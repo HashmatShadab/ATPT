@@ -39,4 +39,6 @@ pip install tqdm
 pip install ftfy
 pip install regex
 pip install scipy
+pip install "numpy<2"
+
 ```
