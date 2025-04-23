@@ -45,7 +45,7 @@ class BaseJsonDataset(Dataset):
         if self.transform:
             image = self.transform(image)
         
-        return image, torch.tensor(label).long()
+        return image, torch.tensor(label).long(), image_path
     
 class BaseJsonDataset_adv(Dataset):
     def __init__(self, image_path, json_path, mode='train', n_shot=None, transform=None, replace_path=''):
@@ -192,7 +192,7 @@ class Aircraft(Dataset):
         if self.transform:
             image = self.transform(image)
         
-        return image, torch.tensor(label).long()
+        return image, torch.tensor(label).long(), image_path
 
 
 class Aircraft_path(Dataset):

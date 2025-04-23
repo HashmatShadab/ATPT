@@ -377,8 +377,22 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             logger.info(f"Using PGD attack with epsilon: {args.eps/255:.6f}, alpha: {args.alpha/255:.6f}, steps: {args.steps}")
 
     end = time.time()
+    # Create directory for saving adversarial images if needed
+    adv_images_dir = os.path.join(args.output_dir, f"adv_images_eps{args.eps}_alpha{args.alpha}_steps{args.steps}")
+    if args.eps > 0.0 and not os.path.exists(adv_images_dir):
+        os.makedirs(adv_images_dir, exist_ok=True)
+        if logger:
+            logger.info(f"Created directory for adversarial images: {adv_images_dir}")
+
     # Iterate through validation data
-    for i, (images, target) in enumerate(val_loader):
+    for i, data in enumerate(val_loader):
+        # Handle different return formats (with or without path)
+        if len(data) == 3:
+            images, target, path = data
+        else:
+            images, target = data
+            path = None
+
         assert args.gpu is not None
         target = target.cuda(args.gpu, non_blocking=True)
 
@@ -388,18 +402,40 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             if logger and i == 0:
                 logger.debug(f"Original image shape: {image.shape}, target: {target.item()}")
 
-            # Create adversarial image using PGD attack
-            adv_image = atk(image, target)
-            if logger and i == 0:
-                logger.debug(f"Generated adversarial image with shape: {adv_image.shape}")
+            # Create a unique filename for the adversarial image
+            if path is not None:
+                # Extract filename from path and the preceding directory
+                img_filename = os.path.basename(path[0])
+                parent_folder_name = os.path.basename(os.path.dirname(path[0]))
+                adv_img_path = os.path.join(adv_images_dir, f"{parent_folder_name}_{img_filename}")
+            else:
+                # If path is not available, use index as identifier
+                adv_img_path = os.path.join(adv_images_dir, f"{i}.png")
 
-            img_adv = transforms.ToPILImage()(adv_image.squeeze(0))
+            # Check if adversarial image already exists
+            if os.path.exists(adv_img_path):
+                if logger and i == 0:
+                    logger.info(f"Loading existing adversarial image from {adv_img_path}")
+                # Load existing adversarial image
+                img_adv = Image.open(adv_img_path).convert('RGB')
+            else:
+                # Create adversarial image using PGD attack
+                adv_image = atk(image, target)
+                if logger and i == 0:
+                    logger.info(f"Generated adversarial image with shape: {adv_image.shape}")
+
+                img_adv = transforms.ToPILImage()(adv_image.squeeze(0))
+                # Save the adversarial image
+                img_adv.save(adv_img_path)
+                if logger and i == 0:
+                    logger.info(f"Saved adversarial image to {adv_img_path}")
+
             # Apply data transformations to adversarial image
             images = data_transform(img_adv)
             images = [_.unsqueeze(0) for _ in images]
 
             if logger and i == 0:
-                logger.debug(f"Created {len(images)} augmented views of the adversarial image")
+                logger.info(f"Created {len(images)} augmented views of the adversarial image")
 
         # Process images based on their format
         if isinstance(images, list):

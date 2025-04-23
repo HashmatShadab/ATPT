@@ -45,7 +45,7 @@ class ImageFolder_path(datasets.ImageFolder):
             transform=transform
         )
         self.imgs = self.samples
-    
+
 
     def __getitem__(self, index: int):
         """
@@ -68,10 +68,10 @@ def build_dataset(set_id, transform, data_root, mode='test', n_shot=None, split=
     if set_id == 'I':
         # ImageNet validation set
         testdir = os.path.join(os.path.join(data_root, ID_to_DIRNAME[set_id]), 'val')
-        testset = datasets.ImageFolder(testdir, transform=transform)
+        testset = ImageFolder_path(testdir, transform=transform)
     elif set_id in ['A', 'K', 'R', 'V']:
         testdir = os.path.join(data_root, ID_to_DIRNAME[set_id])
-        testset = datasets.ImageFolder(testdir, transform=transform)
+        testset = ImageFolder_path(testdir, transform=transform)
     elif set_id in fewshot_datasets:
         if mode == 'train' and n_shot:
             testset = build_fewshot_dataset(set_id, os.path.join(data_root, ID_to_DIRNAME[set_id.lower()]), transform, mode=mode, n_shot=n_shot)
@@ -79,7 +79,7 @@ def build_dataset(set_id, transform, data_root, mode='test', n_shot=None, split=
             testset = build_fewshot_dataset(set_id, os.path.join(data_root, ID_to_DIRNAME[set_id.lower()]), transform, mode=mode)
     else:
         raise NotImplementedError
-        
+
     return testset
 
 # AugMix Transforms
@@ -119,7 +119,7 @@ class AugMixAugmenter(object):
         else:
             self.aug_list = []
         self.severity = severity
-        
+
     def __call__(self, x):
         image = self.preprocess(self.base_transform(x))
         views = [augmix(x, self.preprocess, self.aug_list, self.severity) for _ in range(self.n_views)]
@@ -137,7 +137,7 @@ class Post_AugMixAugmenter(object):
         else:
             self.aug_list = []
         self.severity = severity
-        
+
     def __call__(self, x):
         image = self.preprocess(self.base_transform(x))
         views = [augmix(x, self.preprocess, self.aug_list, self.severity) for _ in range(self.n_views)]
