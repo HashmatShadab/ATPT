@@ -29,6 +29,7 @@ except ImportError:
 
 from clip.custom_clip import get_coop
 from data.imagnet_prompts import imagenet_classes
+from data.imagenet_variants import imagenet_a_mask, imagenet_r_mask, imagenet_v_mask
 from data.datautils import AugMixAugmenter, build_dataset
 from utils.tools import Summary, AverageMeter, ProgressMeter, accuracy, set_random_seed
 from utils.logger import setup_logger
@@ -69,8 +70,34 @@ def print_args(args):
     """
     s = "==========================================\n"
     for arg, content in args.__dict__.items():
-        s += "{}:{}\n".format(arg, content)
+        s += f"{arg}:{content}\n"
     return s
+
+
+def calculate_entropy(outputs):
+    """
+    Calculate entropy for each sample in the batch.
+
+    Args:
+        outputs (torch.Tensor): Model output logits.
+
+    Returns:
+        torch.Tensor: Entropy for each sample.
+    """
+    return -(outputs.softmax(1) * outputs.log_softmax(1)).sum(1)
+
+def entropy_avg(outputs):
+    """
+    Calculate the average entropy of model outputs.
+
+    Args:
+        outputs (torch.Tensor): Model output logits.
+
+    Returns:
+        torch.Tensor: Mean entropy across all samples.
+    """
+    # Calculate entropy for each sample and return mean
+    return calculate_entropy(outputs).mean()
 
 def select_confident_samples(logits, top):
     """
@@ -86,25 +113,10 @@ def select_confident_samples(logits, top):
         tuple: (selected_logits, selected_indices)
     """
     # Calculate entropy for each sample in the batch
-    batch_entropy = -(logits.softmax(1) * logits.log_softmax(1)).sum(1)
+    batch_entropy = calculate_entropy(logits)
     # Select indices of samples with lowest entropy (highest confidence)
     idx = torch.argsort(batch_entropy, descending=False)[:int(batch_entropy.size()[0] * top)]
     return logits[idx], idx
-
-def entropy_avg(outputs):
-    """
-    Calculate the average entropy of model outputs.
-
-    Args:
-        outputs (torch.Tensor): Model output logits.
-
-    Returns:
-        torch.Tensor: Mean entropy across all samples.
-    """
-    # Calculate entropy for each sample
-    batch_entropy = -(outputs.softmax(1) * outputs.log_softmax(1)).sum(1)
-    # Return mean entropy
-    return batch_entropy.mean()
 
 def test_time_tuning(model, inputs, optimizer, scaler, args, logger=None):
     """
@@ -193,10 +205,7 @@ def main():
                                   'eps_'+str(args.eps)+'_alpha_'+str(args.alpha)+'_step_'+str(args.steps))
 
     # Create output directory if it doesn't exist
-    if not os.path.exists(args.output_dir):
-        os.system('mkdir -p ' + args.output_dir)
-    if not os.path.exists(args.output_dir):
-        os.mkdir(args.output_dir)
+    os.makedirs(args.output_dir, exist_ok=True)
 
     # Set up logging
     logger, log_file = setup_logger('rtpt', args.output_dir, level=logging.INFO)
@@ -205,29 +214,30 @@ def main():
     # Ensure GPU is available
     assert args.gpu is not None
     set_random_seed(args.seed)
-    logger.info("Use GPU: {} for training".format(args.gpu))
+    logger.info(f"Use GPU: {args.gpu} for training")
 
     # Determine class names based on dataset
     dset = args.test_sets
     if len(dset) > 1: 
         # For multi-character dataset names (e.g., 'Caltech101')
-        classnames = eval("{}_classes".format(dset.lower()))
+        # This would require importing the specific classes for each dataset
+        # For now, we keep using eval for this case as it's not a common path
+        classnames = eval(f"{dset.lower()}_classes")
     else:
         # For single-character dataset codes (ImageNet variants)
         assert dset in ['A', 'R', 'K', 'V', 'I']
         classnames_all = imagenet_classes
-        classnames = []
-        if dset in ['A', 'R', 'V']:
-            # ImageNet-A, ImageNet-R, or ImageNet-V
-            label_mask = eval("imagenet_{}_mask".format(dset.lower()))
-            if dset == 'R':
-                # Special handling for ImageNet-R
-                for i, m in enumerate(label_mask):
-                    if m:
-                        classnames.append(classnames_all[i])
-            else:
-                # For ImageNet-A and ImageNet-V
-                classnames = [classnames_all[i] for i in label_mask]
+
+        # Select appropriate class names based on dataset code
+        if dset == 'A':
+            # ImageNet-A
+            classnames = [classnames_all[i] for i in imagenet_a_mask]
+        elif dset == 'R':
+            # ImageNet-R
+            classnames = [classnames_all[i] for i, m in enumerate(imagenet_r_mask) if m]
+        elif dset == 'V':
+            # ImageNet-V
+            classnames = [classnames_all[i] for i in imagenet_v_mask]
         else:
             # For ImageNet (I) or ImageNet-K
             classnames = classnames_all
@@ -251,7 +261,7 @@ def main():
         if "prompt_learner" not in name:
                 param.requires_grad_(False)
 
-    logger.info("=> Model created: visual backbone {}".format(args.arch))
+    logger.info(f"=> Model created: visual backbone {args.arch}")
 
     # Move model to GPU
     if not torch.cuda.is_available():
@@ -289,11 +299,11 @@ def main():
 
     # Create dataset and data loader
     val_dataset = build_dataset(dset, data_transform, args.data, mode=args.dataset_mode)
-    logger.info("Number of test samples: {}".format(len(val_dataset)))
+    logger.info(f"Number of test samples: {len(val_dataset)}")
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batchsize, shuffle=False,
                 num_workers=args.workers, pin_memory=not args.no_pin_memory)
 
-    logger.info("Evaluating dataset: {}".format(dset))
+    logger.info(f"Evaluating dataset: {dset}")
 
     # Run evaluation with test-time adaptation
     results = test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger)
@@ -304,11 +314,11 @@ def main():
     # Format and save results
     if args.eps <= 0:
         # Clean accuracy (no adversarial attack)
-        log_msg = "=> Acc. on testset [{}]: Clean Acc @1 {}/ TTA Clean Acc @1 {}".format(dset, results[0], results[1])
+        log_msg = f"=> Acc. on testset [{dset}]: Clean Acc @1 {results[0]}/ TTA Clean Acc @1 {results[1]}"
         save_log = {'clean_acc': results[0], 'tta_clean_acc': results[1]}
     else:
         # Adversarial accuracy
-        log_msg = "=> Acc. on testset [{}]: Adv Acc @1 {}/ TTA Adv Acc @1 {} ".format(dset, results[0], results[1])
+        log_msg = f"=> Acc. on testset [{dset}]: Adv Acc @1 {results[0]}/ TTA Adv Acc @1 {results[1]}"
         save_log = {'adv_acc': results[0], 'tta_adv_acc': results[1]}
 
     # Log results
@@ -316,6 +326,53 @@ def main():
 
     # Save results to file
     torch.save(save_log, os.path.join(args.output_dir, 'results_log.pt'))
+
+
+def get_adversarial_image(image, target, attack, path, index, output_dir, logger=None):
+    """
+    Generate or load a cached adversarial image.
+
+    Args:
+        image (torch.Tensor): Original image tensor.
+        target (torch.Tensor): Target label.
+        attack (torchattacks.Attack): Adversarial attack object.
+        path (list or None): Path to the original image file.
+        index (int): Index of the current sample.
+        output_dir (str): Directory to save/load adversarial images.
+        logger (logging.Logger, optional): Logger for logging information.
+
+    Returns:
+        PIL.Image.Image: Adversarial image.
+    """
+    # Create a unique filename for the adversarial image
+    if path is not None:
+        # Extract filename from path and the preceding directory
+        img_filename = os.path.basename(path[0])
+        parent_folder_name = os.path.basename(os.path.dirname(path[0]))
+        adv_img_path = os.path.join(output_dir, f"{parent_folder_name}_{img_filename}")
+    else:
+        # If path is not available, use index as identifier
+        adv_img_path = os.path.join(output_dir, f"{index}.png")
+
+    # Check if adversarial image already exists
+    if os.path.exists(adv_img_path):
+        if logger:
+            logger.info(f"Loading existing adversarial image from {adv_img_path}")
+        # Load existing adversarial image
+        img_adv = Image.open(adv_img_path).convert('RGB')
+    else:
+        # Create adversarial image using attack
+        adv_image = attack(image, target)
+        if logger:
+            logger.info(f"Generated adversarial image with shape: {adv_image.shape}")
+
+        img_adv = transforms.ToPILImage()(adv_image.squeeze(0))
+        # Save the adversarial image
+        img_adv.save(adv_img_path)
+        if logger:
+            logger.info(f"Saved adversarial image to {adv_img_path}")
+
+    return img_adv
 
 
 def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger=None):
@@ -369,10 +426,10 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     end = time.time()
     # Create directory for saving adversarial images if needed
     adv_images_dir = os.path.join(args.output_dir, f"adv_images_eps{args.eps}_alpha{args.alpha}_steps{args.steps}")
-    if args.eps > 0.0 and not os.path.exists(adv_images_dir):
+    if args.eps > 0.0:
         os.makedirs(adv_images_dir, exist_ok=True)
         if logger:
-            logger.info(f"Created directory for adversarial images: {adv_images_dir}")
+            logger.info(f"Using directory for adversarial images: {adv_images_dir}")
 
     # Iterate through validation data
     for i, data in enumerate(val_loader):
@@ -392,33 +449,10 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             if logger and i == 0:
                 logger.debug(f"Original image shape: {image.shape}, target: {target.item()}")
 
-            # Create a unique filename for the adversarial image
-            if path is not None:
-                # Extract filename from path and the preceding directory
-                img_filename = os.path.basename(path[0])
-                parent_folder_name = os.path.basename(os.path.dirname(path[0]))
-                adv_img_path = os.path.join(adv_images_dir, f"{parent_folder_name}_{img_filename}")
-            else:
-                # If path is not available, use index as identifier
-                adv_img_path = os.path.join(adv_images_dir, f"{i}.png")
-
-            # Check if adversarial image already exists
-            if os.path.exists(adv_img_path):
-                if logger and i == 0:
-                    logger.info(f"Loading existing adversarial image from {adv_img_path}")
-                # Load existing adversarial image
-                img_adv = Image.open(adv_img_path).convert('RGB')
-            else:
-                # Create adversarial image using PGD attack
-                adv_image = atk(image, target)
-                if logger and i == 0:
-                    logger.info(f"Generated adversarial image with shape: {adv_image.shape}")
-
-                img_adv = transforms.ToPILImage()(adv_image.squeeze(0))
-                # Save the adversarial image
-                img_adv.save(adv_img_path)
-                if logger and i == 0:
-                    logger.info(f"Saved adversarial image to {adv_img_path}")
+            # Get adversarial image (either generate or load from cache)
+            img_adv = get_adversarial_image(
+                image, target, atk, path, i, adv_images_dir, logger=(logger if i == 0 else None)
+            )
 
             # Apply data transformations to adversarial image
             images = data_transform(img_adv)
@@ -495,9 +529,9 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         if (i+1) % args.print_freq == 0 or (i+1) == len(val_loader):
             if logger:
                 if args.eps <= 0:
-                    logger.info('iter:{}/{}, clip_acc1={}, tta_acc1={}'.format(i+1, len(val_loader), top1.avg, tpt1.avg))
+                    logger.info(f'iter:{i+1}/{len(val_loader)}, clip_acc1={top1.avg}, tta_acc1={tpt1.avg}')
                 else:
-                    logger.info('iter:{}/{}, clip_adv1={}, tta_adv1={}'.format(i+1, len(val_loader), top1.avg, tpt1.avg))
+                    logger.info(f'iter:{i+1}/{len(val_loader)}, clip_adv1={top1.avg}, tta_adv1={tpt1.avg}')
             progress.display(i)
 
     # Display final summary
