@@ -30,6 +30,8 @@ except ImportError:
 from clip.custom_clip import get_coop
 from data.imagnet_prompts import imagenet_classes
 from data.imagenet_variants import imagenet_a_mask, imagenet_r_mask, imagenet_v_mask
+from data.cls_to_names import flower102_classes, food101_classes, dtd_classes, caltech101_classes, pets_classes, \
+    sun397_classes, cars_classes, ucf101_classes, aircraft_classes, eurosat_classes
 from data.datautils import AugMixAugmenter, build_dataset
 from utils.tools import Summary, AverageMeter, ProgressMeter, accuracy, set_random_seed
 from utils.logger import setup_logger
@@ -201,8 +203,7 @@ def main():
     args.alpha = args.eps / args.alpha_eps_ratio
 
     # Create output directory path with experiment parameters
-    args.output_dir = os.path.join(args.output_dir, args.arch, args.test_sets, 
-                                  'eps_'+str(args.eps)+'_alpha_'+str(args.alpha)+'_step_'+str(args.steps))
+    args.output_dir = os.path.join(args.output_dir, args.arch, args.test_sets)
 
     # Create output directory if it doesn't exist
     os.makedirs(args.output_dir, exist_ok=True)
@@ -305,6 +306,7 @@ def main():
 
     logger.info(f"Evaluating dataset: {dset}")
 
+    exit()
     # Run evaluation with test-time adaptation
     results = test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger)
 
@@ -425,7 +427,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     end = time.time()
     # Create directory for saving adversarial images if needed
-    adv_images_dir = os.path.join(args.output_dir, f"adv_images_eps{args.eps}_alpha{args.alpha}_steps{args.steps}")
+    adv_images_dir = os.path.join(args.output_dir, f"adv_images_eps_{args.eps}_alpha_{args.alpha}_steps_{args.steps}")
     if args.eps > 0.0:
         os.makedirs(adv_images_dir, exist_ok=True)
         if logger:
@@ -488,7 +490,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         with torch.no_grad():
             clip_output = model(image)  # Output for original image
             clip_features, _, _ = model.forward_features(images)  # Features for all images
-            clip_outputs = model(images)  # Outputs for all images
+            # clip_outputs = model(images)  # Outputs for all images
 
         # Perform test-time adaptation
         assert args.tta_steps > 0
