@@ -7,19 +7,18 @@ tuning to adapt the model at test time without modifying the model weights.
 """
 
 import argparse
+import logging
 import time
 from copy import deepcopy
-from PIL import Image
-import numpy as np
-import logging
 
 import torch
-import torch.nn.parallel
 import torch.backends.cudnn as cudnn
+import torch.nn.parallel
 import torch.optim
 import torch.utils.data
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
+from PIL import Image
 
 try:
     from torchvision.transforms import InterpolationMode
@@ -27,23 +26,17 @@ try:
 except ImportError:
     # Fallback for older torchvision versions
     BICUBIC = Image.BICUBIC
-import torchvision.models as models
 
 from clip.custom_clip import get_coop
 from data.imagnet_prompts import imagenet_classes
 from data.datautils import AugMixAugmenter, build_dataset
-from utils.tools import Summary, AverageMeter, ProgressMeter, accuracy, load_model_weight, set_random_seed
+from utils.tools import Summary, AverageMeter, ProgressMeter, accuracy, set_random_seed
 from utils.logger import setup_logger
-from data.cls_to_names import *
-from data.fewshot_datasets import fewshot_datasets
-from data.imagenet_variants import thousand_k_to_200, imagenet_a_mask, imagenet_r_mask, imagenet_v_mask
 import os
 
 import torchattacks
 
-model_names = sorted(name for name in models.__dict__
-    if name.islower() and not name.startswith("__")
-    and callable(models.__dict__[name]))
+
 
 def get_top_sim(sim_matrix, args):
     """
@@ -59,7 +52,7 @@ def get_top_sim(sim_matrix, args):
     # Exclude self-similarity (which is 1.0) by setting it to negative infinity
     sim_matrix[sim_matrix>=1.0] = float('-inf')
     # Get top-k similarity values for each sample
-    top_k_values, _ = sim_matrix.topk(args.top_k, dim=-1)
+    top_k_values, _ = sim_matrix.topk(args.top_k, dim=-1) # default is 20 neighbors
     # Calculate mean similarity
     top_k_mean = top_k_values.mean(dim=-1)
     return top_k_mean
@@ -187,6 +180,7 @@ def main():
     Returns:
         None
     """
+
     # Parse arguments and set random seed
     args = parser.parse_args()
     set_random_seed(args.seed)
@@ -274,58 +268,54 @@ def main():
 
     # Set up additional training parameters
     scaler = None  # No mixed precision scaling used
-    cudnn.benchmark = not args.no_cudnn_benchmark  # Enable cudnn benchmarking for faster training unless disabled
+    cudnn.benchmark = not args.no_cudnn_benchmark  # Enable cudnn benchmarking for faster training unless disabled, default is True
 
-    # CLIP normalization values
-    normalize = transforms.Normalize(mean=[0.48145466, 0.4578275, 0.40821073],
-                                     std=[0.26862954, 0.26130258, 0.27577711])
 
     # Set up data transformations and evaluation
-    results = {}
-    if True:  # This condition is always true, could be refactored
-        # Set up image transformations
-        base_transform = transforms.Compose([
-            transforms.Resize(args.resolution, interpolation=BICUBIC),
-            transforms.CenterCrop(args.resolution)])
-        preprocess = transforms.Compose([
-            transforms.ToTensor(),
-            # normalize is commented out - intentional?
-            ])
 
-        # Create data augmentation transformer
-        data_transform = AugMixAugmenter(base_transform, preprocess, n_views=args.batch_size-1, 
-                                        augmix=len(dset)>1)
-        batchsize = 1 #args.eval_batch_size  # Process images in batches of specified size
+    # Set up image transformations
+    base_transform = transforms.Compose([
+        transforms.Resize(args.resolution, interpolation=BICUBIC),
+        transforms.CenterCrop(args.resolution)])
+    preprocess = transforms.Compose([
+        transforms.ToTensor(),
+        # normalize is commented out - intentional
+        ])
 
-        # Create dataset and data loader
-        val_dataset = build_dataset(dset, data_transform, args.data, mode=args.dataset_mode)
-        logger.info("Number of test samples: {}".format(len(val_dataset)))
-        val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batchsize, shuffle=False,
-                    num_workers=args.workers, pin_memory=True)
+    # Create data augmentation transformer
+    data_transform = AugMixAugmenter(base_transform, preprocess, n_views=args.batch_size-1,
+                                    augmix=len(dset)>1)
+    batchsize = 1 # Process images one at a time for test-time adaptation
 
-        logger.info("Evaluating dataset: {}".format(dset))
+    # Create dataset and data loader
+    val_dataset = build_dataset(dset, data_transform, args.data, mode=args.dataset_mode)
+    logger.info("Number of test samples: {}".format(len(val_dataset)))
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batchsize, shuffle=False,
+                num_workers=args.workers, pin_memory=not args.no_pin_memory)
 
-        # Run evaluation with test-time adaptation
-        results = test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger)
+    logger.info("Evaluating dataset: {}".format(dset))
 
-        # Clean up to free memory
-        del val_dataset, val_loader
+    # Run evaluation with test-time adaptation
+    results = test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger)
 
-        # Format and save results
-        if args.eps <= 0:
-            # Clean accuracy (no adversarial attack)
-            log_msg = "=> Acc. on testset [{}]: Clean Acc @1 {}/ TTA Clean Acc @1 {}".format(dset, results[0], results[1])
-            save_log = {'clean_acc': results[0], 'tta_clean_acc': results[1]}
-        else:
-            # Adversarial accuracy
-            log_msg = "=> Acc. on testset [{}]: Adv Acc @1 {}/ TTA Adv Acc @1 {} ".format(dset, results[0], results[1])
-            save_log = {'adv_acc': results[0], 'tta_adv_acc': results[1]}
+    # Clean up to free memory
+    del val_dataset, val_loader
 
-        # Log results
-        logger.info(log_msg)
+    # Format and save results
+    if args.eps <= 0:
+        # Clean accuracy (no adversarial attack)
+        log_msg = "=> Acc. on testset [{}]: Clean Acc @1 {}/ TTA Clean Acc @1 {}".format(dset, results[0], results[1])
+        save_log = {'clean_acc': results[0], 'tta_clean_acc': results[1]}
+    else:
+        # Adversarial accuracy
+        log_msg = "=> Acc. on testset [{}]: Adv Acc @1 {}/ TTA Adv Acc @1 {} ".format(dset, results[0], results[1])
+        save_log = {'adv_acc': results[0], 'tta_adv_acc': results[1]}
 
-        # Save results to file
-        torch.save(save_log, os.path.join(args.output_dir, 'results_log.pt'))
+    # Log results
+    logger.info(log_msg)
+
+    # Save results to file
+    torch.save(save_log, os.path.join(args.output_dir, 'results_log.pt'))
 
 
 def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger=None):
@@ -479,7 +469,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         # Get top similarity scores
         score = get_top_sim(sim_matrix_images, args)
         # Calculate weights based on similarity scores
-        weight = torch.nn.functional.softmax(score/args.softmax_temp, dim=-1)
+        weight = torch.nn.functional.softmax(score/args.softmax_temp, dim=-1) # softmax temperature default is 0.01
         # Weighted average of tuned outputs
         tta_output = torch.bmm(weight.unsqueeze(-1).transpose(1, 2), tuned_outputs.unsqueeze(0)).squeeze(1)
 
@@ -545,6 +535,9 @@ if __name__ == '__main__':
     # Hardware and performance parameters
     parser.add_argument('-j', '--workers', default=4, type=int, metavar='N', 
                         help='Number of data loading workers (default: 4)')
+    # pin memory, default is True
+    parser.add_argument('--no_pin_memory', action='store_true',
+                        help='Pin memory for data loading')
     parser.add_argument('-b', '--batch-size', default=64, type=int, metavar='N',
                         help='Mini-batch size for augmentation')
     parser.add_argument('-p', '--print-freq', default=200, type=int, metavar='N', 
