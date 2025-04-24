@@ -30,7 +30,7 @@ COMMON_PARAMS="--gpu $GPU --ctx_init a_photo_of_a --output_dir output_results --
 COMMON_PARAMS+=" --eps $EPSILON --steps $ATTACK_STEPS --tta_steps $TTA_STEPS"
 COMMON_PARAMS+=" --selection_p $FRACTION_CONFIDENT_SAMPLES"
 COMMON_PARAMS+=" --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX"
-COMMON_PARAMS+=" --softmax_tem $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING"
+COMMON_PARAMS+=" --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING"
 
 # Model parameters
 MODEL="-a $MODEL_NAME -b 64"
@@ -93,25 +93,25 @@ echo "Fine-grained datasets testing complete"
 #
 echo "Running tests on ImageNet datasets..."
 
-echo "  [1/5] Testing A dataset..."
+echo "  [1/5] Testing ImageNet-A dataset..."
 python rtpt.py $DATA_ROOT --test_sets A $MODEL $COMMON_PARAMS
-echo "  ✓ A dataset testing complete"
+echo "  ✓ ImageNet-A dataset testing complete"
 
-echo "  [2/5] Testing R dataset..."
+echo "  [2/5] Testing ImageNet-R dataset..."
 python rtpt.py $DATA_ROOT --test_sets R $MODEL $COMMON_PARAMS
-echo "  ✓ R dataset testing complete"
+echo "  ✓ ImageNet-R dataset testing complete"
 
-echo "  [3/5] Testing K dataset..."
+echo "  [3/5] Testing ImageNet-S dataset..."
 python rtpt.py $DATA_ROOT --test_sets K $MODEL $COMMON_PARAMS
-echo "  ✓ K dataset testing complete"
+echo "  ✓ ImageNet-S dataset testing complete"
 
-echo "  [4/5] Testing V dataset..."
+echo "  [4/5] Testing ImageNet-V dataset..."
 python rtpt.py $DATA_ROOT --test_sets V $MODEL $COMMON_PARAMS
-echo "  ✓ V dataset testing complete"
+echo "  ✓ ImageNet-V dataset testing complete"
 
-echo "  [5/5] Testing I dataset..."
+echo "  [5/5] Testing ImageNet dataset..."
 python rtpt.py $DATA_ROOT --test_sets I $MODEL $COMMON_PARAMS
-echo "  ✓ I dataset testing complete"
+echo "  ✓ ImageNet dataset testing complete"
 
 echo "ImageNet datasets testing complete"
 

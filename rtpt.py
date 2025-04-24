@@ -178,22 +178,7 @@ def test_time_tuning(model, inputs, optimizer, scaler, args, logger=None):
 
 
 def main():
-    """
-    Main function for running test-time prompt tuning evaluation.
 
-    This function:
-    1. Parses command line arguments
-    2. Sets up the output directory and logging
-    3. Initializes the model with appropriate class names
-    4. Loads pre-trained weights if specified
-    5. Sets up optimization parameters
-    6. Prepares data transformations and loaders
-    7. Runs evaluation with test-time adaptation
-    8. Saves and reports results
-
-    Returns:
-        None
-    """
 
     # Parse arguments and set random seed
     args = parser.parse_args()
@@ -209,7 +194,11 @@ def main():
     os.makedirs(args.output_dir, exist_ok=True)
 
     # Set up logging
-    logger, log_file = setup_logger('rtpt', args.output_dir, level=logging.INFO)
+
+    # Create a log name that includes TTA variations
+    # Format floating point values and ensure filename is valid
+    log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_TPT_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
+    logger, log_file = setup_logger(log_name, args.output_dir, level=logging.INFO)
     logger.info(print_args(args))
 
     # Ensure GPU is available
@@ -306,7 +295,6 @@ def main():
 
     logger.info(f"Evaluating dataset: {dset}")
 
-    exit()
     # Run evaluation with test-time adaptation
     results = test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger)
 

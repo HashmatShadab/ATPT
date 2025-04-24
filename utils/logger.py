@@ -39,7 +39,7 @@ def setup_logger(name, log_dir, level=logging.INFO):
         os.makedirs(log_dir)
     
     # Create timestamp for log file
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now().strftime("%B_%d_%I_%M_%p")
     log_file = os.path.join(log_dir, f"{name}_{timestamp}.log")
     
     # Create file handler
