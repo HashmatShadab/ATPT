@@ -12,15 +12,18 @@ DATA_ROOT=${1:-"F:\Code\datasets\downstream_datasets\downstream_datasets"}
 GPU=${2:-0}
 NUM_WORKERS=${3:-0}
 
+# Model parameters
+MODEL_NAME=${4:-"RN50"} # Options: RN50, ViT-B/16
+
 # Adversarial example parameters, defaults attack in paper as epsilon=1.0 and steps=7 for RN50 and epsilon=4.0 and steps=100 for ViT-B/16
-EPSILON=${4:-0.0}
-ATTACK_STEPS=${5:-0}
+EPSILON=${5:-0.0}
+ATTACK_STEPS=${6:-0}
 
 # Test-time augmentation parameters
-TTA_STEPS=${6:-1}
-FRACTION_CONFIDENT_SAMPLES=${7:-0.1}
-TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX=${8:-20}
-SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING=${9:-0.01}
+TTA_STEPS=${7:-1}
+FRACTION_CONFIDENT_SAMPLES=${8:-0.1}
+TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX=${9:-20}
+SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING=${10:-0.01}
 
 # Common parameters for all runs
 COMMON_PARAMS="--gpu $GPU --ctx_init a_photo_of_a --output_dir output_results --workers $NUM_WORKERS"
@@ -30,7 +33,7 @@ COMMON_PARAMS+=" --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX"
 COMMON_PARAMS+=" --softmax_tem $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING"
 
 # Model parameters
-MODEL="-a RN50 -b 64"
+MODEL="-a $MODEL_NAME -b 64"
 
 # Display configuration
 echo "=== Configuration ==="
