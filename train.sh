@@ -27,6 +27,7 @@ SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING=${10:-0.01}
 OUTPUT_DIR=${11:-"output_results"}
 
 # bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 0 4 RN50 1.0 7 1 0.1 20 0.01 /mnt/nvme0n1/Dataset/muzammal/atpt_results
+# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 0 4 ViT-B/16 4.0 100 1 0.1 20 0.01 /mnt/nvme0n1/Dataset/muzammal/atpt_results
 
 # Common parameters for all runs
 COMMON_PARAMS="--gpu $GPU --ctx_init a_photo_of_a --output_dir $OUTPUT_DIR --workers $NUM_WORKERS"
