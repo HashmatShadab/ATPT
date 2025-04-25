@@ -33,7 +33,7 @@ COMMON_PARAMS="--gpu $GPU --ctx_init a_photo_of_a --output_dir $OUTPUT_DIR --wor
 COMMON_PARAMS+=" --eps $EPSILON --steps $ATTACK_STEPS --tta_steps $TTA_STEPS"
 COMMON_PARAMS+=" --selection_p $FRACTION_CONFIDENT_SAMPLES"
 COMMON_PARAMS+=" --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX"
-COMMON_PARAMS+=" --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING"
+COMMON_PARAMS+=" --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING --print-freq 20"
 
 # Model parameters
 MODEL="-a $MODEL_NAME -b 64"
