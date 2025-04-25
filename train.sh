@@ -24,9 +24,12 @@ TTA_STEPS=${7:-1}
 FRACTION_CONFIDENT_SAMPLES=${8:-0.1}
 TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX=${9:-20}
 SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING=${10:-0.01}
+OUTPUT_DIR=${11:-"output_results"}
+
+# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 0 4 RN50 1.0 7 1 0.1 20 0.01 /mnt/nvme0n1/Dataset/muzammal/atpt_results
 
 # Common parameters for all runs
-COMMON_PARAMS="--gpu $GPU --ctx_init a_photo_of_a --output_dir output_results --workers $NUM_WORKERS"
+COMMON_PARAMS="--gpu $GPU --ctx_init a_photo_of_a --output_dir $OUTPUT_DIR --workers $NUM_WORKERS"
 COMMON_PARAMS+=" --eps $EPSILON --steps $ATTACK_STEPS --tta_steps $TTA_STEPS"
 COMMON_PARAMS+=" --selection_p $FRACTION_CONFIDENT_SAMPLES"
 COMMON_PARAMS+=" --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX"
