@@ -38,7 +38,10 @@ from utils.logger import setup_logger
 import os
 
 import torchattacks
-
+import os
+from PIL import Image
+import torch
+from torchvision import transforms
 
 
 def get_top_sim(sim_matrix, args):
@@ -286,7 +289,7 @@ def main():
     data_transform = AugMixAugmenter(base_transform, preprocess, n_views=args.batch_size-1,
                                     augmix=len(dset)>1, only_base_image=True)
 
-    batchsize = 16 # Process images one at a time for test-time adaptation
+    batchsize = 8 # Process images one at a time for test-time adaptation
 
     # Create dataset and data loader
     val_dataset = build_dataset(dset, data_transform, args.data, mode=args.dataset_mode)
@@ -301,10 +304,7 @@ def main():
 
     logger.info(f"Adversarial image generation completed. Results")
 
-import os
-from PIL import Image
-import torch
-from torchvision import transforms
+
 
 def get_adversarial_images(images, targets, attack, paths, index, output_dir, logger=None):
     """
