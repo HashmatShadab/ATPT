@@ -40,5 +40,6 @@ pip install ftfy
 pip install regex
 pip install scipy
 pip install "numpy<2"
+pip install matplotlib
 
 ```

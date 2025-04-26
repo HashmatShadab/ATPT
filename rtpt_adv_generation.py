@@ -148,7 +148,7 @@ def test_time_tuning(model, inputs, optimizer, scaler, args, logger=None):
     # Perform test-time adaptation for specified number of steps
     for j in range(args.tta_steps):
         # Forward pass
-        output = model(inputs) 
+        output = model(inputs)
 
         # Use only confident samples for adaptation
         if selected_idx is not None:
@@ -197,7 +197,7 @@ def main():
 
     # Create a log name that includes TTA variations
     # Format floating point values and ensure filename is valid
-    log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_TPT_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
+    log_name = f"ADV_Generation_eps_{args.eps}_steps_{args.steps}"
     logger, log_file = setup_logger(log_name, args.output_dir, level=logging.INFO)
     logger.info(print_args(args))
 
@@ -208,7 +208,7 @@ def main():
 
     # Determine class names based on dataset
     dset = args.test_sets
-    if len(dset) > 1: 
+    if len(dset) > 1:
         # For multi-character dataset names (e.g., 'Caltech101')
         # This would require importing the specific classes for each dataset
         # For now, we keep using eval for this case as it's not a common path
@@ -284,9 +284,9 @@ def main():
 
     # # Create data augmentation transformer
     data_transform = AugMixAugmenter(base_transform, preprocess, n_views=args.batch_size-1,
-                                    augmix=len(dset)>1, only_base_image=False)
+                                    augmix=len(dset)>1, only_base_image=True)
 
-    batchsize = 1 # Process images one at a time for test-time adaptation
+    batchsize = 16 # Process images one at a time for test-time adaptation
 
     # Create dataset and data loader
     val_dataset = build_dataset(dset, data_transform, args.data, mode=args.dataset_mode)
@@ -297,26 +297,66 @@ def main():
     logger.info(f"Evaluating dataset: {dset}")
 
     # Run evaluation with test-time adaptation
-    results = test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger)
+    test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger)
 
-    # Clean up to free memory
-    del val_dataset, val_loader
+    logger.info(f"Adversarial image generation completed. Results")
 
-    # Format and save results
-    if args.eps <= 0:
-        # Clean accuracy (no adversarial attack)
-        log_msg = f"=> Acc. on testset [{dset}]: Clean Acc @1 {results[0]}/ TTA Clean Acc @1 {results[1]}"
-        save_log = {'clean_acc': results[0], 'tta_clean_acc': results[1]}
+import os
+from PIL import Image
+import torch
+from torchvision import transforms
+
+def get_adversarial_images(images, targets, attack, paths, index, output_dir, logger=None):
+    """
+    Generate or load cached adversarial images for a batch of samples.
+
+    Args:
+        images (torch.Tensor): Batch of original images (B, C, H, W).
+        targets (torch.Tensor): Batch of target labels (B,).
+        attack (torchattacks.Attack): Adversarial attack object.
+        paths (list): List of paths to original image files (len = B).
+        output_dir (str): Directory to save/load adversarial images.
+        logger (logging.Logger, optional): Logger for logging information.
+
+    Returns:
+        List[PIL.Image.Image]: List of adversarial images.
+    """
+    batch_size = images.size(0)
+    adv_images = []
+
+    # Check if any adversarial image is missing and generate the attack
+    generate_attack = False
+    for i in range(batch_size):
+        img_filename = os.path.basename(paths[i])
+        parent_folder_name = os.path.basename(os.path.dirname(paths[i]))
+        adv_img_path = os.path.join(output_dir, f"{parent_folder_name}_{img_filename}")
+
+        if not os.path.exists(adv_img_path):
+            generate_attack = True  # If any image doesn't exist, attack for the whole batch
+            break
+
+    # Generate adversarial images for the entire batch if needed
+    if generate_attack:
+        adv_images = attack(images, targets)  # Perform the attack on the whole batch
+        if logger:
+            logger.info(f"Generated adversarial images for the entire batch.")
+
+        for i in range(batch_size):
+            img_adv = transforms.ToPILImage()(adv_images[i].cpu())
+            img_filename = os.path.basename(paths[i])
+            # change the extension to png
+            img_filename = os.path.splitext(img_filename)[0] + ".png"
+            parent_folder_name = os.path.basename(os.path.dirname(paths[i]))
+            adv_img_path = os.path.join(output_dir, f"{parent_folder_name}_{img_filename}")
+
+            img_adv.save(adv_img_path)
+            if logger:
+                logger.info(f"Batch:[{index}] Image: [{i}] Saved adversarial image to {adv_img_path}")
     else:
-        # Adversarial accuracy
-        log_msg = f"=> Acc. on testset [{dset}]: Adv Acc @1 {results[0]}/ TTA Adv Acc @1 {results[1]}"
-        save_log = {'adv_acc': results[0], 'tta_adv_acc': results[1]}
+        logger.info(f"Batch:[{index}] Adversarial images for this batch already exist")
 
-    # Log results
-    logger.info(log_msg)
 
-    # Save results to file
-    torch.save(save_log, os.path.join(args.output_dir, 'results_log.pt'))
+
 
 
 def get_adversarial_image(image, target, attack, path, index, output_dir, logger=None):
@@ -339,11 +379,10 @@ def get_adversarial_image(image, target, attack, path, index, output_dir, logger
     if path is not None:
         # Extract filename from path and the preceding directory
         img_filename = os.path.basename(path[0])
-        # change the extension to .png
-        img_filename = os.path.splitext(img_filename)[0] + '.png'
+        # Change the extension to png
+        img_filename = os.path.splitext(img_filename)[0] + ".png"
         parent_folder_name = os.path.basename(os.path.dirname(path[0]))
         adv_img_path = os.path.join(output_dir, f"{parent_folder_name}_{img_filename}")
-
     else:
         # If path is not available, use index as identifier
         adv_img_path = os.path.join(output_dir, f"{index}.png")
@@ -390,17 +429,6 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     Returns:
         list: [original_accuracy, test_time_adapted_accuracy]
     """
-    # Initialize metrics tracking
-    batch_time = AverageMeter('Time', ':6.3f', Summary.NONE)
-    top1 = AverageMeter('Acc@1', ':6.2f', Summary.AVERAGE)  # Original model accuracy
-    tpt1 = AverageMeter('TTAAcc@1', ':6.2f', Summary.AVERAGE)  # Test-time adapted accuracy
-    top5 = AverageMeter('Acc@5', ':6.2f', Summary.AVERAGE)
-
-    # Progress display
-    progress = ProgressMeter(
-        len(val_loader),
-        [batch_time, top1, tpt1],
-        prefix='Test: ')
 
     # Set model to evaluation mode
     model.eval()
@@ -436,111 +464,23 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
         assert args.gpu is not None
         target = target.cuda(args.gpu, non_blocking=True)
+        images = images.cuda(args.gpu, non_blocking=True)
 
         # Generate adversarial examples if specified
         if args.eps > 0.0:
-            image = images[0].cuda(args.gpu, non_blocking=True)
+            #image = images[0].cuda(args.gpu, non_blocking=True)
+
+
             if logger and i == 0:
-                logger.debug(f"Original image shape: {image.shape}, target: {target.item()}")
+                logger.debug(f"Original image shape: {images.shape}, target: {target}")
 
             # Get adversarial image (either generate or load from cache)
-            img_adv = get_adversarial_image(
-                image, target, atk, path, i, adv_images_dir, logger=logger
-            )
-
-            # Apply data transformations to adversarial image
-            images = data_transform(img_adv)
-            images = [_.unsqueeze(0) for _ in images]
-
-            if logger:
-                logger.info(f"Created {len(images)} augmented views of the adversarial image")
-
-        # Process images based on their format
-        if isinstance(images, list):
-            # Handle list of tensors (augmented views)
-            for k in range(len(images)):
-                images[k] = images[k].cuda(args.gpu, non_blocking=True)
-            image = images[0]  # Original image is the first one
+            get_adversarial_images(
+                images, target, atk, path, i, adv_images_dir, logger=logger)
         else:
-            # Handle single tensor
-            if len(images.size()) > 4:
-                # When using ImageNet Sampler as the dataset
-                assert images.size()[0] == 1
-                images = images.squeeze(0)
-            images = images.cuda(args.gpu, non_blocking=True)
-            image = images
+            logger.info(f"No adversarial attack applied")
 
-        # Concatenate all images (original and augmented views)
-        images = torch.cat(images, dim=0)
-
-        # Reset model to initial state for each batch
-        with torch.no_grad():
-            model.reset()
-        optimizer.load_state_dict(optim_state)
-
-        # Get original model outputs and features
-        with torch.no_grad():
-            clip_output = model(image)  # Output for original image
-            clip_features, _, _ = model.forward_features(images)  # Features for all images
-            # clip_outputs = model(images)  # Outputs for all images
-
-        # Perform test-time adaptation
-        assert args.tta_steps > 0
-        test_time_tuning(model, images, optimizer, scaler, args, logger)
-
-        # Get outputs after test-time adaptation
-        with torch.no_grad():
-            tuned_outputs = model(images)
-
-        # Calculate similarity matrix between features
-        sim_matrix_images = torch.bmm(clip_features.unsqueeze(0), clip_features.unsqueeze(0).permute(0, 2, 1))
-        # Get top similarity scores
-        score = get_top_sim(sim_matrix_images, args)
-        # Calculate weights based on similarity scores
-        weight = torch.nn.functional.softmax(score/args.softmax_temp, dim=-1) # softmax temperature default is 0.01
-        # Weighted average of tuned outputs
-        tta_output = torch.bmm(weight.unsqueeze(-1).transpose(1, 2), tuned_outputs.unsqueeze(0)).squeeze(1)
-
-        # Measure accuracy
-        acc1, acc5 = accuracy(clip_output, target, topk=(1, 5))  # Original model accuracy
-        tpt_acc1, _ = accuracy(tta_output, target, topk=(1, 5))  # Test-time adapted accuracy
-
-        # Update accuracy metrics
-        top1.update(acc1[0], images.size(0))
-        tpt1.update(tpt_acc1[0], images.size(0))
-
-        if logger and (i < 5 or i % 20 == 0):  # Log detailed info for first few samples and periodically
-            if args.eps <= 0:
-                logger.debug(f"Sample {i+1}: Original accuracy: {acc1[0].item():.2f}, TTA accuracy: {tpt_acc1[0].item():.2f}")
-            else:
-                logger.debug(f"Sample {i+1}: Adversarial accuracy: {acc1[0].item():.2f}, TTA adversarial accuracy: {tpt_acc1[0].item():.2f}")
-
-        # Measure elapsed time
-        batch_time.update(time.time() - end)
-        end = time.time()
-
-        # Log progress
-        if (i+1) % args.print_freq == 0 or (i+1) == len(val_loader):
-            if logger:
-                if args.eps <= 0:
-                    logger.info(f'iter:{i+1}/{len(val_loader)}, clip_acc1={top1.avg}, tta_acc1={tpt1.avg}')
-                else:
-                    logger.info(f'iter:{i+1}/{len(val_loader)}, clip_adv1={top1.avg}, tta_adv1={tpt1.avg}')
-            progress.display(i)
-
-    # Display final summary
-    progress.display_summary()
-
-    if logger:
-        if args.eps <= 0:
-            logger.info(f"Final results - Original accuracy: {top1.avg:.2f}, TTA accuracy: {tpt1.avg:.2f}")
-            logger.info(f"Improvement from TTA: {tpt1.avg - top1.avg:.2f}")
-        else:
-            logger.info(f"Final results - Adversarial accuracy: {top1.avg:.2f}, TTA adversarial accuracy: {tpt1.avg:.2f}")
-            logger.info(f"Improvement from TTA: {tpt1.avg - top1.avg:.2f}")
-
-    # Return original and test-time adapted accuracies
-    return [top1.avg, tpt1.avg]
+        logger.info(f"Processing batch {i+1}/{len(val_loader)}")
 
 
 if __name__ == '__main__':
@@ -549,7 +489,7 @@ if __name__ == '__main__':
 
     # Dataset parameters
     parser.add_argument('data', metavar='DIR', help='path to dataset root')
-    parser.add_argument('--test_sets', type=str, default='Caltech101', 
+    parser.add_argument('--test_sets', type=str, default='Caltech101',
                         help='Dataset to evaluate on (e.g., Caltech101, A, R, K, V, I for ImageNet variants)')
     parser.add_argument('--dataset_mode', type=str, default='test',
                         help='Dataset split to use (train, val, test)')
@@ -557,28 +497,28 @@ if __name__ == '__main__':
     # Model parameters
     parser.add_argument('-a', '--arch', metavar='ARCH', default='RN50',
                         help='Model architecture (RN50, ViT-B/32, etc.)')
-    parser.add_argument('--resolution', default=224, type=int, 
+    parser.add_argument('--resolution', default=224, type=int,
                         help='CLIP image resolution')
 
     # Hardware and performance parameters
-    parser.add_argument('-j', '--workers', default=4, type=int, metavar='N', 
+    parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                         help='Number of data loading workers (default: 4)')
     # pin memory, default is True
     parser.add_argument('--no_pin_memory', action='store_true',
                         help='Pin memory for data loading')
     parser.add_argument('-b', '--batch-size', default=64, type=int, metavar='N',
                         help='Mini-batch size for augmentation')
-    parser.add_argument('-p', '--print-freq', default=20, type=int, metavar='N',
+    parser.add_argument('-p', '--print-freq', default=200, type=int, metavar='N',
                         help='Print frequency (default: 200)')
-    parser.add_argument('--gpu', default=0, type=int, 
+    parser.add_argument('--gpu', default=0, type=int,
                         help='GPU id to use')
     parser.add_argument('--no_cudnn_benchmark', action='store_true',
                         help='Disable cudnn benchmarking for potentially more deterministic behavior')
 
     # Prompt tuning parameters
-    parser.add_argument('--n_ctx', default=4, type=int, 
+    parser.add_argument('--n_ctx', default=4, type=int,
                         help='Number of tunable context tokens')
-    parser.add_argument('--ctx_init', default=None, type=str, 
+    parser.add_argument('--ctx_init', default=None, type=str,
                         help='Initial values for tunable prompts')
 
     # Experiment parameters
@@ -598,11 +538,11 @@ if __name__ == '__main__':
                         help='Number of steps for adversarial attack')
 
     # Test-time adaptation parameters
-    parser.add_argument('--lr', '--learning-rate', default=5e-3, type=float, metavar='LR', 
+    parser.add_argument('--lr', '--learning-rate', default=5e-3, type=float, metavar='LR',
                         help='Learning rate for test-time adaptation', dest='lr')
-    parser.add_argument('--selection_p', default=0.1, type=float, 
+    parser.add_argument('--selection_p', default=0.1, type=float,
                         help='Proportion of confident samples to select for adaptation (0.0-1.0)')
-    parser.add_argument('--tta_steps', default=1, type=int, 
+    parser.add_argument('--tta_steps', default=1, type=int,
                         help='Number of test-time adaptation steps')
     parser.add_argument('--top_k', default=20, type=int,
                         help='Number of neighbors for similarity calculation')
@@ -610,7 +550,7 @@ if __name__ == '__main__':
                         help='Temperature parameter for softmax in similarity weighting')
 
     # Pre-trained model parameters
-    parser.add_argument('--load_tecoa', type=str, default='', 
+    parser.add_argument('--load_tecoa', type=str, default='',
                         choices=['', 'RN50-eps1', 'ViT-B/32-eps1', 'ViT-B/32-eps4'],
                         help='Load robust vision encoder (TeCoA)')
 
