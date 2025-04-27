@@ -77,4 +77,8 @@ class PGD(Attack):
             delta = torch.clamp(adv_images - images, min=-self.eps, max=self.eps)
             adv_images = torch.clamp(images + delta, min=0, max=1).detach()
 
+            # Explicitly free memory
+            del outputs, cost, grad, delta
+            torch.cuda.empty_cache()
+
         return adv_images

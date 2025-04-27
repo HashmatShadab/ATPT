@@ -328,6 +328,7 @@ def get_adversarial_images(images, targets, attack, paths, index, output_dir, lo
     generate_attack = False
     for i in range(batch_size):
         img_filename = os.path.basename(paths[i])
+        img_filename = os.path.splitext(img_filename)[0] + ".png"
         parent_folder_name = os.path.basename(os.path.dirname(paths[i]))
         adv_img_path = os.path.join(output_dir, f"{parent_folder_name}_{img_filename}")
 
@@ -352,6 +353,10 @@ def get_adversarial_images(images, targets, attack, paths, index, output_dir, lo
             img_adv.save(adv_img_path)
             if logger:
                 logger.info(f"Batch:[{index}] Image: [{i}] Saved adversarial image to {adv_img_path}")
+
+        # Free memory after processing the batch
+        del adv_images
+        torch.cuda.empty_cache()
     else:
         logger.info(f"Batch:[{index}] Adversarial images for this batch already exist")
 
@@ -404,6 +409,10 @@ def get_adversarial_image(image, target, attack, path, index, output_dir, logger
         img_adv.save(adv_img_path)
         if logger:
             logger.info(f"Saved adversarial image to {adv_img_path}")
+
+        # Free memory for large datasets
+        del adv_image
+        torch.cuda.empty_cache()
 
     return img_adv
 

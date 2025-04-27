@@ -97,9 +97,9 @@ echo "Fine-grained datasets Adv Examples  complete"
 
 #
 # Section 2: ImageNet Datasets
-#
+##
 echo "Generating Adv Examples  on ImageNet datasets..."
-
+#
 echo "  [1/5] Adv Examples  ImageNet-A dataset..."
 CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets A $MODEL $COMMON_PARAMS
 echo "  ✓ ImageNet-A dataset Adv Examples  complete"
