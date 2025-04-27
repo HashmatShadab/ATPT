@@ -299,6 +299,9 @@ class CLIP(nn.Module):
             heads=transformer_heads,
             attn_mask=self.build_attention_mask()
         )
+        """
+        **NOTE: The Attention mask IS HARD-CODED TO A CONTEXT LENGTH SIZE OF 40 in Coop**
+        """
 
         self.vocab_size = vocab_size
         self.token_embedding = nn.Embedding(vocab_size, transformer_width)
