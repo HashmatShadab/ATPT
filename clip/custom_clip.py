@@ -62,6 +62,9 @@ class TextEncoder(nn.Module):
         super().__init__()
         self.transformer = clip_model.transformer
         self.positional_embedding = clip_model.positional_embedding[:40]
+        """
+        ***NOTE the positional embedding is hard-coded to context_length of 40 for the text encoder of CLIP***
+        """
         self.ln_final = clip_model.ln_final
         self.text_projection = clip_model.text_projection
         self.dtype = clip_model.dtype
