@@ -82,6 +82,8 @@ class CLIPTextCfg:
     hf_model_pretrained: bool = True
     hf_proj_type: str = 'mlp'
     hf_pooler_type: str = 'mean_pooler'  # attentional pooling for HF models
+    vocab_path: str = None
+
 
 
 def get_cast_dtype(precision: str):
