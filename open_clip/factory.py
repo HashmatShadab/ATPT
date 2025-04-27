@@ -130,6 +130,10 @@ def get_tokenizer(
             cache_dir=cache_dir,
             **tokenizer_kwargs,
         )
+    elif 'delta_clip' in model_name:
+        tokenizer = get_pp_custom_bert_tokenize(vocab_path=config['text_cfg']['vocab_path'],
+                                                max_len=context_length)
+
     elif 'siglip' in model_name:
         tn = 'gemma' if 'siglip2'  in model_name else 'mc4' if 'i18n' in model_name else 'c4-en'
         tokenizer = SigLipTokenizer(

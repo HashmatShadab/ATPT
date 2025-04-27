@@ -16,6 +16,10 @@ import numpy as np
 import regex as re
 import torch
 
+import tensorflow as tf
+# import tensorflow_text
+tf.config.set_visible_devices([], 'GPU')  # Hands off my GPU! (or pip install tensorflow-cpu)
+
 # https://stackoverflow.com/q/62691279
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 _nltk_init = False
@@ -526,3 +530,75 @@ class SigLipTokenizer:
             truncation=True,
         )
         return output.input_ids
+
+def _create_bert_tokenizer(vocab_path, add_bos=False, add_eos=False):
+  with tf.io.gfile.GFile(vocab_path) as f:
+    vocab = f.read().split("\n")
+  cls_token = vocab.index("[CLS]")
+
+  return_list = [cls_token,
+                 tensorflow_text.BertTokenizer(vocab_path, token_out_type=tf.int32, lower_case=True,)]
+  if add_bos:
+    bos_token = vocab.index("[bos]")
+    return_list.append(bos_token)
+  if add_eos:
+    eos_token = vocab.index("[eos]")
+    return_list.append(eos_token)
+
+  return return_list
+
+def get_pp_custom_bert_tokenize(vocab_path, max_len, add_bos=True, add_eos=True):
+  """Extracts tokens with tensorflow_text.BertTokenizer.
+  copied from big_vision. modified to deal with multiple text.
+  add eos, bod. put cls at the back.
+
+  Args:
+    vocab_path: Path to a file containing the vocabulry for the WordPiece
+      tokenizer. It's the "vocab.txt" file in the zip file downloaded from
+      the original repo https://github.com/google-research/bert
+    max_len: Number of tokens after tokenization.
+    sample_if_multi: Whether the first text should be taken (if set to `False`),
+      or whether a random text should be tokenized.
+
+  Returns:
+    A preprocessing Op.
+  """
+  temp_list = _create_bert_tokenizer(vocab_path, add_bos=add_bos, add_eos=add_eos)
+  cur_idx = 2
+  cls_token, tokenizer = temp_list[:cur_idx]
+  if add_bos:
+    bos_token = temp_list[cur_idx]
+    cur_idx += 1
+  if add_eos:
+    eos_token = temp_list[cur_idx]
+    cur_idx += 1
+
+#   @tf.function
+  def _pp_custom_bert_tokenize(labels):
+    if isinstance(labels, str):
+        labels = [labels]
+
+    labels = tf.reshape(labels, (-1,))
+    output_list = []
+
+    # token_ids = tokenizer.tokenize(txt[None])
+    token_ids = tokenizer.tokenize(labels)
+    token_ids = token_ids.merge_dims(1, -1) if token_ids.ragged_rank > 1 else token_ids
+    count = tf.shape(token_ids)[0]
+    if add_bos:
+        token_ids = tf.concat([tf.fill([count, 1], bos_token), token_ids], axis=1)
+    if add_eos:
+        token_ids = tf.concat([token_ids, tf.fill([count, 1], eos_token)], axis=1)
+
+    padded_token_ids, mask = tensorflow_text.pad_model_inputs(token_ids, max_len - 1)
+    # always end with [eos] token
+    def func1(): return tf.concat([padded_token_ids[:, :-1], tf.fill([count, 1], eos_token)], axis=1)
+    def func2(): return padded_token_ids
+    padded_token_ids = tf.cond(tf.math.equal(mask[0, -1], 1), func1, func2)
+    # append cls_token at the end
+    padded_token_ids = tf.concat([padded_token_ids, tf.fill([count, 1], cls_token)], axis=1)
+
+    return torch.tensor(padded_token_ids.numpy())
+    # return padded_token_ids
+
+  return _pp_custom_bert_tokenize
