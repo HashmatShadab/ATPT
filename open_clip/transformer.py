@@ -153,6 +153,7 @@ class Attention(nn.Module):
             attn = attn.view(N, self.num_heads, L, L) * logit_scale
             attn = attn.view(-1, L, L)
             if attn_mask is not None:
+                # Use non-in-place addition to avoid modifying tensors in the computation graph
                 attn = attn + attn_mask
             attn = attn.softmax(dim=-1)
             attn = self.attn_drop(attn)
@@ -168,7 +169,8 @@ class Attention(nn.Module):
                 q = q * self.scale
                 attn = torch.bmm(q, k.transpose(-1, -2))
                 if attn_mask is not None:
-                    attn += attn_mask
+                    # Use non-in-place addition to avoid modifying tensors in the computation graph
+                    attn = attn + attn_mask
                 attn = attn.softmax(dim=-1)
                 attn = self.attn_drop(attn)
                 x = torch.bmm(attn, v)
@@ -832,7 +834,7 @@ class VisionTransformer(nn.Module):
 
         if self.output_tokens:
             return pooled, tokens
-        
+
         return pooled
 
 
@@ -960,6 +962,16 @@ class TextTransformer(nn.Module):
     def build_causal_mask(self):
         # lazily create causal attention mask, with full attention between the tokens
         # pytorch uses additive attention mask; fill with -inf
+        """
+               **NOTE: THIS FUNCTION IS HARD-CODED TO A CONTEXT LENGTH SIZE OF 40 in Coop**
+
+               Lazily creates a causal attention mask, with full attention between the vision tokens.
+
+               Returns:
+                   torch.Tensor: A 2D tensor of shape `(40, 40)` with -inf in the upper triangular
+                   part (excluding the diagonal) and zeros elsewhere.
+               """
+
         mask = torch.empty(self.num_pos, self.num_pos)
         mask = mask[:40,:40]
         mask.fill_(float("-inf"))
