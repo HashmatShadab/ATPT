@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .openai import load_openai_model
-from.factory import create_model_and_transforms, get_tokenizer
+from .factory import create_model_and_transforms, get_tokenizer
 from .tokenizer import tokenize
 from .tokenizer import SimpleTokenizer as _Tokenizer
 from typing import Callable, Dict, List, Optional, Sequence, Tuple, Union
@@ -332,8 +332,7 @@ class ClipTestTimeTuning(nn.Module):
     def __init__(self, device, classnames, batch_size, criterion='cosine', arch="ViT-L/14",
                  n_ctx=16, ctx_init=None, ctx_position='end', learned_cls=False, ):
         super(ClipTestTimeTuning, self).__init__()
-        clip, _,_ = create_model_and_transforms(arch, device=device, cache_dir=DOWNLOAD_ROOT, pretrained='openai')  # precision='fp32'
-        tokenizer = get_tokenizer(arch)
+        clip, _, _, tokenizer = get_open_clip(arch, device=device, cache_dir=DOWNLOAD_ROOT)
         self.device = device
         self.model = clip
         # self.text_encoder = TextEncoder(clip)
@@ -358,6 +357,7 @@ class ClipTestTimeTuning(nn.Module):
 
     def encode_image(self, image, normalize: bool = False):
         features = self.model.encode_image(image)
+        # F.normalize doesn't modify the input tensor in-place, so this is safe
         return F.normalize(features, dim=-1) if normalize else features
 
 
@@ -372,13 +372,17 @@ class ClipTestTimeTuning(nn.Module):
     def inference(self, image):
 
         image_features = self.encode_image(self.normalize(image.type(self.dtype)))
-        image_features /= image_features.norm(dim=-1, keepdim=True)
+        # Use non-in-place normalization to avoid modifying tensors in the computation graph
+        image_norm = image_features.norm(dim=-1, keepdim=True)
+        image_features_normalized = image_features / image_norm
 
         text_features = self.get_text_features()
-        text_features /= text_features.norm(dim=-1, keepdim=True)
+        # Use non-in-place normalization to avoid modifying tensors in the computation graph
+        text_norm = text_features.norm(dim=-1, keepdim=True)
+        text_features_normalized = text_features / text_norm
 
         logit_scale = self.logit_scale.exp()
-        logits = (logit_scale * image_features @ text_features.t())
+        logits = (logit_scale * image_features_normalized @ text_features_normalized.t())
 
         return logits
 
@@ -393,15 +397,18 @@ class ClipTestTimeTuning(nn.Module):
 
     def forward_features(self, input):
         image_features = self.encode_image(self.normalize(input.type(self.dtype)))
-        image_features = image_features / image_features.norm(dim=-1, keepdim=True)
+        # Use non-in-place normalization to avoid modifying tensors in the computation graph
+        image_norm = image_features.norm(dim=-1, keepdim=True)
+        image_features_normalized = image_features / image_norm
 
         text_features = self.get_text_features()
-        text_features /= text_features.norm(dim=-1, keepdim=True)
-
+        # Use non-in-place normalization to avoid modifying tensors in the computation graph
+        text_norm = text_features.norm(dim=-1, keepdim=True)
+        text_features_normalized = text_features / text_norm
 
         logit_scale = self.logit_scale.exp()
         # logits = logit_scale * image_features @ text_features.t()
-        return image_features, text_features, logit_scale
+        return image_features_normalized, text_features_normalized, logit_scale
 
 
 def get_coop(clip_arch, classnames, device, n_ctx, ctx_init, learned_cls=False):
@@ -410,8 +417,19 @@ def get_coop(clip_arch, classnames, device, n_ctx, ctx_init, learned_cls=False):
 
     return model
 
-def get_open_clip(clip_arch, device):
-    clip, _, preprocess = create_model_and_transforms(clip_arch, device=device, cache_dir=DOWNLOAD_ROOT, pretrained='openai')  # precision='fp32'
+def get_open_clip(clip_arch, device, cache_dir=DOWNLOAD_ROOT):
+    model_names = {
+        "hf-hub:zw123/delta_clip_l14_224",
+        "hf-hub:chs20/tecoa4-clip",
+        "hf-hub:chs20/tecoa2-clip",
+        "hf-hub:chs20/fare2-clip",
+        "hf-hub:chs20/fare4-clip",
+    }
+    if clip_arch in model_names:
+        clip, _, preprocess = create_model_and_transforms(clip_arch, device=device, cache_dir=cache_dir)  # precision='fp32'
+    else:
+        clip, _, preprocess = create_model_and_transforms(clip_arch, device=device, cache_dir=DOWNLOAD_ROOT, pretrained='openai')  # precision='fp32'
+
     tokenizer = get_tokenizer(clip_arch)
 
 
