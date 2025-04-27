@@ -27,6 +27,7 @@ except ImportError:
     # Fallback for older torchvision versions
     BICUBIC = Image.BICUBIC
 
+from open_clip.custom_openai_clip import get_coop as get_coop_openai
 from clip.custom_clip import get_coop
 from data.imagnet_prompts import imagenet_classes
 from data.imagenet_variants import imagenet_a_mask, imagenet_r_mask, imagenet_v_mask
@@ -38,6 +39,77 @@ from utils.logger import setup_logger
 import os
 
 import torchattacks
+
+import matplotlib.pyplot as plt
+import torch
+from PIL import Image
+import numpy as np
+
+openai_model_dict = {
+    "delta_clip_l14_224": "hf-hub:zw123/delta_clip_l14_224",
+    "tecoa4": "hf-hub:chs20/tecoa4-clip",
+    "tecoa2": "hf-hub:chs20/tecoa2-clip",
+    "fare2": "hf-hub:chs20/fare2-clip",
+    "fare4": "hf-hub:chs20/fare4-clip",
+    # "RN50": "RN50",
+}
+
+
+
+def plot_image(imgs, title=None, nrow=4, figsize=(12, 8)):
+    """
+    Plots a single image or a list of images in a grid.
+
+    Args:
+        imgs: Single torch.Tensor, PIL.Image, or numpy.ndarray, or a list of them.
+        title: Optional string for the plot title.
+        nrow: Number of images per row if plotting a list.
+        figsize: Size of the figure for multiple images.
+    """
+
+    def prepare(img):
+        """Helper to convert Tensor/PIL/numpy to numpy format for plotting."""
+        if isinstance(img, torch.Tensor):
+            img = img.detach().cpu()
+            if img.dim() == 3:
+                img = img.permute(1, 2, 0)
+            img = img.numpy()
+        elif isinstance(img, Image.Image):
+            img = np.array(img)
+        elif isinstance(img, np.ndarray):
+            pass
+        else:
+            raise TypeError(f"Unsupported image type: {type(img)}")
+        return img
+
+    if isinstance(imgs, list):
+        imgs = [prepare(img) for img in imgs]
+        n_imgs = len(imgs)
+        ncols = nrow
+        nrows = (n_imgs + ncols - 1) // ncols
+
+        fig, axes = plt.subplots(nrows, ncols, figsize=figsize)
+        axes = axes.flatten()
+
+        for idx, ax in enumerate(axes):
+            if idx < n_imgs:
+                ax.imshow(imgs[idx])
+                ax.axis('off')
+            else:
+                ax.remove()  # Remove extra empty subplots
+
+        if title:
+            fig.suptitle(title)
+        plt.tight_layout()
+        plt.show()
+
+    else:
+        img = prepare(imgs)
+        plt.imshow(img)
+        plt.axis('off')
+        if title:
+            plt.title(title)
+        plt.show()
 
 
 
@@ -234,7 +306,12 @@ def main():
     args.classnames = classnames
 
     # Initialize model with CoOp (Context Optimization)
-    model = get_coop(args.arch, classnames, args.gpu, args.n_ctx, args.ctx_init)
+    if args.arch in openai_model_dict:
+        actual_model_name = openai_model_dict[args.arch]
+        model = get_coop_openai(actual_model_name, classnames, args.gpu, args.n_ctx, args.ctx_init)
+    else:
+        model = get_coop(args.arch, classnames, args.gpu, args.n_ctx, args.ctx_init)
+
     model_state = None
 
     # Load robust vision encoder (TeCoA) if specified
@@ -556,7 +633,7 @@ if __name__ == '__main__':
 
     # Model parameters
     parser.add_argument('-a', '--arch', metavar='ARCH', default='RN50',
-                        help='Model architecture (RN50, ViT-B/32, etc.)')
+                        help='Model architecture (RN50, ViT-B/32, tecoa4, tecoa2, fare2, fare4, delta_clip_l14_224 etc.)')
     parser.add_argument('--resolution', default=224, type=int, 
                         help='CLIP image resolution')
 
