@@ -57,6 +57,13 @@ openai_model_dict = {
 
 
 
+def create_log_name(args):
+    """Creates a standardized log name from experiment parameters"""
+    # R-TPT hyperparameters for log name
+    log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_TPT_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
+    return log_name
+
+
 
 
 def main():
@@ -78,8 +85,7 @@ def main():
     # Set up logging
 
     # Create a log name that includes TTA variations
-    # Format floating point values and ensure filename is valid
-    log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_TPT_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
+    log_name = create_log_name(args)
     logger, log_file = setup_logger(log_name, args.output_dir, level=logging.INFO)
     logger.info(print_args(args))
 
