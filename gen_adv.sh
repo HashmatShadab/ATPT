@@ -26,7 +26,7 @@ TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX=${9:-20}
 SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING=${10:-0.01}
 OUTPUT_DIR=${11:-"output_results"}
 
-# bash gen_adv.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 output_results
+# bash gen_adv.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 "F:\Code\datasets\atpt_results"
 
 
 # bash gen_adv.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 0 4 RN50 1.0 7 1 0.1 20 0.01 /mnt/nvme0n1/Dataset/muzammal/atpt_results
