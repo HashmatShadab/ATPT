@@ -41,5 +41,8 @@ pip install regex
 pip install scipy
 pip install "numpy<2"
 pip install matplotlib
+pip install huggingface_hub
+pip install tensorflow-cpu
 
+pip install tensorflow-text
 ```

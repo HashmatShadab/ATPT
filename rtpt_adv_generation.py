@@ -11,7 +11,6 @@ import logging
 import time
 from copy import deepcopy
 
-import torch
 import torch.backends.cudnn as cudnn
 import torch.nn.parallel
 import torch.optim
@@ -27,157 +26,34 @@ except ImportError:
     # Fallback for older torchvision versions
     BICUBIC = Image.BICUBIC
 
+from open_clip.custom_openai_clip import get_coop as get_coop_openai
 from clip.custom_clip import get_coop
 from data.imagnet_prompts import imagenet_classes
 from data.imagenet_variants import imagenet_a_mask, imagenet_r_mask, imagenet_v_mask
 from data.cls_to_names import flower102_classes, food101_classes, dtd_classes, caltech101_classes, pets_classes, \
     sun397_classes, cars_classes, ucf101_classes, aircraft_classes, eurosat_classes
 from data.datautils import AugMixAugmenter, build_dataset
-from utils.tools import Summary, AverageMeter, ProgressMeter, accuracy, set_random_seed
+from utils.tools import set_random_seed
 from utils.logger import setup_logger
 import os
 
 import torchattacks
 import os
-from PIL import Image
-import torch
 from torchvision import transforms
 
+from helper_functions import print_args
 
-def get_top_sim(sim_matrix, args):
-    """
-    Calculate the mean similarity of top-k most similar samples for each sample.
+import torch
+from PIL import Image
 
-    Args:
-        sim_matrix (torch.Tensor): Similarity matrix between samples.
-        args (argparse.Namespace): Arguments containing the top_k parameter.
-
-    Returns:
-        torch.Tensor: Mean similarity scores of top-k neighbors for each sample.
-    """
-    # Exclude self-similarity (which is 1.0) by setting it to negative infinity
-    sim_matrix[sim_matrix>=1.0] = float('-inf')
-    # Get top-k similarity values for each sample
-    top_k_values, _ = sim_matrix.topk(args.top_k, dim=-1) # default is 20 neighbors
-    # Calculate mean similarity
-    top_k_mean = top_k_values.mean(dim=-1)
-    return top_k_mean
-
-def print_args(args):
-    """
-    Format command line arguments for printing.
-
-    Args:
-        args (argparse.Namespace): Command line arguments.
-
-    Returns:
-        str: Formatted string of all arguments.
-    """
-    s = "==========================================\n"
-    for arg, content in args.__dict__.items():
-        s += f"{arg}:{content}\n"
-    return s
-
-
-def calculate_entropy(outputs):
-    """
-    Calculate entropy for each sample in the batch.
-
-    Args:
-        outputs (torch.Tensor): Model output logits.
-
-    Returns:
-        torch.Tensor: Entropy for each sample.
-    """
-    return -(outputs.softmax(1) * outputs.log_softmax(1)).sum(1)
-
-def entropy_avg(outputs):
-    """
-    Calculate the average entropy of model outputs.
-
-    Args:
-        outputs (torch.Tensor): Model output logits.
-
-    Returns:
-        torch.Tensor: Mean entropy across all samples.
-    """
-    # Calculate entropy for each sample and return mean
-    return calculate_entropy(outputs).mean()
-
-def select_confident_samples(logits, top):
-    """
-    Select the most confident samples based on entropy.
-
-    Lower entropy indicates higher confidence in the prediction.
-
-    Args:
-        logits (torch.Tensor): Model output logits.
-        top (float): Proportion of samples to select (0.0 to 1.0).
-
-    Returns:
-        tuple: (selected_logits, selected_indices)
-    """
-    # Calculate entropy for each sample in the batch
-    batch_entropy = calculate_entropy(logits)
-    # Select indices of samples with lowest entropy (highest confidence)
-    idx = torch.argsort(batch_entropy, descending=False)[:int(batch_entropy.size()[0] * top)]
-    return logits[idx], idx
-
-def test_time_tuning(model, inputs, optimizer, scaler, args, logger=None):
-    """
-    Perform test-time tuning of the model using entropy minimization.
-
-    This function adapts the model at test time by minimizing the entropy of predictions
-    on the input batch. It selects confident samples based on their entropy and uses
-    them for adaptation.
-
-    Args:
-        model (torch.nn.Module): The model to be tuned.
-        inputs (torch.Tensor): Input tensor of shape [batch_size, channels, height, width].
-        optimizer (torch.optim.Optimizer): Optimizer for updating model parameters.
-        scaler (torch.cuda.amp.GradScaler, optional): Gradient scaler for mixed precision training.
-        args (argparse.Namespace): Arguments containing tuning parameters.
-        logger (logging.Logger, optional): Logger for logging information.
-
-    Returns:
-        None
-    """
-    # Track indices of confident samples
-    selected_idx = None
-
-    if logger:
-        logger.debug(f"Starting test-time tuning with {args.tta_steps} steps")
-
-    # Perform test-time adaptation for specified number of steps
-    for j in range(args.tta_steps):
-        # Forward pass
-        output = model(inputs)
-
-        # Use only confident samples for adaptation
-        if selected_idx is not None:
-            # Use previously selected confident samples
-            output = output[selected_idx]
-        else:
-            # Select confident samples based on entropy
-            output, selected_idx = select_confident_samples(output, args.selection_p)
-            if logger:
-                logger.debug(f"Selected {len(selected_idx)}/{inputs.size(0)} samples for adaptation")
-
-        # Calculate loss as average entropy (lower is better)
-        loss = entropy_avg(output)
-
-        if logger and (j == 0 or j == args.tta_steps - 1 or j % 5 == 0):
-            logger.debug(f"Step {j+1}/{args.tta_steps}, Loss: {loss.item():.6f}")
-
-        # Update model parameters
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-    if logger:
-        logger.debug(f"Completed test-time tuning with final loss: {loss.item():.6f}")
-
-    return
+openai_model_dict = {
+    "delta_clip_l14_224": "hf-hub:zw123/delta_clip_l14_224",
+    "tecoa4": "hf-hub:chs20/tecoa4-clip",
+    "tecoa2": "hf-hub:chs20/tecoa2-clip",
+    "fare2": "hf-hub:chs20/fare2-clip",
+    "fare4": "hf-hub:chs20/fare4-clip",
+    # "RN50": "RN50",
+}
 
 
 def main():
@@ -237,7 +113,12 @@ def main():
     args.classnames = classnames
 
     # Initialize model with CoOp (Context Optimization)
-    model = get_coop(args.arch, classnames, args.gpu, args.n_ctx, args.ctx_init)
+    if args.arch in openai_model_dict:
+        actual_model_name = openai_model_dict[args.arch]
+        model = get_coop_openai(actual_model_name, classnames, args.gpu, args.n_ctx, args.ctx_init)
+    else:
+        model = get_coop(args.arch, classnames, args.gpu, args.n_ctx, args.ctx_init)
+
     model_state = None
 
     # Load robust vision encoder (TeCoA) if specified
@@ -319,7 +200,7 @@ def get_adversarial_images(images, targets, attack, paths, index, output_dir, lo
         logger (logging.Logger, optional): Logger for logging information.
 
     Returns:
-        List[PIL.Image.Image]: List of adversarial images.
+        torch.Tensor: Tensor of adversarial images.
     """
     batch_size = images.size(0)
     adv_images = []
@@ -328,7 +209,7 @@ def get_adversarial_images(images, targets, attack, paths, index, output_dir, lo
     generate_attack = False
     for i in range(batch_size):
         img_filename = os.path.basename(paths[i])
-        img_filename = os.path.splitext(img_filename)[0] + ".png"
+        img_filename = os.path.splitext(img_filename)[0] + ".pt"
         parent_folder_name = os.path.basename(os.path.dirname(paths[i]))
         adv_img_path = os.path.join(output_dir, f"{parent_folder_name}_{img_filename}")
 
@@ -343,22 +224,38 @@ def get_adversarial_images(images, targets, attack, paths, index, output_dir, lo
             logger.info(f"Generated adversarial images for the entire batch.")
 
         for i in range(batch_size):
-            img_adv = transforms.ToPILImage()(adv_images[i].cpu())
+            # Move tensor to CPU before saving
+            img_adv = adv_images[i].detach().cpu()
             img_filename = os.path.basename(paths[i])
-            # change the extension to png
-            img_filename = os.path.splitext(img_filename)[0] + ".png"
+            # change the extension to pt (PyTorch tensor)
+            img_filename = os.path.splitext(img_filename)[0] + ".pt"
             parent_folder_name = os.path.basename(os.path.dirname(paths[i]))
             adv_img_path = os.path.join(output_dir, f"{parent_folder_name}_{img_filename}")
 
-            img_adv.save(adv_img_path)
+            # Save tensor directly
+            torch.save(img_adv, adv_img_path)
             if logger:
-                logger.info(f"Batch:[{index}] Image: [{i}] Saved adversarial image to {adv_img_path}")
+                logger.info(f"Batch:[{index}] Image: [{i}] Saved adversarial tensor to {adv_img_path}")
 
         # Free memory after processing the batch
-        del adv_images
         torch.cuda.empty_cache()
+        return adv_images
     else:
         logger.info(f"Batch:[{index}] Adversarial images for this batch already exist")
+        adv_images = []
+        for i in range(batch_size):
+            img_filename = os.path.basename(paths[i])
+            img_filename = os.path.splitext(img_filename)[0] + ".pt"
+            parent_folder_name = os.path.basename(os.path.dirname(paths[i]))
+            adv_img_path = os.path.join(output_dir, f"{parent_folder_name}_{img_filename}")
+
+            # Load tensor directly
+            img_adv = torch.load(adv_img_path)
+            adv_images.append(img_adv)
+
+        # Stack tensors and move to GPU
+        adv_images = torch.stack(adv_images, dim=0).cuda()
+        return adv_images
 
 
 
@@ -378,37 +275,38 @@ def get_adversarial_image(image, target, attack, path, index, output_dir, logger
         logger (logging.Logger, optional): Logger for logging information.
 
     Returns:
-        PIL.Image.Image: Adversarial image.
+        torch.Tensor: Adversarial image tensor.
     """
     # Create a unique filename for the adversarial image
     if path is not None:
         # Extract filename from path and the preceding directory
         img_filename = os.path.basename(path[0])
-        # Change the extension to png
-        img_filename = os.path.splitext(img_filename)[0] + ".png"
+        # Change the extension to pt (PyTorch tensor)
+        img_filename = os.path.splitext(img_filename)[0] + ".pt"
         parent_folder_name = os.path.basename(os.path.dirname(path[0]))
         adv_img_path = os.path.join(output_dir, f"{parent_folder_name}_{img_filename}")
     else:
         # If path is not available, use index as identifier
-        adv_img_path = os.path.join(output_dir, f"{index}.png")
+        adv_img_path = os.path.join(output_dir, f"{index}.pt")
 
     # Check if adversarial image already exists
     if os.path.exists(adv_img_path):
         if logger:
-            logger.info(f"Loading existing adversarial image from {adv_img_path}")
-        # Load existing adversarial image
-        img_adv = Image.open(adv_img_path).convert('RGB')
+            logger.info(f"Loading existing adversarial tensor from {adv_img_path}")
+        # Load existing adversarial tensor
+        img_adv = torch.load(adv_img_path)
     else:
         # Create adversarial image using attack
         adv_image = attack(image, target)
         if logger:
             logger.info(f"Generated adversarial image with shape: {adv_image.shape}")
 
-        img_adv = transforms.ToPILImage()(adv_image.squeeze(0))
-        # Save the adversarial image
-        img_adv.save(adv_img_path)
+        # Move tensor to CPU before saving
+        img_adv = adv_image.squeeze(0).detach().cpu()
+        # Save the adversarial tensor directly
+        torch.save(img_adv, adv_img_path)
         if logger:
-            logger.info(f"Saved adversarial image to {adv_img_path}")
+            logger.info(f"Saved adversarial tensor to {adv_img_path}")
 
         # Free memory for large datasets
         del adv_image
@@ -444,7 +342,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     if logger:
         logger.info(f"Starting evaluation with batch size: {args.batch_size}, selection percentage: {args.selection_p}")
-        logger.info(f"Test-time adaptation steps: {args.tta_steps}, learning rate: {args.lr}")
+        #logger.info(f"Test-time adaptation steps: {args.tta_steps}, learning rate: {args.lr}")
 
     # Initialize adversarial attack if specified
     if args.eps > 0.0:
@@ -462,6 +360,9 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         if logger:
             logger.info(f"Using directory for adversarial images: {adv_images_dir}")
 
+    adv_correct = 0
+    clean_correct = 0
+    total = 0
     # Iterate through validation data
     for i, data in enumerate(val_loader):
         # Handle different return formats (with or without path)
@@ -475,21 +376,50 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         target = target.cuda(args.gpu, non_blocking=True)
         images = images.cuda(args.gpu, non_blocking=True)
 
-        # Generate adversarial examples if specified
-        if args.eps > 0.0:
-            #image = images[0].cuda(args.gpu, non_blocking=True)
+
+        # Get adversarial image (either generate or load from cache)
+        adv_images = get_adversarial_images(
+            images, target, atk, path, i, adv_images_dir, logger=logger)
+        # Pass adversarial images to the model
+        adv_images = adv_images.cuda(args.gpu, non_blocking=True)
+
+        # Model forward pass
+        with torch.no_grad():
+            # Adv
+            adv_logits = model(adv_images)
+            adv_probs = adv_logits.softmax(dim=-1)
+            _, adv_pred = adv_probs.max(1)
+            adv_correct += adv_pred.eq(target).sum().item()
+
+            # Clean
+            clean_logits = model(images)
+            clean_probs = clean_logits.softmax(dim=-1)
+            _, clean_pred = clean_probs.max(1)
+            clean_correct += clean_pred.eq(target).sum().item()
 
 
-            if logger and i == 0:
-                logger.debug(f"Original image shape: {images.shape}, target: {target}")
+            total += target.size(0)
+            if logger:
+                logger.info(f"Batch {i+1}/{len(val_loader)}: Clean accuracy {clean_correct / total:.4f} | Adv accuracy: {adv_correct / total:.4f}")
+        # Free memory
+        del images, target, adv_images, adv_logits, adv_probs, adv_pred, clean_logits, clean_probs, clean_pred
+        torch.cuda.empty_cache()
+        end = time.time()
 
-            # Get adversarial image (either generate or load from cache)
-            get_adversarial_images(
-                images, target, atk, path, i, adv_images_dir, logger=logger)
-        else:
-            logger.info(f"No adversarial attack applied")
+    # Calculate final accuracy
+    original_accuracy = clean_correct / total
+    adv_accuracy = adv_correct / total
+    if logger:
+        logger.info(f"Original accuracy: {original_accuracy:.4f}")
+        logger.info(f"Adversarial accuracy: {adv_accuracy:.4f}")
 
-        logger.info(f"Processing batch {i+1}/{len(val_loader)}")
+
+
+
+
+
+
+
 
 
 if __name__ == '__main__':

@@ -299,6 +299,9 @@ class CLIP(nn.Module):
             heads=transformer_heads,
             attn_mask=self.build_attention_mask()
         )
+        """
+        **NOTE: The Attention mask IS HARD-CODED TO A CONTEXT LENGTH SIZE OF 40 in Coop**
+        """
 
         self.vocab_size = vocab_size
         self.token_embedding = nn.Embedding(vocab_size, transformer_width)
@@ -340,12 +343,27 @@ class CLIP(nn.Module):
             nn.init.normal_(self.text_projection, std=self.transformer.width ** -0.5)
 
     def build_attention_mask(self):
-        # lazily create causal attention mask, with full attention between the vision tokens
-        # pytorch uses additive attention mask; fill with -inf
+        """
+        **NOTE: THIS FUNCTION IS HARD-CODED TO A CONTEXT LENGTH SIZE OF 40 in Coop**
+
+        Lazily creates a causal attention mask, with full attention between the vision tokens.
+
+        Returns:
+            torch.Tensor: A 2D tensor of shape `(40, 40)` with -inf in the upper triangular
+            part (excluding the diagonal) and zeros elsewhere.
+        """
+        # Create an empty tensor of shape (context_length, context_length)
         mask = torch.empty(self.context_length, self.context_length)
-        mask = mask[:40,:40] 
+
+        # Hardcoded to slice the mask to a smaller size (40x40)
+        mask = mask[:40, :40]
+
+        # Fill the entire mask with -inf
         mask.fill_(float("-inf"))
-        mask.triu_(1)  # zero out the lower diagonal
+
+        # Set the lower triangular part (including the diagonal) to zero
+        mask.triu_(1)  # Zero out the lower diagonal
+
         return mask
 
     @property

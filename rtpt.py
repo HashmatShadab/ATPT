@@ -27,6 +27,7 @@ except ImportError:
     # Fallback for older torchvision versions
     BICUBIC = Image.BICUBIC
 
+from open_clip.custom_openai_clip import get_coop as get_coop_openai
 from clip.custom_clip import get_coop
 from data.imagnet_prompts import imagenet_classes
 from data.imagenet_variants import imagenet_a_mask, imagenet_r_mask, imagenet_v_mask
@@ -39,142 +40,30 @@ import os
 
 import torchattacks
 
+import matplotlib.pyplot as plt
+import torch
+from PIL import Image
+import numpy as np
+from helper_functions import plot_image, get_top_sim, print_args, test_time_tuning
+
+openai_model_dict = {
+    "delta_clip_l14_224": "hf-hub:zw123/delta_clip_l14_224",
+    "tecoa4": "hf-hub:chs20/tecoa4-clip",
+    "tecoa2": "hf-hub:chs20/tecoa2-clip",
+    "fare2": "hf-hub:chs20/fare2-clip",
+    "fare4": "hf-hub:chs20/fare4-clip",
+    # "RN50": "RN50",
+}
 
 
-def get_top_sim(sim_matrix, args):
-    """
-    Calculate the mean similarity of top-k most similar samples for each sample.
 
-    Args:
-        sim_matrix (torch.Tensor): Similarity matrix between samples.
-        args (argparse.Namespace): Arguments containing the top_k parameter.
-
-    Returns:
-        torch.Tensor: Mean similarity scores of top-k neighbors for each sample.
-    """
-    # Exclude self-similarity (which is 1.0) by setting it to negative infinity
-    sim_matrix[sim_matrix>=1.0] = float('-inf')
-    # Get top-k similarity values for each sample
-    top_k_values, _ = sim_matrix.topk(args.top_k, dim=-1) # default is 20 neighbors
-    # Calculate mean similarity
-    top_k_mean = top_k_values.mean(dim=-1)
-    return top_k_mean
-
-def print_args(args):
-    """
-    Format command line arguments for printing.
-
-    Args:
-        args (argparse.Namespace): Command line arguments.
-
-    Returns:
-        str: Formatted string of all arguments.
-    """
-    s = "==========================================\n"
-    for arg, content in args.__dict__.items():
-        s += f"{arg}:{content}\n"
-    return s
+def create_log_name(args):
+    """Creates a standardized log name from experiment parameters"""
+    # R-TPT hyperparameters for log name
+    log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_TPT_loss_{args.tpt_loss}_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
+    return log_name
 
 
-def calculate_entropy(outputs):
-    """
-    Calculate entropy for each sample in the batch.
-
-    Args:
-        outputs (torch.Tensor): Model output logits.
-
-    Returns:
-        torch.Tensor: Entropy for each sample.
-    """
-    return -(outputs.softmax(1) * outputs.log_softmax(1)).sum(1)
-
-def entropy_avg(outputs):
-    """
-    Calculate the average entropy of model outputs.
-
-    Args:
-        outputs (torch.Tensor): Model output logits.
-
-    Returns:
-        torch.Tensor: Mean entropy across all samples.
-    """
-    # Calculate entropy for each sample and return mean
-    return calculate_entropy(outputs).mean()
-
-def select_confident_samples(logits, top):
-    """
-    Select the most confident samples based on entropy.
-
-    Lower entropy indicates higher confidence in the prediction.
-
-    Args:
-        logits (torch.Tensor): Model output logits.
-        top (float): Proportion of samples to select (0.0 to 1.0).
-
-    Returns:
-        tuple: (selected_logits, selected_indices)
-    """
-    # Calculate entropy for each sample in the batch
-    batch_entropy = calculate_entropy(logits)
-    # Select indices of samples with lowest entropy (highest confidence)
-    idx = torch.argsort(batch_entropy, descending=False)[:int(batch_entropy.size()[0] * top)]
-    return logits[idx], idx
-
-def test_time_tuning(model, inputs, optimizer, scaler, args, logger=None):
-    """
-    Perform test-time tuning of the model using entropy minimization.
-
-    This function adapts the model at test time by minimizing the entropy of predictions
-    on the input batch. It selects confident samples based on their entropy and uses
-    them for adaptation.
-
-    Args:
-        model (torch.nn.Module): The model to be tuned.
-        inputs (torch.Tensor): Input tensor of shape [batch_size, channels, height, width].
-        optimizer (torch.optim.Optimizer): Optimizer for updating model parameters.
-        scaler (torch.cuda.amp.GradScaler, optional): Gradient scaler for mixed precision training.
-        args (argparse.Namespace): Arguments containing tuning parameters.
-        logger (logging.Logger, optional): Logger for logging information.
-
-    Returns:
-        None
-    """
-    # Track indices of confident samples
-    selected_idx = None
-
-    if logger:
-        logger.debug(f"Starting test-time tuning with {args.tta_steps} steps")
-
-    # Perform test-time adaptation for specified number of steps
-    for j in range(args.tta_steps):
-        # Forward pass
-        output = model(inputs) 
-
-        # Use only confident samples for adaptation
-        if selected_idx is not None:
-            # Use previously selected confident samples
-            output = output[selected_idx]
-        else:
-            # Select confident samples based on entropy
-            output, selected_idx = select_confident_samples(output, args.selection_p)
-            if logger:
-                logger.debug(f"Selected {len(selected_idx)}/{inputs.size(0)} samples for adaptation")
-
-        # Calculate loss as average entropy (lower is better)
-        loss = entropy_avg(output)
-
-        if logger and (j == 0 or j == args.tta_steps - 1 or j % 5 == 0):
-            logger.debug(f"Step {j+1}/{args.tta_steps}, Loss: {loss.item():.6f}")
-
-        # Update model parameters
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-    if logger:
-        logger.debug(f"Completed test-time tuning with final loss: {loss.item():.6f}")
-
-    return
 
 
 def main():
@@ -196,8 +85,7 @@ def main():
     # Set up logging
 
     # Create a log name that includes TTA variations
-    # Format floating point values and ensure filename is valid
-    log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_TPT_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
+    log_name = create_log_name(args)
     logger, log_file = setup_logger(log_name, args.output_dir, level=logging.INFO)
     logger.info(print_args(args))
 
@@ -234,7 +122,12 @@ def main():
     args.classnames = classnames
 
     # Initialize model with CoOp (Context Optimization)
-    model = get_coop(args.arch, classnames, args.gpu, args.n_ctx, args.ctx_init)
+    if args.arch in openai_model_dict:
+        actual_model_name = openai_model_dict[args.arch]
+        model = get_coop_openai(actual_model_name, classnames, args.gpu, args.n_ctx, args.ctx_init)
+    else:
+        model = get_coop(args.arch, classnames, args.gpu, args.n_ctx, args.ctx_init)
+
     model_state = None
 
     # Load robust vision encoder (TeCoA) if specified
@@ -340,31 +233,50 @@ def get_adversarial_image(image, target, attack, path, index, output_dir, logger
         # Extract filename from path and the preceding directory
         img_filename = os.path.basename(path[0])
         # change the extension to .png
-        img_filename = os.path.splitext(img_filename)[0] + '.png'
+        img_filename = os.path.splitext(img_filename)[0] + '.pt'
         parent_folder_name = os.path.basename(os.path.dirname(path[0]))
         adv_img_path = os.path.join(output_dir, f"{parent_folder_name}_{img_filename}")
 
     else:
         # If path is not available, use index as identifier
-        adv_img_path = os.path.join(output_dir, f"{index}.png")
+        adv_img_path = os.path.join(output_dir, f"{index}.pt")
 
     # Check if adversarial image already exists
     if os.path.exists(adv_img_path):
         if logger:
             logger.info(f"Loading existing adversarial image from {adv_img_path}")
-        # Load existing adversarial image
-        img_adv = Image.open(adv_img_path).convert('RGB')
+        # Load existing adversarial image tensor
+        adv_tensor = torch.load(adv_img_path)
+        # Convert to PIL for return
+        """
+        ***NOTE: This conversion to PIL causes precision loss, the adversarial image will not be exactly the same as the original tensor.***
+        """
+        img_adv = transforms.ToPILImage()(adv_tensor)
+
+
     else:
         # Create adversarial image using attack
         adv_image = attack(image, target)
         if logger:
-            logger.info(f"Generated adversarial image with shape: {adv_image.shape}")
+            logger.debug(f"Generated adversarial image with shape: {adv_image.shape}")
 
-        img_adv = transforms.ToPILImage()(adv_image.squeeze(0))
-        # Save the adversarial image
-        img_adv.save(adv_img_path)
+
+        # Move tensor to CPU before saving
+        adv_tensor = adv_image.squeeze(0).detach().cpu()
+
+        # Save the adversarial tensor
+        torch.save(adv_tensor, adv_img_path)
+
         if logger:
             logger.info(f"Saved adversarial image to {adv_img_path}")
+
+        # Convert to PIL for return
+        img_adv = transforms.ToPILImage()(adv_tensor)
+
+        # Free memory for large datasets
+        del adv_image
+        torch.cuda.empty_cache()
+
 
     return img_adv
 
@@ -453,7 +365,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             images = [_.unsqueeze(0) for _ in images]
 
             if logger:
-                logger.info(f"Created {len(images)} augmented views of the adversarial image")
+                logger.debug(f"Created {len(images)} augmented views of the adversarial image")
 
         # Process images based on their format
         if isinstance(images, list):
@@ -492,14 +404,25 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         with torch.no_grad():
             tuned_outputs = model(images)
 
-        # Calculate similarity matrix between features
-        sim_matrix_images = torch.bmm(clip_features.unsqueeze(0), clip_features.unsqueeze(0).permute(0, 2, 1))
-        # Get top similarity scores
-        score = get_top_sim(sim_matrix_images, args)
-        # Calculate weights based on similarity scores
-        weight = torch.nn.functional.softmax(score/args.softmax_temp, dim=-1) # softmax temperature default is 0.01
-        # Weighted average of tuned outputs
-        tta_output = torch.bmm(weight.unsqueeze(-1).transpose(1, 2), tuned_outputs.unsqueeze(0)).squeeze(1)
+        # Handle different types of ensembling
+        if args.ensemble_type == 'none':
+            # Use only the first output (no ensembling)
+            tta_output = tuned_outputs[0].unsqueeze(0)
+        elif args.ensemble_type == 'vanilla':
+            # Use the average of all outputs
+            tta_output = torch.mean(tuned_outputs, dim=0).unsqueeze(0)
+        elif args.ensemble_type == 'weighted_rtpt':
+
+            # Calculate similarity matrix between features
+            sim_matrix_images = torch.bmm(clip_features.unsqueeze(0), clip_features.unsqueeze(0).permute(0, 2, 1))
+            # Get top similarity scores
+            score = get_top_sim(sim_matrix_images, args)
+            # Calculate weights based on similarity scores
+            weight = torch.nn.functional.softmax(score/args.softmax_temp, dim=-1) # softmax temperature default is 0.01
+            # Weighted average of tuned outputs
+            tta_output = torch.bmm(weight.unsqueeze(-1).transpose(1, 2), tuned_outputs.unsqueeze(0)).squeeze(1)
+        else:
+            raise ValueError(f"Unknown ensemble type: {args.ensemble_type}")
 
         # Measure accuracy
         acc1, acc5 = accuracy(clip_output, target, topk=(1, 5))  # Original model accuracy
@@ -556,7 +479,7 @@ if __name__ == '__main__':
 
     # Model parameters
     parser.add_argument('-a', '--arch', metavar='ARCH', default='RN50',
-                        help='Model architecture (RN50, ViT-B/32, etc.)')
+                        help='Model architecture (RN50, ViT-B/32, tecoa4, tecoa2, fare2, fare4, delta_clip_l14_224 etc.)')
     parser.add_argument('--resolution', default=224, type=int, 
                         help='CLIP image resolution')
 
@@ -580,6 +503,11 @@ if __name__ == '__main__':
                         help='Number of tunable context tokens')
     parser.add_argument('--ctx_init', default=None, type=str, 
                         help='Initial values for tunable prompts')
+    parser.add_argument('--tpt_loss', type=str, default='rtpt', choices=['rtpt', 'tpt'])
+    # Add this in the "Test-time adaptation parameters" section
+    parser.add_argument('--ensemble_type', default='weighted_rtpt', type=str,
+                        choices=['none', 'vanilla', 'weighted_rtpt'],
+                        help='Type of ensembling to use (none, vanilla, or weighted)')
 
     # Experiment parameters
     parser.add_argument('--seed', type=int, default=0,

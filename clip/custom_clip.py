@@ -62,6 +62,9 @@ class TextEncoder(nn.Module):
         super().__init__()
         self.transformer = clip_model.transformer
         self.positional_embedding = clip_model.positional_embedding[:40]
+        """
+        ***NOTE the positional embedding is hard-coded to context_length of 40 for the text encoder of CLIP***
+        """
         self.ln_final = clip_model.ln_final
         self.text_projection = clip_model.text_projection
         self.dtype = clip_model.dtype
@@ -81,7 +84,8 @@ class TextEncoder(nn.Module):
 
 
 class PromptLearner(nn.Module):
-    def __init__(self, clip_model, classnames, batch_size=None, n_ctx=16, ctx_init=None, ctx_position='end', learned_cls=False):
+    def __init__(self, clip_model, classnames, batch_size=None, n_ctx=16, ctx_init=None, ctx_position='end',
+                 learned_cls=False, context_length=40):
         super().__init__()
         n_cls = len(classnames)
         self.learned_cls = learned_cls
@@ -91,7 +95,7 @@ class PromptLearner(nn.Module):
         ctx_dim = clip_model.ln_final.weight.shape[0]
         self.ctx_dim = ctx_dim
         self.batch_size = batch_size
-
+        self.context_length = context_length
         # self.ctx, prompt_prefix = self.reset_prompt(ctx_dim, ctx_init, clip_model)
 
         if ctx_init:
@@ -107,7 +111,7 @@ class PromptLearner(nn.Module):
                 split_idx = None
             self.split_idx = split_idx
             n_ctx = len(ctx_init.split(" "))
-            prompt = tokenize(ctx_init).to(self.device)
+            prompt = tokenize(ctx_init, context_length=self.context_length).to(self.device)
             with torch.no_grad():
                 embedding = clip_model.token_embedding(prompt).type(dtype)
             ctx_vectors = embedding[0, 1 : 1 + n_ctx, :]
@@ -144,7 +148,7 @@ class PromptLearner(nn.Module):
             self.cls_init_state = cls_vectors.detach().clone()
             self.cls = nn.Parameter(cls_vectors) # to be optimized
 
-        tokenized_prompts = torch.cat([tokenize(p) for p in prompts]).to(self.device)
+        tokenized_prompts = torch.cat([tokenize(p, context_length=self.context_length) for p in prompts]).to(self.device)
         with torch.no_grad():
             embedding = clip_model.token_embedding(tokenized_prompts).type(dtype)
 
@@ -187,7 +191,7 @@ class PromptLearner(nn.Module):
             # TODO: re-init the cls parameters
             # self.cls = nn.Parameter(cls_vectors) # to be optimized
             self.cls_init_state = cls_vectors.detach().clone()
-        tokenized_prompts = torch.cat([tokenize(p) for p in prompts]).to(self.device)
+        tokenized_prompts = torch.cat([tokenize(p, context_length=self.context_length) for p in prompts]).to(self.device)
 
         clip, _, _ = load(arch, device=self.device, download_root=DOWNLOAD_ROOT)
 
@@ -297,15 +301,17 @@ class PromptLearner(nn.Module):
 
 class ClipTestTimeTuning(nn.Module):
     def __init__(self, device, classnames, batch_size, criterion='cosine', arch="ViT-L/14",
-                        n_ctx=16, ctx_init=None, ctx_position='end', learned_cls=False, ):
+                        n_ctx=16, ctx_init=None, ctx_position='end', learned_cls=False,
+                        context_length=40):
         super(ClipTestTimeTuning, self).__init__()
-        clip, _, _ = load(arch, device=device, download_root=DOWNLOAD_ROOT)
+        clip, _, preprocess = load(arch, device=device, download_root=DOWNLOAD_ROOT)
         self.device = device
         self.image_encoder = clip.visual
         self.text_encoder = TextEncoder(clip)
         self.logit_scale = clip.logit_scale.data
         # prompt tuning
-        self.prompt_learner = PromptLearner(clip, classnames, batch_size, n_ctx, ctx_init, ctx_position, learned_cls)
+        self.prompt_learner = PromptLearner(clip, classnames, batch_size, n_ctx, ctx_init, ctx_position, learned_cls,
+                                            context_length=context_length)
         self.criterion = criterion
 
         self.normalize = ImageNormalizer(mu, std).cuda(device)
