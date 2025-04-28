@@ -248,6 +248,9 @@ def get_adversarial_image(image, target, attack, path, index, output_dir, logger
         # Load existing adversarial image tensor
         adv_tensor = torch.load(adv_img_path)
         # Convert to PIL for return
+        """
+        ***NOTE: This conversion to PIL causes precision loss, the adversarial image will not be exactly the same as the original tensor.***
+        """
         img_adv = transforms.ToPILImage()(adv_tensor)
 
 
