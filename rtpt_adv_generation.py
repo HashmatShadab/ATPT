@@ -200,7 +200,7 @@ def get_adversarial_images(images, targets, attack, paths, index, output_dir, lo
         logger (logging.Logger, optional): Logger for logging information.
 
     Returns:
-        List[PIL.Image.Image]: List of adversarial images.
+        torch.Tensor: Tensor of adversarial images.
     """
     batch_size = images.size(0)
     adv_images = []
@@ -209,7 +209,7 @@ def get_adversarial_images(images, targets, attack, paths, index, output_dir, lo
     generate_attack = False
     for i in range(batch_size):
         img_filename = os.path.basename(paths[i])
-        img_filename = os.path.splitext(img_filename)[0] + ".png"
+        img_filename = os.path.splitext(img_filename)[0] + ".pt"
         parent_folder_name = os.path.basename(os.path.dirname(paths[i]))
         adv_img_path = os.path.join(output_dir, f"{parent_folder_name}_{img_filename}")
 
@@ -224,16 +224,18 @@ def get_adversarial_images(images, targets, attack, paths, index, output_dir, lo
             logger.info(f"Generated adversarial images for the entire batch.")
 
         for i in range(batch_size):
-            img_adv = transforms.ToPILImage()(adv_images[i].cpu())
+            # Move tensor to CPU before saving
+            img_adv = adv_images[i].detach().cpu()
             img_filename = os.path.basename(paths[i])
-            # change the extension to png
-            img_filename = os.path.splitext(img_filename)[0] + ".png"
+            # change the extension to pt (PyTorch tensor)
+            img_filename = os.path.splitext(img_filename)[0] + ".pt"
             parent_folder_name = os.path.basename(os.path.dirname(paths[i]))
             adv_img_path = os.path.join(output_dir, f"{parent_folder_name}_{img_filename}")
 
-            img_adv.save(adv_img_path)
+            # Save tensor directly
+            torch.save(img_adv, adv_img_path)
             if logger:
-                logger.info(f"Batch:[{index}] Image: [{i}] Saved adversarial image to {adv_img_path}")
+                logger.info(f"Batch:[{index}] Image: [{i}] Saved adversarial tensor to {adv_img_path}")
 
         # Free memory after processing the batch
         torch.cuda.empty_cache()
@@ -243,17 +245,15 @@ def get_adversarial_images(images, targets, attack, paths, index, output_dir, lo
         adv_images = []
         for i in range(batch_size):
             img_filename = os.path.basename(paths[i])
-            img_filename = os.path.splitext(img_filename)[0] + ".png"
+            img_filename = os.path.splitext(img_filename)[0] + ".pt"
             parent_folder_name = os.path.basename(os.path.dirname(paths[i]))
             adv_img_path = os.path.join(output_dir, f"{parent_folder_name}_{img_filename}")
 
-            # Load existing adversarial image
-            img_adv = Image.open(adv_img_path).convert('RGB')
-            # convert the images to tensor
-            img_adv = transforms.ToTensor()(img_adv)
+            # Load tensor directly
+            img_adv = torch.load(adv_img_path)
             adv_images.append(img_adv)
 
-        # load the images to the device
+        # Stack tensors and move to GPU
         adv_images = torch.stack(adv_images, dim=0).cuda()
         return adv_images
 
@@ -275,37 +275,38 @@ def get_adversarial_image(image, target, attack, path, index, output_dir, logger
         logger (logging.Logger, optional): Logger for logging information.
 
     Returns:
-        PIL.Image.Image: Adversarial image.
+        torch.Tensor: Adversarial image tensor.
     """
     # Create a unique filename for the adversarial image
     if path is not None:
         # Extract filename from path and the preceding directory
         img_filename = os.path.basename(path[0])
-        # Change the extension to png
-        img_filename = os.path.splitext(img_filename)[0] + ".png"
+        # Change the extension to pt (PyTorch tensor)
+        img_filename = os.path.splitext(img_filename)[0] + ".pt"
         parent_folder_name = os.path.basename(os.path.dirname(path[0]))
         adv_img_path = os.path.join(output_dir, f"{parent_folder_name}_{img_filename}")
     else:
         # If path is not available, use index as identifier
-        adv_img_path = os.path.join(output_dir, f"{index}.png")
+        adv_img_path = os.path.join(output_dir, f"{index}.pt")
 
     # Check if adversarial image already exists
     if os.path.exists(adv_img_path):
         if logger:
-            logger.info(f"Loading existing adversarial image from {adv_img_path}")
-        # Load existing adversarial image
-        img_adv = Image.open(adv_img_path).convert('RGB')
+            logger.info(f"Loading existing adversarial tensor from {adv_img_path}")
+        # Load existing adversarial tensor
+        img_adv = torch.load(adv_img_path)
     else:
         # Create adversarial image using attack
         adv_image = attack(image, target)
         if logger:
             logger.info(f"Generated adversarial image with shape: {adv_image.shape}")
 
-        img_adv = transforms.ToPILImage()(adv_image.squeeze(0))
-        # Save the adversarial image
-        img_adv.save(adv_img_path)
+        # Move tensor to CPU before saving
+        img_adv = adv_image.squeeze(0).detach().cpu()
+        # Save the adversarial tensor directly
+        torch.save(img_adv, adv_img_path)
         if logger:
-            logger.info(f"Saved adversarial image to {adv_img_path}")
+            logger.info(f"Saved adversarial tensor to {adv_img_path}")
 
         # Free memory for large datasets
         del adv_image
