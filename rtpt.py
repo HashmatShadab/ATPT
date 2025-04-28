@@ -227,31 +227,47 @@ def get_adversarial_image(image, target, attack, path, index, output_dir, logger
         # Extract filename from path and the preceding directory
         img_filename = os.path.basename(path[0])
         # change the extension to .png
-        img_filename = os.path.splitext(img_filename)[0] + '.png'
+        img_filename = os.path.splitext(img_filename)[0] + '.pt'
         parent_folder_name = os.path.basename(os.path.dirname(path[0]))
         adv_img_path = os.path.join(output_dir, f"{parent_folder_name}_{img_filename}")
 
     else:
         # If path is not available, use index as identifier
-        adv_img_path = os.path.join(output_dir, f"{index}.png")
+        adv_img_path = os.path.join(output_dir, f"{index}.pt")
 
     # Check if adversarial image already exists
     if os.path.exists(adv_img_path):
         if logger:
             logger.info(f"Loading existing adversarial image from {adv_img_path}")
-        # Load existing adversarial image
-        img_adv = Image.open(adv_img_path).convert('RGB')
+        # Load existing adversarial image tensor
+        adv_tensor = torch.load(adv_img_path)
+        # Convert to PIL for return
+        img_adv = transforms.ToPILImage()(adv_tensor)
+
+
     else:
         # Create adversarial image using attack
         adv_image = attack(image, target)
         if logger:
             logger.debug(f"Generated adversarial image with shape: {adv_image.shape}")
 
-        img_adv = transforms.ToPILImage()(adv_image.squeeze(0))
-        # Save the adversarial image
-        img_adv.save(adv_img_path)
+
+        # Move tensor to CPU before saving
+        adv_tensor = adv_image.squeeze(0).detach().cpu()
+
+        # Save the adversarial tensor
+        torch.save(adv_tensor, adv_img_path)
+
         if logger:
             logger.info(f"Saved adversarial image to {adv_img_path}")
+
+        # Convert to PIL for return
+        img_adv = transforms.ToPILImage()(adv_tensor)
+
+        # Free memory for large datasets
+        del adv_image
+        torch.cuda.empty_cache()
+
 
     return img_adv
 
