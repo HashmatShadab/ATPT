@@ -44,7 +44,7 @@ import matplotlib.pyplot as plt
 import torch
 from PIL import Image
 import numpy as np
-from helper_functions import plot_image, get_top_sim, print_args, calculate_entropy, entropy_avg, select_confident_samples, test_time_tuning
+from helper_functions import plot_image, get_top_sim, print_args, select_confident_samples, test_time_tuning
 
 
 openai_model_dict = {

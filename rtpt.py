@@ -44,7 +44,7 @@ import matplotlib.pyplot as plt
 import torch
 from PIL import Image
 import numpy as np
-from helper_functions import plot_image, get_top_sim, print_args, calculate_entropy, entropy_avg, select_confident_samples, test_time_tuning
+from helper_functions import plot_image, get_top_sim, print_args, test_time_tuning
 
 openai_model_dict = {
     "delta_clip_l14_224": "hf-hub:zw123/delta_clip_l14_224",
@@ -60,7 +60,7 @@ openai_model_dict = {
 def create_log_name(args):
     """Creates a standardized log name from experiment parameters"""
     # R-TPT hyperparameters for log name
-    log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_TPT_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
+    log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_TPT_loss_{args.tpt_loss}_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
     return log_name
 
 
@@ -404,14 +404,25 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         with torch.no_grad():
             tuned_outputs = model(images)
 
-        # Calculate similarity matrix between features
-        sim_matrix_images = torch.bmm(clip_features.unsqueeze(0), clip_features.unsqueeze(0).permute(0, 2, 1))
-        # Get top similarity scores
-        score = get_top_sim(sim_matrix_images, args)
-        # Calculate weights based on similarity scores
-        weight = torch.nn.functional.softmax(score/args.softmax_temp, dim=-1) # softmax temperature default is 0.01
-        # Weighted average of tuned outputs
-        tta_output = torch.bmm(weight.unsqueeze(-1).transpose(1, 2), tuned_outputs.unsqueeze(0)).squeeze(1)
+        # Handle different types of ensembling
+        if args.ensemble_type == 'none':
+            # Use only the first output (no ensembling)
+            tta_output = tuned_outputs[0].unsqueeze(0)
+        elif args.ensemble_type == 'vanilla':
+            # Use the average of all outputs
+            tta_output = torch.mean(tuned_outputs, dim=0).unsqueeze(0)
+        elif args.ensemble_type == 'weighted_rtpt':
+
+            # Calculate similarity matrix between features
+            sim_matrix_images = torch.bmm(clip_features.unsqueeze(0), clip_features.unsqueeze(0).permute(0, 2, 1))
+            # Get top similarity scores
+            score = get_top_sim(sim_matrix_images, args)
+            # Calculate weights based on similarity scores
+            weight = torch.nn.functional.softmax(score/args.softmax_temp, dim=-1) # softmax temperature default is 0.01
+            # Weighted average of tuned outputs
+            tta_output = torch.bmm(weight.unsqueeze(-1).transpose(1, 2), tuned_outputs.unsqueeze(0)).squeeze(1)
+        else:
+            raise ValueError(f"Unknown ensemble type: {args.ensemble_type}")
 
         # Measure accuracy
         acc1, acc5 = accuracy(clip_output, target, topk=(1, 5))  # Original model accuracy
@@ -492,6 +503,11 @@ if __name__ == '__main__':
                         help='Number of tunable context tokens')
     parser.add_argument('--ctx_init', default=None, type=str, 
                         help='Initial values for tunable prompts')
+    parser.add_argument('--tpt_loss', type=str, default='rtpt', choices=['rtpt', 'tpt'])
+    # Add this in the "Test-time adaptation parameters" section
+    parser.add_argument('--ensemble_type', default='weighted_rtpt', type=str,
+                        choices=['none', 'vanilla', 'weighted_rtpt'],
+                        help='Type of ensembling to use (none, vanilla, or weighted)')
 
     # Experiment parameters
     parser.add_argument('--seed', type=int, default=0,
