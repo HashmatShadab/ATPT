@@ -26,6 +26,9 @@ TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX=${9:-20}
 SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING=${10:-0.01}
 OUTPUT_DIR=${11:-"output_results"}
 
+# bash gen_adv.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 output_results
+
+
 # bash gen_adv.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 0 4 RN50 1.0 7 1 0.1 20 0.01 /mnt/nvme0n1/Dataset/muzammal/atpt_results
 # bash gen_adv.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 0 4 RN50 4.0 7 1 0.1 20 0.01 /mnt/nvme0n1/Dataset/muzammal/atpt_results
 # bash gen_adv.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 ViT-B/16 4.0 100 1 0.1 20 0.01 /mnt/nvme0n1/Dataset/muzammal/atpt_results
@@ -74,62 +77,62 @@ echo "  [1/8] Adv Examples  DTD dataset..."
 CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets DTD $MODEL $COMMON_PARAMS
 echo "  ✓ DTD dataset Adv Examples  complete"
 
-echo "  [2/8] Adv Examples  Flower102 dataset..."
-CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets Flower102 $MODEL $COMMON_PARAMS
-echo "  ✓ Flower102 dataset Adv Examples  complete"
-
-echo "  [3/8] Adv Examples  Cars dataset..."
-CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets Cars $MODEL $COMMON_PARAMS
-echo "  ✓ Cars dataset Adv Examples  complete"
-
-echo "  [4/8] Adv Examples  Aircraft dataset..."
-CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets Aircraft $MODEL $COMMON_PARAMS
-echo "  ✓ Aircraft dataset Adv Examples  complete"
-
-echo "  [5/8] Adv Examples  Pets dataset..."
-CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets Pets $MODEL $COMMON_PARAMS
-echo "  ✓ Pets dataset Adv Examples  complete"
-
-echo "  [6/8] Adv Examples  Caltech101 dataset..."
-CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets Caltech101 $MODEL $COMMON_PARAMS
-echo "  ✓ Caltech101 dataset Adv Examples  complete"
-
-echo "  [7/8] Adv Examples  UCF101 dataset..."
-CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets UCF101 $MODEL $COMMON_PARAMS
-echo "  ✓ UCF101 dataset Adv Examples  complete"
-
-echo "  [8/8] Adv Examples  eurosat dataset..."
-CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets eurosat $MODEL $COMMON_PARAMS
-echo "  ✓ eurosat dataset Adv Examples  complete"
-
-echo "Fine-grained datasets Adv Examples  complete"
-
+#echo "  [2/8] Adv Examples  Flower102 dataset..."
+#CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets Flower102 $MODEL $COMMON_PARAMS
+#echo "  ✓ Flower102 dataset Adv Examples  complete"
 #
-# Section 2: ImageNet Datasets
+#echo "  [3/8] Adv Examples  Cars dataset..."
+#CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets Cars $MODEL $COMMON_PARAMS
+#echo "  ✓ Cars dataset Adv Examples  complete"
+#
+#echo "  [4/8] Adv Examples  Aircraft dataset..."
+#CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets Aircraft $MODEL $COMMON_PARAMS
+#echo "  ✓ Aircraft dataset Adv Examples  complete"
+#
+#echo "  [5/8] Adv Examples  Pets dataset..."
+#CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets Pets $MODEL $COMMON_PARAMS
+#echo "  ✓ Pets dataset Adv Examples  complete"
+#
+#echo "  [6/8] Adv Examples  Caltech101 dataset..."
+#CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets Caltech101 $MODEL $COMMON_PARAMS
+#echo "  ✓ Caltech101 dataset Adv Examples  complete"
+#
+#echo "  [7/8] Adv Examples  UCF101 dataset..."
+#CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets UCF101 $MODEL $COMMON_PARAMS
+#echo "  ✓ UCF101 dataset Adv Examples  complete"
+#
+#echo "  [8/8] Adv Examples  eurosat dataset..."
+#CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets eurosat $MODEL $COMMON_PARAMS
+#echo "  ✓ eurosat dataset Adv Examples  complete"
+#
+#echo "Fine-grained datasets Adv Examples  complete"
+#
 ##
-echo "Generating Adv Examples  on ImageNet datasets..."
+## Section 2: ImageNet Datasets
+###
+#echo "Generating Adv Examples  on ImageNet datasets..."
+##
+#echo "  [1/5] Adv Examples  ImageNet-A dataset..."
+#CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets A $MODEL $COMMON_PARAMS
+#echo "  ✓ ImageNet-A dataset Adv Examples  complete"
 #
-echo "  [1/5] Adv Examples  ImageNet-A dataset..."
-CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets A $MODEL $COMMON_PARAMS
-echo "  ✓ ImageNet-A dataset Adv Examples  complete"
-
-echo "  [2/5] Adv Examples  ImageNet-R dataset..."
-CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets R $MODEL $COMMON_PARAMS
-echo "  ✓ ImageNet-R dataset Adv Examples  complete"
-
-echo "  [3/5] Adv Examples  ImageNet-S dataset..."
-CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets K $MODEL $COMMON_PARAMS
-echo "  ✓ ImageNet-S dataset Adv Examples  complete"
-
-echo "  [4/5] Adv Examples  ImageNet-V dataset..."
-CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets V $MODEL $COMMON_PARAMS
-echo "  ✓ ImageNet-V dataset Adv Examples  complete"
-
-echo "  [5/5] Adv Examples  ImageNet dataset..."
-CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets I $MODEL $COMMON_PARAMS
-echo "  ✓ ImageNet dataset Adv Examples  complete"
-
-echo "ImageNet datasets Adv Examples  complete"
-
-# Add final completion message
-echo "=== All tests completed successfully ==="
+#echo "  [2/5] Adv Examples  ImageNet-R dataset..."
+#CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets R $MODEL $COMMON_PARAMS
+#echo "  ✓ ImageNet-R dataset Adv Examples  complete"
+#
+#echo "  [3/5] Adv Examples  ImageNet-S dataset..."
+#CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets K $MODEL $COMMON_PARAMS
+#echo "  ✓ ImageNet-S dataset Adv Examples  complete"
+#
+#echo "  [4/5] Adv Examples  ImageNet-V dataset..."
+#CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets V $MODEL $COMMON_PARAMS
+#echo "  ✓ ImageNet-V dataset Adv Examples  complete"
+#
+#echo "  [5/5] Adv Examples  ImageNet dataset..."
+#CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets I $MODEL $COMMON_PARAMS
+#echo "  ✓ ImageNet dataset Adv Examples  complete"
+#
+#echo "ImageNet datasets Adv Examples  complete"
+#
+## Add final completion message
+#echo "=== All tests completed successfully ==="

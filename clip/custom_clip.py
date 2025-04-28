@@ -304,7 +304,7 @@ class ClipTestTimeTuning(nn.Module):
                         n_ctx=16, ctx_init=None, ctx_position='end', learned_cls=False,
                         context_length=40):
         super(ClipTestTimeTuning, self).__init__()
-        clip, _, _ = load(arch, device=device, download_root=DOWNLOAD_ROOT)
+        clip, _, preprocess = load(arch, device=device, download_root=DOWNLOAD_ROOT)
         self.device = device
         self.image_encoder = clip.visual
         self.text_encoder = TextEncoder(clip)

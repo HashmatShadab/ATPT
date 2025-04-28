@@ -236,10 +236,26 @@ def get_adversarial_images(images, targets, attack, paths, index, output_dir, lo
                 logger.info(f"Batch:[{index}] Image: [{i}] Saved adversarial image to {adv_img_path}")
 
         # Free memory after processing the batch
-        del adv_images
         torch.cuda.empty_cache()
+        return adv_images
     else:
         logger.info(f"Batch:[{index}] Adversarial images for this batch already exist")
+        adv_images = []
+        for i in range(batch_size):
+            img_filename = os.path.basename(paths[i])
+            img_filename = os.path.splitext(img_filename)[0] + ".png"
+            parent_folder_name = os.path.basename(os.path.dirname(paths[i]))
+            adv_img_path = os.path.join(output_dir, f"{parent_folder_name}_{img_filename}")
+
+            # Load existing adversarial image
+            img_adv = Image.open(adv_img_path).convert('RGB')
+            # convert the images to tensor
+            img_adv = transforms.ToTensor()(img_adv)
+            adv_images.append(img_adv)
+
+        # load the images to the device
+        adv_images = torch.stack(adv_images, dim=0).cuda()
+        return adv_images
 
 
 
@@ -325,7 +341,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     if logger:
         logger.info(f"Starting evaluation with batch size: {args.batch_size}, selection percentage: {args.selection_p}")
-        logger.info(f"Test-time adaptation steps: {args.tta_steps}, learning rate: {args.lr}")
+        #logger.info(f"Test-time adaptation steps: {args.tta_steps}, learning rate: {args.lr}")
 
     # Initialize adversarial attack if specified
     if args.eps > 0.0:
@@ -343,6 +359,9 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         if logger:
             logger.info(f"Using directory for adversarial images: {adv_images_dir}")
 
+    adv_correct = 0
+    clean_correct = 0
+    total = 0
     # Iterate through validation data
     for i, data in enumerate(val_loader):
         # Handle different return formats (with or without path)
@@ -356,21 +375,50 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         target = target.cuda(args.gpu, non_blocking=True)
         images = images.cuda(args.gpu, non_blocking=True)
 
-        # Generate adversarial examples if specified
-        if args.eps > 0.0:
-            #image = images[0].cuda(args.gpu, non_blocking=True)
+
+        # Get adversarial image (either generate or load from cache)
+        adv_images = get_adversarial_images(
+            images, target, atk, path, i, adv_images_dir, logger=logger)
+        # Pass adversarial images to the model
+        adv_images = adv_images.cuda(args.gpu, non_blocking=True)
+
+        # Model forward pass
+        with torch.no_grad():
+            # Adv
+            adv_logits = model(adv_images)
+            adv_probs = adv_logits.softmax(dim=-1)
+            _, adv_pred = adv_probs.max(1)
+            adv_correct += adv_pred.eq(target).sum().item()
+
+            # Clean
+            clean_logits = model(images)
+            clean_probs = clean_logits.softmax(dim=-1)
+            _, clean_pred = clean_probs.max(1)
+            clean_correct += clean_pred.eq(target).sum().item()
 
 
-            if logger and i == 0:
-                logger.debug(f"Original image shape: {images.shape}, target: {target}")
+            total += target.size(0)
+            if logger:
+                logger.info(f"Batch {i+1}/{len(val_loader)}: Clean accuracy {clean_correct / total:.4f} | Adv accuracy: {adv_correct / total:.4f}")
+        # Free memory
+        del images, target, adv_images, adv_logits, adv_probs, adv_pred, clean_logits, clean_probs, clean_pred
+        torch.cuda.empty_cache()
+        end = time.time()
 
-            # Get adversarial image (either generate or load from cache)
-            get_adversarial_images(
-                images, target, atk, path, i, adv_images_dir, logger=logger)
-        else:
-            logger.info(f"No adversarial attack applied")
+    # Calculate final accuracy
+    original_accuracy = clean_correct / total
+    adv_accuracy = adv_correct / total
+    if logger:
+        logger.info(f"Original accuracy: {original_accuracy:.4f}")
+        logger.info(f"Adversarial accuracy: {adv_accuracy:.4f}")
 
-        logger.info(f"Processing batch {i+1}/{len(val_loader)}")
+
+
+
+
+
+
+
 
 
 if __name__ == '__main__':
