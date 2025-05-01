@@ -24,15 +24,36 @@ TTA_STEPS=${7:-1}
 FRACTION_CONFIDENT_SAMPLES=${8:-0.1}
 TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX=${9:-20}
 SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING=${10:-0.01}
-OUTPUT_DIR=${11:-"output_results"}
+TPT_LOSS=${11:-"rtpt"}
+ENSEMBLE_TYPE=${12:-"weighted_rtpt"}
+
+OUTPUT_DIR=${13:-"output_results"}
 
 
-# bash train.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 "F:\Code\datasets\atpt_results"
+# bash train.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 rtpt weighted_rtpt "F:\Code\datasets\atpt_results"
+# bash train.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 rtpt vanilla "F:\Code\datasets\atpt_results"
+# bash train.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 rtpt none "F:\Code\datasets\atpt_results"
+# bash train.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 tpt weighted_rtpt "F:\Code\datasets\atpt_results"
+# bash train.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 tpt vanilla "F:\Code\datasets\atpt_results"
+# bash train.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 tpt none "F:\Code\datasets\atpt_results"
 
-# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 0 4 RN50 1.0 7 1 0.1 20 0.01 /mnt/nvme0n1/Dataset/muzammal/atpt_results
-# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 0 4 RN50 4.0 7 1 0.1 20 0.01 /mnt/nvme0n1/Dataset/muzammal/atpt_results
-# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 0 4 ViT-B/16 4.0 100 1 0.1 20 0.01 /mnt/nvme0n1/Dataset/muzammal/atpt_results
-# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 0 4 ViT-B/16 1.0 100 1 0.1 20 0.01 /mnt/nvme0n1/Dataset/muzammal/atpt_results
+
+
+# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 0 4 RN50 1.0 7 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
+# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 0 4 RN50 4.0 7 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
+# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 ViT-B/16 4.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
+# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 ViT-B/16 1.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
+# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 ViT-L/14 4.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
+# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 ViT-L/14 1.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
+# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 fare2 1.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
+# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 fare2 4.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
+# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 tecoa2 1.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
+# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 tecoa2 4.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
+# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 fare4 1.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
+# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 fare4 4.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
+# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 tecoa4 1.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
+# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 tecoa4 4.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
+
 
 
 # Common parameters for all runs
@@ -40,7 +61,7 @@ COMMON_PARAMS="--gpu $GPU --ctx_init a_photo_of_a --output_dir $OUTPUT_DIR --wor
 COMMON_PARAMS+=" --eps $EPSILON --steps $ATTACK_STEPS --tta_steps $TTA_STEPS"
 COMMON_PARAMS+=" --selection_p $FRACTION_CONFIDENT_SAMPLES"
 COMMON_PARAMS+=" --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX"
-COMMON_PARAMS+=" --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING --print-freq 20"
+COMMON_PARAMS+=" --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING --tpt_loss $TPT_LOSS --ensemble_type $ENSEMBLE_TYPE --print-freq 20"
 
 # Model parameters
 MODEL="-a $MODEL_NAME -b 64"
@@ -65,7 +86,7 @@ echo "========================"
 echo "Running tests on Fine-grained datasets..."
 
 echo "  [1/8] Testing DTD dataset..."
-CUDA_VISIBLE_DEVICES=$GPU python rtpt.py $DATA_ROOT --test_sets DTD $MODEL $COMMON_PARAMS
+CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets DTD $MODEL $COMMON_PARAMS
 echo "  ✓ DTD dataset testing complete"
 
 #echo "  [2/8] Testing Flower102 dataset..."
