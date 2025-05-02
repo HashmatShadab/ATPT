@@ -89,62 +89,62 @@ echo "  [1/8] Testing DTD dataset..."
 CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets DTD $MODEL $COMMON_PARAMS
 echo "  ✓ DTD dataset testing complete"
 
-#echo "  [2/8] Testing Flower102 dataset..."
-#CUDA_VISIBLE_DEVICES=$GPU python rtpt.py $DATA_ROOT --test_sets Flower102 $MODEL $COMMON_PARAMS
-#echo "  ✓ Flower102 dataset testing complete"
+echo "  [2/8] Testing Flower102 dataset..."
+CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Flower102 $MODEL $COMMON_PARAMS
+echo "  ✓ Flower102 dataset testing complete"
+
+echo "  [3/8] Testing Cars dataset..."
+CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Cars $MODEL $COMMON_PARAMS
+echo "  ✓ Cars dataset testing complete"
+
+echo "  [4/8] Testing Aircraft dataset..."
+CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Aircraft $MODEL $COMMON_PARAMS
+echo "  ✓ Aircraft dataset testing complete"
+
+echo "  [5/8] Testing Pets dataset..."
+CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Pets $MODEL $COMMON_PARAMS
+echo "  ✓ Pets dataset testing complete"
+
+echo "  [6/8] Testing Caltech101 dataset..."
+CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Caltech101 $MODEL $COMMON_PARAMS
+echo "  ✓ Caltech101 dataset testing complete"
+
+echo "  [7/8] Testing UCF101 dataset..."
+CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets UCF101 $MODEL $COMMON_PARAMS
+echo "  ✓ UCF101 dataset testing complete"
+
+echo "  [8/8] Testing eurosat dataset..."
+CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets eurosat $MODEL $COMMON_PARAMS
+echo "  ✓ eurosat dataset testing complete"
+
+echo "Fine-grained datasets testing complete"
+
 #
-#echo "  [3/8] Testing Cars dataset..."
-#CUDA_VISIBLE_DEVICES=$GPU python rtpt.py $DATA_ROOT --test_sets Cars $MODEL $COMMON_PARAMS
-#echo "  ✓ Cars dataset testing complete"
+# Section 2: ImageNet Datasets
 #
-#echo "  [4/8] Testing Aircraft dataset..."
-#CUDA_VISIBLE_DEVICES=$GPU python rtpt.py $DATA_ROOT --test_sets Aircraft $MODEL $COMMON_PARAMS
-#echo "  ✓ Aircraft dataset testing complete"
-#
-#echo "  [5/8] Testing Pets dataset..."
-#CUDA_VISIBLE_DEVICES=$GPU python rtpt.py $DATA_ROOT --test_sets Pets $MODEL $COMMON_PARAMS
-#echo "  ✓ Pets dataset testing complete"
-#
-#echo "  [6/8] Testing Caltech101 dataset..."
-#CUDA_VISIBLE_DEVICES=$GPU python rtpt.py $DATA_ROOT --test_sets Caltech101 $MODEL $COMMON_PARAMS
-#echo "  ✓ Caltech101 dataset testing complete"
-#
-#echo "  [7/8] Testing UCF101 dataset..."
-#CUDA_VISIBLE_DEVICES=$GPU python rtpt.py $DATA_ROOT --test_sets UCF101 $MODEL $COMMON_PARAMS
-#echo "  ✓ UCF101 dataset testing complete"
-#
-#echo "  [8/8] Testing eurosat dataset..."
-#CUDA_VISIBLE_DEVICES=$GPU python rtpt.py $DATA_ROOT --test_sets eurosat $MODEL $COMMON_PARAMS
-#echo "  ✓ eurosat dataset testing complete"
-#
-#echo "Fine-grained datasets testing complete"
-#
-##
-## Section 2: ImageNet Datasets
-##
-#echo "Running tests on ImageNet datasets..."
-#
-#echo "  [1/5] Testing ImageNet-A dataset..."
-#CUDA_VISIBLE_DEVICES=$GPU python rtpt.py $DATA_ROOT --test_sets A $MODEL $COMMON_PARAMS
-#echo "  ✓ ImageNet-A dataset testing complete"
-#
-#echo "  [2/5] Testing ImageNet-R dataset..."
-#CUDA_VISIBLE_DEVICES=$GPU python rtpt.py $DATA_ROOT --test_sets R $MODEL $COMMON_PARAMS
-#echo "  ✓ ImageNet-R dataset testing complete"
-#
-#echo "  [3/5] Testing ImageNet-S dataset..."
-#CUDA_VISIBLE_DEVICES=$GPU python rtpt.py $DATA_ROOT --test_sets K $MODEL $COMMON_PARAMS
-#echo "  ✓ ImageNet-S dataset testing complete"
-#
-#echo "  [4/5] Testing ImageNet-V dataset..."
-#CUDA_VISIBLE_DEVICES=$GPU python rtpt.py $DATA_ROOT --test_sets V $MODEL $COMMON_PARAMS
-#echo "  ✓ ImageNet-V dataset testing complete"
-#
-#echo "  [5/5] Testing ImageNet dataset..."
-#CUDA_VISIBLE_DEVICES=$GPU python rtpt.py $DATA_ROOT --test_sets I $MODEL $COMMON_PARAMS
-#echo "  ✓ ImageNet dataset testing complete"
-#
-#echo "ImageNet datasets testing complete"
-#
-## Add final completion message
-#echo "=== All tests completed successfully ==="
+echo "Running tests on ImageNet datasets..."
+
+echo "  [1/5] Testing ImageNet-A dataset..."
+CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets A $MODEL $COMMON_PARAMS
+echo "  ✓ ImageNet-A dataset testing complete"
+
+echo "  [2/5] Testing ImageNet-R dataset..."
+CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets R $MODEL $COMMON_PARAMS
+echo "  ✓ ImageNet-R dataset testing complete"
+
+echo "  [3/5] Testing ImageNet-S dataset..."
+CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets K $MODEL $COMMON_PARAMS
+echo "  ✓ ImageNet-S dataset testing complete"
+
+echo "  [4/5] Testing ImageNet-V dataset..."
+CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets V $MODEL $COMMON_PARAMS
+echo "  ✓ ImageNet-V dataset testing complete"
+
+echo "  [5/5] Testing ImageNet dataset..."
+CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets I $MODEL $COMMON_PARAMS
+echo "  ✓ ImageNet dataset testing complete"
+
+echo "ImageNet datasets testing complete"
+
+# Add final completion message
+echo "=== All tests completed successfully ==="
