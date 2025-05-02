@@ -3,7 +3,7 @@
 
 DATA_ROOT=${1:-"F:\Code\datasets\downstream_datasets\downstream_datasets"}
 ADV_DATA_ROOT=${2:-"F:\Code\datasets\atpt_results"}
-GPU=${3:-0}
+GPU=${3:-1}
 
 # Record start time
 START_TIME=$(date +%s)
