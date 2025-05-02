@@ -431,7 +431,7 @@ if __name__ == '__main__':
                         help='Dataset split to use (train, val, test)')
 
     # Model parameters
-    parser.add_argument('-a', '--arch', metavar='ARCH', default='RN50',
+    parser.add_argument('-a', '--arch', metavar='ARCH', default='delta_clip_l14_224',
                         help='Model architecture (RN50, ViT-B/32, etc.)')
     parser.add_argument('--resolution', default=224, type=int,
                         help='CLIP image resolution')
@@ -466,13 +466,13 @@ if __name__ == '__main__':
                         help='Directory to save results')
 
     # Adversarial attack parameters
-    parser.add_argument('--eps', default=0.0, type=float,
+    parser.add_argument('--eps', default=1.0, type=float,
                         help='Epsilon for adversarial attack (0.0 for clean evaluation)')
     parser.add_argument('--alpha', default=0.0, type=float,
                         help='Step size for adversarial attack (if not provided, calculated as eps/alpha_eps_ratio)')
     parser.add_argument('--alpha_eps_ratio', default=4.0, type=float,
                         help='Ratio of epsilon to alpha when alpha is not explicitly provided (default: 4.0)')
-    parser.add_argument('--steps', type=int, default=0,
+    parser.add_argument('--steps', type=int, default=7,
                         help='Number of steps for adversarial attack')
 
     # Test-time adaptation parameters

@@ -107,7 +107,7 @@ class TextEncoder(nn.Module):
 
 class PromptLearner(nn.Module):
     def __init__(self, clip_model, classnames, batch_size=None, n_ctx=16, ctx_init=None, ctx_position='end',
-                 learned_cls=False, tokenizer_openai=None):
+                 learned_cls=False, tokenizer_openai=None, model_name=None):
         super().__init__()
         n_cls = len(classnames)
         self.learned_cls = learned_cls
@@ -134,7 +134,10 @@ class PromptLearner(nn.Module):
             self.split_idx = split_idx
             n_ctx = len(ctx_init.split(" "))
             if tokenizer_openai is not None:
-                prompt = tokenizer_openai(ctx_init, context_length=40).to(self.device)
+                if "delta" in model_name:
+                    prompt = tokenizer_openai(ctx_init).to(self.device)
+                else:
+                    prompt = tokenizer_openai(ctx_init, context_length=40).to(self.device)
             else:
                 prompt = tokenize(ctx_init, context_length=40).to(self.device)
             with torch.no_grad():
@@ -174,7 +177,10 @@ class PromptLearner(nn.Module):
             self.cls = nn.Parameter(cls_vectors)  # to be optimized
 
         if tokenizer_openai is not None:
-            tokenized_prompts = torch.cat([tokenizer_openai(p, context_length=40) for p in prompts]).to(self.device)
+            if "delta" in model_name:
+                tokenized_prompts = torch.cat([tokenizer_openai(p) for p in prompts]).to(self.device)
+            else:
+                tokenized_prompts = torch.cat([tokenizer_openai(p, context_length=40) for p in prompts]).to(self.device)
         else:
             tokenized_prompts = torch.cat([tokenize(p, context_length=40) for p in prompts]).to(self.device)
         with torch.no_grad():
@@ -338,7 +344,7 @@ class ClipTestTimeTuning(nn.Module):
         # self.text_encoder = TextEncoder(clip)
         self.logit_scale = clip.logit_scale.data
         # prompt tuning
-        self.prompt_learner = PromptLearner(clip, classnames, batch_size, n_ctx, ctx_init, ctx_position, learned_cls, tokenizer)
+        self.prompt_learner = PromptLearner(clip, classnames, batch_size, n_ctx, ctx_init, ctx_position, learned_cls, tokenizer, model_name=arch)
         self.criterion = criterion
 
         self.normalize = ImageNormalizer(mu, std).cuda(device)

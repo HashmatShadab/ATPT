@@ -17,7 +17,7 @@ import regex as re
 import torch
 
 import tensorflow as tf
-# import tensorflow_text
+import tensorflow_text
 tf.config.set_visible_devices([], 'GPU')  # Hands off my GPU! (or pip install tensorflow-cpu)
 
 # https://stackoverflow.com/q/62691279
@@ -547,7 +547,7 @@ def _create_bert_tokenizer(vocab_path, add_bos=False, add_eos=False):
 
   return return_list
 
-def get_pp_custom_bert_tokenize(vocab_path, max_len, add_bos=True, add_eos=True):
+def get_pp_custom_bert_tokenize(vocab_path,  add_bos=True, add_eos=True, context_length=40):
   """Extracts tokens with tensorflow_text.BertTokenizer.
   copied from big_vision. modified to deal with multiple text.
   add eos, bod. put cls at the back.
@@ -556,7 +556,7 @@ def get_pp_custom_bert_tokenize(vocab_path, max_len, add_bos=True, add_eos=True)
     vocab_path: Path to a file containing the vocabulry for the WordPiece
       tokenizer. It's the "vocab.txt" file in the zip file downloaded from
       the original repo https://github.com/google-research/bert
-    max_len: Number of tokens after tokenization.
+    context_length: Number of tokens after tokenization.
     sample_if_multi: Whether the first text should be taken (if set to `False`),
       or whether a random text should be tokenized.
 
@@ -590,7 +590,7 @@ def get_pp_custom_bert_tokenize(vocab_path, max_len, add_bos=True, add_eos=True)
     if add_eos:
         token_ids = tf.concat([token_ids, tf.fill([count, 1], eos_token)], axis=1)
 
-    padded_token_ids, mask = tensorflow_text.pad_model_inputs(token_ids, max_len - 1)
+    padded_token_ids, mask = tensorflow_text.pad_model_inputs(token_ids, context_length - 1)
     # always end with [eos] token
     def func1(): return tf.concat([padded_token_ids[:, :-1], tf.fill([count, 1], eos_token)], axis=1)
     def func2(): return padded_token_ids
