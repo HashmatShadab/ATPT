@@ -170,7 +170,7 @@ def main():
     data_transform = AugMixAugmenter(base_transform, preprocess, n_views=args.batch_size-1,
                                     augmix=len(dset)>1, only_base_image=True)
 
-    batchsize = 8 # Process images one at a time for test-time adaptation
+    batchsize = args.adv_bs # Process images one at a time for test-time adaptation
 
     # Create dataset and data loader
     val_dataset = build_dataset(dset, data_transform, args.data, mode=args.dataset_mode)
@@ -256,9 +256,6 @@ def get_adversarial_images(images, targets, attack, paths, index, output_dir, lo
         # Stack tensors and move to GPU
         adv_images = torch.stack(adv_images, dim=0).cuda()
         return adv_images
-
-
-
 
 
 def get_adversarial_image(image, target, attack, path, index, output_dir, logger=None):
@@ -446,6 +443,8 @@ if __name__ == '__main__':
     parser.add_argument('--no_pin_memory', action='store_true',
                         help='Pin memory for data loading')
     parser.add_argument('-b', '--batch-size', default=64, type=int, metavar='N',
+                        help='Mini-batch size for augmentation')
+    parser.add_argument('--adv_bs', default=16, type=int, metavar='N',
                         help='Mini-batch size for augmentation')
     parser.add_argument('-p', '--print-freq', default=200, type=int, metavar='N',
                         help='Print frequency (default: 200)')
