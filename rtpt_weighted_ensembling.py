@@ -85,6 +85,8 @@ def test_time_tuning(model, inputs, optimizer, scaler, args, logger=None):
         logger.debug(f"Starting test-time tuning with {args.tta_steps} steps")
 
     selected_ids = []
+    batch_entropies = []
+
     # Perform test-time adaptation for specified number of steps
     for j in range(args.tta_steps):
         # Forward pass
@@ -96,13 +98,14 @@ def test_time_tuning(model, inputs, optimizer, scaler, args, logger=None):
             output = output[selected_idx]
         else:
             # Select confident samples based on entropy
-            output, selected_idx = select_confident_samples(output, args.selection_p)
+            output, selected_idx, batch_entropy = select_confident_samples(output, args.selection_p)
             if logger:
                 logger.debug(f"Selected {len(selected_idx)}/{inputs.size(0)} samples for adaptation")
 
             # convert selected_idx to list
             selected_idx = selected_idx.tolist()
             selected_ids.append(selected_idx)
+            batch_entropies.append(batch_entropy)
 
         # Calculate loss as average entropy (lower is better)
         if args.tpt_loss == "rtpt":
@@ -123,7 +126,7 @@ def test_time_tuning(model, inputs, optimizer, scaler, args, logger=None):
     if logger:
         logger.debug(f"Completed test-time tuning with final loss: {loss.item():.6f}")
 
-    return selected_ids
+    return selected_ids, batch_entropies
 
 def get_top_sim(sim_matrix, args):
     """
@@ -161,7 +164,9 @@ def select_confident_samples(logits, top):
     batch_entropy = entropy_of_each_sample(logits)
     # Select indices of samples with lowest entropy (highest confidence)
     idx = torch.argsort(batch_entropy, descending=False)[:int(batch_entropy.size()[0] * top)]
-    return logits[idx], idx
+    # return batch_entropy, first detach, get to cpu and then list
+    batch_entropy_cpu = batch_entropy.detach().cpu().tolist()
+    return logits[idx], idx, batch_entropy_cpu
 
 
 def create_log_name(args):
@@ -542,6 +547,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     selected_ids_dic = {}
     weighted_scores = {}
+    batch_entropies_dic = {}
     # Iterate through validation data
     for i, data in enumerate(val_loader):
         # Handle different return formats (with or without path)
@@ -603,8 +609,9 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
         # Perform test-time adaptation
         if args.tta_steps > 0:
-            selected_ids = test_time_tuning(model, images, optimizer, scaler, args, logger)
+            selected_ids, batch_entropies = test_time_tuning(model, images, optimizer, scaler, args, logger)
             selected_ids_dic[i] = selected_ids
+            batch_entropies_dic[i] = batch_entropies
 
 
 
@@ -695,6 +702,12 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         with open(selected_ids_path, 'w') as f:
             json.dump(selected_ids_dic, f, indent=4)
         logger.info(f"Selected IDs saved to {selected_ids_path}")
+
+        # Save batch entropies to a file
+        batch_entropies_path = os.path.join(args.output_dir, args.batch_entropy_name)
+        with open(batch_entropies_path, 'w') as f:
+            json.dump(batch_entropies_dic, f, indent=4)
+        logger.info(f"Batch entropies saved to {batch_entropies_path}")
 
     # Save weighted scores to a file if using weighted ensembling
     if args.ensemble_type == 'weighted_rtpt' and weighted_scores:
@@ -791,6 +804,8 @@ if __name__ == '__main__':
     parser.add_argument('--selected_id_name', type=str, default='selected_topk.json',)
 
     parser.add_argument('--weighted_score_name', type=str, default='weighted_scores.json',)
+    parser.add_argument('--batch_entropy_name', type=str, default='entropies.json',)
+
 
     # Run the main function
     main()
