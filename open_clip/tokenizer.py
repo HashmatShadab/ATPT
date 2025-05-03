@@ -17,7 +17,10 @@ import regex as re
 import torch
 
 import tensorflow as tf
-import tensorflow_text
+try:
+    import tensorflow_text
+except ImportError:
+    pass  # silently ignore if not installed
 tf.config.set_visible_devices([], 'GPU')  # Hands off my GPU! (or pip install tensorflow-cpu)
 
 # https://stackoverflow.com/q/62691279
