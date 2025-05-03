@@ -25,6 +25,7 @@ from .attacks.vnifgsm import VNIFGSM
 from .attacks.spsa import SPSA
 from .attacks.pifgsm import PIFGSM
 from .attacks.pifgsmpp import PIFGSMPP
+from .attacks.pgd_counter_attack import PGDCounter
 
 # L2 attacks
 from .attacks.cw import CW
@@ -59,6 +60,7 @@ __all__ = [
     "BIM",
     "RFGSM",
     "PGD",
+    "PGDCounter",
     "EOTPGD",
     "FFGSM",
     "TPGD",
