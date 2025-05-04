@@ -77,6 +77,11 @@ def main():
     # Create a log name that includes TTA variations
     # Format floating point values and ensure filename is valid
     log_name = f"ADV_Generation_eps_{args.eps}_steps_{args.steps}"
+
+    # Update log name if counter_attack is True
+    if args.counter_attack:
+        log_name = f"{log_name}_counter_attack_eps_{args.counter_attack_eps}_steps_{args.counter_attack_steps}_alpha_{args.counter_attack_alpha}_tau_thres_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_perturbations_{args.counter_attack_weighted_perturbations}"
+
     logger, log_file = setup_logger(log_name, args.output_dir, level=logging.INFO)
     logger.info(print_args(args))
 
@@ -349,9 +354,19 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         if logger:
             logger.info(f"Using PGD attack with epsilon: {args.eps/255:.6f}, alpha: {args.alpha/255:.6f}, steps: {args.steps}")
 
+    if args.counter_attack:
+        # Create counter-attack with specified parameters
+        counter_atk = torchattacks.PGDCounter(model, eps=args.counter_attack_eps/255, alpha=args.counter_attack_alpha/255, steps=args.counter_attack_steps,
+                                              tau_thres=args.counter_attack_tau_thres, beta=args.counter_attack_beta, weighted_perturbation=args.counter_attack_weighted_perturbations)
+        if logger:
+            logger.info(f"Using counter-attack with epsilon: {args.counter_attack_eps:.6f}, alpha: {args.counter_attack_alpha:.6f}, steps: {args.counter_attack_steps}")
+
+
     end = time.time()
     # Create directory for saving adversarial images if needed
     adv_images_dir = os.path.join(args.output_dir, f"adv_images_eps_{args.eps}_alpha_{args.alpha}_steps_{args.steps}")
+
+
     if args.eps > 0.0:
         os.makedirs(adv_images_dir, exist_ok=True)
         if logger:
@@ -359,6 +374,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     adv_correct = 0
     clean_correct = 0
+    adv_correct_counter = 0
     total = 0
     # Iterate through validation data
     for i, data in enumerate(val_loader):
@@ -377,6 +393,14 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         # Get adversarial image (either generate or load from cache)
         adv_images = get_adversarial_images(
             images, target, atk, path, i, adv_images_dir, logger=logger)
+
+        if args.counter_attack:
+            # If using counter-attack, apply it to the generated image
+            adv_images_counter = counter_atk(adv_images, target)
+            adv_images_counter = adv_images_counter.cuda(args.gpu, non_blocking=True)
+
+
+
         # Pass adversarial images to the model
         adv_images = adv_images.cuda(args.gpu, non_blocking=True)
 
@@ -388,6 +412,13 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             _, adv_pred = adv_probs.max(1)
             adv_correct += adv_pred.eq(target).sum().item()
 
+            # If using counter-attack, pass the counter-attacked images to the model
+            if args.counter_attack:
+                adv_logits_counter = model(adv_images_counter)
+                adv_probs_counter = adv_logits_counter.softmax(dim=-1)
+                _, adv_pred_counter = adv_probs_counter.max(1)
+                adv_correct_counter += adv_pred_counter.eq(target).sum().item()
+
             # Clean
             clean_logits = model(images)
             clean_probs = clean_logits.softmax(dim=-1)
@@ -396,19 +427,30 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
 
             total += target.size(0)
-            if logger:
+            if logger and args.counter_attack:
+                logger.info(f"Batch {i+1}/{len(val_loader)}: Clean accuracy {clean_correct / total:.4f} | Adv accuracy: {adv_correct / total:.4f} | Counter-attack accuracy: {adv_correct_counter / total:.4f}")
+            else:
                 logger.info(f"Batch {i+1}/{len(val_loader)}: Clean accuracy {clean_correct / total:.4f} | Adv accuracy: {adv_correct / total:.4f}")
         # Free memory
         del images, target, adv_images, adv_logits, adv_probs, adv_pred, clean_logits, clean_probs, clean_pred
+        if args.counter_attack:
+            del adv_images_counter, adv_logits_counter, adv_probs_counter, adv_pred_counter
         torch.cuda.empty_cache()
         end = time.time()
 
     # Calculate final accuracy
     original_accuracy = clean_correct / total
     adv_accuracy = adv_correct / total
-    if logger:
+    if args.counter_attack:
+        adv_accuracy_counter = adv_correct_counter / total
+    if logger and args.counter_attack:
+        logger.info(f"Final Clean accuracy: {original_accuracy:.4f} | Adversarial accuracy: {adv_accuracy:.4f} | Counter-attack accuracy: {adv_accuracy_counter:.4f}")
+    elif logger and not args.counter_attack:
         logger.info(f"Original accuracy: {original_accuracy:.4f}")
         logger.info(f"Adversarial accuracy: {adv_accuracy:.4f}")
+    else:
+        print(f"Original accuracy: {original_accuracy:.4f}")
+        print(f"Adversarial accuracy: {adv_accuracy:.4f}")
 
 
 
@@ -474,6 +516,16 @@ if __name__ == '__main__':
                         help='Ratio of epsilon to alpha when alpha is not explicitly provided (default: 4.0)')
     parser.add_argument('--steps', type=int, default=7,
                         help='Number of steps for adversarial attack')
+
+    parser.add_argument('--counter_attack', default=True, type=lambda x: (str(x).lower() == 'true') )
+    parser.add_argument('--counter_attack_type', default='pgd', type=str)
+    parser.add_argument('--counter_attack_steps', default=2, type=int)
+    parser.add_argument('--counter_attack_eps', default=4.0, type=float)
+    parser.add_argument('--counter_attack_alpha', default=1.0, type=float)
+    parser.add_argument('--counter_attack_tau_thres', default=0.2, type=float)
+    parser.add_argument('--counter_attack_beta', default=2.0, type=float)
+    parser.add_argument('--counter_attack_weighted_perturbations', default=True, type=lambda x: (str(x).lower() == 'true') )
+
 
     # Test-time adaptation parameters
     parser.add_argument('--lr', '--learning-rate', default=5e-3, type=float, metavar='LR',

@@ -7,6 +7,26 @@ import torch
 from PIL import Image
 import numpy as np
 
+
+def handle_long_windows_path(file_path):
+    """
+    Handles long file paths in Windows by adding the extended path prefix if needed.
+
+    Args:
+        file_path (str): The original file path
+
+    Returns:
+        str: Modified file path with extended path prefix if needed for Windows
+    """
+    if os.name == 'nt' and len(file_path) > 260:
+        # Use the \\?\ prefix to bypass the 260 character limitation
+        if not file_path.startswith('\\\\?\\'):
+            file_path = f"\\\\?\\{os.path.abspath(file_path)}"
+    else:
+        file_path = file_path
+
+    return file_path
+
 def test_time_tuning(model, inputs, optimizer, scaler, args, logger=None):
     """
     Perform test-time tuning of the model using entropy minimization.

@@ -45,7 +45,7 @@ import matplotlib.pyplot as plt
 import torch
 from PIL import Image
 import numpy as np
-from helper_functions import plot_image, print_args, rtpt_entropy_avg, entropy_loss_ttl, entropy_of_each_sample
+from helper_functions import plot_image, print_args, rtpt_entropy_avg, entropy_loss_ttl, entropy_of_each_sample, handle_long_windows_path
 
 
 
@@ -173,55 +173,64 @@ def create_log_name(args):
     """Creates a standardized log name from experiment parameters"""
     # R-TPT hyperparameters for log name
     if args.tta_steps > 0:
-        log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_TPT_loss_{args.tpt_loss}_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
+        if args.counter_attack:
+            log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_counter_attack_eps_{args.counter_attack_eps}_steps_{args.counter_attack_steps}_alpha_{args.counter_attack_alpha}_tau_thres_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_perturbations_{args.counter_attack_weighted_perturbations}_TPT_loss_{args.tpt_loss}_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
+        else:
+            log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_TPT_loss_{args.tpt_loss}_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
     else:
-        log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_no_TPT_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
+        if args.counter_attack:
+            log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_counter_attack_eps_{args.counter_attack_eps}_steps_{args.counter_attack_steps}_alpha_{args.counter_attack_alpha}_tau_thres_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_perturbations_{args.counter_attack_weighted_perturbations}_no_TPT_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
+        else:
+            log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_no_TPT_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
     return log_name
 
 
-def create_filename_name(args):
-    """Creates a standardized log name from experiment parameters"""
-    # R-TPT hyperparameters for log name
-    if args.eps > 0:
+def create_log_dir(args):
+    """Creates a structured log path and filename from experiment parameters"""
 
-        if args.tta_steps > 0:
-            log_name = f"Adv_eps_{args.eps}_{args.steps}_TPT_loss_{args.tpt_loss}_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
-        else:
-            log_name = f"Adv_eps_{args.eps}_{args.steps}_no_TPT_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
-    else:
+    # Root: adversarial or clean
+    data_type = "adversarial" if args.eps > 0 else "clean"
 
-        if args.tta_steps > 0:
-            log_name = f"Clean_TPT_loss_{args.tpt_loss}_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
-        else:
-            log_name = f"Clean_no_TPT_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
-    return log_name
+    # Counter-attack or not
+    counter_attack_part = [f"counter_attack", f"eps_{args.counter_attack_eps}_steps_{args.counter_attack_steps}_alpha_{args.counter_attack_alpha}",
+        f"tau_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_{args.counter_attack_weighted_perturbations}"
+    ] if args.counter_attack else ["no_counter_attack"]
 
-import os
+    # TPT or no-TPT
+    tpt_part = [f"TPT", f"loss_{args.tpt_loss}_lr_{args.lr}_steps_{args.tta_steps}_selection_{args.selection_p}"] if args.tta_steps > 0 else ["no_TPT"]
 
-def create_folder_path(args):
-    """Creates a standardized folder path from experiment parameters"""
-    # Start with base: Adv or Clean
-    if args.eps > 0:
-        base = os.path.join("Adv", f"eps_{args.eps}_steps_{args.steps}")
-    else:
-        base = "Clean"
 
-    # Add TPT or no_TPT block
-    if args.tta_steps > 0:
-        tpt_block = os.path.join(f"TPT_{args.tpt_loss}_lr_{args.lr}_selection_{args.selection_p}",
-                                 f"tta_steps_{args.tta_steps}")
-    else:
-        tpt_block = "no_TPT"
+    # Ensemble details
+    ensemble_part = [f"ensemble_{args.ensemble_type}_topk_{args.top_k}_softmaxtemp_{args.softmax_temp}"]
 
-    # Add ensemble block
-    if args.ensemble_type == "weighted_rtpt":
-        ensemble_block = os.path.join(f"ensemble_{args.ensemble_type}_topk_{args.top_k}_sftemp_{args.softmax_temp}")
-    else:
-        ensemble_block = os.path.join(f"ensemble_{args.ensemble_type}")
+    # Adversarial-specific part (include eps and attack steps if adversarial)
+    if data_type == "adversarial":
+        data_type = f"{data_type}_eps_{args.eps}_steps_{args.steps}" if args.eps > 0 else ""
 
-    # Combine all parts
-    folder_path = os.path.join(base, tpt_block, ensemble_block)
+    # Combine folder structure
+    # Create a list of path parts
+    path_parts = []
+    path_parts.append(data_type)
+    for part in counter_attack_part:
+        path_parts.append(part)
+
+    for part in tpt_part:
+        path_parts.append(part)
+    for part in ensemble_part:
+        path_parts.append(part)
+
+    # Join the parts to create the final folder path
+    folder_path = os.path.join(*path_parts)
+
+    # replace all the "." with "_"
+    folder_path = folder_path.replace(".", "_")
+
+    # convert the file path to be compatible with the file system of windows
+
     return folder_path
+
+
+
 
 
 
@@ -244,8 +253,12 @@ def main():
     # Set up logging
 
     # Create a log name that includes TTA variations
-    log_name = create_log_name(args)
-    logger, log_file = setup_logger(log_name, args.output_dir, level=logging.INFO)
+    log_dir = create_log_dir(args)
+    log_dir = os.path.join(args.output_dir, log_dir)
+    args.log_dir = log_dir
+    # Create log directory if it doesn't exist
+    os.makedirs(args.log_dir, exist_ok=True)
+    logger, log_file = setup_logger("log", args.log_dir, level=logging.INFO)
     logger.info(print_args(args))
 
     # Ensure GPU is available
@@ -371,7 +384,7 @@ def main():
     torch.save(save_log, os.path.join(args.output_dir, 'results_log.pt'))
 
 
-def get_adversarial_image(image, target, attack, path, index, output_dir, logger=None):
+def get_adversarial_image(image, target, attack, path, index, output_dir, logger=None, counter_atk=None):
     """
     Generate or load a cached adversarial image.
 
@@ -410,6 +423,13 @@ def get_adversarial_image(image, target, attack, path, index, output_dir, logger
         """
         ***NOTE: This conversion to PIL causes precision loss, the adversarial image will not be exactly the same as the original tensor.***
         """
+        if counter_atk:
+            # If using counter-attack, apply it to the loaded tensor
+            adv_tensor = counter_atk(adv_tensor.unsqueeze(0), target)
+            if logger:
+                logger.debug(f"Applied counter-attack to loaded adversarial image with shape: {adv_tensor.shape}")
+
+        adv_tensor = adv_tensor.squeeze(0)
         img_adv = transforms.ToPILImage()(adv_tensor)
 
 
@@ -418,6 +438,12 @@ def get_adversarial_image(image, target, attack, path, index, output_dir, logger
         adv_image = attack(image, target)
         if logger:
             logger.debug(f"Generated adversarial image with shape: {adv_image.shape}")
+
+        if counter_atk:
+            # If using counter-attack, apply it to the generated image
+            adv_image = counter_atk(adv_image, target)
+            if logger:
+                logger.debug(f"Applied counter-attack to generated adversarial image with shape: {adv_image.shape}")
 
 
         # Move tensor to CPU before saving
@@ -482,6 +508,7 @@ def plot_average_weights(weighted_scores, output_dir, logger=None, filename='ave
 
     # Save the plot
     plot_path = os.path.join(output_dir, filename)
+    plot_path = handle_long_windows_path(plot_path)
     plt.savefig(plot_path)
     plt.close()
 
@@ -537,6 +564,16 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         if logger:
             logger.info(f"Using PGD attack with epsilon: {args.eps/255:.6f}, alpha: {args.alpha/255:.6f}, steps: {args.steps}")
 
+    if args.counter_attack:
+        # Create counter-attack with specified parameters
+        counter_atk = torchattacks.PGDCounter(model, eps=args.counter_attack_eps / 255,
+                                              alpha=args.counter_attack_alpha / 255, steps=args.counter_attack_steps,
+                                              tau_thres=args.counter_attack_tau_thres, beta=args.counter_attack_beta,
+                                              weighted_perturbation=args.counter_attack_weighted_perturbations)
+        if logger:
+            logger.info(
+                f"Using counter-attack with epsilon: {args.counter_attack_eps:.6f}, alpha: {args.alpha:.6f}, steps: {args.counter_attack_steps}")
+
     end = time.time()
     # Create directory for saving adversarial images if needed
     adv_images_dir = os.path.join(args.output_dir, f"adv_images_eps_{args.eps}_alpha_{args.alpha}_steps_{args.steps}")
@@ -568,7 +605,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
             # Get adversarial image (either generate or load from cache)
             img_adv = get_adversarial_image(
-                image, target, atk, path, i, adv_images_dir, logger=logger
+                image, target, atk, path, i, adv_images_dir, logger=logger,  counter_atk=counter_atk if args.counter_attack else None
             )
 
             # Apply data transformations to adversarial image
@@ -577,6 +614,21 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
             if logger:
                 logger.debug(f"Created {len(images)} augmented views of the adversarial image")
+
+        elif args.counter_attack:
+            image = images[0].cuda(args.gpu, non_blocking=True)
+            if logger and i == 0:
+                logger.debug(f"Original image shape: {image.shape}, target: {target.item()}")
+            # Get adversarial image (either generate or load from cache)
+            img_adv = counter_atk(image, target)
+            # Apply data transformations to adversarial image
+            images = data_transform(img_adv)
+            images = [_.unsqueeze(0) for _ in images]
+            if logger:
+                logger.debug(f"Created {len(images)} augmented views of the adversarial image")
+
+        else:
+            logger.info(f"Evaluating clean images without adversarial attack or counter-attack")
 
         # Process images based on their format
         if isinstance(images, list):
@@ -698,26 +750,34 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
 
         # Save selected IDs to a file
-        selected_ids_path = os.path.join(args.output_dir, args.selected_id_name)
+        selected_ids_path = os.path.join(args.log_dir, args.selected_id_name)
+        selected_ids_path = handle_long_windows_path(selected_ids_path)
+
         with open(selected_ids_path, 'w') as f:
             json.dump(selected_ids_dic, f, indent=4)
         logger.info(f"Selected IDs saved to {selected_ids_path}")
 
         # Save batch entropies to a file
-        batch_entropies_path = os.path.join(args.output_dir, args.batch_entropy_name)
+        batch_entropies_path = os.path.join(args.log_dir, args.batch_entropy_name)
+        # Handle long paths on Windows
+        batch_entropies_path = handle_long_windows_path(batch_entropies_path)
+
         with open(batch_entropies_path, 'w') as f:
             json.dump(batch_entropies_dic, f, indent=4)
         logger.info(f"Batch entropies saved to {batch_entropies_path}")
 
     # Save weighted scores to a file if using weighted ensembling
     if args.ensemble_type == 'weighted_rtpt' and weighted_scores:
-        weighted_scores_path = os.path.join(args.output_dir, f"{create_filename_name(args)}_{args.weighted_score_name}")
+        weighted_scores_path = os.path.join(args.log_dir, f"{args.weighted_score_name}")
+        # Handle long paths on Windows
+        weighted_scores_path = handle_long_windows_path(weighted_scores_path)
+
         with open(weighted_scores_path, 'w') as f:
             json.dump(weighted_scores, f, indent=4)
         logger.info(f"Weighted scores saved to {weighted_scores_path}")
 
         # Create and save a plot of average weights for each view
-        plot_average_weights(weighted_scores, args.output_dir, logger, filename=f"{create_filename_name(args)}_{args.weighted_score_name[:-5]}_plot.png")
+        plot_average_weights(weighted_scores, args.log_dir, logger, filename=f"{args.weighted_score_name[:-5]}_plot.png")
 
 
     # Return original and test-time adapted accuracies
@@ -782,6 +842,16 @@ if __name__ == '__main__':
                         help='Ratio of epsilon to alpha when alpha is not explicitly provided (default: 4.0)')
     parser.add_argument('--steps', type=int, default=0,
                         help='Number of steps for adversarial attack')
+
+    parser.add_argument('--counter_attack', default=True, type=lambda x: (str(x).lower() == 'true'))
+    parser.add_argument('--counter_attack_type', default='pgd', type=str)
+    parser.add_argument('--counter_attack_steps', default=2, type=int)
+    parser.add_argument('--counter_attack_eps', default=4.0, type=float)
+    parser.add_argument('--counter_attack_alpha', default=1.0, type=float)
+    parser.add_argument('--counter_attack_tau_thres', default=0.2, type=float)
+    parser.add_argument('--counter_attack_beta', default=2.0, type=float)
+    parser.add_argument('--counter_attack_weighted_perturbations', default=True, type=lambda x: (str(x).lower() == 'true') )
+
 
     # Test-time adaptation parameters
     parser.add_argument('--lr', '--learning-rate', default=5e-3, type=float, metavar='LR',
