@@ -189,23 +189,26 @@ def create_log_dir(args):
     """Creates a structured log path and filename from experiment parameters"""
 
     # Root: adversarial or clean
-    data_type = "adversarial" if args.eps > 0 else "clean"
+    data_type = "Adversarial" if args.eps > 0 else "Clean"
 
     # Counter-attack or not
-    counter_attack_part = [f"counter_attack", f"eps_{args.counter_attack_eps}_steps_{args.counter_attack_steps}_alpha_{args.counter_attack_alpha}",
-        f"tau_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_{args.counter_attack_weighted_perturbations}"
-    ] if args.counter_attack else ["no_counter_attack"]
+    counter_attack_part = [f"Counter_Attack", f"Eps_{args.counter_attack_eps}_Steps_{args.counter_attack_steps}_Alpha_{args.counter_attack_alpha}",
+        f"tau_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_pertrubation_{args.counter_attack_weighted_perturbations}"
+    ] if args.counter_attack else ["No_Counter_Attack"]
 
     # TPT or no-TPT
-    tpt_part = [f"TPT", f"loss_{args.tpt_loss}_lr_{args.lr}_steps_{args.tta_steps}_selection_{args.selection_p}"] if args.tta_steps > 0 else ["no_TPT"]
+    tpt_part = [f"TPT", f"Optimization_Loss_{args.tpt_loss}_LR_{args.lr}_Optimization_Steps_{args.tta_steps}_View_Selection_Fraction_{args.selection_p}"] if args.tta_steps > 0 else ["No_TPT"]
 
 
     # Ensemble details
-    ensemble_part = [f"ensemble_{args.ensemble_type}_topk_{args.top_k}_softmaxtemp_{args.softmax_temp}"]
+    if args.ensemble_type == "weighted_rtpt":
+        ensemble_part = [f"Inference_Ensemble_{args.ensemble_type}_topk_{args.top_k}_softmaxtemp_{args.softmax_temp}"]
+    else:
+        ensemble_part = [f"Inference_Ensemble_{args.ensemble_type}"]
 
     # Adversarial-specific part (include eps and attack steps if adversarial)
-    if data_type == "adversarial":
-        data_type = f"{data_type}_eps_{args.eps}_steps_{args.steps}" if args.eps > 0 else ""
+    if data_type == "Adversarial":
+        data_type = f"{data_type}_Eps_{args.eps}_Steps_{args.steps}" if args.eps > 0 else ""
 
     # Combine folder structure
     # Create a list of path parts
@@ -256,6 +259,7 @@ def main():
     # Create a log name that includes TTA variations
     log_dir = create_log_dir(args)
     log_dir = os.path.join(args.output_dir, log_dir)
+    log_dir = handle_long_windows_path(log_dir)
     args.log_dir = log_dir
     # Create log directory if it doesn't exist
     os.makedirs(args.log_dir, exist_ok=True)
