@@ -375,12 +375,10 @@ def main():
     # Format and save results
     if args.eps <= 0:
         # Clean accuracy (no adversarial attack)
-        log_msg = f"=> Acc. on testset [{dset}]: Clean Acc @1 {results[0]}/ TTA Clean Acc @1 {results[1]}"
-        save_log = {'clean_acc': results[0], 'tta_clean_acc': results[1]}
+        log_msg = f"=> Acc. on testset [{dset}]: Clean Acc @1 {results[0]}/ TTA Clean Acc @1 {results[2]}, Clean Acc @5 {results[1]}/ TTA Clean Acc @5 {results[3]}"
     else:
         # Adversarial accuracy
-        log_msg = f"=> Acc. on testset [{dset}]: Adv Acc @1 {results[0]}/ TTA Adv Acc @1 {results[1]}"
-        save_log = {'adv_acc': results[0], 'tta_adv_acc': results[1]}
+        log_msg = f"=> Acc. on testset [{dset}]: Adv Acc @1 {results[0]}/ TTA Adv Acc @1 {results[2]}, Adv Acc @5 {results[1]}/ TTA Adv Acc @5 {results[3]}"
 
     # Log results
     logger.info(log_msg)
@@ -443,32 +441,34 @@ def get_adversarial_image(image, target, attack, path, index, output_dir, logger
 
     else:
         # Create adversarial image using attack
-        adv_image = attack(image, target)
-        if logger:
-            logger.debug(f"Generated adversarial image with shape: {adv_image.shape}")
-
-        if counter_atk:
-            # If using counter-attack, apply it to the generated image
-            adv_image = counter_atk(adv_image, target)
-            if logger:
-                logger.debug(f"Applied counter-attack to generated adversarial image with shape: {adv_image.shape}")
-
-
-        # Move tensor to CPU before saving
-        adv_tensor = adv_image.squeeze(0).detach().cpu()
-
-        # Save the adversarial tensor
-        torch.save(adv_tensor, adv_img_path)
-
-        if logger:
-            logger.info(f"Saved adversarial image to {adv_img_path}")
-
-        # Convert to PIL for return
-        img_adv = transforms.ToPILImage()(adv_tensor)
-
-        # Free memory for large datasets
-        del adv_image
-        torch.cuda.empty_cache()
+        # adv_image = attack(image, target)
+        # if logger:
+        #     logger.debug(f"Generated adversarial image with shape: {adv_image.shape}")
+        #
+        # if counter_atk:
+        #     # If using counter-attack, apply it to the generated image
+        #     adv_image = counter_atk(adv_image, target)
+        #     if logger:
+        #         logger.debug(f"Applied counter-attack to generated adversarial image with shape: {adv_image.shape}")
+        #
+        #
+        # # Move tensor to CPU before saving
+        # adv_tensor = adv_image.squeeze(0).detach().cpu()
+        #
+        # # Save the adversarial tensor
+        # torch.save(adv_tensor, adv_img_path)
+        #
+        # if logger:
+        #     logger.info(f"Saved adversarial image to {adv_img_path}")
+        #
+        # # Convert to PIL for return
+        # img_adv = transforms.ToPILImage()(adv_tensor)
+        #
+        # # Free memory for large datasets
+        # del adv_image
+        # torch.cuda.empty_cache()
+        ## raise an error if Adversarial image is not already generated
+        raise FileNotFoundError(f"Adversarial image not found at {adv_img_path}. Please generate it first.")
 
 
     return img_adv
@@ -548,8 +548,9 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     # Initialize metrics tracking
     batch_time = AverageMeter('Time', ':6.3f', Summary.NONE)
     top1 = AverageMeter('Acc@1', ':6.2f', Summary.AVERAGE)  # Original model accuracy
-    tpt1 = AverageMeter('TTAAcc@1', ':6.2f', Summary.AVERAGE)  # Test-time adapted accuracy
     top5 = AverageMeter('Acc@5', ':6.2f', Summary.AVERAGE)
+    tpt1 = AverageMeter('TTAAcc@1', ':6.2f', Summary.AVERAGE)  # Test-time adapted accuracy
+    tpt5 = AverageMeter('TTAcc@5', ':6.2f', Summary.AVERAGE)
 
     # Progress display
     progress = ProgressMeter(
@@ -570,7 +571,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         # Create PGD attack with specified parameters
         atk = torchattacks.PGD(model, eps=args.eps/255, alpha=args.alpha/255, steps=args.steps)
         if logger:
-            logger.info(f"Using PGD attack with epsilon: {args.eps/255:.6f}, alpha: {args.alpha/255:.6f}, steps: {args.steps}")
+            logger.info(f"Using PGD attack with epsilon: {args.eps}, alpha: {args.alpha}, steps: {args.steps}")
 
     if args.counter_attack:
         # Create counter-attack with specified parameters
@@ -580,7 +581,8 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                                               weighted_perturbation=args.counter_attack_weighted_perturbations)
         if logger:
             logger.info(
-                f"Using counter-attack with epsilon: {args.counter_attack_eps:.6f}, alpha: {args.alpha:.6f}, steps: {args.counter_attack_steps}")
+                f"Using counter-attack with epsilon: {args.counter_attack_eps:.6f}, alpha: {args.alpha:.6f}, steps: {args.counter_attack_steps}, "
+                f"tau_thres: {args.counter_attack_tau_thres}, beta: {args.counter_attack_beta}, weighted perturbation: {args.counter_attack_weighted_perturbations}")
 
     end = time.time()
     # Create directory for saving adversarial images if needed
@@ -629,6 +631,8 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                 logger.debug(f"Original image shape: {image.shape}, target: {target.item()}")
             # Get adversarial image (either generate or load from cache)
             img_adv = counter_atk(image, target)
+            img_adv = img_adv.squeeze(0)
+            img_adv = transforms.ToPILImage()(img_adv)
             # Apply data transformations to adversarial image
             images = data_transform(img_adv)
             images = [_.unsqueeze(0) for _ in images]
@@ -705,17 +709,19 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
         # Measure accuracy
         acc1, acc5 = accuracy(clip_output, target, topk=(1, 5))  # Original model accuracy
-        tpt_acc1, _ = accuracy(tta_output, target, topk=(1, 5))  # Test-time adapted accuracy
+        tpt_acc1, tpt_acc5 = accuracy(tta_output, target, topk=(1, 5))  # Test-time adapted accuracy
 
         # Update accuracy metrics
         top1.update(acc1[0], images.size(0))
         tpt1.update(tpt_acc1[0], images.size(0))
+        top5.update(acc5[0], images.size(0))
+        tpt5.update(tpt_acc5[0], images.size(0))
 
         if logger and (i < 5 or i % 20 == 0):  # Log detailed info for first few samples and periodically
             if args.eps <= 0:
-                logger.debug(f"Sample {i+1}: Original accuracy: {acc1[0].item():.2f}, TTA accuracy: {tpt_acc1[0].item():.2f}")
+                logger.debug(f"Sample {i+1}: Original Model  Acc@1: {acc1[0].item():.2f}, Acc@5: {acc5[0].item():.2f}, TTA Acc@1: {tpt_acc1[0].item():.2f}, Acc@5: {tpt_acc5[0].item():.2f}")
             else:
-                logger.debug(f"Sample {i+1}: Adversarial accuracy: {acc1[0].item():.2f}, TTA adversarial accuracy: {tpt_acc1[0].item():.2f}")
+                logger.debug(f"Sample {i+1}: Original Model Adversarial Acc@1: {acc1[0].item():.2f}, Acc@5: {acc5[0].item():.2f} TTA adversarial Acc@1: {tpt_acc1[0].item():.2f}, Acc@5: {tpt_acc5[0].item():.2f}")
 
         # Measure elapsed time
         batch_time.update(time.time() - end)
@@ -726,8 +732,9 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             if logger:
                 if args.eps <= 0:
                     logger.info(f'iter:{i+1}/{len(val_loader)}, clip_acc1={top1.avg}, tta_acc1={tpt1.avg}')
+                    logger.info(f'iter:{i+1}/{len(val_loader)}, Original Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}')
                 else:
-                    logger.info(f'iter:{i+1}/{len(val_loader)}, clip_adv1={top1.avg}, tta_adv1={tpt1.avg}')
+                    logger.info(f'iter:{i+1}/{len(val_loader)}, Original Adv Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Adv Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}')
             progress.display(i)
 
     # Display final summary
@@ -735,11 +742,11 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     if logger:
         if args.eps <= 0:
-            logger.info(f"Final results - Original accuracy: {top1.avg:.2f}, TTA accuracy: {tpt1.avg:.2f}")
-            logger.info(f"Improvement from TTA: {tpt1.avg - top1.avg:.2f}")
+            logger.info(f"Final results - Original Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}")
+            logger.info(f"Improvement from TTA in Acc@1 {tpt1.avg - top1.avg:.2f}, and Acc@5 {tpt5.avg - top5.avg:.2f}")
         else:
-            logger.info(f"Final results - Adversarial accuracy: {top1.avg:.2f}, TTA adversarial accuracy: {tpt1.avg:.2f}")
-            logger.info(f"Improvement from TTA: {tpt1.avg - top1.avg:.2f}")
+            logger.info(f"Final results - Adversarial Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Adversarial Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}")
+            logger.info(f"Improvement from TTA in Adversarial Acc@1 {tpt1.avg - top1.avg:.2f}, and Acc@5 {tpt5.avg - top5.avg:.2f}")
 
     if args.tta_steps > 0:
 
@@ -753,9 +760,6 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         logger.info(f"Number of selected samples with index 0: {count}")
         # log number of samples in the dataset, which is equal to number of keys
         logger.info(f"Number of samples in the dataset: {len(selected_ids_dic)}")
-
-
-
 
         # Save selected IDs to a file
         selected_ids_path = os.path.join(args.log_dir, args.selected_id_name)
@@ -789,7 +793,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
 
     # Return original and test-time adapted accuracies
-    return [top1.avg, tpt1.avg]
+    return [top1.avg, top5.avg, tpt1.avg, tpt5.avg]
 
 
 if __name__ == '__main__':
