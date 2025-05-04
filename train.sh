@@ -28,6 +28,16 @@ TPT_LOSS=${11:-"rtpt"}
 ENSEMBLE_TYPE=${12:-"weighted_rtpt"}
 
 OUTPUT_DIR=${13:-"output_results"}
+COUNTER_ATTACK=${14:-"false"}
+COUNTER_ATTACK_TYPE=${15:-"pgd"}
+COUNTER_ATTACK_STEPS=${16:-2}
+COUNTER_ATTACK_EPSILON=${17:-4.0}
+COUNTER_ATTACK_ALPHA=${18:-1.0}
+COUNTER_ATTACK_TAU_THRES=${19:-0.2}
+COUNTER_ATTACK_BETA=${20:-2.0}
+COUNTER_ATTACK_W_PERTURBATION=${21:-"true"}
+
+
 
 
 # bash train.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 rtpt weighted_rtpt "F:\Code\datasets\atpt_results"
@@ -57,28 +67,42 @@ OUTPUT_DIR=${13:-"output_results"}
 
 
 # Common parameters for all runs
-COMMON_PARAMS="--gpu $GPU --ctx_init a_photo_of_a --output_dir $OUTPUT_DIR --workers $NUM_WORKERS"
-COMMON_PARAMS+=" --eps $EPSILON --steps $ATTACK_STEPS --tta_steps $TTA_STEPS"
-COMMON_PARAMS+=" --selection_p $FRACTION_CONFIDENT_SAMPLES"
-COMMON_PARAMS+=" --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX"
-COMMON_PARAMS+=" --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING --tpt_loss $TPT_LOSS --ensemble_type $ENSEMBLE_TYPE --print-freq 20"
+COMMON_PARAMS="--gpu $GPU --n_ctx 4 --ctx_init a_photo_of_a --tpt_loss $TPT_LOSS"
+COMMON_PARAMS+=" --output_dir $OUTPUT_DIR  --eps $EPSILON --steps $ATTACK_STEPS"
+COMMON_PARAMS+=" --selection_p $FRACTION_CONFIDENT_SAMPLES --tta_steps $TTA_STEPS"
+COMMON_PARAMS+=" --ensemble_type $ENSEMBLE_TYPE --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING"
+COMMON_PARAMS+=" --counter_attack $COUNTER_ATTACK --counter_attack_type $COUNTER_ATTACK_TYPE --counter_attack_steps $COUNTER_ATTACK_STEPS --counter_attack_eps $COUNTER_ATTACK_EPSILON"
+COMMON_PARAMS+=" --counter_attack_alpha $COUNTER_ATTACK_ALPHA --counter_attack_tau_thres $COUNTER_ATTACK_TAU_THRES --counter_attack_beta $COUNTER_ATTACK_BETA --counter_attack_weighted_perturbations $COUNTER_ATTACK_W_PERTURBATION"
 
 # Model parameters
-MODEL="-a $MODEL_NAME -b 64"
+MODEL="-a $MODEL_NAME -b 64 --workers $NUM_WORKERS --print-freq 20"
 
 # Display configuration
+# Display configuration
 echo "=== Configuration ==="
-echo "Data Root: $DATA_ROOT"
 echo "GPU: $GPU"
-echo "Workers: $NUM_WORKERS"
-echo "Epsilon: $EPSILON"
-echo "Attack Steps: $ATTACK_STEPS"
-echo "TTA Steps: $TTA_STEPS"
-echo "Fraction Confident Samples: $FRACTION_CONFIDENT_SAMPLES"
-echo "Top K Neighbours: $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX"
-echo "Softmax Temperature: $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING"
 echo "Model: $MODEL_NAME with batch size 64"
+echo "Workers: $NUM_WORKERS"
+echo "Context Init for TPT: a_photo_of_a"
+echo "TPT Loss: $TPT_LOSS"
+echo "Output Dir: $OUTPUT_DIR"
+echo "Epsilon for Adversarial Examples: $EPSILON"
+echo "Attack Steps for Adversarial Examples: $ATTACK_STEPS"
+echo "Fraction Confident Samples to select views with low entropy: $FRACTION_CONFIDENT_SAMPLES"
+echo "TTA Steps: $TTA_STEPS"
+echo "Ensemble Type for inference: $ENSEMBLE_TYPE"
+echo "Top K Neighbours for weighted ensemble: $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX"
+echo "Softmax Temperature for weighted ensemble: $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING"
+echo "Counter Attack: $COUNTER_ATTACK"
+echo "Counter Attack Type: $COUNTER_ATTACK_TYPE"
+echo "Counter Attack Steps: $COUNTER_ATTACK_STEPS"
+echo "Counter Attack Epsilon: $COUNTER_ATTACK_EPSILON"
+echo "Counter Attack Alpha: $COUNTER_ATTACK_ALPHA"
+echo "Counter Attack Tau Threshold: $COUNTER_ATTACK_TAU_THRES"
+echo "Counter Attack Beta: $COUNTER_ATTACK_BETA"
+echo "Counter Attack Weighted Perturbations: $COUNTER_ATTACK_W_PERTURBATION"
 echo "========================"
+
 
 #
 # Section 1: Fine-grained Datasets
