@@ -235,7 +235,8 @@ def create_log_dir(args):
 
 
 def main():
-
+    # Record start time for script execution
+    start_time = time.time()
 
     # Parse arguments and set random seed
     args = parser.parse_args()
@@ -380,8 +381,11 @@ def main():
     # Log results
     logger.info(log_msg)
 
-    # Save results to file
-    torch.save(save_log, os.path.join(args.output_dir, 'results_log.pt'))
+    # Calculate and log total execution time
+    end_time = time.time()
+    execution_time = end_time - start_time
+    logger.info(f"Total script execution time: {execution_time:.2f} seconds ({execution_time/60:.2f} minutes)")
+
 
 
 def get_adversarial_image(image, target, attack, path, index, output_dir, logger=None, counter_atk=None):
@@ -823,9 +827,7 @@ if __name__ == '__main__':
                         help='Initial values for tunable prompts')
     parser.add_argument('--tpt_loss', type=str, default='rtpt', choices=['rtpt', 'tpt'])
     # Add this in the "Test-time adaptation parameters" section
-    parser.add_argument('--ensemble_type', default='weighted_rtpt', type=str,
-                        choices=['none', 'vanilla', 'weighted_rtpt'],
-                        help='Type of ensembling to use (none, vanilla, or weighted)')
+
 
     # Experiment parameters
     parser.add_argument('--seed', type=int, default=0,
@@ -843,6 +845,26 @@ if __name__ == '__main__':
     parser.add_argument('--steps', type=int, default=0,
                         help='Number of steps for adversarial attack')
 
+
+    # Test-time adaptation parameters
+    parser.add_argument('--lr', '--learning-rate', default=5e-3, type=float, metavar='LR',
+                        help='Learning rate for test-time adaptation', dest='lr')
+    parser.add_argument('--selection_p', default=0.1, type=float,
+                        help='Proportion of confident samples to select for adaptation (0.0-1.0)')
+    parser.add_argument('--tta_steps', default=1, type=int,
+                        help='Number of test-time adaptation steps')
+
+    parser.add_argument('--ensemble_type', default='weighted_rtpt', type=str,
+                        choices=['none', 'vanilla', 'weighted_rtpt'],
+                        help='Type of ensembling to use (none, vanilla, or weighted)')
+    parser.add_argument('--top_k', default=20, type=int,
+                        help='Number of neighbors for similarity calculation')
+    parser.add_argument('--softmax_temp', default=0.01, type=float,
+                        help='Temperature parameter for softmax in similarity weighting')
+
+
+
+    # Counter-attack parameters
     parser.add_argument('--counter_attack', default=True, type=lambda x: (str(x).lower() == 'true'))
     parser.add_argument('--counter_attack_type', default='pgd', type=str)
     parser.add_argument('--counter_attack_steps', default=2, type=int)
@@ -853,18 +875,6 @@ if __name__ == '__main__':
     parser.add_argument('--counter_attack_weighted_perturbations', default=True, type=lambda x: (str(x).lower() == 'true') )
 
 
-    # Test-time adaptation parameters
-    parser.add_argument('--lr', '--learning-rate', default=5e-3, type=float, metavar='LR',
-                        help='Learning rate for test-time adaptation', dest='lr')
-    parser.add_argument('--selection_p', default=0.1, type=float,
-                        help='Proportion of confident samples to select for adaptation (0.0-1.0)')
-    parser.add_argument('--tta_steps', default=1, type=int,
-                        help='Number of test-time adaptation steps')
-    parser.add_argument('--top_k', default=20, type=int,
-                        help='Number of neighbors for similarity calculation')
-    parser.add_argument('--softmax_temp', default=0.01, type=float,
-                        help='Temperature parameter for softmax in similarity weighting')
-
     # Pre-trained model parameters
     parser.add_argument('--load_tecoa', type=str, default='',
                         choices=['', 'RN50-eps1', 'ViT-B/32-eps1', 'ViT-B/32-eps4'],
@@ -872,7 +882,6 @@ if __name__ == '__main__':
 
 
     parser.add_argument('--selected_id_name', type=str, default='selected_topk.json',)
-
     parser.add_argument('--weighted_score_name', type=str, default='weighted_scores.json',)
     parser.add_argument('--batch_entropy_name', type=str, default='entropies.json',)
 
