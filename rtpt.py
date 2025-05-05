@@ -60,7 +60,10 @@ openai_model_dict = {
 def create_log_name(args):
     """Creates a standardized log name from experiment parameters"""
     # R-TPT hyperparameters for log name
-    log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_TPT_loss_{args.tpt_loss}_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
+    if args.counter_attack:
+        log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_counter_attack_eps_{args.counter_attack_eps}_steps_{args.counter_attack_steps}_alpha_{args.counter_attack_alpha}_tau_thres_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_perturbations_{args.counter_attack_weighted_perturbations}_TPT_loss_{args.tpt_loss}_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
+    else:
+        log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_TPT_loss_{args.tpt_loss}_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
     return log_name
 
 
@@ -212,7 +215,7 @@ def main():
     torch.save(save_log, os.path.join(args.output_dir, 'results_log.pt'))
 
 
-def get_adversarial_image(image, target, attack, path, index, output_dir, logger=None):
+def get_adversarial_image(image, target, attack, path, index, output_dir, logger=None, counter_atk=None):
     """
     Generate or load a cached adversarial image.
 
@@ -251,6 +254,12 @@ def get_adversarial_image(image, target, attack, path, index, output_dir, logger
         """
         ***NOTE: This conversion to PIL causes precision loss, the adversarial image will not be exactly the same as the original tensor.***
         """
+
+        if counter_atk:
+            # If using counter-attack, apply it to the loaded tensor
+            adv_tensor = counter_atk(adv_tensor, target)
+            if logger:
+                logger.debug(f"Applied counter-attack to loaded adversarial image with shape: {adv_tensor.shape}")
         img_adv = transforms.ToPILImage()(adv_tensor)
 
 
@@ -259,6 +268,12 @@ def get_adversarial_image(image, target, attack, path, index, output_dir, logger
         adv_image = attack(image, target)
         if logger:
             logger.debug(f"Generated adversarial image with shape: {adv_image.shape}")
+
+        if counter_atk:
+            # If using counter-attack, apply it to the generated image
+            adv_image = counter_atk(adv_image, target)
+            if logger:
+                logger.debug(f"Applied counter-attack to generated adversarial image with shape: {adv_image.shape}")
 
 
         # Move tensor to CPU before saving
@@ -327,7 +342,15 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         # Create PGD attack with specified parameters
         atk = torchattacks.PGD(model, eps=args.eps/255, alpha=args.alpha/255, steps=args.steps)
         if logger:
-            logger.info(f"Using PGD attack with epsilon: {args.eps/255:.6f}, alpha: {args.alpha/255:.6f}, steps: {args.steps}")
+            logger.info(f"Using PGD attack with epsilon: {args.eps:.6f}, alpha: {args.alpha:.6f}, steps: {args.steps}")
+
+    if args.counter_attack:
+        # Create counter-attack with specified parameters
+        counter_atk = torchattacks.PGDCounter(model, eps=args.counter_attack_eps/255, alpha=args.counter_attack_alpha/255, steps=args.counter_attack_steps,
+                                              tau_thres=args.counter_attack_tau_thres, beta=args.counter_attack_beta,
+                                              weighted_perturbation=args.counter_attack_weighted_perturbations)
+        if logger:
+            logger.info(f"Using counter-attack with epsilon: {args.counter_attack_eps:.6f}, alpha: {args.alpha:.6f}, steps: {args.counter_attack_steps}")
 
     end = time.time()
     # Create directory for saving adversarial images if needed
@@ -357,7 +380,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
             # Get adversarial image (either generate or load from cache)
             img_adv = get_adversarial_image(
-                image, target, atk, path, i, adv_images_dir, logger=logger
+                image, target, atk, path, i, adv_images_dir, logger=logger, counter_atk=counter_atk if args.counter_attack else None
             )
 
             # Apply data transformations to adversarial image
@@ -366,6 +389,22 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
             if logger:
                 logger.debug(f"Created {len(images)} augmented views of the adversarial image")
+
+        elif args.counter_attack:
+            image = images[0].cuda(args.gpu, non_blocking=True)
+            if logger and i == 0:
+                logger.debug(f"Original image shape: {image.shape}, target: {target.item()}")
+            # Get adversarial image (either generate or load from cache)
+            img_adv = counter_atk(image, target)
+            # Apply data transformations to adversarial image
+            images = data_transform(img_adv)
+            images = [_.unsqueeze(0) for _ in images]
+            if logger:
+                logger.debug(f"Created {len(images)} augmented views of the adversarial image")
+
+        else:
+            logger.info(f"Evaluating clean images without adversarial attack or counter-attack")
+
 
         # Process images based on their format
         if isinstance(images, list):
@@ -390,6 +429,8 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             model.reset()
         optimizer.load_state_dict(optim_state)
 
+
+
         # Get original model outputs and features
         with torch.no_grad():
             clip_output = model(image)  # Output for original image
@@ -397,8 +438,8 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             # clip_outputs = model(images)  # Outputs for all images
 
         # Perform test-time adaptation
-        assert args.tta_steps > 0
-        test_time_tuning(model, images, optimizer, scaler, args, logger)
+        if args.tta_steps > 0:
+            test_time_tuning(model, images, optimizer, scaler, args, logger)
 
         # Get outputs after test-time adaptation
         with torch.no_grad():
@@ -524,6 +565,17 @@ if __name__ == '__main__':
                         help='Ratio of epsilon to alpha when alpha is not explicitly provided (default: 4.0)')
     parser.add_argument('--steps', type=int, default=0,
                         help='Number of steps for adversarial attack')
+
+    parser.add_argument('--counter_attack', default=True, type=lambda x: (str(x).lower() == 'true') )
+    parser.add_argument('--counter_attack_type', default='pgd', type=str)
+    parser.add_argument('--counter_attack_steps', default=2, type=int)
+    parser.add_argument('--counter_attack_eps', default=4.0, type=float)
+    parser.add_argument('--counter_attack_alpha', default=1.0, type=float)
+    parser.add_argument('--counter_attack_tau_thres', default=0.2, type=float)
+    parser.add_argument('--counter_attack_beta', default=2.0, type=float)
+    parser.add_argument('--counter_attack_weighted_perturbations', default=True, type=lambda x: (str(x).lower() == 'true') )
+
+
 
     # Test-time adaptation parameters
     parser.add_argument('--lr', '--learning-rate', default=5e-3, type=float, metavar='LR', 

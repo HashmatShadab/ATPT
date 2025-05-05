@@ -76,7 +76,11 @@ class Attack(object):
     def get_logits(self, inputs, labels=None, *args, **kwargs):
         if self._normalization_applied is False:
             inputs = self.normalize(inputs)
-        logits = self.model(inputs)
+        get_image_features = kwargs.get("get_image_features", False)
+        if not get_image_features:
+            logits = self.model(inputs)
+        else:
+            logits = self.model(inputs, get_image_features=True)
         return logits
 
     @wrapper_method

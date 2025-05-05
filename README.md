@@ -45,4 +45,10 @@ pip install huggingface_hub
 pip install tensorflow-cpu
 
 pip install tensorflow-text
+pip install einops
+pip install pycountry==24.6.1
+pip install packaging==24.2
+pip install gdown==5.2.0
+pip install git+https://github.com/fra31/auto-attack
+
 ```
