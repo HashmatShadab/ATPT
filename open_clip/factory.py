@@ -536,7 +536,10 @@ def create_model_and_transforms(
         is_train=False,
     )
 
-    return model, preprocess_train, preprocess_val
+    embed_dim = model.state_dict()["text_projection"].shape[1]
+
+
+    return model, embed_dim, preprocess_val,
 
 
 def create_model_from_pretrained(
