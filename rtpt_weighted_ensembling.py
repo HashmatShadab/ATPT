@@ -29,6 +29,7 @@ except ImportError:
     BICUBIC = Image.BICUBIC
 
 from open_clip.custom_openai_clip import get_coop as get_coop_openai
+from open_clip.custom_openai_clip import get_reward_model
 from clip.custom_clip import get_coop
 from data.imagnet_prompts import imagenet_classes
 from data.imagenet_variants import imagenet_a_mask, imagenet_r_mask, imagenet_v_mask
@@ -46,6 +47,7 @@ import torch
 from PIL import Image
 import numpy as np
 from helper_functions import plot_image, print_args, rtpt_entropy_avg, entropy_loss_ttl, entropy_of_each_sample, handle_long_windows_path
+import torch.nn.functional as F
 
 
 
@@ -112,6 +114,96 @@ def test_time_tuning(model, inputs, optimizer, scaler, args, logger=None):
             loss = rtpt_entropy_avg(output)
         elif args.tpt_loss == "tpt":
             loss = entropy_loss_ttl(output)
+        else:
+            raise ValueError(f"Unknown loss type: {args.loss_type}")
+
+        if logger and (j == 0 or j == args.tta_steps - 1 or j % 5 == 0):
+            logger.debug(f"Step {j+1}/{args.tta_steps}, Loss: {loss.item():.6f}")
+
+        # Update model parameters
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+    if logger:
+        logger.debug(f"Completed test-time tuning with final loss: {loss.item():.6f}")
+
+    return selected_ids, batch_entropies
+
+
+def test_time_tuning_reward(model, inputs, optimizer, scaler, args, logger=None, reward_model=None):
+    """
+    Perform test-time tuning of the model using entropy minimization.
+
+    This function adapts the model at test time by minimizing the entropy of predictions
+    on the input batch. It selects confident samples based on their entropy and uses
+    them for adaptation.
+
+    Args:
+        model (torch.nn.Module): The model to be tuned.
+        inputs (torch.Tensor): Input tensor of shape [batch_size, channels, height, width].
+        optimizer (torch.optim.Optimizer): Optimizer for updating model parameters.
+        scaler (torch.cuda.amp.GradScaler, optional): Gradient scaler for mixed precision training.
+        args (argparse.Namespace): Arguments containing tuning parameters.
+        logger (logging.Logger, optional): Logger for logging information.
+
+    Returns:
+        None
+    """
+    # Track indices of confident samples
+    selected_idx = None
+    sample_k = args.reward_sample_k
+
+    if logger:
+        logger.debug(f"Starting test-time tuning with {args.tta_steps} steps")
+
+    selected_ids = []
+    batch_entropies = []
+
+    # Perform test-time adaptation for specified number of steps
+    for j in range(args.tta_steps):
+        # Forward pass
+        output = model(inputs)
+
+        # Use only confident samples for adaptation
+        if selected_idx is not None:
+            # Use previously selected confident samples
+            output = output[selected_idx]
+        else:
+            # Select confident samples based on entropy
+            output, selected_idx, batch_entropy = select_confident_samples(output, args.selection_p)
+            reward_model.set_image_features(inputs[selected_idx])
+            if logger:
+                logger.debug(f"Selected {len(selected_idx)}/{inputs.size(0)} samples for adaptation")
+
+            # convert selected_idx to list
+            selected_idx = selected_idx.tolist()
+            selected_ids.append(selected_idx)
+            batch_entropies.append(batch_entropy)
+
+        batch_size =  output.shape[0]
+
+        # top-k sample results
+        value, index = torch.topk(output, sample_k, dim=1)
+        flatten_index = index.flatten()
+        # reward calculation
+        clip_score = reward_model.CLIPScore(class_index=flatten_index, pairwise=False)
+        rewards = reward_model.rewards_post_process(
+            clip_score if reward_model.process_batch else clip_score.reshape(batch_size, -1))
+
+        rep_output = torch.repeat_interleave(output, sample_k, dim=0)
+        all_loss = F.cross_entropy(rep_output, flatten_index, reduction='none')
+        loss = torch.mean(rewards * all_loss)
+
+
+        # Calculate loss as average entropy (lower is better)
+        if args.tpt_loss == "rtpt":
+            loss = loss + args.min_entropy_w * rtpt_entropy_avg(output)
+        elif args.tpt_loss == "tpt":
+            loss = loss + args.min_entropy_w * entropy_loss_ttl(output)
+        elif args.tpt_loss == "none" or args.tpt_loss == "None":
+            loss = loss
+
         else:
             raise ValueError(f"Unknown loss type: {args.loss_type}")
 
@@ -336,6 +428,12 @@ def main():
     optimizer = torch.optim.AdamW(trainable_param, args.lr)
     optim_state = deepcopy(optimizer.state_dict())
 
+
+
+    if args.reward_distillation:
+        reward_model = get_reward_model(args.gpu, args)
+        reward_model.set_class_features()
+
     # Set up additional training parameters
     scaler = None  # No mixed precision scaling used
     cudnn.benchmark = not args.no_cudnn_benchmark  # Enable cudnn benchmarking for faster training unless disabled, default is True
@@ -367,7 +465,10 @@ def main():
     logger.info(f"Evaluating dataset: {dset}")
 
     # Run evaluation with test-time adaptation
-    results = test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger)
+    if args.reward_distillation:
+        results = test_time_adapt_eval_reward(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger, reward_model=reward_model)
+    else:
+        results = test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger)
 
     # Clean up to free memory
     del val_dataset, val_loader
@@ -796,6 +897,281 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     return [top1.avg, top5.avg, tpt1.avg, tpt5.avg]
 
 
+def test_time_adapt_eval_reward(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger=None, reward_model=None):
+    """
+    Evaluate model performance with test-time adaptation.
+
+    This function evaluates the model on a validation dataset, applying test-time adaptation
+    to improve performance. It can also evaluate robustness against adversarial attacks
+    if specified in the arguments.
+
+    Args:
+        val_loader (torch.utils.data.DataLoader): Validation data loader.
+        model (torch.nn.Module): The model to evaluate.
+        model_state (dict, optional): Model state dictionary for resetting.
+        optimizer (torch.optim.Optimizer): Optimizer for test-time tuning.
+        optim_state (dict): Optimizer state dictionary for resetting.
+        scaler (torch.cuda.amp.GradScaler, optional): Gradient scaler for mixed precision.
+        args (argparse.Namespace): Arguments containing evaluation parameters.
+        data_transform (callable): Data transformation function.
+
+    Returns:
+        list: [original_accuracy, test_time_adapted_accuracy]
+    """
+    # Initialize metrics tracking
+    batch_time = AverageMeter('Time', ':6.3f', Summary.NONE)
+    top1 = AverageMeter('Acc@1', ':6.2f', Summary.AVERAGE)  # Original model accuracy
+    top5 = AverageMeter('Acc@5', ':6.2f', Summary.AVERAGE)
+    tpt1 = AverageMeter('TTAAcc@1', ':6.2f', Summary.AVERAGE)  # Test-time adapted accuracy
+    tpt5 = AverageMeter('TTAcc@5', ':6.2f', Summary.AVERAGE)
+
+    # Progress display
+    progress = ProgressMeter(
+        len(val_loader),
+        [batch_time, top1, tpt1],
+        prefix='Test: ')
+
+    # Set model to evaluation mode
+    model.eval()
+
+    # with torch.no_grad():
+    #     model.reset()
+
+    if logger:
+        logger.info(f"Starting evaluation with batch size: {args.batch_size}, selection percentage: {args.selection_p}")
+        logger.info(f"Test-time adaptation steps: {args.tta_steps}, learning rate: {args.lr}")
+
+    # Initialize adversarial attack if specified
+    if args.eps > 0.0:
+        assert args.steps > 0
+        # Create PGD attack with specified parameters
+        atk = torchattacks.PGD(model, eps=args.eps/255, alpha=args.alpha/255, steps=args.steps)
+        if logger:
+            logger.info(f"Using PGD attack with epsilon: {args.eps}, alpha: {args.alpha}, steps: {args.steps}")
+
+    if args.counter_attack:
+        # Create counter-attack with specified parameters
+        counter_atk = torchattacks.PGDCounter(model, eps=args.counter_attack_eps / 255,
+                                              alpha=args.counter_attack_alpha / 255, steps=args.counter_attack_steps,
+                                              tau_thres=args.counter_attack_tau_thres, beta=args.counter_attack_beta,
+                                              weighted_perturbation=args.counter_attack_weighted_perturbations)
+        if logger:
+            logger.info(
+                f"Using counter-attack with epsilon: {args.counter_attack_eps:.6f}, alpha: {args.alpha:.6f}, steps: {args.counter_attack_steps}, "
+                f"tau_thres: {args.counter_attack_tau_thres}, beta: {args.counter_attack_beta}, weighted perturbation: {args.counter_attack_weighted_perturbations}")
+
+    end = time.time()
+    # Create directory for saving adversarial images if needed
+    adv_images_dir = os.path.join(args.output_dir, f"adv_images_eps_{args.eps}_alpha_{args.alpha}_steps_{args.steps}")
+    if args.eps > 0.0:
+        os.makedirs(adv_images_dir, exist_ok=True)
+        if logger:
+            logger.info(f"Using directory for adversarial images: {adv_images_dir}")
+
+    selected_ids_dic = {}
+    weighted_scores = {}
+    batch_entropies_dic = {}
+    # Iterate through validation data
+    for i, data in enumerate(val_loader):
+        # Handle different return formats (with or without path)
+        if len(data) == 3:
+            images, target, path = data
+        else:
+            images, target = data
+            path = None
+
+        assert args.gpu is not None
+        target = target.cuda(args.gpu, non_blocking=True)
+
+        # Generate adversarial examples if specified
+        if args.eps > 0.0:
+            image = images[0].cuda(args.gpu, non_blocking=True)
+            if logger and i == 0:
+                logger.debug(f"Original image shape: {image.shape}, target: {target.item()}")
+
+            # Get adversarial image (either generate or load from cache)
+            img_adv = get_adversarial_image(
+                image, target, atk, path, i, adv_images_dir, logger=logger,  counter_atk=counter_atk if args.counter_attack else None
+            )
+
+            # Apply data transformations to adversarial image
+            images = data_transform(img_adv)
+            images = [_.unsqueeze(0) for _ in images]
+
+            if logger:
+                logger.debug(f"Created {len(images)} augmented views of the adversarial image")
+
+        elif args.counter_attack:
+            image = images[0].cuda(args.gpu, non_blocking=True)
+            if logger and i == 0:
+                logger.debug(f"Original image shape: {image.shape}, target: {target.item()}")
+            # Get adversarial image (either generate or load from cache)
+            img_adv = counter_atk(image, target)
+            img_adv = img_adv.squeeze(0)
+            img_adv = transforms.ToPILImage()(img_adv)
+            # Apply data transformations to adversarial image
+            images = data_transform(img_adv)
+            images = [_.unsqueeze(0) for _ in images]
+            if logger:
+                logger.debug(f"Created {len(images)} augmented views of the adversarial image")
+
+        else:
+            logger.info(f"Evaluating clean images without adversarial attack or counter-attack")
+
+        # Process images based on their format
+        if isinstance(images, list):
+            # Handle list of tensors (augmented views)
+            for k in range(len(images)):
+                images[k] = images[k].cuda(args.gpu, non_blocking=True)
+            image = images[0]  # Original image is the first one
+        else:
+            # Handle single tensor
+            if len(images.size()) > 4:
+                # When using ImageNet Sampler as the dataset
+                assert images.size()[0] == 1
+                images = images.squeeze(0)
+            images = images.cuda(args.gpu, non_blocking=True)
+            image = images
+
+        # Concatenate all images (original and augmented views)
+        images = torch.cat(images, dim=0)
+
+        # Reset model to initial state for each batch
+        with torch.no_grad():
+            model.reset()
+        optimizer.load_state_dict(optim_state)
+
+        # Get original model outputs and features
+        with torch.no_grad():
+            clip_output = model(image)  # Output for original image
+            clip_features, _, _ = model.forward_features(images)  # Features for all images
+            # clip_outputs = model(images)  # Outputs for all images
+
+        # Perform test-time adaptation
+        if args.tta_steps > 0:
+            selected_ids, batch_entropies = test_time_tuning_reward(model, images, optimizer, scaler, args, logger, reward_model=reward_model)
+            selected_ids_dic[i] = selected_ids
+            batch_entropies_dic[i] = batch_entropies
+
+
+
+        # Get outputs after test-time adaptation
+        with torch.no_grad():
+            tuned_outputs = model(images)
+
+        # Handle different types of ensembling
+        if args.ensemble_type == 'none':
+            # Use only the first output (no ensembling)
+            tta_output = tuned_outputs[0].unsqueeze(0)
+        elif args.ensemble_type == 'vanilla':
+            # Use the average of all outputs
+            tta_output = torch.mean(tuned_outputs, dim=0).unsqueeze(0)
+        elif args.ensemble_type == 'weighted_rtpt':
+
+            # Calculate similarity matrix between features
+            sim_matrix_images = torch.bmm(clip_features.unsqueeze(0), clip_features.unsqueeze(0).permute(0, 2, 1))
+            # Get top similarity scores
+            score = get_top_sim(sim_matrix_images, args)
+            # Calculate weights based on similarity scores
+            weight = torch.nn.functional.softmax(score/args.softmax_temp, dim=-1) # softmax temperature default is 0.01
+            # Store weights in the weighted_scores dictionary as a list for each sample
+            weighted_scores[i] = weight.detach().cpu().tolist()
+            # Weighted average of tuned outputs
+            tta_output = torch.bmm(weight.unsqueeze(-1).transpose(1, 2), tuned_outputs.unsqueeze(0)).squeeze(1)
+        else:
+            raise ValueError(f"Unknown ensemble type: {args.ensemble_type}")
+
+
+
+        # Measure accuracy
+        acc1, acc5 = accuracy(clip_output, target, topk=(1, 5))  # Original model accuracy
+        tpt_acc1, tpt_acc5 = accuracy(tta_output, target, topk=(1, 5))  # Test-time adapted accuracy
+
+        # Update accuracy metrics
+        top1.update(acc1[0], images.size(0))
+        tpt1.update(tpt_acc1[0], images.size(0))
+        top5.update(acc5[0], images.size(0))
+        tpt5.update(tpt_acc5[0], images.size(0))
+
+        if logger and (i < 5 or i % 20 == 0):  # Log detailed info for first few samples and periodically
+            if args.eps <= 0:
+                logger.debug(f"Sample {i+1}: Original Model  Acc@1: {acc1[0].item():.2f}, Acc@5: {acc5[0].item():.2f}, TTA Acc@1: {tpt_acc1[0].item():.2f}, Acc@5: {tpt_acc5[0].item():.2f}")
+            else:
+                logger.debug(f"Sample {i+1}: Original Model Adversarial Acc@1: {acc1[0].item():.2f}, Acc@5: {acc5[0].item():.2f} TTA adversarial Acc@1: {tpt_acc1[0].item():.2f}, Acc@5: {tpt_acc5[0].item():.2f}")
+
+        # Measure elapsed time
+        batch_time.update(time.time() - end)
+        end = time.time()
+
+        # Log progress
+        if (i+1) % args.print_freq == 0 or (i+1) == len(val_loader):
+            if logger:
+                if args.eps <= 0:
+                    logger.info(f'iter:{i+1}/{len(val_loader)}, clip_acc1={top1.avg}, tta_acc1={tpt1.avg}')
+                    logger.info(f'iter:{i+1}/{len(val_loader)}, Original Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}')
+                else:
+                    logger.info(f'iter:{i+1}/{len(val_loader)}, Original Adv Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Adv Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}')
+            progress.display(i)
+
+    # Display final summary
+    progress.display_summary()
+
+    if logger:
+        if args.eps <= 0:
+            logger.info(f"Final results - Original Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}")
+            logger.info(f"Improvement from TTA in Acc@1 {tpt1.avg - top1.avg:.2f}, and Acc@5 {tpt5.avg - top5.avg:.2f}")
+        else:
+            logger.info(f"Final results - Adversarial Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Adversarial Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}")
+            logger.info(f"Improvement from TTA in Adversarial Acc@1 {tpt1.avg - top1.avg:.2f}, and Acc@5 {tpt5.avg - top5.avg:.2f}")
+
+    if args.tta_steps > 0:
+
+        # Loop through selected IDs and check how many times entry 0 is in the values
+        count = 0
+        for key, values in selected_ids_dic.items():
+            ids = values
+            for value in values:
+                if 0 in value:
+                    count += 1
+        logger.info(f"Number of selected samples with index 0: {count}")
+        # log number of samples in the dataset, which is equal to number of keys
+        logger.info(f"Number of samples in the dataset: {len(selected_ids_dic)}")
+
+        # Save selected IDs to a file
+        selected_ids_path = os.path.join(args.log_dir, args.selected_id_name)
+        selected_ids_path = handle_long_windows_path(selected_ids_path)
+
+        with open(selected_ids_path, 'w') as f:
+            json.dump(selected_ids_dic, f, indent=4)
+        logger.info(f"Selected IDs saved to {selected_ids_path}")
+
+        # Save batch entropies to a file
+        batch_entropies_path = os.path.join(args.log_dir, args.batch_entropy_name)
+        # Handle long paths on Windows
+        batch_entropies_path = handle_long_windows_path(batch_entropies_path)
+
+        with open(batch_entropies_path, 'w') as f:
+            json.dump(batch_entropies_dic, f, indent=4)
+        logger.info(f"Batch entropies saved to {batch_entropies_path}")
+
+    # Save weighted scores to a file if using weighted ensembling
+    if args.ensemble_type == 'weighted_rtpt' and weighted_scores:
+        weighted_scores_path = os.path.join(args.log_dir, f"{args.weighted_score_name}")
+        # Handle long paths on Windows
+        weighted_scores_path = handle_long_windows_path(weighted_scores_path)
+
+        with open(weighted_scores_path, 'w') as f:
+            json.dump(weighted_scores, f, indent=4)
+        logger.info(f"Weighted scores saved to {weighted_scores_path}")
+
+        # Create and save a plot of average weights for each view
+        plot_average_weights(weighted_scores, args.log_dir, logger, filename=f"{args.weighted_score_name[:-5]}_plot.png")
+
+
+    # Return original and test-time adapted accuracies
+    return [top1.avg, top5.avg, tpt1.avg, tpt5.avg]
+
+
 if __name__ == '__main__':
     # Set up command-line argument parser
     parser = argparse.ArgumentParser(description='Test-time Prompt Tuning')
@@ -812,6 +1188,26 @@ if __name__ == '__main__':
                         help='Model architecture (RN50, ViT-B/32, tecoa4, tecoa2, fare2, fare4, delta_clip_l14_224 etc.)')
     parser.add_argument('--resolution', default=224, type=int,
                         help='CLIP image resolution')
+
+    # Reward Model parameters
+    parser.add_argument('--reward_distillation', default=True, type=lambda x: (str(x).lower() == 'true'))
+    parser.add_argument('--reward_arch', default='fare2',
+                        help='Model architecture (fare2, fare4, tecoa2, tecoa4, delta_clip_l14_224 etc.)')
+    parser.add_argument('--reward_clipscore_weight', type=float, default=2.5,
+                        help='Weight for clipscore contribution to reward')
+    parser.add_argument('--reward_amplify', type=float, default=0.0,
+                        help='Amplification factor for rewards')
+    parser.add_argument('--reward_process', type=int, default=1,
+                        help='Reward processing mode')
+    parser.add_argument('--reward_sample_k', type=int, default=3,
+                        help='Number of samples to draw (sample_k) for reward calculation')
+    parser.add_argument('--reward_process_batch', type=int, default=0,
+                        help='Batch processing flag for reward step')
+    parser.add_argument('--reward_weighted_scores', type=int, default=0)
+    parser.add_argument('--multiple_reward_models', type=int, default=0)
+    parser.add_argument('--min_entropy_w', type=float, default=0.1, help='Minimum entropy weight')
+
+
 
     # Hardware and performance parameters
     parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
@@ -833,7 +1229,7 @@ if __name__ == '__main__':
                         help='Number of tunable context tokens')
     parser.add_argument('--ctx_init', default=None, type=str,
                         help='Initial values for tunable prompts')
-    parser.add_argument('--tpt_loss', type=str, default='rtpt', choices=['rtpt', 'tpt'])
+    parser.add_argument('--tpt_loss', type=str, default='rtpt', choices=['rtpt', 'tpt', 'none', 'None'])
     # Add this in the "Test-time adaptation parameters" section
 
 
