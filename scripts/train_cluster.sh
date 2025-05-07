@@ -113,42 +113,48 @@ echo "========================"
 
 if [ "$JOB_ID" -eq 1 ]; then
   echo "Running tests on Fine-grained datasets..."
-  echo "  [1/8] Testing DTD dataset..."
-   python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets DTD $MODEL $COMMON_PARAMS
-  echo "  ✓ DTD dataset testing complete"
 
-  echo "  [2/8] Testing Flower102 dataset..."
-   python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Flower102 $MODEL $COMMON_PARAMS
-  echo "  ✓ Flower102 dataset testing complete"
 
-  echo "  [3/8] Testing Cars dataset..."
+  echo "  [1/8] Testing Caltech101 dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Caltech101 $MODEL $COMMON_PARAMS
+  echo "  ✓ Caltech101 dataset testing complete"
+
+  echo "  [2/8] Testing Cars dataset..."
    python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Cars $MODEL $COMMON_PARAMS
   echo "  ✓ Cars dataset testing complete"
 
 elif [ "$JOB_ID" -eq 2 ]; then
+
   echo "Running tests on Fine-grained datasets..."
-  echo "  [4/8] Testing Aircraft dataset..."
-   python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Aircraft $MODEL $COMMON_PARAMS
+
+  echo "  [3/8] Testing DTD dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets DTD $MODEL $COMMON_PARAMS
+  echo "  ✓ DTD dataset testing complete"
+
+  echo "  [4/8] Testing Flower102 dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Flower102 $MODEL $COMMON_PARAMS
+  echo "  ✓ Flower102 dataset testing complete"
+
+  echo "  [5/8] Testing Aircraft dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Aircraft $MODEL $COMMON_PARAMS
   echo "  ✓ Aircraft dataset testing complete"
 
-  echo "  [5/8] Testing Pets dataset..."
-   python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Pets $MODEL $COMMON_PARAMS
-  echo "  ✓ Pets dataset testing complete"
+  echo "  [6/8] Testing UCF101 dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets UCF101 $MODEL $COMMON_PARAMS
+  echo "  ✓ UCF101 dataset testing complete"
 
-  echo "  [6/8] Testing Caltech101 dataset..."
-   python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Caltech101 $MODEL $COMMON_PARAMS
-  echo "  ✓ Caltech101 dataset testing complete"
 
 elif [ "$JOB_ID" -eq 3 ]; then
   echo "Running tests on Fine-grained datasets..."
-  echo "  [7/8] Testing UCF101 dataset..."
-   python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets UCF101 $MODEL $COMMON_PARAMS
-  echo "  ✓ UCF101 dataset testing complete"
 
-  echo "  [8/8] Testing eurosat dataset..."
-   python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets eurosat $MODEL $COMMON_PARAMS
+
+  echo "  [7/8] Testing eurosat dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets eurosat $MODEL $COMMON_PARAMS
   echo "  ✓ eurosat dataset testing complete"
 
+  echo "  [8/8] Testing Pets dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Pets $MODEL $COMMON_PARAMS
+  echo "  ✓ Pets dataset testing complete"
   echo "Fine-grained datasets testing complete"
 
 elif [ "$JOB_ID" -eq 4 ]; then
