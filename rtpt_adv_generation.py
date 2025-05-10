@@ -486,7 +486,7 @@ if __name__ == '__main__':
                         help='Pin memory for data loading')
     parser.add_argument('-b', '--batch-size', default=64, type=int, metavar='N',
                         help='Mini-batch size for augmentation')
-    parser.add_argument('--adv_bs', default=16, type=int, metavar='N',
+    parser.add_argument('--adv_bs', default=48, type=int, metavar='N',
                         help='Mini-batch size for augmentation')
     parser.add_argument('-p', '--print-freq', default=200, type=int, metavar='N',
                         help='Print frequency (default: 200)')
