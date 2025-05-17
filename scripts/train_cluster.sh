@@ -40,6 +40,7 @@ COUNTER_ATTACK_W_PERTURBATION=${21:-"true"}
 
 ############################################
 JOB_ID=${22:-1}
+DATASET_ID=${23:-"caltech101"}
 
 
 
@@ -184,4 +185,55 @@ elif [ "$JOB_ID" -eq 6 ]; then
   echo "  ✓ ImageNet dataset testing complete"
 
   echo "ImageNet datasets testing complete"
+
+# add logic for job ids being the dataset name
+
+elif [ "$DATASET_ID" = "caltech101"   ]; then
+  echo "Running tests on Fine-grained datasets..."
+  echo "Testing Caltech101 dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Caltech101 $MODEL $COMMON_PARAMS
+  echo "  ✓ Caltech101 dataset testing complete"
+
+elif [ "$DATASET_ID" = "cars" ]; then
+  echo "Running tests on Fine-grained datasets..."
+  echo "Testing Cars dataset..."
+   python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Cars $MODEL $COMMON_PARAMS
+  echo "  ✓ Cars dataset testing complete"
+
+elif [ "$DATASET_ID" = "dtd" ]; then
+  echo "Running tests on Fine-grained datasets..."
+  echo "Testing DTD dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets DTD $MODEL $COMMON_PARAMS
+  echo "  ✓ DTD dataset testing complete"
+
+elif [ "$DATASET_ID" = "flower102" ]; then
+  echo "Running tests on Fine-grained datasets..."
+  echo "Testing Flower102 dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Flower102 $MODEL $COMMON_PARAMS
+  echo "  ✓ Flower102 dataset testing complete"
+
+elif [ "$DATASET_ID" = "aircraft" ]; then
+  echo "Running tests on Fine-grained datasets..."
+  echo "Testing Aircraft dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Aircraft $MODEL $COMMON_PARAMS
+  echo "  ✓ Aircraft dataset testing complete"
+
+elif [ "$DATASET_ID" = "ucf101" ]; then
+  echo "Running tests on Fine-grained datasets..."
+  echo "Testing UCF101 dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets UCF101 $MODEL $COMMON_PARAMS
+  echo "  ✓ UCF101 dataset testing complete"
+
+elif [ "$DATASET_ID" = "eurosat" ]; then
+  echo "Running tests on Fine-grained datasets..."
+  echo "Testing eurosat dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets eurosat $MODEL $COMMON_PARAMS
+  echo "  ✓ eurosat dataset testing complete"
+
+elif [ "$DATASET_ID" = "pets" ]; then
+  echo "Running tests on Fine-grained datasets..."
+  echo "Testing Pets dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Pets $MODEL $COMMON_PARAMS
+  echo "  ✓ Pets dataset testing complete"
+
 fi
