@@ -70,7 +70,7 @@ JOB_ID=${22:-1}
 
 
 # Common parameters for all runs
-COMMON_PARAMS="--gpu $GPU --n_ctx 4 --ctx_init a_photo_of_a --tpt_loss $TPT_LOSS"
+COMMON_PARAMS="--gpu 0 --n_ctx 4 --ctx_init a_photo_of_a --tpt_loss $TPT_LOSS"
 COMMON_PARAMS+=" --output_dir $OUTPUT_DIR  --eps $EPSILON --steps $ATTACK_STEPS"
 COMMON_PARAMS+=" --selection_p $FRACTION_CONFIDENT_SAMPLES --tta_steps $TTA_STEPS"
 COMMON_PARAMS+=" --ensemble_type $ENSEMBLE_TYPE --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING"
