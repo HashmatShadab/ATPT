@@ -392,6 +392,13 @@ class ClipTestTimeTuning(nn.Module):
 
         return logits
 
+    def get_intermediate_features(self, image):
+
+        image_features = self.model.visual.get_all_layer_features(self.normalize(image.type(self.dtype)))
+
+
+        return image_features
+
     def forward(self, input, get_image_features=False):
         if isinstance(input, Tuple):
             view_0, view_1, view_2 = input

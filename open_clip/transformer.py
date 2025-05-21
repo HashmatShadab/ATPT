@@ -837,6 +837,28 @@ class VisionTransformer(nn.Module):
 
         return pooled
 
+    def get_all_layer_features(self, x: torch.Tensor):
+        x = self._embeds(x)
+
+        intermediate_features = []
+        for i, blk in enumerate(self.transformer.resblocks):
+            x = blk(x, attn_mask=None)
+            intermediate_features.append(x)
+
+        pooled, tokens = self._pool(x)
+
+        intermediate_features.append(pooled)
+
+        if self.proj is not None:
+            pooled = pooled @ self.proj
+
+        intermediate_features.append(pooled)
+
+        if self.output_tokens:
+            return pooled, tokens
+
+        return intermediate_features
+
 
 def text_global_pool(
         x: torch.Tensor,
