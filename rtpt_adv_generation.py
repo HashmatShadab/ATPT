@@ -18,6 +18,7 @@ import torch.utils.data
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
 from PIL import Image
+import torch.nn.functional as F
 
 try:
     from torchvision.transforms import InterpolationMode
@@ -44,7 +45,7 @@ import os
 from torchvision import transforms
 
 from helper_functions import print_args
-
+from torch.nn.functional import cosine_similarity
 import torch
 from PIL import Image
 
@@ -369,6 +370,40 @@ def get_adversarial_image(image, target, attack, path, index, output_dir, logger
     return img_adv
 
 
+def purify_zi(img_emb, iter=10, step_size=30., temp_emb_all=None):
+    step_size_u = step_size
+    batch, device = img_emb.shape[0], img_emb.device
+    if not img_emb.requires_grad:
+        img_emb.requires_grad = True  # 确保图像嵌入需要梯度
+
+    text_embed = temp_emb_all.mean(dim=1)
+    text_embed = text_embed.repeat(batch, 1).to(device)
+
+    momentum = torch.zeros_like(img_emb)
+    norm = "L2"
+    gamma = 0.
+    for i in range(iter):
+        r = torch.norm(img_emb, dim=1, keepdim=True)
+        u = img_emb / r
+
+        logits_uncond = cosine_similarity(img_emb, text_embed, dim=1)
+        loss = - logits_uncond
+        grad = torch.autograd.grad(loss, img_emb, torch.ones_like(loss), retain_graph=True)[0]
+
+        grad_u = r * grad
+
+        if norm == "Linf":
+            momentum = gamma * momentum - (1 - gamma) * grad_u / torch.norm(grad_u, p=1)
+            u = u + step_size_u * momentum.sign()
+        elif norm == "L2":
+            momentum = gamma * momentum - (1 - gamma) * grad_u / torch.norm(grad_u, p=2)
+            u = u + step_size_u * momentum
+
+        u = u / torch.norm(u, dim=1, keepdim=True)
+        img_emb = r * u
+
+    return img_emb
+
 def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger=None,  template_text_embeddings=None, class_text_embeddings=None):
     """
     Evaluate model performance with test-time adaptation.
@@ -459,6 +494,8 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     clean_correct = 0
     adv_correct_counter = 0
     total = 0
+    adv_emb_correct = 0
+    purify_emb_correct = 0
     # Iterate through validation data
     for i, data in enumerate(val_loader):
         # Handle different return formats (with or without path)
@@ -510,27 +547,57 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
 
             total += target.size(0)
-            if logger and args.counter_attack:
-                logger.info(f"Batch {i+1}/{len(val_loader)}: Clean accuracy {clean_correct / total:.4f} | Adv accuracy: {adv_correct / total:.4f} | Counter-attack accuracy: {adv_correct_counter / total:.4f}")
-            else:
-                logger.info(f"Batch {i+1}/{len(val_loader)}: Clean accuracy {clean_correct / total:.4f} | Adv accuracy: {adv_correct / total:.4f}")
+
         # Free memory
-        del images, target, adv_images, adv_logits, adv_probs, adv_pred, clean_logits, clean_probs, clean_pred
+        del images, adv_logits, adv_probs, adv_pred, clean_logits, clean_probs, clean_pred
+
         if args.counter_attack:
             del adv_images_counter, adv_logits_counter, adv_probs_counter, adv_pred_counter
+
+        with torch.enable_grad():
+
+            image_embeddings, text_embeddings, logit_scale = model(adv_images, get_image_text_features=True)
+
+            image_embeddings_purify = purify_zi(image_embeddings, 10, 30, template_text_embeddings)
+
+        adv_emb_logits = logit_scale * image_embeddings @ text_embeddings.t()
+        adv_emb_probs = adv_emb_logits.softmax(dim=-1)
+        _, adv_emb_pred = adv_emb_probs.max(1)
+        adv_emb_correct += adv_emb_pred.eq(target).sum().item()
+
+
+        purify_emb_logits = logit_scale * image_embeddings_purify @ text_embeddings.t()
+        purify_emb_probs = purify_emb_logits.softmax(dim=-1)
+        _, purify_emb_pred = purify_emb_probs.max(1)
+        purify_emb_correct += purify_emb_pred.eq(target).sum().item()
+
+        if logger and args.counter_attack:
+            logger.info(
+                f"Batch {i + 1}/{len(val_loader)}: Clean accuracy {clean_correct / total:.4f} | Adv accuracy: {adv_correct / total:.4f} | Counter-attack accuracy: {adv_correct_counter / total:.4f} | Adv Emb accuracy: {adv_emb_correct / total:.4f} | Purify Emb accuracy: {purify_emb_correct / total:.4f}")
+        else:
+            logger.info(
+                f"Batch {i + 1}/{len(val_loader)}: Clean accuracy {clean_correct / total:.4f} | Adv accuracy: {adv_correct / total:.4f} | Adv Emb accuracy: {adv_emb_correct / total:.4f} | Purify Emb accuracy: {purify_emb_correct / total:.4f}")
+
+
+
         torch.cuda.empty_cache()
         end = time.time()
 
     # Calculate final accuracy
     original_accuracy = clean_correct / total
     adv_accuracy = adv_correct / total
+
+    adv_emb_accuracy = adv_emb_correct / total
+    purify_emb_accuracy = purify_emb_correct / total
+
     if args.counter_attack:
         adv_accuracy_counter = adv_correct_counter / total
     if logger and args.counter_attack:
-        logger.info(f"Final Clean accuracy: {original_accuracy:.4f} | Adversarial accuracy: {adv_accuracy:.4f} | Counter-attack accuracy: {adv_accuracy_counter:.4f}")
+        logger.info(f"Final Clean accuracy: {original_accuracy:.4f} | Adversarial accuracy: {adv_accuracy:.4f} | Counter-attack accuracy: {adv_accuracy_counter:.4f} | Adv Emb accuracy: {adv_emb_accuracy:.4f} | Purify Emb accuracy: {purify_emb_accuracy:.4f}")
     elif logger and not args.counter_attack:
         logger.info(f"Original accuracy: {original_accuracy:.4f}")
         logger.info(f"Adversarial accuracy: {adv_accuracy:.4f}")
+        logger.info(f"Adv Emb accuracy: {adv_emb_accuracy:.4f} | Purify Emb accuracy: {purify_emb_accuracy:.4f}")
     else:
         print(f"Original accuracy: {original_accuracy:.4f}")
         print(f"Adversarial accuracy: {adv_accuracy:.4f}")
