@@ -28,6 +28,8 @@ except ImportError:
 
 from open_clip.custom_openai_clip import get_coop as get_coop_openai
 from clip.custom_clip import get_coop
+from open_clip.custom_openai_clip import get_text_embeddings as get_text_embeddings_openai
+from clip.custom_clip import get_text_embeddings as get_text_embeddings
 from data.imagnet_prompts import imagenet_classes
 from data.imagenet_variants import imagenet_a_mask, imagenet_r_mask, imagenet_v_mask
 from data.cls_to_names import flower102_classes, food101_classes, dtd_classes, caltech101_classes, pets_classes, \
@@ -54,6 +56,50 @@ openai_model_dict = {
     "fare4": "hf-hub:chs20/fare4-clip",
     # "RN50": "RN50",
 }
+
+
+import json
+
+def get_zeroshot_templates(dset, template_path='zeroshot-templates.json'):
+    """
+    Load zeroshot templates based on dataset name.
+
+    Args:
+        dset (str): Dataset short name (e.g., 'I', 'cars', 'pets').
+        template_path (str): Path to zeroshot-templates.json file.
+
+    Returns:
+        list of str: List of template strings.
+
+    Raises:
+        ValueError: If dataset name is unknown.
+    """
+    with open(template_path, 'r') as f:
+        templates = json.load(f)
+
+    dset = dset.lower()
+
+    dataset_key_map = {
+        'i': 'imagenet1k',
+        'a': 'imagenet1k',
+        'r': 'imagenet1k',
+        'k': 'imagenet1k',
+        'v': 'imagenet1k',
+        'cars': 'cars',
+        'aircraft': 'fgvc_aircraft',
+        'pets': 'pets',
+        'dtd': 'dtd',
+        'caltech101': 'caltech101',
+        'flowers102': 'flowers',
+        'eurosat': 'eurosat',
+        'ucf101': 'dummy',
+    }
+
+    if dset not in dataset_key_map:
+        raise ValueError(f"Unknown dataset: {dset}")
+
+    key = dataset_key_map[dset]
+    return templates[key]
 
 
 def main():
@@ -117,12 +163,18 @@ def main():
             classnames = classnames_all
     args.classnames = classnames
 
+    class_templates = get_zeroshot_templates(dset)
+
     # Initialize model with CoOp (Context Optimization)
     if args.arch in openai_model_dict:
         actual_model_name = openai_model_dict[args.arch]
         model = get_coop_openai(actual_model_name, classnames, args.gpu, args.n_ctx, args.ctx_init)
+        class_text_embeddings, template_text_embeddings = get_text_embeddings_openai(actual_model_name, classnames, class_templates, args.gpu)
+
     else:
         model = get_coop(args.arch, classnames, args.gpu, args.n_ctx, args.ctx_init)
+        class_text_embeddings, template_text_embeddings = get_text_embeddings(args.arch, classnames, class_templates, args.gpu)
+
 
     model_state = None
 
@@ -186,7 +238,7 @@ def main():
     logger.info(f"Evaluating dataset: {dset}")
 
     # Run evaluation with test-time adaptation
-    test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger)
+    test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger, template_text_embeddings, class_text_embeddings)
 
     logger.info(f"Adversarial image generation completed. Results")
 
@@ -317,7 +369,7 @@ def get_adversarial_image(image, target, attack, path, index, output_dir, logger
     return img_adv
 
 
-def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger=None):
+def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger=None,  template_text_embeddings=None, class_text_embeddings=None):
     """
     Evaluate model performance with test-time adaptation.
 
@@ -356,8 +408,39 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     if args.counter_attack:
         # Create counter-attack with specified parameters
-        counter_atk = torchattacks.PGDCounter(model, eps=args.counter_attack_eps/255, alpha=args.counter_attack_alpha/255, steps=args.counter_attack_steps,
-                                              tau_thres=args.counter_attack_tau_thres, beta=args.counter_attack_beta, weighted_perturbation=args.counter_attack_weighted_perturbations)
+        if args.counter_attack_type == "pgd":
+            counter_atk = torchattacks.PGDCounter(model, eps=args.counter_attack_eps / 255,
+                                                  alpha=args.counter_attack_alpha / 255,
+                                                  steps=args.counter_attack_steps,
+                                                  tau_thres=args.counter_attack_tau_thres,
+                                                  beta=args.counter_attack_beta,
+                                                  weighted_perturbation=args.counter_attack_weighted_perturbations)
+        elif args.counter_attack_type == "pgd_clip_pure_i":
+            if args.pgd_clip_pure_i_text_embeddings == "null":
+                embeddings = template_text_embeddings
+            elif args.pgd_clip_pure_i_text_embeddings == "class":
+                embeddings = class_text_embeddings
+            else:
+                raise ValueError(f"Unknown text embedding type: {args.pgd_clip_pure_i_text_embeddings}")
+            counter_atk = torchattacks.PGDClipPureImage(model, eps=args.counter_attack_eps / 255,
+                                                        alpha=args.counter_attack_alpha / 255,
+                                                        steps=args.counter_attack_steps, text_embeddings=embeddings
+                                                        )
+        elif args.counter_attack_type == "pgd_counter_and_clipure_i":
+            if args.pgd_clip_pure_i_text_embeddings == "null":
+                embeddings = template_text_embeddings
+            elif args.pgd_clip_pure_i_text_embeddings == "class":
+                embeddings = class_text_embeddings
+            else:
+                raise ValueError(f"Unknown text embedding type: {args.pgd_clip_pure_i_text_embeddings}")
+            counter_atk = torchattacks.PGDCounterClipPureImage(model, eps=args.counter_attack_eps / 255,
+                                                               alpha=args.counter_attack_alpha / 255,
+                                                               steps=args.counter_attack_steps,
+                                                               text_embeddings=embeddings,
+                                                               tau_thres=args.counter_attack_tau_thres,
+                                                               beta=args.counter_attack_beta,
+                                                               weighted_perturbation=args.counter_attack_weighted_perturbations,
+                                                               loss_lamda=args.pgd_counter_and_clipure_i_lamda)
         if logger:
             logger.info(f"Using counter-attack with epsilon: {args.counter_attack_eps:.6f}, alpha: {args.counter_attack_alpha:.6f}, steps: {args.counter_attack_steps}")
 
@@ -518,13 +601,16 @@ if __name__ == '__main__':
                         help='Number of steps for adversarial attack')
 
     parser.add_argument('--counter_attack', default=True, type=lambda x: (str(x).lower() == 'true') )
-    parser.add_argument('--counter_attack_type', default='pgd', type=str)
+    parser.add_argument('--counter_attack_type', default='pgd', choices=["pgd", "pgd_clip_pure_i", "pgd_counter_and_clipure_i"], type=str)
     parser.add_argument('--counter_attack_steps', default=2, type=int)
     parser.add_argument('--counter_attack_eps', default=4.0, type=float)
     parser.add_argument('--counter_attack_alpha', default=1.0, type=float)
     parser.add_argument('--counter_attack_tau_thres', default=0.2, type=float)
     parser.add_argument('--counter_attack_beta', default=2.0, type=float)
     parser.add_argument('--counter_attack_weighted_perturbations', default=True, type=lambda x: (str(x).lower() == 'true') )
+
+    parser.add_argument('--pgd_clip_pure_i_text_embeddings', default='null', choices=["null", "class"], type=str)
+    parser.add_argument('--pgd_counter_and_clipure_i_lamda', default=1.0, type=float)
 
 
     # Test-time adaptation parameters

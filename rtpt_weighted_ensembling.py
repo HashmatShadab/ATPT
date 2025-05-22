@@ -252,6 +252,14 @@ def create_log_dir(args):
                                    f"Eps_{args.counter_attack_eps}_Steps_{args.counter_attack_steps}_Alpha_{args.counter_attack_alpha}_textembed_{args.pgd_clip_pure_i_text_embeddings}",
                                    ]
 
+        elif args.counter_attack_type == "pgd_clip_pure_i":
+            counter_attack_part = [f"Counter_Attack_PGDCounter_CLIPPureImage",
+                                   f"Eps_{args.counter_attack_eps}_Steps_{args.counter_attack_steps}_Alpha_{args.counter_attack_alpha}_textembed_{args.pgd_clip_pure_i_text_embeddings}",
+                                   f"tau_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_pertrubation_{args.counter_attack_weighted_perturbations}",
+                                   f"loss_lamda_{args.pgd_counter_and_clipure_i_lamda}"
+
+                                   ]
+
     else:
         counter_attack_part = ["No_Counter_Attack"]
 
@@ -657,6 +665,16 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                                                   alpha=args.counter_attack_alpha / 255,
                                                   steps=args.counter_attack_steps, text_embeddings=embeddings
                                                   )
+        elif args.counter_attack_type == "pgd_counter_and_clipure_i":
+            if args.pgd_clip_pure_i_text_embeddings == "null":
+                embeddings = template_text_embeddings
+            elif args.pgd_clip_pure_i_text_embeddings == "class":
+                embeddings = class_text_embeddings
+            else:
+                raise ValueError(f"Unknown text embedding type: {args.pgd_clip_pure_i_text_embeddings}")
+            counter_atk = torchattacks.PGDCounterClipPureImage(model, eps=args.counter_attack_eps / 255,  alpha=args.counter_attack_alpha / 255,
+                                                  steps=args.counter_attack_steps, text_embeddings=embeddings, tau_thres=args.counter_attack_tau_thres, beta=args.counter_attack_beta,
+                                              weighted_perturbation=args.counter_attack_weighted_perturbations, loss_lamda=args.pgd_counter_and_clipure_i_lamda)
         if logger:
             logger.info(
                 f"Using counter-attack with epsilon: {args.counter_attack_eps:.6f}, alpha: {args.alpha:.6f}, steps: {args.counter_attack_steps}, "
@@ -954,14 +972,17 @@ if __name__ == '__main__':
 
     # Counter-attack parameters
     parser.add_argument('--counter_attack', default=False, type=lambda x: (str(x).lower() == 'true'))
-    parser.add_argument('--counter_attack_type', default='pgd', choices=["pgd", "pgd_clip_pure_i"], type=str)
+    parser.add_argument('--counter_attack_type', default='pgd', choices=["pgd", "pgd_clip_pure_i", "pgd_counter_and_clipure_i"], type=str)
     parser.add_argument('--counter_attack_steps', default=2, type=int)
     parser.add_argument('--counter_attack_eps', default=4.0, type=float)
     parser.add_argument('--counter_attack_alpha', default=1.0, type=float)
     parser.add_argument('--counter_attack_tau_thres', default=0.2, type=float)
     parser.add_argument('--counter_attack_beta', default=2.0, type=float)
     parser.add_argument('--counter_attack_weighted_perturbations', default=True, type=lambda x: (str(x).lower() == 'true') )
+
     parser.add_argument('--pgd_clip_pure_i_text_embeddings', default='null', choices=["null", "class"], type=str)
+    parser.add_argument('--pgd_counter_and_clipure_i_lamda', default=1.0, type=float)
+
 
 
 
