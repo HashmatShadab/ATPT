@@ -88,11 +88,11 @@ class PGDClipPureImage(Attack):
 
             # Update adversarial images
             grad = torch.autograd.grad(
-                cost, adv_images_for_grad, retain_graph=False, create_graph=False
+                cost, adv_images_for_grad,  torch.ones_like(loss), retain_graph=False, create_graph=False
             )[0]
 
             # Update using the detached gradient
-            adv_images = adv_images.detach() + self.alpha * grad.sign()
+            adv_images = adv_images.detach() - self.alpha * grad.sign()
             delta = torch.clamp(adv_images - images, min=-self.eps, max=self.eps)
             adv_images = torch.clamp(images + delta, min=0, max=1).detach()
 

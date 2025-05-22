@@ -392,7 +392,7 @@ class ClipTestTimeTuning(nn.Module):
 
         return logits
 
-    def forward(self, input, get_image_features=False):
+    def forward(self, input, get_image_features=False, normalize=False):
         if isinstance(input, Tuple):
             view_0, view_1, view_2 = input
             return self.contrast_prompt_tuning(view_0, view_1, view_2)
@@ -400,7 +400,7 @@ class ClipTestTimeTuning(nn.Module):
             return self.directional_prompt_tuning(input)
         else:
             if get_image_features:
-                image_features = self.encode_image(self.normalize(input.type(self.dtype)))
+                image_features = self.encode_image(self.normalize(input.type(self.dtype)), normalize=normalize)
                 return image_features
             else:
                 return self.inference(input)
