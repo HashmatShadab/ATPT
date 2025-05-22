@@ -444,3 +444,59 @@ def get_open_clip(clip_arch, device, cache_dir=DOWNLOAD_ROOT):
 
 
     return clip, _, preprocess, tokenizer
+
+@torch.no_grad()
+def get_text_embeddings(clip_arch, classnames, class_templates, device="cuda"):
+    """
+    Generates normalized text embeddings from class names and templates.
+
+    Args:
+        classnames (list of str): List of class names (e.g., ['dog', 'cat']).
+        class_templates (list of str): List of templates (e.g., ["a photo of a {}", "a blurry photo of a {}"]).
+        tokenizer: The tokenizer from OpenCLIP (e.g., from get_open_clip).
+        clip_model: The CLIP model from OpenCLIP.
+        device (str): Device to run on ('cuda' or 'cpu').
+
+    Returns:
+        torch.Tensor: Text embeddings of shape [num_classes, embed_dim].
+    """
+
+    clip, _, _, tokenizer = get_open_clip(clip_arch, device=device, cache_dir=DOWNLOAD_ROOT)
+
+    all_text_features = []
+
+    for classname in classnames:
+        texts = [template.format(c=classname) for template in class_templates]  # prompt engineering
+        if "delta" in clip_arch:
+            tokenized = tokenizer(texts).to(device)  # [T, seq_len]
+        else:
+            tokenized = tokenizer(texts, context_length=40).to(device)                               # [T, seq_len]
+        text_features = clip.encode_text(tokenized)                    # [T, D]
+        text_features = text_features / text_features.norm(dim=-1, keepdim=True)  # Normalize
+        mean_text_feature = text_features.mean(dim=0)                        # Average templates
+        mean_text_feature = mean_text_feature / mean_text_feature.norm()     # Normalize again
+        all_text_features.append(mean_text_feature)
+
+    all_text_features = torch.stack(all_text_features, dim=0)  # [num_classes, D]
+
+
+    null_templates = [template.format(c="") for template in class_templates]
+    temp_emb_all = []
+
+    for temp in null_templates:
+        if "delta" in clip_arch:
+            text_purify = tokenizer(temp).to(device)  # [T, seq_len]
+        else:
+            text_purify = tokenizer(temp, context_length=40).to(device)
+
+        text_embed = clip.encode_text(text_purify)
+        text_embed = text_embed / text_embed.norm()
+        temp_emb_all.append(text_embed)
+
+    temp_emb_all = torch.stack(temp_emb_all, dim=1).to(device)
+
+    # del clip and tokenizer
+    del clip
+    del tokenizer
+
+    return all_text_features, temp_emb_all

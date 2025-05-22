@@ -30,6 +30,8 @@ except ImportError:
 
 from open_clip.custom_openai_clip import get_coop as get_coop_openai
 from clip.custom_clip import get_coop
+from open_clip.custom_openai_clip import get_text_embeddings as get_text_embeddings_openai
+from clip.custom_clip import get_text_embeddings as get_text_embeddings
 from data.imagnet_prompts import imagenet_classes
 from data.imagenet_variants import imagenet_a_mask, imagenet_r_mask, imagenet_v_mask
 from data.cls_to_names import flower102_classes, food101_classes, dtd_classes, caltech101_classes, pets_classes, \
@@ -47,6 +49,49 @@ from PIL import Image
 import numpy as np
 from helper_functions import plot_image, print_args, rtpt_entropy_avg, entropy_loss_ttl, entropy_of_each_sample, handle_long_windows_path
 
+
+import json
+
+def get_zeroshot_templates(dset, template_path='zeroshot-templates.json'):
+    """
+    Load zeroshot templates based on dataset name.
+
+    Args:
+        dset (str): Dataset short name (e.g., 'I', 'cars', 'pets').
+        template_path (str): Path to zeroshot-templates.json file.
+
+    Returns:
+        list of str: List of template strings.
+
+    Raises:
+        ValueError: If dataset name is unknown.
+    """
+    with open(template_path, 'r') as f:
+        templates = json.load(f)
+
+    dset = dset.lower()
+
+    dataset_key_map = {
+        'i': 'imagenet1k',
+        'a': 'imagenet1k',
+        'r': 'imagenet1k',
+        'k': 'imagenet1k',
+        'v': 'imagenet1k',
+        'cars': 'cars',
+        'aircraft': 'fgvc_aircraft',
+        'pets': 'pets',
+        'dtd': 'dtd',
+        'caltech101': 'caltech101',
+        'flowers102': 'flowers',
+        'eurosat': 'eurosat',
+        'ucf101': 'dummy',
+    }
+
+    if dset not in dataset_key_map:
+        raise ValueError(f"Unknown dataset: {dset}")
+
+    key = dataset_key_map[dset]
+    return templates[key]
 
 
 openai_model_dict = {
@@ -298,12 +343,19 @@ def main():
             classnames = classnames_all
     args.classnames = classnames
 
+    class_templates = get_zeroshot_templates(dset)
+
+
+
     # Initialize model with CoOp (Context Optimization)
     if args.arch in openai_model_dict:
         actual_model_name = openai_model_dict[args.arch]
         model = get_coop_openai(actual_model_name, classnames, args.gpu, args.n_ctx, args.ctx_init)
+
+        class_text_embeddings, template_text_embeddings = get_text_embeddings_openai(actual_model_name, classnames, class_templates, args.gpu)
     else:
         model = get_coop(args.arch, classnames, args.gpu, args.n_ctx, args.ctx_init)
+        class_text_embeddings, template_text_embeddings = get_text_embeddings(args.arch, classnames, class_templates, args.gpu)
 
     model_state = None
 

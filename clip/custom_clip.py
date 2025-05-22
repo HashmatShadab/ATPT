@@ -384,3 +384,83 @@ def get_coop(clip_arch, classnames, device, n_ctx, ctx_init, learned_cls=False):
     return model
 
 
+class TextEncoder_v2(nn.Module):
+    def __init__(self, clip_model):
+        super().__init__()
+        self.transformer = clip_model.transformer
+        self.positional_embedding = clip_model.positional_embedding[:40]
+        """
+        ***NOTE the positional embedding is hard-coded to context_length of 40 for the text encoder of CLIP***
+        """
+        self.ln_final = clip_model.ln_final
+        self.text_projection = clip_model.text_projection
+        self.dtype = clip_model.dtype
+        self.token_embedding = clip_model.token_embedding
+
+    def forward(self, tokenized_prompts):
+        x = self.token_embedding(tokenized_prompts).type(self.dtype)  # [batch_size, n_ctx, d_model]
+
+        x = x + self.positional_embedding.type(self.dtype)
+        x = x.permute(1, 0, 2)  # NLD -> LND
+        x = self.transformer(x)
+        x = x.permute(1, 0, 2)  # LND -> NLD
+        x = self.ln_final(x).type(self.dtype)
+
+        # x.shape = [batch_size, n_ctx, transformer.width]
+        # take features from the eot embedding (eot_token is the highest number in each sequence)
+        x = x[torch.arange(x.shape[0]), tokenized_prompts.argmax(dim=-1)] @ self.text_projection
+
+        return x
+
+
+@torch.no_grad()
+def get_text_embeddings(clip_arch, classnames, class_templates, device="cuda"):
+    """
+    Generates normalized text embeddings from class names and templates.
+
+    Args:
+        classnames (list of str): List of class names (e.g., ['dog', 'cat']).
+        class_templates (list of str): List of templates (e.g., ["a photo of a {}", "a blurry photo of a {}"]).
+        tokenizer: The tokenizer from OpenCLIP (e.g., from get_open_clip).
+        clip_model: The CLIP model from OpenCLIP.
+        device (str): Device to run on ('cuda' or 'cpu').
+
+    Returns:
+        torch.Tensor: Text embeddings of shape [num_classes, embed_dim].
+    """
+
+    clip, _, preprocess = load(clip_arch, device=device, download_root=DOWNLOAD_ROOT)
+
+    text_encoder = TextEncoder_v2(clip)
+
+    all_text_features = []
+
+    for classname in classnames:
+        texts = [template.format(c=classname) for template in class_templates]  # prompt engineering
+        tokenized = tokenize(texts, context_length=40).to(device)
+        # [T, seq_len]
+        text_features = text_encoder(tokenized)                    # [T, D]
+        text_features = text_features / text_features.norm(dim=-1, keepdim=True)  # Normalize
+        mean_text_feature = text_features.mean(dim=0)                        # Average templates
+        mean_text_feature = mean_text_feature / mean_text_feature.norm()     # Normalize again
+        all_text_features.append(mean_text_feature)
+
+    all_text_features = torch.stack(all_text_features, dim=0)  # [num_classes, D]
+
+    null_templates = [template.format(c="") for template in class_templates]
+    temp_emb_all = []
+
+    for temp in null_templates:
+        text_purify = tokenize(temp, context_length=40).to(device)
+
+        text_embed = text_encoder(text_purify)
+        text_embed = text_embed / text_embed.norm()
+        temp_emb_all.append(text_embed)
+
+    temp_emb_all = torch.stack(temp_emb_all, dim=1).to(device)
+
+    # delete clip, text_encoder
+    del clip
+    del text_encoder
+
+    return all_text_features, temp_emb_all
