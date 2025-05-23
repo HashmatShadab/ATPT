@@ -18,6 +18,7 @@ import torch.utils.data
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
 from PIL import Image
+import torch.nn.functional as F
 
 try:
     from torchvision.transforms import InterpolationMode
@@ -28,6 +29,8 @@ except ImportError:
 
 from open_clip.custom_openai_clip import get_coop as get_coop_openai
 from clip.custom_clip import get_coop
+from open_clip.custom_openai_clip import get_text_embeddings as get_text_embeddings_openai
+from clip.custom_clip import get_text_embeddings as get_text_embeddings
 from data.imagnet_prompts import imagenet_classes
 from data.imagenet_variants import imagenet_a_mask, imagenet_r_mask, imagenet_v_mask
 from data.cls_to_names import flower102_classes, food101_classes, dtd_classes, caltech101_classes, pets_classes, \
@@ -42,7 +45,7 @@ import os
 from torchvision import transforms
 
 from helper_functions import print_args
-
+from torch.nn.functional import cosine_similarity
 import torch
 from PIL import Image
 
@@ -54,6 +57,50 @@ openai_model_dict = {
     "fare4": "hf-hub:chs20/fare4-clip",
     # "RN50": "RN50",
 }
+
+
+import json
+
+def get_zeroshot_templates(dset, template_path='zeroshot-templates.json'):
+    """
+    Load zeroshot templates based on dataset name.
+
+    Args:
+        dset (str): Dataset short name (e.g., 'I', 'cars', 'pets').
+        template_path (str): Path to zeroshot-templates.json file.
+
+    Returns:
+        list of str: List of template strings.
+
+    Raises:
+        ValueError: If dataset name is unknown.
+    """
+    with open(template_path, 'r') as f:
+        templates = json.load(f)
+
+    dset = dset.lower()
+
+    dataset_key_map = {
+        'i': 'imagenet1k',
+        'a': 'imagenet1k',
+        'r': 'imagenet1k',
+        'k': 'imagenet1k',
+        'v': 'imagenet1k',
+        'cars': 'cars',
+        'aircraft': 'fgvc_aircraft',
+        'pets': 'pets',
+        'dtd': 'dtd',
+        'caltech101': 'caltech101',
+        'flowers102': 'flowers',
+        'eurosat': 'eurosat',
+        'ucf101': 'dummy',
+    }
+
+    if dset not in dataset_key_map:
+        raise ValueError(f"Unknown dataset: {dset}")
+
+    key = dataset_key_map[dset]
+    return templates[key]
 
 
 def main():
@@ -117,12 +164,18 @@ def main():
             classnames = classnames_all
     args.classnames = classnames
 
+    class_templates = get_zeroshot_templates(dset)
+
     # Initialize model with CoOp (Context Optimization)
     if args.arch in openai_model_dict:
         actual_model_name = openai_model_dict[args.arch]
         model = get_coop_openai(actual_model_name, classnames, args.gpu, args.n_ctx, args.ctx_init)
+        class_text_embeddings, template_text_embeddings = get_text_embeddings_openai(actual_model_name, classnames, class_templates, args.gpu)
+
     else:
         model = get_coop(args.arch, classnames, args.gpu, args.n_ctx, args.ctx_init)
+        class_text_embeddings, template_text_embeddings = get_text_embeddings(args.arch, classnames, class_templates, args.gpu)
+
 
     model_state = None
 
@@ -186,7 +239,7 @@ def main():
     logger.info(f"Evaluating dataset: {dset}")
 
     # Run evaluation with test-time adaptation
-    test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger)
+    test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger, template_text_embeddings, class_text_embeddings)
 
     logger.info(f"Adversarial image generation completed. Results")
 
@@ -317,7 +370,41 @@ def get_adversarial_image(image, target, attack, path, index, output_dir, logger
     return img_adv
 
 
-def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger=None):
+def purify_zi(img_emb, iter=10, step_size=30., temp_emb_all=None):
+    step_size_u = step_size
+    batch, device = img_emb.shape[0], img_emb.device
+    if not img_emb.requires_grad:
+        img_emb.requires_grad = True  # 确保图像嵌入需要梯度
+
+    text_embed = temp_emb_all.mean(dim=1)
+    text_embed = text_embed.repeat(batch, 1).to(device)
+
+    momentum = torch.zeros_like(img_emb)
+    norm = "L2"
+    gamma = 0.
+    for i in range(iter):
+        r = torch.norm(img_emb, dim=1, keepdim=True)
+        u = img_emb / r
+
+        logits_uncond = cosine_similarity(img_emb, text_embed, dim=1)
+        loss = - logits_uncond
+        grad = torch.autograd.grad(loss, img_emb, torch.ones_like(loss), retain_graph=True)[0]
+
+        grad_u = r * grad
+
+        if norm == "Linf":
+            momentum = gamma * momentum - (1 - gamma) * grad_u / torch.norm(grad_u, p=1)
+            u = u + step_size_u * momentum.sign()
+        elif norm == "L2":
+            momentum = gamma * momentum - (1 - gamma) * grad_u / torch.norm(grad_u, p=2)
+            u = u + step_size_u * momentum
+
+        u = u / torch.norm(u, dim=1, keepdim=True)
+        img_emb = r * u
+
+    return img_emb
+
+def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger=None,  template_text_embeddings=None, class_text_embeddings=None):
     """
     Evaluate model performance with test-time adaptation.
 
@@ -356,8 +443,39 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     if args.counter_attack:
         # Create counter-attack with specified parameters
-        counter_atk = torchattacks.PGDCounter(model, eps=args.counter_attack_eps/255, alpha=args.counter_attack_alpha/255, steps=args.counter_attack_steps,
-                                              tau_thres=args.counter_attack_tau_thres, beta=args.counter_attack_beta, weighted_perturbation=args.counter_attack_weighted_perturbations)
+        if args.counter_attack_type == "pgd":
+            counter_atk = torchattacks.PGDCounter(model, eps=args.counter_attack_eps / 255,
+                                                  alpha=args.counter_attack_alpha / 255,
+                                                  steps=args.counter_attack_steps,
+                                                  tau_thres=args.counter_attack_tau_thres,
+                                                  beta=args.counter_attack_beta,
+                                                  weighted_perturbation=args.counter_attack_weighted_perturbations)
+        elif args.counter_attack_type == "pgd_clip_pure_i":
+            if args.pgd_clip_pure_i_text_embeddings == "null":
+                embeddings = template_text_embeddings
+            elif args.pgd_clip_pure_i_text_embeddings == "class":
+                embeddings = class_text_embeddings
+            else:
+                raise ValueError(f"Unknown text embedding type: {args.pgd_clip_pure_i_text_embeddings}")
+            counter_atk = torchattacks.PGDClipPureImage(model, eps=args.counter_attack_eps / 255,
+                                                        alpha=args.counter_attack_alpha / 255,
+                                                        steps=args.counter_attack_steps, text_embeddings=embeddings
+                                                        )
+        elif args.counter_attack_type == "pgd_counter_and_clipure_i":
+            if args.pgd_clip_pure_i_text_embeddings == "null":
+                embeddings = template_text_embeddings
+            elif args.pgd_clip_pure_i_text_embeddings == "class":
+                embeddings = class_text_embeddings
+            else:
+                raise ValueError(f"Unknown text embedding type: {args.pgd_clip_pure_i_text_embeddings}")
+            counter_atk = torchattacks.PGDCounterClipPureImage(model, eps=args.counter_attack_eps / 255,
+                                                               alpha=args.counter_attack_alpha / 255,
+                                                               steps=args.counter_attack_steps,
+                                                               text_embeddings=embeddings,
+                                                               tau_thres=args.counter_attack_tau_thres,
+                                                               beta=args.counter_attack_beta,
+                                                               weighted_perturbation=args.counter_attack_weighted_perturbations,
+                                                               loss_lamda=args.pgd_counter_and_clipure_i_lamda)
         if logger:
             logger.info(f"Using counter-attack with epsilon: {args.counter_attack_eps:.6f}, alpha: {args.counter_attack_alpha:.6f}, steps: {args.counter_attack_steps}")
 
@@ -376,6 +494,8 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     clean_correct = 0
     adv_correct_counter = 0
     total = 0
+    adv_emb_correct = 0
+    purify_emb_correct = 0
     # Iterate through validation data
     for i, data in enumerate(val_loader):
         # Handle different return formats (with or without path)
@@ -427,24 +547,54 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
 
             total += target.size(0)
-            if logger and args.counter_attack:
-                logger.info(f"Batch {i+1}/{len(val_loader)}: Clean accuracy {clean_correct / total:.4f} | Adv accuracy: {adv_correct / total:.4f} | Counter-attack accuracy: {adv_correct_counter / total:.4f}")
-            else:
-                logger.info(f"Batch {i+1}/{len(val_loader)}: Clean accuracy {clean_correct / total:.4f} | Adv accuracy: {adv_correct / total:.4f}")
+
         # Free memory
-        del images, target, adv_images, adv_logits, adv_probs, adv_pred, clean_logits, clean_probs, clean_pred
+        del images, adv_logits, adv_probs, adv_pred, clean_logits, clean_probs, clean_pred
+
         if args.counter_attack:
             del adv_images_counter, adv_logits_counter, adv_probs_counter, adv_pred_counter
+
+
+        ############### Not working ###############################
+        # with torch.enable_grad():
+        #
+        #     image_embeddings, text_embeddings, logit_scale = model(adv_images, get_image_text_features=True)
+        #
+        #     image_embeddings_purify = purify_zi(image_embeddings, 10, 30, template_text_embeddings)
+        #
+        # adv_emb_logits = logit_scale * image_embeddings @ text_embeddings.t()
+        # adv_emb_probs = adv_emb_logits.softmax(dim=-1)
+        # _, adv_emb_pred = adv_emb_probs.max(1)
+        # adv_emb_correct += adv_emb_pred.eq(target).sum().item()
+        #
+        #
+        # purify_emb_logits = logit_scale * image_embeddings_purify @ text_embeddings.t()
+        # purify_emb_probs = purify_emb_logits.softmax(dim=-1)
+        # _, purify_emb_pred = purify_emb_probs.max(1)
+        # purify_emb_correct += purify_emb_pred.eq(target).sum().item()
+        ############### Not working ###############################
+
+        if logger and args.counter_attack:
+            logger.info(
+                f"Batch {i + 1}/{len(val_loader)}: Clean accuracy {clean_correct / total:.4f} | Adv accuracy: {adv_correct / total:.4f} | Counter-attack accuracy: {adv_correct_counter / total:.4f}")
+        else:
+            logger.info(
+                f"Batch {i + 1}/{len(val_loader)}: Clean accuracy {clean_correct / total:.4f} | Adv accuracy: {adv_correct / total:.4f} ")
+
+
+
         torch.cuda.empty_cache()
         end = time.time()
 
     # Calculate final accuracy
     original_accuracy = clean_correct / total
     adv_accuracy = adv_correct / total
+
+
     if args.counter_attack:
         adv_accuracy_counter = adv_correct_counter / total
     if logger and args.counter_attack:
-        logger.info(f"Final Clean accuracy: {original_accuracy:.4f} | Adversarial accuracy: {adv_accuracy:.4f} | Counter-attack accuracy: {adv_accuracy_counter:.4f}")
+        logger.info(f"Final Clean accuracy: {original_accuracy:.4f} | Adversarial accuracy: {adv_accuracy:.4f} | Counter-attack accuracy: {adv_accuracy_counter:.4f} ")
     elif logger and not args.counter_attack:
         logger.info(f"Original accuracy: {original_accuracy:.4f}")
         logger.info(f"Adversarial accuracy: {adv_accuracy:.4f}")
@@ -518,13 +668,16 @@ if __name__ == '__main__':
                         help='Number of steps for adversarial attack')
 
     parser.add_argument('--counter_attack', default=True, type=lambda x: (str(x).lower() == 'true') )
-    parser.add_argument('--counter_attack_type', default='pgd', type=str)
+    parser.add_argument('--counter_attack_type', default='pgd', choices=["pgd", "pgd_clip_pure_i", "pgd_counter_and_clipure_i"], type=str)
     parser.add_argument('--counter_attack_steps', default=2, type=int)
     parser.add_argument('--counter_attack_eps', default=4.0, type=float)
     parser.add_argument('--counter_attack_alpha', default=1.0, type=float)
     parser.add_argument('--counter_attack_tau_thres', default=0.2, type=float)
     parser.add_argument('--counter_attack_beta', default=2.0, type=float)
     parser.add_argument('--counter_attack_weighted_perturbations', default=True, type=lambda x: (str(x).lower() == 'true') )
+
+    parser.add_argument('--pgd_clip_pure_i_text_embeddings', default='null', choices=["null", "class"], type=str)
+    parser.add_argument('--pgd_counter_and_clipure_i_lamda', default=1.0, type=float)
 
 
     # Test-time adaptation parameters

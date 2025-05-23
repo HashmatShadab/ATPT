@@ -27,6 +27,7 @@ from .attacks.pifgsm import PIFGSM
 from .attacks.pifgsmpp import PIFGSMPP
 from .attacks.pgd_counter_attack import PGDCounter
 from .attacks.pgd_clipure_image import PGDClipPureImage
+from .attacks.pgd_counter_and_clipure_image import PGDCounterClipPureImage
 
 # L2 attacks
 from .attacks.cw import CW
