@@ -381,16 +381,9 @@ def main():
 
     model_state = None
 
-    # Load robust vision encoder (TeCoA) if specified
-    if len(args.load_tecoa) > 0:
-        args.robust_pretrain_path = {
-            'RN50-eps1': 'pretrain/tecoa/rn50_eps1.pth.tar',
-        }[args.load_tecoa]
-        robust_state_dict = torch.load(args.robust_pretrain_path, map_location='cpu')
-        model.image_encoder.load_state_dict(robust_state_dict['vision_encoder_state_dict'])
-        logger.info('Loaded robust vision encoder')
 
     # Freeze all parameters except prompt learner
+    logger.info("Freezing all parameters except prompt learner")
     for name, param in model.named_parameters():
         if "prompt_learner" not in name:
                 param.requires_grad_(False)
@@ -983,13 +976,6 @@ if __name__ == '__main__':
     parser.add_argument('--pgd_clip_pure_i_text_embeddings', default='null', choices=["null", "class"], type=str)
     parser.add_argument('--pgd_counter_and_clipure_i_lamda', default=1.0, type=float)
 
-
-
-
-    # Pre-trained model parameters
-    parser.add_argument('--load_tecoa', type=str, default='',
-                        choices=['', 'RN50-eps1', 'ViT-B/32-eps1', 'ViT-B/32-eps4'],
-                        help='Load robust vision encoder (TeCoA)')
 
 
     parser.add_argument('--selected_id_name', type=str, default='selected_topk.json',)
