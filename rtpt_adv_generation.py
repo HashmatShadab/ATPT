@@ -554,29 +554,32 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         if args.counter_attack:
             del adv_images_counter, adv_logits_counter, adv_probs_counter, adv_pred_counter
 
-        with torch.enable_grad():
 
-            image_embeddings, text_embeddings, logit_scale = model(adv_images, get_image_text_features=True)
-
-            image_embeddings_purify = purify_zi(image_embeddings, 10, 30, template_text_embeddings)
-
-        adv_emb_logits = logit_scale * image_embeddings @ text_embeddings.t()
-        adv_emb_probs = adv_emb_logits.softmax(dim=-1)
-        _, adv_emb_pred = adv_emb_probs.max(1)
-        adv_emb_correct += adv_emb_pred.eq(target).sum().item()
-
-
-        purify_emb_logits = logit_scale * image_embeddings_purify @ text_embeddings.t()
-        purify_emb_probs = purify_emb_logits.softmax(dim=-1)
-        _, purify_emb_pred = purify_emb_probs.max(1)
-        purify_emb_correct += purify_emb_pred.eq(target).sum().item()
+        ############### Not working ###############################
+        # with torch.enable_grad():
+        #
+        #     image_embeddings, text_embeddings, logit_scale = model(adv_images, get_image_text_features=True)
+        #
+        #     image_embeddings_purify = purify_zi(image_embeddings, 10, 30, template_text_embeddings)
+        #
+        # adv_emb_logits = logit_scale * image_embeddings @ text_embeddings.t()
+        # adv_emb_probs = adv_emb_logits.softmax(dim=-1)
+        # _, adv_emb_pred = adv_emb_probs.max(1)
+        # adv_emb_correct += adv_emb_pred.eq(target).sum().item()
+        #
+        #
+        # purify_emb_logits = logit_scale * image_embeddings_purify @ text_embeddings.t()
+        # purify_emb_probs = purify_emb_logits.softmax(dim=-1)
+        # _, purify_emb_pred = purify_emb_probs.max(1)
+        # purify_emb_correct += purify_emb_pred.eq(target).sum().item()
+        ############### Not working ###############################
 
         if logger and args.counter_attack:
             logger.info(
-                f"Batch {i + 1}/{len(val_loader)}: Clean accuracy {clean_correct / total:.4f} | Adv accuracy: {adv_correct / total:.4f} | Counter-attack accuracy: {adv_correct_counter / total:.4f} | Adv Emb accuracy: {adv_emb_correct / total:.4f} | Purify Emb accuracy: {purify_emb_correct / total:.4f}")
+                f"Batch {i + 1}/{len(val_loader)}: Clean accuracy {clean_correct / total:.4f} | Adv accuracy: {adv_correct / total:.4f} | Counter-attack accuracy: {adv_correct_counter / total:.4f}")
         else:
             logger.info(
-                f"Batch {i + 1}/{len(val_loader)}: Clean accuracy {clean_correct / total:.4f} | Adv accuracy: {adv_correct / total:.4f} | Adv Emb accuracy: {adv_emb_correct / total:.4f} | Purify Emb accuracy: {purify_emb_correct / total:.4f}")
+                f"Batch {i + 1}/{len(val_loader)}: Clean accuracy {clean_correct / total:.4f} | Adv accuracy: {adv_correct / total:.4f} ")
 
 
 
@@ -587,17 +590,14 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     original_accuracy = clean_correct / total
     adv_accuracy = adv_correct / total
 
-    adv_emb_accuracy = adv_emb_correct / total
-    purify_emb_accuracy = purify_emb_correct / total
 
     if args.counter_attack:
         adv_accuracy_counter = adv_correct_counter / total
     if logger and args.counter_attack:
-        logger.info(f"Final Clean accuracy: {original_accuracy:.4f} | Adversarial accuracy: {adv_accuracy:.4f} | Counter-attack accuracy: {adv_accuracy_counter:.4f} | Adv Emb accuracy: {adv_emb_accuracy:.4f} | Purify Emb accuracy: {purify_emb_accuracy:.4f}")
+        logger.info(f"Final Clean accuracy: {original_accuracy:.4f} | Adversarial accuracy: {adv_accuracy:.4f} | Counter-attack accuracy: {adv_accuracy_counter:.4f} ")
     elif logger and not args.counter_attack:
         logger.info(f"Original accuracy: {original_accuracy:.4f}")
         logger.info(f"Adversarial accuracy: {adv_accuracy:.4f}")
-        logger.info(f"Adv Emb accuracy: {adv_emb_accuracy:.4f} | Purify Emb accuracy: {purify_emb_accuracy:.4f}")
     else:
         print(f"Original accuracy: {original_accuracy:.4f}")
         print(f"Adversarial accuracy: {adv_accuracy:.4f}")
