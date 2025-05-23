@@ -32,6 +32,9 @@ from open_clip.custom_openai_clip import get_coop as get_coop_openai
 from clip.custom_clip import get_coop
 from open_clip.custom_openai_clip import get_text_embeddings as get_text_embeddings_openai
 from clip.custom_clip import get_text_embeddings as get_text_embeddings
+from open_clip.custom_openai_clip_lora import get_coop as get_coop_lora
+
+
 from data.imagnet_prompts import imagenet_classes
 from data.imagenet_variants import imagenet_a_mask, imagenet_r_mask, imagenet_v_mask
 from data.cls_to_names import flower102_classes, food101_classes, dtd_classes, caltech101_classes, pets_classes, \
@@ -100,6 +103,7 @@ openai_model_dict = {
     "tecoa2": "hf-hub:chs20/tecoa2-clip",
     "fare2": "hf-hub:chs20/fare2-clip",
     "fare4": "hf-hub:chs20/fare4-clip",
+    "ViT-L-14": "ViT-L-14",
     # "RN50": "RN50",
 }
 
@@ -350,7 +354,7 @@ def main():
     # Initialize model with CoOp (Context Optimization)
     if args.arch in openai_model_dict:
         actual_model_name = openai_model_dict[args.arch]
-        model = get_coop_openai(actual_model_name, classnames, args.gpu, args.n_ctx, args.ctx_init)
+        model = get_coop_lora(actual_model_name, classnames, args.gpu, args.n_ctx, args.ctx_init)
 
         class_text_embeddings, template_text_embeddings = get_text_embeddings_openai(actual_model_name, classnames, class_templates, args.gpu)
     else:
@@ -370,7 +374,7 @@ def main():
 
     # Freeze all parameters except prompt learner
     for name, param in model.named_parameters():
-        if "prompt_learner" not in name:
+        if "prompt_learner" not in name and "lora" not in name:
                 param.requires_grad_(False)
 
     logger.info(f"=> Model created: visual backbone {args.arch}")
@@ -383,8 +387,14 @@ def main():
         torch.cuda.set_device(args.gpu)
         model = model.cuda(args.gpu)
 
-    # Set up optimizer for prompt parameters only
-    trainable_param = model.prompt_learner.parameters()
+    # Combine trainable params from prompt_learner and LoRA
+    trainable_param = list(model.prompt_learner.parameters()) + [
+        p for _, p in model.get_trainable_named_parameters()
+    ]
+    # Print total number of trainable parameters
+    total_params = sum(p.numel() for p in trainable_param if p.requires_grad)
+    print(f"Total number of trainable parameters (Prompt + LoRA): {total_params:,}")
+
     optimizer = torch.optim.AdamW(trainable_param, args.lr)
     optim_state = deepcopy(optimizer.state_dict())
 
@@ -493,34 +503,34 @@ def get_adversarial_image(image, target, attack, path, index, output_dir, logger
 
     else:
         # Create adversarial image using attack
-        # adv_image = attack(image, target)
-        # if logger:
-        #     logger.debug(f"Generated adversarial image with shape: {adv_image.shape}")
-        #
-        # if counter_atk:
-        #     # If using counter-attack, apply it to the generated image
-        #     adv_image = counter_atk(adv_image, target)
-        #     if logger:
-        #         logger.debug(f"Applied counter-attack to generated adversarial image with shape: {adv_image.shape}")
-        #
-        #
-        # # Move tensor to CPU before saving
-        # adv_tensor = adv_image.squeeze(0).detach().cpu()
-        #
-        # # Save the adversarial tensor
-        # torch.save(adv_tensor, adv_img_path)
-        #
-        # if logger:
-        #     logger.info(f"Saved adversarial image to {adv_img_path}")
-        #
-        # # Convert to PIL for return
-        # img_adv = transforms.ToPILImage()(adv_tensor)
-        #
-        # # Free memory for large datasets
-        # del adv_image
-        # torch.cuda.empty_cache()
-        ## raise an error if Adversarial image is not already generated
-        raise FileNotFoundError(f"Adversarial image not found at {adv_img_path}. Please generate it first.")
+        adv_image = attack(image, target)
+        if logger:
+            logger.debug(f"Generated adversarial image with shape: {adv_image.shape}")
+
+        if counter_atk:
+            # If using counter-attack, apply it to the generated image
+            adv_image = counter_atk(adv_image, target)
+            if logger:
+                logger.debug(f"Applied counter-attack to generated adversarial image with shape: {adv_image.shape}")
+
+
+        # Move tensor to CPU before saving
+        adv_tensor = adv_image.squeeze(0).detach().cpu()
+
+        # Save the adversarial tensor
+        torch.save(adv_tensor, adv_img_path)
+
+        if logger:
+            logger.info(f"Saved adversarial image to {adv_img_path}")
+
+        # Convert to PIL for return
+        img_adv = transforms.ToPILImage()(adv_tensor)
+
+        # Free memory for large datasets
+        del adv_image
+        torch.cuda.empty_cache()
+        # raise an error if Adversarial image is not already generated
+        # raise FileNotFoundError(f"Adversarial image not found at {adv_img_path}. Please generate it first.")
 
 
     return img_adv
@@ -659,6 +669,11 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         assert args.gpu is not None
         target = target.cuda(args.gpu, non_blocking=True)
 
+        # Reset model to initial state for each batch
+        with torch.no_grad():
+            model.reset()
+        optimizer.load_state_dict(optim_state)
+
         # Generate adversarial examples if specified
         if args.eps > 0.0:
             image = images[0].cuda(args.gpu, non_blocking=True)
@@ -716,6 +731,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         with torch.no_grad():
             model.reset()
         optimizer.load_state_dict(optim_state)
+
 
         # Get original model outputs and features
         with torch.no_grad():
