@@ -96,7 +96,7 @@ class PGDCounterClipPureImage(Attack):
         for _ in range(self.steps):
             # Create a fresh copy for gradient computation
             adv_images_for_grad = adv_images.clone().detach().requires_grad_(True)
-            outputs = self.get_logits(adv_images_for_grad, get_image_features=True, normalize=True)
+            outputs = self.get_logits(adv_images_for_grad, get_image_features=True)
 
             ###########################################
             scheme_sign = (self.tau_thres - diff_ratio).sign()
@@ -105,6 +105,8 @@ class PGDCounterClipPureImage(Attack):
             # Calculate L2 loss between original and adversarial features
             l2_loss = ((((outputs - original_features) ** 2).sum(1))).sum()
 
+            # normalize the output features
+            outputs = outputs / outputs.norm(dim=-1, keepdim=True)
 
             logits_uncond = cosine_similarity(outputs, text_embed, dim=1)
 
