@@ -56,6 +56,7 @@ openai_model_dict = {
     "fare2": "hf-hub:chs20/fare2-clip",
     "fare4": "hf-hub:chs20/fare4-clip",
     # "RN50": "RN50",
+    "vit_l_14_datacomp_1b": "hf-hub:laion/CLIP-ViT-L-14-DataComp.XL-s13B-b90K",
 }
 
 

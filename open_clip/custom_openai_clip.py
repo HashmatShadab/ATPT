@@ -437,6 +437,8 @@ def get_open_clip(clip_arch, device, cache_dir=DOWNLOAD_ROOT):
         "hf-hub:chs20/tecoa2-clip",
         "hf-hub:chs20/fare2-clip",
         "hf-hub:chs20/fare4-clip",
+    "hf-hub:laion/CLIP-ViT-L-14-DataComp.XL-s13B-b90K",
+
     }
     if clip_arch in model_names:
         clip, _, preprocess = create_model_and_transforms(clip_arch, device=device, cache_dir=cache_dir)  # precision='fp32'
