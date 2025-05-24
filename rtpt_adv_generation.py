@@ -668,7 +668,7 @@ if __name__ == '__main__':
     parser.add_argument('--steps', type=int, default=7,
                         help='Number of steps for adversarial attack')
 
-    parser.add_argument('--counter_attack', default=True, type=lambda x: (str(x).lower() == 'true') )
+    parser.add_argument('--counter_attack', default=False, type=lambda x: (str(x).lower() == 'true') )
     parser.add_argument('--counter_attack_type', default='pgd', choices=["pgd", "pgd_clip_pure_i", "pgd_counter_and_clipure_i"], type=str)
     parser.add_argument('--counter_attack_steps', default=2, type=int)
     parser.add_argument('--counter_attack_eps', default=4.0, type=float)
