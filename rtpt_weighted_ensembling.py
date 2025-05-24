@@ -324,7 +324,7 @@ def main():
     # Set up logging
     # Create a log name that includes TTA variations
     log_dir = create_log_dir(args)
-    if args.output_dir is None or args.output_dir.lower() == "none":
+    if args.log_output_dir is None or args.log_output_dir.lower() == "none":
         log_dir = os.path.join(args.output_dir, log_dir)
     else:
         args.log_output_dir = os.path.join(args.log_output_dir, args.arch, args.test_sets)
