@@ -39,9 +39,7 @@ COUNTER_ATTACK_W_PERTURBATION=${21:-"true"}
 
 
 ############################################
-JOB_ID=${22:-1}
-DATASET_ID=${23:-"caltech101"}
-
+LOG_OUTPUT_DIR=${22:-"none"}
 
 
 # bash train.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 rtpt weighted_rtpt "F:\Code\datasets\atpt_results"
@@ -72,7 +70,7 @@ DATASET_ID=${23:-"caltech101"}
 
 # Common parameters for all runs
 COMMON_PARAMS="--gpu $GPU --n_ctx 4 --ctx_init a_photo_of_a --tpt_loss $TPT_LOSS"
-COMMON_PARAMS+=" --output_dir $OUTPUT_DIR  --eps $EPSILON --steps $ATTACK_STEPS"
+COMMON_PARAMS+=" --output_dir $OUTPUT_DIR --log_output_dir $LOG_OUTPUT_DIR  --eps $EPSILON --steps $ATTACK_STEPS"
 COMMON_PARAMS+=" --selection_p $FRACTION_CONFIDENT_SAMPLES --tta_steps $TTA_STEPS"
 COMMON_PARAMS+=" --ensemble_type $ENSEMBLE_TYPE --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING"
 COMMON_PARAMS+=" --counter_attack $COUNTER_ATTACK --counter_attack_type $COUNTER_ATTACK_TYPE --counter_attack_steps $COUNTER_ATTACK_STEPS --counter_attack_eps $COUNTER_ATTACK_EPSILON"
@@ -90,6 +88,7 @@ echo "Workers: $NUM_WORKERS"
 echo "Context Init for TPT: a_photo_of_a"
 echo "TPT Loss: $TPT_LOSS"
 echo "Output Dir: $OUTPUT_DIR"
+echo "Log Output Dir: $LOG_OUTPUT_DIR"
 echo "Epsilon for Adversarial Examples: $EPSILON"
 echo "Attack Steps for Adversarial Examples: $ATTACK_STEPS"
 echo "Fraction Confident Samples to select views with low entropy: $FRACTION_CONFIDENT_SAMPLES"

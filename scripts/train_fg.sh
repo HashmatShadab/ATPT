@@ -39,7 +39,7 @@ COUNTER_ATTACK_W_PERTURBATION=${21:-"true"}
 
 
 ############################################
-JOB_ID=${22:-1}
+LOG_OUTPUT_DIR=${22:-"none"}
 
 
 
@@ -71,7 +71,7 @@ JOB_ID=${22:-1}
 
 # Common parameters for all runs
 COMMON_PARAMS="--gpu 0 --n_ctx 4 --ctx_init a_photo_of_a --tpt_loss $TPT_LOSS"
-COMMON_PARAMS+=" --output_dir $OUTPUT_DIR  --eps $EPSILON --steps $ATTACK_STEPS"
+COMMON_PARAMS+=" --output_dir $OUTPUT_DIR --log_output_dir $LOG_OUTPUT_DIR  --eps $EPSILON --steps $ATTACK_STEPS"
 COMMON_PARAMS+=" --selection_p $FRACTION_CONFIDENT_SAMPLES --tta_steps $TTA_STEPS"
 COMMON_PARAMS+=" --ensemble_type $ENSEMBLE_TYPE --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING"
 COMMON_PARAMS+=" --counter_attack $COUNTER_ATTACK --counter_attack_type $COUNTER_ATTACK_TYPE --counter_attack_steps $COUNTER_ATTACK_STEPS --counter_attack_eps $COUNTER_ATTACK_EPSILON"
@@ -89,6 +89,7 @@ echo "Workers: $NUM_WORKERS"
 echo "Context Init for TPT: a_photo_of_a"
 echo "TPT Loss: $TPT_LOSS"
 echo "Output Dir: $OUTPUT_DIR"
+echo "Log Output Dir: $LOG_OUTPUT_DIR"
 echo "Epsilon for Adversarial Examples: $EPSILON"
 echo "Attack Steps for Adversarial Examples: $ATTACK_STEPS"
 echo "Fraction Confident Samples to select views with low entropy: $FRACTION_CONFIDENT_SAMPLES"
@@ -116,37 +117,37 @@ echo "  [1/8] Testing DTD dataset..."
 CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets DTD $MODEL $COMMON_PARAMS
 echo "  ✓ DTD dataset testing complete"
 
-echo "  [2/8] Testing Flower102 dataset..."
-CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Flower102 $MODEL $COMMON_PARAMS
-echo "  ✓ Flower102 dataset testing complete"
-
-echo "  [3/8] Testing Cars dataset..."
-CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Cars $MODEL $COMMON_PARAMS
-echo "  ✓ Cars dataset testing complete"
-
-echo "Running tests on Fine-grained datasets..."
-echo "  [4/8] Testing Aircraft dataset..."
-CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Aircraft $MODEL $COMMON_PARAMS
-echo "  ✓ Aircraft dataset testing complete"
-
-echo "  [5/8] Testing Pets dataset..."
-CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Pets $MODEL $COMMON_PARAMS
-echo "  ✓ Pets dataset testing complete"
-
-echo "  [6/8] Testing Caltech101 dataset..."
-CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Caltech101 $MODEL $COMMON_PARAMS
-echo "  ✓ Caltech101 dataset testing complete"
-
-echo "Running tests on Fine-grained datasets..."
-echo "  [7/8] Testing UCF101 dataset..."
-CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets UCF101 $MODEL $COMMON_PARAMS
-echo "  ✓ UCF101 dataset testing complete"
-
-echo "  [8/8] Testing eurosat dataset..."
-CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets eurosat $MODEL $COMMON_PARAMS
-echo "  ✓ eurosat dataset testing complete"
-
-echo "Fine-grained datasets testing complete"
+#echo "  [2/8] Testing Flower102 dataset..."
+#CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Flower102 $MODEL $COMMON_PARAMS
+#echo "  ✓ Flower102 dataset testing complete"
+#
+#echo "  [3/8] Testing Cars dataset..."
+#CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Cars $MODEL $COMMON_PARAMS
+#echo "  ✓ Cars dataset testing complete"
+#
+#echo "Running tests on Fine-grained datasets..."
+#echo "  [4/8] Testing Aircraft dataset..."
+#CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Aircraft $MODEL $COMMON_PARAMS
+#echo "  ✓ Aircraft dataset testing complete"
+#
+#echo "  [5/8] Testing Pets dataset..."
+#CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Pets $MODEL $COMMON_PARAMS
+#echo "  ✓ Pets dataset testing complete"
+#
+#echo "  [6/8] Testing Caltech101 dataset..."
+#CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Caltech101 $MODEL $COMMON_PARAMS
+#echo "  ✓ Caltech101 dataset testing complete"
+#
+#echo "Running tests on Fine-grained datasets..."
+#echo "  [7/8] Testing UCF101 dataset..."
+#CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets UCF101 $MODEL $COMMON_PARAMS
+#echo "  ✓ UCF101 dataset testing complete"
+#
+#echo "  [8/8] Testing eurosat dataset..."
+#CUDA_VISIBLE_DEVICES=$GPU python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets eurosat $MODEL $COMMON_PARAMS
+#echo "  ✓ eurosat dataset testing complete"
+#
+#echo "Fine-grained datasets testing complete"
 
 #elif [ "$JOB_ID" -eq 4 ]; then
 #  echo "Running tests on ImageNet datasets..."

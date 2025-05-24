@@ -322,10 +322,17 @@ def main():
     os.makedirs(args.output_dir, exist_ok=True)
 
     # Set up logging
-
     # Create a log name that includes TTA variations
     log_dir = create_log_dir(args)
-    log_dir = os.path.join(args.output_dir, log_dir) if args.log_output_dir is None else os.path.join(args.log_output_dir, log_dir)
+    if args.output_dir is None or args.output_dir.lower() == "none":
+        log_dir = os.path.join(args.output_dir, log_dir)
+    else:
+        args.log_output_dir = os.path.join(args.log_output_dir, args.arch, args.test_sets)
+        # Create a log directory if it doesn't exist
+
+        #os.makedirs(args.log_output_dir, exist_ok=True)
+        log_dir = os.path.join(args.log_output_dir, log_dir)
+
     log_dir = handle_long_windows_path(log_dir)
     args.log_dir = log_dir
     # Create log directory if it doesn't exist
@@ -508,34 +515,34 @@ def get_adversarial_image(image, target, attack, path, index, output_dir, logger
 
     else:
         # Create adversarial image using attack
-        # adv_image = attack(image, target)
-        # if logger:
-        #     logger.debug(f"Generated adversarial image with shape: {adv_image.shape}")
-        #
-        # if counter_atk:
-        #     # If using counter-attack, apply it to the generated image
-        #     adv_image = counter_atk(adv_image, target)
-        #     if logger:
-        #         logger.debug(f"Applied counter-attack to generated adversarial image with shape: {adv_image.shape}")
-        #
-        #
-        # # Move tensor to CPU before saving
-        # adv_tensor = adv_image.squeeze(0).detach().cpu()
-        #
-        # # Save the adversarial tensor
-        # torch.save(adv_tensor, adv_img_path)
-        #
-        # if logger:
-        #     logger.info(f"Saved adversarial image to {adv_img_path}")
-        #
-        # # Convert to PIL for return
-        # img_adv = transforms.ToPILImage()(adv_tensor)
-        #
-        # # Free memory for large datasets
-        # del adv_image
-        # torch.cuda.empty_cache()
+        adv_image = attack(image, target)
+        if logger:
+            logger.debug(f"Generated adversarial image with shape: {adv_image.shape}")
+
+        if counter_atk:
+            # If using counter-attack, apply it to the generated image
+            adv_image = counter_atk(adv_image, target)
+            if logger:
+                logger.debug(f"Applied counter-attack to generated adversarial image with shape: {adv_image.shape}")
+
+
+        # Move tensor to CPU before saving
+        adv_tensor = adv_image.squeeze(0).detach().cpu()
+
+        # Save the adversarial tensor
+        torch.save(adv_tensor, adv_img_path)
+
+        if logger:
+            logger.info(f"Saved adversarial image to {adv_img_path}")
+
+        # Convert to PIL for return
+        img_adv = transforms.ToPILImage()(adv_tensor)
+
+        # Free memory for large datasets
+        del adv_image
+        torch.cuda.empty_cache()
         # raise an error if Adversarial image is not already generated
-        raise FileNotFoundError(f"Adversarial image not found at {adv_img_path}. Please generate it first.")
+        #raise FileNotFoundError(f"Adversarial image not found at {adv_img_path}. Please generate it first.")
 
 
     return img_adv
@@ -931,7 +938,7 @@ if __name__ == '__main__':
                         help='Random seed for reproducibility')
     parser.add_argument('--output_dir', type=str, default='output_results/ckps/rtpt',
                         help='Directory to save adv images / results')
-    parser.add_argument('--log_output_dir', type=str, default=None,
+    parser.add_argument('--log_output_dir', type=str, default="none",
                         help='Directory to save log results')
 
     # Adversarial attack parameters
