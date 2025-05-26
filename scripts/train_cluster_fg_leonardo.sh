@@ -3,7 +3,7 @@
 
 JOB_ID=${1:-1}
 EVAL=${2:-"adv"}
-MODEL_NAME=${3:-"$MODEL_NAME"}
+MODEL_NAME=${3:-"ViT-L/14"}
 
 if [ $JOB_ID -eq 1 ]; then
   # Zero shot Performance
