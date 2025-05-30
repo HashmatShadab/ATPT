@@ -3,7 +3,7 @@
 
 LAUNCHER="bash scripts/train_cluster_fg.sh"
 ATPT_DATASET="/leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data"
-DOWNSTREAM_DATASET="$ATPT_DATASET/downstream_DOWNSTREAM_DATASETs"
+DOWNSTREAM_DATASET="$ATPT_DATASET/downstream_datasets"
 MODEL="ViT-L/14"
 OUTPUT_DIR="/leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results"
 
