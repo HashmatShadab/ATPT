@@ -82,7 +82,7 @@ def get_zeroshot_templates(dset, template_path='zeroshot-templates.json'):
         'pets': 'pets',
         'dtd': 'dtd',
         'caltech101': 'caltech101',
-        'flowers102': 'flowers',
+        'flower102': 'flowers',
         'eurosat': 'eurosat',
         'ucf101': 'dummy',
     }
