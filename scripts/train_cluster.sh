@@ -39,8 +39,8 @@ COUNTER_ATTACK_W_PERTURBATION=${21:-"true"}
 
 
 ############################################
-JOB_ID=${22:-1}
-LOG_OUTPUT_DIR=${23:-"none"}
+LOG_OUTPUT_DIR=${22:-"none"}
+JOB_ID=${23:-1}
 DATASET_ID=${24:-"caltech101"}
 
 
