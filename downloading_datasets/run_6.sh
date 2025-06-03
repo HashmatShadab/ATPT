@@ -2,7 +2,7 @@
 # vit_l_14_datacomp_1b
 cd /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data
 mkdir vit_l_14_datacomp_1b
-
+cd vit_l_14_datacomp_1b
 wget https://www.dropbox.com/scl/fi/cnn70dahaftyyv2n78w1j/Aircraft.zip?rlkey=e9y0g3d8cs5c5rinphjqt41aw&st=rw0gcj1h&dl=0
 wget https://www.dropbox.com/scl/fi/s1917wxk72afma8lg7vdq/Caltech101.zip?rlkey=hk0gmdzqpxnsp0hz2mk65byvt&st=97m7ycrh&dl=0
 wget https://www.dropbox.com/scl/fi/ms4yskwemwv9l7bhsray7/Cars.zip?rlkey=8dexth8n2g3i3j9e587ovp3i8&st=owbiere0&dl=0
