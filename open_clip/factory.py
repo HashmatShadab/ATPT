@@ -131,7 +131,15 @@ def get_tokenizer(
             **tokenizer_kwargs,
         )
     elif 'delta_clip' in model_name:
-        config['text_cfg']['vocab_path'] = "/home/muzammal/Projects/ATPT/open_clip/bert_base_vocab_bos_eos.txt"
+        if os.path.exists("/home/muzammal/Projects/ATPT/open_clip/bert_base_vocab_bos_eos.txt"):
+            config['text_cfg']['vocab_path'] = "/home/muzammal/Projects/ATPT/open_clip/bert_base_vocab_bos_eos.txt"
+        elif os.path.exists("/leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/open_clip/bert_base_vocab_bos_eos.txt"):
+            config['text_cfg']['vocab_path'] = "/leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/open_clip/bert_base_vocab_bos_eos.txt"
+        else:
+            raise FileNotFoundError(
+                "BERT base vocabulary file not found. Please provide the correct path to the vocabulary file."
+            )
+
         tokenizer = get_pp_custom_bert_tokenize(vocab_path=config['text_cfg']['vocab_path'],
                                                 context_length=40)
         # ************************
