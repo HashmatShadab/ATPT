@@ -444,8 +444,9 @@ def get_open_clip(clip_arch, device, cache_dir=DOWNLOAD_ROOT):
         clip, _, preprocess = create_model_and_transforms(clip_arch, device=device, cache_dir=DOWNLOAD_ROOT)  # precision='fp32'
     else:
         clip, _, preprocess = create_model_and_transforms(clip_arch, device=device, cache_dir=DOWNLOAD_ROOT, pretrained='openai')  # precision='fp32'
-
-    tokenizer = get_tokenizer(clip_arch)
+    print(f"Using CLIP model: {clip_arch} on device: {device}")
+    exit()
+    tokenizer = get_tokenizer(clip_arch, cache_dir=cache_dir)
 
 
     return clip, _, preprocess, tokenizer

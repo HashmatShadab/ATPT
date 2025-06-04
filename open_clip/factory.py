@@ -299,6 +299,7 @@ def create_model(
     preprocess_cfg = asdict(PreprocessCfg())
     has_hf_hub_prefix = model_name.startswith(HF_HUB_PREFIX)
     if has_hf_hub_prefix:
+        print(f"Loading model from Hugging Face Hub: {model_name} and cache_dir: {cache_dir}")
         model_id = model_name[len(HF_HUB_PREFIX):]
         checkpoint_path = download_pretrained_from_hf(model_id, cache_dir=cache_dir)
         config = _get_hf_config(model_id, cache_dir=cache_dir)
@@ -536,6 +537,7 @@ def create_model_and_transforms(
         is_train=False,
     )
 
+    print("Preprocess Config:", pp_cfg)
     return model, preprocess_train, preprocess_val
 
 
