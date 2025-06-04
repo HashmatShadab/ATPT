@@ -441,7 +441,7 @@ def get_open_clip(clip_arch, device, cache_dir=DOWNLOAD_ROOT):
 
     }
     if clip_arch in model_names:
-        clip, _, preprocess = create_model_and_transforms(clip_arch, device=device, cache_dir=cache_dir)  # precision='fp32'
+        clip, _, preprocess = create_model_and_transforms(clip_arch, device=device, cache_dir=DOWNLOAD_ROOT)  # precision='fp32'
     else:
         clip, _, preprocess = create_model_and_transforms(clip_arch, device=device, cache_dir=DOWNLOAD_ROOT, pretrained='openai')  # precision='fp32'
 
