@@ -178,7 +178,7 @@ wait_for_jobs() {
 #wait_for_jobs
 
 #TPT Performance
-echo "Running $MODEL_NAME RTPT tests Fine-grained datasets..."
+echo "Running $MODEL_NAME TPT tests Fine-grained datasets..."
 
 echo "Running $MODEL_NAME ZS tests Fine-grained datasets with adversarial evaluation"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 tpt none /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data false pgd 0 4.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results"
