@@ -4,21 +4,39 @@
 MODEL_NAME=${1:-"ViT-L/14"}
 
 # Function to wait for all SLURM jobs to complete
+#wait_for_jobs() {
+#    echo "Waiting for all jobs to complete..."
+#    while true; do
+#        # Check if there are any jobs running for the current user
+#        job_count=$(squeue -u $USER -h | wc -l)
+#        if [ "$job_count" -eq 0 ]; then
+#            echo "All jobs completed."
+#            break
+#        fi
+#        echo "$job_count jobs still running. Checking again in 5 minutes..."
+#        sleep 5m
+#    done
+#}
+
 wait_for_jobs() {
-    echo "Waiting for all jobs to complete..."
+    fixed_job_name="adv_rob_clip"
+
+    echo "[INFO] Waiting for jobs with name '$fixed_job_name' to complete..."
+
     while true; do
-        # Check if there are any jobs running for the current user
-        job_count=$(squeue -u $USER -h | wc -l)
+        job_count=$(squeue -u "$USER" -h -o "%j" | grep -w "$fixed_job_name" | wc -l)
+
         if [ "$job_count" -eq 0 ]; then
-            echo "All jobs completed."
+            echo "[INFO] All jobs with name '$fixed_job_name' have completed."
             break
         fi
-        echo "$job_count jobs still running. Checking again in 5 minutes..."
-        sleep 5m
+
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] $job_count job(s) with name '$fixed_job_name' still running. Checking again in 30 minutes..."
+        sleep 30m
     done
 }
 
-
+#
 ## Zero shot Performance
 #echo "Running $MODEL_NAME ZS tests Fine-grained datasets..."
 #
