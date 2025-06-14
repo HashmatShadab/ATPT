@@ -52,6 +52,18 @@ from helper_functions import plot_image, print_args, rtpt_entropy_avg, entropy_l
 
 import json
 
+
+openai_model_dict = {
+    "delta_clip_l14_224": "hf-hub:zw123/delta_clip_l14_224",
+    "tecoa4": "hf-hub:chs20/tecoa4-clip",
+    "tecoa2": "hf-hub:chs20/tecoa2-clip",
+    "fare2": "hf-hub:chs20/fare2-clip",
+    "fare4": "hf-hub:chs20/fare4-clip",
+    "vit_l_14_datacomp_1b": "hf-hub:laion/CLIP-ViT-L-14-DataComp.XL-s13B-b90K",
+    # "RN50": "RN50",
+}
+
+
 def create_log_name(args):
     """Creates a standardized log name from experiment parameters"""
     # R-TPT hyperparameters for log name
@@ -66,7 +78,6 @@ def create_log_name(args):
         else:
             log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_no_TPT_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
     return log_name
-
 
 def create_log_dir(args):
     """Creates a structured log path and filename from experiment parameters"""
@@ -139,10 +150,6 @@ def create_log_dir(args):
 
     return folder_path
 
-
-
-
-
 def get_zeroshot_templates(dset, template_path='zeroshot-templates.json'):
     """
     Load zeroshot templates based on dataset name.
@@ -184,16 +191,72 @@ def get_zeroshot_templates(dset, template_path='zeroshot-templates.json'):
     key = dataset_key_map[dset]
     return templates[key]
 
+def ECE_Loss(num_bins, predictions, confidences, correct):
+    #ipdb.set_trace()
+    bin_boundaries = torch.linspace(0, 1, num_bins + 1)
+    bin_lowers = bin_boundaries[:-1]
+    bin_uppers = bin_boundaries[1:]
+    bin_accuracy = [0]*num_bins
+    bin_confidence = [0]*num_bins
+    bin_num_sample = [0]*num_bins
 
-openai_model_dict = {
-    "delta_clip_l14_224": "hf-hub:zw123/delta_clip_l14_224",
-    "tecoa4": "hf-hub:chs20/tecoa4-clip",
-    "tecoa2": "hf-hub:chs20/tecoa2-clip",
-    "fare2": "hf-hub:chs20/fare2-clip",
-    "fare4": "hf-hub:chs20/fare4-clip",
-    "vit_l_14_datacomp_1b": "hf-hub:laion/CLIP-ViT-L-14-DataComp.XL-s13B-b90K",
-    # "RN50": "RN50",
-}
+    for idx in range(len(predictions)):
+        #prediction = predictions[idx]
+        confidence = confidences[idx]
+        bin_idx = -1
+        for bin_lower, bin_upper in zip(bin_lowers, bin_uppers):
+            bin_idx += 1
+            bin_lower = bin_lower.item()
+            bin_upper = bin_upper.item()
+            #if bin_lower <= confidence and confidence < bin_upper:
+            if bin_lower < confidence and confidence <= bin_upper:
+                bin_num_sample[bin_idx] += 1
+                bin_accuracy[bin_idx] += correct[idx]
+                bin_confidence[bin_idx] += confidences[idx]
+
+    for idx in range(num_bins):
+        if bin_num_sample[idx] != 0:
+            bin_accuracy[idx] = bin_accuracy[idx]/bin_num_sample[idx]
+            bin_confidence[idx] = bin_confidence[idx]/bin_num_sample[idx]
+
+    ece_loss = 0.0
+    for idx in range(num_bins):
+        temp_abs = abs(bin_accuracy[idx]-bin_confidence[idx])
+        ece_loss += (temp_abs*bin_num_sample[idx])/len(predictions)
+
+    return ece_loss, bin_accuracy, bin_confidence, bin_num_sample
+
+
+def Calculator(result_dict, logger=None):
+
+    list_max_confidence = result_dict['max_confidence']
+    list_prediction = result_dict['prediction']
+    list_label = result_dict['label']
+
+    torch_list_prediction = torch.tensor(list_prediction).int()
+    torch_list_label = torch.tensor(list_label).int()
+
+    torch_correct = (torch_list_prediction == torch_list_label)
+    list_correct = torch_correct.tolist()
+
+    # Identify incorrect predictions using tensor operations
+    incorrect_indices = (torch_list_prediction != torch_list_label)
+    torch_max_confidence = torch.tensor(list_max_confidence)
+
+    # Extract confidences for incorrect predictions
+    incorrect_confidences = torch_max_confidence[incorrect_indices].tolist()
+
+    ece_data = ECE_Loss(20, list_prediction, list_max_confidence, list_correct)
+    acc = sum(list_correct)/len(list_correct)
+
+
+    logger.info("ECE Calculator")
+    logger.info(f"Acc: {acc*100}")
+    logger.info(f"ECE: {ece_data[0]*100}")
+
+    return acc*100, ece_data[0]*100, ece_data[1], incorrect_confidences
+
+
 
 
 def test_time_tuning(model, inputs, optimizer, scaler, args, logger=None):
@@ -497,6 +560,17 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     selected_ids_dic = {}
     weighted_scores = {}
     batch_entropies_dic = {}
+
+    result_dict_original = {'max_confidence': [], 'prediction': [], 'label': []}
+    result_dict_single = {'max_confidence': [], 'prediction': [], 'label': []}
+    result_dict_vanilla = {'max_confidence': [], 'prediction': [], 'label': []}
+    result_dict_weighted = {'max_confidence': [], 'prediction': [], 'label': []}
+
+    # define a softmax layer
+    softmax_ece = torch.nn.Softmax(dim=1)
+
+
+
     # Iterate through validation data
     for i, data in enumerate(val_loader):
         # Handle different return formats (with or without path)
@@ -633,6 +707,13 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         # Measure accuracy
         acc1, acc5 = accuracy(clip_output, target, topk=(1, 5))  # Original model accuracy
 
+        # Calculate ECE
+        softmax_clip_output = softmax_ece(clip_output)
+        max_conf_clip_output, max_index_clip_output = torch.max(softmax_clip_output, dim=1)
+        result_dict_original['max_confidence'].append(max_conf_clip_output.item())
+        result_dict_original['prediction'].append(max_index_clip_output.item())
+        result_dict_original['label'].append(target.item())
+
         # Update original model accuracy metrics
         top1.update(acc1[0], images.size(0))
         top5.update(acc5[0], images.size(0))
@@ -640,22 +721,63 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         if args.ensemble_type != "all":
             # For single ensemble type, calculate and update metrics
             tpt_acc1, tpt_acc5 = accuracy(tta_output, target, topk=(1, 5))  # Test-time adapted accuracy
+
+            # Calculate the ECE for the single ensemble type
+            softmax_tta_output = softmax_ece(tta_output)
+            max_conf_tta_output, max_index_tta_output = torch.max(softmax_tta_output, dim=1)
+            if args.ensemble_type == "none":
+                result_dict_single['max_confidence'].append(max_conf_tta_output.item())
+                result_dict_single['prediction'].append(max_index_tta_output.item())
+                result_dict_single['label'].append(target.item())
+            elif args.ensemble_type == "vanilla":
+                result_dict_vanilla['max_confidence'].append(max_conf_tta_output.item())
+                result_dict_vanilla['prediction'].append(max_index_tta_output.item())
+                result_dict_vanilla['label'].append(target.item())
+            elif args.ensemble_type == "weighted_rtpt":
+                result_dict_weighted['max_confidence'].append(max_conf_tta_output.item())
+                result_dict_weighted['prediction'].append(max_index_tta_output.item())
+                result_dict_weighted['label'].append(target.item())
+            else:
+                raise ValueError(f"Unknown ensemble type: {args.ensemble_type}")
+
             tpt1.update(tpt_acc1[0], images.size(0))
             tpt5.update(tpt_acc5[0], images.size(0))
         else:
             # For "all" ensemble type, calculate and update metrics for all three types
             # 1. 'none' ensemble type
             tpt_acc1_single, tpt_acc5_single = accuracy(tta_output_single, target, topk=(1, 5))
+            # Calculate the ECE for the single ensemble type
+            softmax_tta_output_single = softmax_ece(tta_output_single)
+            max_conf_tta_output_single, max_index_tta_output_single = torch.max(softmax_tta_output_single, dim=1)
+            result_dict_single['max_confidence'].append(max_conf_tta_output_single.item())
+            result_dict_single['prediction'].append(max_index_tta_output_single.item())
+            result_dict_single['label'].append(target.item())
+
             tpt1_single.update(tpt_acc1_single[0], images.size(0))
             tpt5_single.update(tpt_acc5_single[0], images.size(0))
 
             # 2. 'vanilla' ensemble type
             tpt_acc1_vanilla, tpt_acc5_vanilla = accuracy(tta_output_vanilla, target, topk=(1, 5))
+            # Calculate the ECE for the vanilla ensemble type
+            softmax_tta_output_vanilla = softmax_ece(tta_output_vanilla)
+            max_conf_tta_output_vanilla, max_index_tta_output_vanilla = torch.max(softmax_tta_output_vanilla, dim=1)
+            result_dict_vanilla['max_confidence'].append(max_conf_tta_output_vanilla.item())
+            result_dict_vanilla['prediction'].append(max_index_tta_output_vanilla.item())
+            result_dict_vanilla['label'].append(target.item())
+
             tpt1_vanilla.update(tpt_acc1_vanilla[0], images.size(0))
             tpt5_vanilla.update(tpt_acc5_vanilla[0], images.size(0))
 
+
             # 3. 'weighted_rtpt' ensemble type
             tpt_acc1_weighted, tpt_acc5_weighted = accuracy(tta_output_weighted, target, topk=(1, 5))
+            # Calculate the ECE for the weighted ensemble type
+            softmax_tta_output_weighted = softmax_ece(tta_output_weighted)
+            max_conf_tta_output_weighted, max_index_tta_output_weighted = torch.max(softmax_tta_output_weighted, dim=1)
+            result_dict_weighted['max_confidence'].append(max_conf_tta_output_weighted.item())
+            result_dict_weighted['prediction'].append(max_index_tta_output_weighted.item())
+            result_dict_weighted['label'].append(target.item())
+
             tpt1_weighted.update(tpt_acc1_weighted[0], images.size(0))
             tpt5_weighted.update(tpt_acc5_weighted[0], images.size(0))
 
@@ -780,7 +902,44 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         # Create and save a plot of average weights for each view
         plot_average_weights(weighted_scores, args.log_dir, logger, filename=f"{args.weighted_score_name[:-5]}_plot.png")
 
+    # Save the results dictionary if not empty
+    if result_dict_original:
+        results_path = os.path.join(args.log_dir, f"results_original.json")
+        # Handle long paths on Windows
+        results_path = handle_long_windows_path(results_path)
+        with open(results_path, 'w') as f:
+            json.dump(result_dict_original, f, indent=4)
+        logger.info(f"Results saved to {results_path}")
+        acc, ece, bin_acc, incorrect_confidences = Calculator(result_dict_original, logger)
+        logger.info(f"ECE results - Original Acc: {acc:.2f},  ECE: {ece:.2f}")
+    if result_dict_single:
+        results_path = os.path.join(args.log_dir, f"results_single.json")
+        # Handle long paths on Windows
+        results_path = handle_long_windows_path(results_path)
+        with open(results_path, 'w') as f:
+            json.dump(result_dict_single, f, indent=4)
+        logger.info(f"Results saved to {results_path}")
+        acc, ece, bin_acc, incorrect_confidences = Calculator(result_dict_single, logger)
+        logger.info(f"ECE results - Single Acc: {acc:.2f},  ECE: {ece:.2f}")
+    if result_dict_vanilla:
+        results_path = os.path.join(args.log_dir, f"results_vanilla.json")
+        # Handle long paths on Windows
+        results_path = handle_long_windows_path(results_path)
+        with open(results_path, 'w') as f:
+            json.dump(result_dict_vanilla, f, indent=4)
+        logger.info(f"Results saved to {results_path}")
+        acc, ece, bin_acc, bin_confidences = Calculator(result_dict_vanilla, logger)
+        logger.info(f"ECE results - Vanilla Acc: {acc:.2f},  ECE: {ece:.2f}")
 
+    if result_dict_weighted:
+        results_path = os.path.join(args.log_dir, f"results_weighted.json")
+        # Handle long paths on Windows
+        results_path = handle_long_windows_path(results_path)
+        with open(results_path, 'w') as f:
+            json.dump(result_dict_weighted, f, indent=4)
+        logger.info(f"Results saved to {results_path}")
+        acc, ece, bin_acc, bin_confidences = Calculator(result_dict_weighted, logger)
+        logger.info(f"ECE results - Weighted Acc: {acc:.2f},  ECE: {ece:.2f}")
 
 
     # Return original and test-time adapted accuracies
