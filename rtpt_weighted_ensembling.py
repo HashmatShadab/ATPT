@@ -48,8 +48,6 @@ import torch
 from PIL import Image
 import numpy as np
 from helper_functions import plot_image, print_args, rtpt_entropy_avg, entropy_loss_ttl, entropy_of_each_sample, handle_long_windows_path
-
-
 import json
 
 
@@ -63,21 +61,54 @@ openai_model_dict = {
     # "RN50": "RN50",
 }
 
+def plot_average_weights(weighted_scores, output_dir, logger=None, filename='average_weights_plot.png'):
+    """
+    Create a plot showing the average weight for each view across all samples.
 
-def create_log_name(args):
-    """Creates a standardized log name from experiment parameters"""
-    # R-TPT hyperparameters for log name
-    if args.tta_steps > 0:
-        if args.counter_attack:
-            log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_counter_attack_eps_{args.counter_attack_eps}_steps_{args.counter_attack_steps}_alpha_{args.counter_attack_alpha}_tau_thres_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_perturbations_{args.counter_attack_weighted_perturbations}_TPT_loss_{args.tpt_loss}_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
-        else:
-            log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_TPT_loss_{args.tpt_loss}_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
-    else:
-        if args.counter_attack:
-            log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_counter_attack_eps_{args.counter_attack_eps}_steps_{args.counter_attack_steps}_alpha_{args.counter_attack_alpha}_tau_thres_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_perturbations_{args.counter_attack_weighted_perturbations}_no_TPT_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
-        else:
-            log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_no_TPT_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
-    return log_name
+    Args:
+        weighted_scores (dict): Dictionary mapping sample indices to lists of weights.
+        output_dir (str): Directory to save the plot.
+        logger (logging.Logger, optional): Logger for logging information.
+    """
+    if logger:
+        logger.info("Creating plot of average weights for each view")
+
+    # Convert the dictionary values to a numpy array
+    all_weights = []
+    for key, values in weighted_scores.items():
+        # Ensure values is a 1D array
+        if isinstance(values, (list, np.ndarray)):
+            all_weights.append(np.asarray(values).flatten())
+
+    # Convert to numpy array and calculate average across all samples
+    all_weights = np.array(all_weights)
+    avg_weights = np.mean(all_weights, axis=0)
+
+    # Ensure avg_weights is 1D
+    avg_weights = avg_weights.flatten()
+
+    # Create the plot
+    plt.figure(figsize=(12, 6))
+    x_positions = np.arange(len(avg_weights))
+    plt.bar(x_positions, avg_weights)
+    plt.xlabel('View Index')
+    plt.ylabel('Average Weight')
+    plt.title('Average Weight for Each View')
+    plt.grid(True, linestyle='--', alpha=0.7)
+
+    # Add a horizontal line at the average weight value
+    plt.axhline(y=np.mean(avg_weights), color='r', linestyle='-',
+                label=f'Mean: {np.mean(avg_weights):.4f}')
+    plt.legend()
+
+    # Save the plot
+    plot_path = os.path.join(output_dir, filename)
+    plot_path = handle_long_windows_path(plot_path)
+    plt.savefig(plot_path)
+    plt.close()
+
+    if logger:
+        logger.info(f"Average weights plot saved to {plot_path}")
 
 def create_log_dir(args):
     """Creates a structured log path and filename from experiment parameters"""
@@ -226,7 +257,6 @@ def ECE_Loss(num_bins, predictions, confidences, correct):
 
     return ece_loss, bin_accuracy, bin_confidence, bin_num_sample
 
-
 def Calculator(result_dict, logger=None):
 
     list_max_confidence = result_dict['max_confidence']
@@ -255,9 +285,6 @@ def Calculator(result_dict, logger=None):
     logger.info(f"ECE: {ece_data[0]*100}")
 
     return acc*100, ece_data[0]*100, ece_data[1], incorrect_confidences
-
-
-
 
 def test_time_tuning(model, inputs, optimizer, scaler, args, logger=None):
     """
@@ -1133,54 +1160,6 @@ def main():
 
 
 
-def plot_average_weights(weighted_scores, output_dir, logger=None, filename='average_weights_plot.png'):
-    """
-    Create a plot showing the average weight for each view across all samples.
-
-    Args:
-        weighted_scores (dict): Dictionary mapping sample indices to lists of weights.
-        output_dir (str): Directory to save the plot.
-        logger (logging.Logger, optional): Logger for logging information.
-    """
-    if logger:
-        logger.info("Creating plot of average weights for each view")
-
-    # Convert the dictionary values to a numpy array
-    all_weights = []
-    for key, values in weighted_scores.items():
-        # Ensure values is a 1D array
-        if isinstance(values, (list, np.ndarray)):
-            all_weights.append(np.asarray(values).flatten())
-
-    # Convert to numpy array and calculate average across all samples
-    all_weights = np.array(all_weights)
-    avg_weights = np.mean(all_weights, axis=0)
-
-    # Ensure avg_weights is 1D
-    avg_weights = avg_weights.flatten()
-
-    # Create the plot
-    plt.figure(figsize=(12, 6))
-    x_positions = np.arange(len(avg_weights))
-    plt.bar(x_positions, avg_weights)
-    plt.xlabel('View Index')
-    plt.ylabel('Average Weight')
-    plt.title('Average Weight for Each View')
-    plt.grid(True, linestyle='--', alpha=0.7)
-
-    # Add a horizontal line at the average weight value
-    plt.axhline(y=np.mean(avg_weights), color='r', linestyle='-',
-                label=f'Mean: {np.mean(avg_weights):.4f}')
-    plt.legend()
-
-    # Save the plot
-    plot_path = os.path.join(output_dir, filename)
-    plot_path = handle_long_windows_path(plot_path)
-    plt.savefig(plot_path)
-    plt.close()
-
-    if logger:
-        logger.info(f"Average weights plot saved to {plot_path}")
 
 if __name__ == '__main__':
     # Set up command-line argument parser
