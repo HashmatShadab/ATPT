@@ -52,6 +52,97 @@ from helper_functions import plot_image, print_args, rtpt_entropy_avg, entropy_l
 
 import json
 
+def create_log_name(args):
+    """Creates a standardized log name from experiment parameters"""
+    # R-TPT hyperparameters for log name
+    if args.tta_steps > 0:
+        if args.counter_attack:
+            log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_counter_attack_eps_{args.counter_attack_eps}_steps_{args.counter_attack_steps}_alpha_{args.counter_attack_alpha}_tau_thres_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_perturbations_{args.counter_attack_weighted_perturbations}_TPT_loss_{args.tpt_loss}_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
+        else:
+            log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_TPT_loss_{args.tpt_loss}_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
+    else:
+        if args.counter_attack:
+            log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_counter_attack_eps_{args.counter_attack_eps}_steps_{args.counter_attack_steps}_alpha_{args.counter_attack_alpha}_tau_thres_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_perturbations_{args.counter_attack_weighted_perturbations}_no_TPT_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
+        else:
+            log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_no_TPT_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
+    return log_name
+
+
+def create_log_dir(args):
+    """Creates a structured log path and filename from experiment parameters"""
+
+    # Root: adversarial or clean
+    data_type = "Adversarial" if args.eps > 0 else "Clean"
+
+    # Counter-attack or not
+
+    counter_attack_part = [f"Counter_Attack", f"Eps_{args.counter_attack_eps}_Steps_{args.counter_attack_steps}_Alpha_{args.counter_attack_alpha}",
+        f"tau_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_pertrubation_{args.counter_attack_weighted_perturbations}"
+    ]
+    if args.counter_attack:
+        if args.counter_attack_type == "pgd":
+            counter_attack_part = [f"Counter_Attack",
+                                   f"Eps_{args.counter_attack_eps}_Steps_{args.counter_attack_steps}_Alpha_{args.counter_attack_alpha}",
+                                   f"tau_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_pertrubation_{args.counter_attack_weighted_perturbations}"
+                                   ]
+        elif args.counter_attack_type == "pgd_clip_pure_i":
+            counter_attack_part = [f"Counter_Attack_PGDCLIPPureImage",
+                                   f"Eps_{args.counter_attack_eps}_Steps_{args.counter_attack_steps}_Alpha_{args.counter_attack_alpha}_textembed_{args.pgd_clip_pure_i_text_embeddings}",
+                                   ]
+
+        elif args.counter_attack_type == "pgd_clip_pure_i":
+            counter_attack_part = [f"Counter_Attack_PGDCounter_CLIPPureImage",
+                                   f"Eps_{args.counter_attack_eps}_Steps_{args.counter_attack_steps}_Alpha_{args.counter_attack_alpha}_textembed_{args.pgd_clip_pure_i_text_embeddings}",
+                                   f"tau_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_pertrubation_{args.counter_attack_weighted_perturbations}",
+                                   f"loss_lamda_{args.pgd_counter_and_clipure_i_lamda}"
+
+                                   ]
+
+    else:
+        counter_attack_part = ["No_Counter_Attack"]
+
+    # TPT or no-TPT
+    tpt_part = [f"TPT", f"Optimization_Loss_{args.tpt_loss}_LR_{args.lr}_Optimization_Steps_{args.tta_steps}_View_Selection_Fraction_{args.selection_p}"] if args.tta_steps > 0 else ["No_TPT"]
+
+
+    # Ensemble details
+    if args.ensemble_type == "weighted_rtpt":
+        ensemble_part = [f"Inference_Ensemble_{args.ensemble_type}_topk_{args.top_k}_softmaxtemp_{args.softmax_temp}"]
+    elif args.ensemble_type == "all":
+        ensemble_part = [f"Inference_Ensemble_{args.ensemble_type}_weighted_rtpt_topk_{args.top_k}_softmaxtemp_{args.softmax_temp}"]
+    else:
+        ensemble_part = [f"Inference_Ensemble_{args.ensemble_type}"]
+
+    # Adversarial-specific part (include eps and attack steps if adversarial)
+    if data_type == "Adversarial":
+        data_type = f"{data_type}_Eps_{args.eps}_Steps_{args.steps}" if args.eps > 0 else ""
+
+    # Combine folder structure
+    # Create a list of path parts
+    path_parts = []
+    path_parts.append(data_type)
+    for part in counter_attack_part:
+        path_parts.append(part)
+
+    for part in tpt_part:
+        path_parts.append(part)
+    for part in ensemble_part:
+        path_parts.append(part)
+
+    # Join the parts to create the final folder path
+    folder_path = os.path.join(*path_parts)
+
+    # replace all the "." with "_"
+    folder_path = folder_path.replace(".", "_")
+
+    # convert the file path to be compatible with the file system of windows
+
+    return folder_path
+
+
+
+
+
 def get_zeroshot_templates(dset, template_path='zeroshot-templates.json'):
     """
     Load zeroshot templates based on dataset name.
@@ -214,257 +305,6 @@ def select_confident_samples(logits, top):
     batch_entropy_cpu = batch_entropy.detach().cpu().tolist()
     return logits[idx], idx, batch_entropy_cpu
 
-
-def create_log_name(args):
-    """Creates a standardized log name from experiment parameters"""
-    # R-TPT hyperparameters for log name
-    if args.tta_steps > 0:
-        if args.counter_attack:
-            log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_counter_attack_eps_{args.counter_attack_eps}_steps_{args.counter_attack_steps}_alpha_{args.counter_attack_alpha}_tau_thres_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_perturbations_{args.counter_attack_weighted_perturbations}_TPT_loss_{args.tpt_loss}_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
-        else:
-            log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_TPT_loss_{args.tpt_loss}_lr_{args.lr}_step_{args.tta_steps}_selection_{args.selection_p}_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
-    else:
-        if args.counter_attack:
-            log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_counter_attack_eps_{args.counter_attack_eps}_steps_{args.counter_attack_steps}_alpha_{args.counter_attack_alpha}_tau_thres_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_perturbations_{args.counter_attack_weighted_perturbations}_no_TPT_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
-        else:
-            log_name = f"ADV_eps_{args.eps}_steps_{args.steps}_no_TPT_weighted_ensemble_{args.ensemble_type}_topk_neighbours_{args.top_k}_sftemp_{args.softmax_temp}"
-    return log_name
-
-
-def create_log_dir(args):
-    """Creates a structured log path and filename from experiment parameters"""
-
-    # Root: adversarial or clean
-    data_type = "Adversarial" if args.eps > 0 else "Clean"
-
-    # Counter-attack or not
-
-    counter_attack_part = [f"Counter_Attack", f"Eps_{args.counter_attack_eps}_Steps_{args.counter_attack_steps}_Alpha_{args.counter_attack_alpha}",
-        f"tau_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_pertrubation_{args.counter_attack_weighted_perturbations}"
-    ]
-    if args.counter_attack:
-        if args.counter_attack_type == "pgd":
-            counter_attack_part = [f"Counter_Attack",
-                                   f"Eps_{args.counter_attack_eps}_Steps_{args.counter_attack_steps}_Alpha_{args.counter_attack_alpha}",
-                                   f"tau_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_pertrubation_{args.counter_attack_weighted_perturbations}"
-                                   ]
-        elif args.counter_attack_type == "pgd_clip_pure_i":
-            counter_attack_part = [f"Counter_Attack_PGDCLIPPureImage",
-                                   f"Eps_{args.counter_attack_eps}_Steps_{args.counter_attack_steps}_Alpha_{args.counter_attack_alpha}_textembed_{args.pgd_clip_pure_i_text_embeddings}",
-                                   ]
-
-        elif args.counter_attack_type == "pgd_clip_pure_i":
-            counter_attack_part = [f"Counter_Attack_PGDCounter_CLIPPureImage",
-                                   f"Eps_{args.counter_attack_eps}_Steps_{args.counter_attack_steps}_Alpha_{args.counter_attack_alpha}_textembed_{args.pgd_clip_pure_i_text_embeddings}",
-                                   f"tau_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_pertrubation_{args.counter_attack_weighted_perturbations}",
-                                   f"loss_lamda_{args.pgd_counter_and_clipure_i_lamda}"
-
-                                   ]
-
-    else:
-        counter_attack_part = ["No_Counter_Attack"]
-
-    # TPT or no-TPT
-    tpt_part = [f"TPT", f"Optimization_Loss_{args.tpt_loss}_LR_{args.lr}_Optimization_Steps_{args.tta_steps}_View_Selection_Fraction_{args.selection_p}"] if args.tta_steps > 0 else ["No_TPT"]
-
-
-    # Ensemble details
-    if args.ensemble_type == "weighted_rtpt":
-        ensemble_part = [f"Inference_Ensemble_{args.ensemble_type}_topk_{args.top_k}_softmaxtemp_{args.softmax_temp}"]
-    else:
-        ensemble_part = [f"Inference_Ensemble_{args.ensemble_type}"]
-
-    # Adversarial-specific part (include eps and attack steps if adversarial)
-    if data_type == "Adversarial":
-        data_type = f"{data_type}_Eps_{args.eps}_Steps_{args.steps}" if args.eps > 0 else ""
-
-    # Combine folder structure
-    # Create a list of path parts
-    path_parts = []
-    path_parts.append(data_type)
-    for part in counter_attack_part:
-        path_parts.append(part)
-
-    for part in tpt_part:
-        path_parts.append(part)
-    for part in ensemble_part:
-        path_parts.append(part)
-
-    # Join the parts to create the final folder path
-    folder_path = os.path.join(*path_parts)
-
-    # replace all the "." with "_"
-    folder_path = folder_path.replace(".", "_")
-
-    # convert the file path to be compatible with the file system of windows
-
-    return folder_path
-
-
-
-
-
-
-def main():
-    # Record start time for script execution
-    start_time = time.time()
-
-    # Parse arguments and set random seed
-    args = parser.parse_args()
-    set_random_seed(args.seed)
-
-    # Calculate alpha from epsilon if not provided
-    args.alpha = args.eps / args.alpha_eps_ratio
-
-    # Create output directory path with experiment parameters
-    args.output_dir = os.path.join(args.output_dir, args.arch, args.test_sets)
-
-    # Create output directory if it doesn't exist
-    os.makedirs(args.output_dir, exist_ok=True)
-
-    # Set up logging
-    # Create a log name that includes TTA variations
-    log_dir = create_log_dir(args)
-    if args.log_output_dir is None or args.log_output_dir.lower() == "none":
-        log_dir = os.path.join(args.output_dir, log_dir)
-    else:
-        args.log_output_dir = os.path.join(args.log_output_dir, args.arch, args.test_sets)
-        # Create a log directory if it doesn't exist
-
-        #os.makedirs(args.log_output_dir, exist_ok=True)
-        log_dir = os.path.join(args.log_output_dir, log_dir)
-
-    log_dir = handle_long_windows_path(log_dir)
-    args.log_dir = log_dir
-    # Create log directory if it doesn't exist
-    os.makedirs(args.log_dir, exist_ok=True)
-    logger, log_file = setup_logger("log", args.log_dir, level=logging.INFO)
-    logger.info(print_args(args))
-
-    # Ensure GPU is available
-    assert args.gpu is not None
-    set_random_seed(args.seed)
-    logger.info(f"Use GPU: {args.gpu} for training")
-
-    # Determine class names based on dataset
-    dset = args.test_sets
-    if len(dset) > 1:
-        # For multi-character dataset names (e.g., 'Caltech101')
-        # This would require importing the specific classes for each dataset
-        # For now, we keep using eval for this case as it's not a common path
-        classnames = eval(f"{dset.lower()}_classes")
-    else:
-        # For single-character dataset codes (ImageNet variants)
-        assert dset in ['A', 'R', 'K', 'V', 'I']
-        classnames_all = imagenet_classes
-
-        # Select appropriate class names based on dataset code
-        if dset == 'A':
-            # ImageNet-A
-            classnames = [classnames_all[i] for i in imagenet_a_mask]
-        elif dset == 'R':
-            # ImageNet-R
-            classnames = [classnames_all[i] for i, m in enumerate(imagenet_r_mask) if m]
-        elif dset == 'V':
-            # ImageNet-V
-            classnames = [classnames_all[i] for i in imagenet_v_mask]
-        else:
-            # For ImageNet (I) or ImageNet-K
-            classnames = classnames_all
-    args.classnames = classnames
-
-    class_templates = get_zeroshot_templates(dset)
-
-
-
-    # Initialize model with CoOp (Context Optimization)
-    if args.arch in openai_model_dict:
-        actual_model_name = openai_model_dict[args.arch]
-        model = get_coop_openai(actual_model_name, classnames, args.gpu, args.n_ctx, args.ctx_init)
-
-        class_text_embeddings, template_text_embeddings = get_text_embeddings_openai(actual_model_name, classnames, class_templates, args.gpu)
-    else:
-        model = get_coop(args.arch, classnames, args.gpu, args.n_ctx, args.ctx_init)
-        class_text_embeddings, template_text_embeddings = get_text_embeddings(args.arch, classnames, class_templates, args.gpu)
-
-    model_state = None
-
-
-    # Freeze all parameters except prompt learner
-    logger.info("Freezing all parameters except prompt learner")
-    for name, param in model.named_parameters():
-        if "prompt_learner" not in name:
-                param.requires_grad_(False)
-
-    logger.info(f"=> Model created: visual backbone {args.arch}")
-
-    # Move model to GPU
-    if not torch.cuda.is_available():
-        logger.warning('Using CPU, this will be slow')
-    else:
-        assert args.gpu is not None
-        torch.cuda.set_device(args.gpu)
-        model = model.cuda(args.gpu)
-
-    # Set up optimizer for prompt parameters only
-    trainable_param = model.prompt_learner.parameters()
-    optimizer = torch.optim.AdamW(trainable_param, args.lr)
-    optim_state = deepcopy(optimizer.state_dict())
-
-    # Set up additional training parameters
-    scaler = None  # No mixed precision scaling used
-    cudnn.benchmark = not args.no_cudnn_benchmark  # Enable cudnn benchmarking for faster training unless disabled, default is True
-
-
-    # Set up data transformations and evaluation
-
-    # Set up image transformations
-    base_transform = transforms.Compose([
-        transforms.Resize(args.resolution, interpolation=BICUBIC),
-        transforms.CenterCrop(args.resolution)])
-    preprocess = transforms.Compose([
-        transforms.ToTensor(),
-        # normalize is commented out - intentional
-        ])
-
-    # # Create data augmentation transformer
-    data_transform = AugMixAugmenter(base_transform, preprocess, n_views=args.batch_size-1,
-                                    augmix=len(dset)>1, only_base_image=False)
-
-    batchsize = 1 # Process images one at a time for test-time adaptation
-
-    # Create dataset and data loader
-    val_dataset = build_dataset(dset, data_transform, args.data, mode=args.dataset_mode)
-    logger.info(f"Number of test samples: {len(val_dataset)}")
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batchsize, shuffle=False,
-                num_workers=args.workers, pin_memory=not args.no_pin_memory)
-
-    logger.info(f"Evaluating dataset: {dset}")
-
-    # Run evaluation with test-time adaptation
-    results = test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger, template_text_embeddings, class_text_embeddings)
-
-    # Clean up to free memory
-    del val_dataset, val_loader
-
-    # Format and save results
-    if args.eps <= 0:
-        # Clean accuracy (no adversarial attack)
-        log_msg = f"=> Acc. on testset [{dset}]: Clean Acc @1 {results[0]}/ TTA Clean Acc @1 {results[2]}, Clean Acc @5 {results[1]}/ TTA Clean Acc @5 {results[3]}"
-    else:
-        # Adversarial accuracy
-        log_msg = f"=> Acc. on testset [{dset}]: Adv Acc @1 {results[0]}/ TTA Adv Acc @1 {results[2]}, Adv Acc @5 {results[1]}/ TTA Adv Acc @5 {results[3]}"
-
-    # Log results
-    logger.info(log_msg)
-
-    # Calculate and log total execution time
-    end_time = time.time()
-    execution_time = end_time - start_time
-    logger.info(f"Total script execution time: {execution_time:.2f} seconds ({execution_time/60:.2f} minutes)")
-
-
-
 def get_adversarial_image(image, target, attack, path, index, output_dir, logger=None, counter_atk=None):
     """
     Generate or load a cached adversarial image.
@@ -549,56 +389,6 @@ def get_adversarial_image(image, target, attack, path, index, output_dir, logger
     return img_adv
 
 
-def plot_average_weights(weighted_scores, output_dir, logger=None, filename='average_weights_plot.png'):
-    """
-    Create a plot showing the average weight for each view across all samples.
-
-    Args:
-        weighted_scores (dict): Dictionary mapping sample indices to lists of weights.
-        output_dir (str): Directory to save the plot.
-        logger (logging.Logger, optional): Logger for logging information.
-    """
-    if logger:
-        logger.info("Creating plot of average weights for each view")
-
-    # Convert the dictionary values to a numpy array
-    all_weights = []
-    for key, values in weighted_scores.items():
-        # Ensure values is a 1D array
-        if isinstance(values, (list, np.ndarray)):
-            all_weights.append(np.asarray(values).flatten())
-
-    # Convert to numpy array and calculate average across all samples
-    all_weights = np.array(all_weights)
-    avg_weights = np.mean(all_weights, axis=0)
-
-    # Ensure avg_weights is 1D
-    avg_weights = avg_weights.flatten()
-
-    # Create the plot
-    plt.figure(figsize=(12, 6))
-    x_positions = np.arange(len(avg_weights))
-    plt.bar(x_positions, avg_weights)
-    plt.xlabel('View Index')
-    plt.ylabel('Average Weight')
-    plt.title('Average Weight for Each View')
-    plt.grid(True, linestyle='--', alpha=0.7)
-
-    # Add a horizontal line at the average weight value
-    plt.axhline(y=np.mean(avg_weights), color='r', linestyle='-', 
-                label=f'Mean: {np.mean(avg_weights):.4f}')
-    plt.legend()
-
-    # Save the plot
-    plot_path = os.path.join(output_dir, filename)
-    plot_path = handle_long_windows_path(plot_path)
-    plt.savefig(plot_path)
-    plt.close()
-
-    if logger:
-        logger.info(f"Average weights plot saved to {plot_path}")
-
-
 def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger=None, template_text_embeddings=None, class_text_embeddings=None):
     """
     Evaluate model performance with test-time adaptation.
@@ -624,14 +414,29 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     batch_time = AverageMeter('Time', ':6.3f', Summary.NONE)
     top1 = AverageMeter('Acc@1', ':6.2f', Summary.AVERAGE)  # Original model accuracy
     top5 = AverageMeter('Acc@5', ':6.2f', Summary.AVERAGE)
-    tpt1 = AverageMeter('TTAAcc@1', ':6.2f', Summary.AVERAGE)  # Test-time adapted accuracy
-    tpt5 = AverageMeter('TTAcc@5', ':6.2f', Summary.AVERAGE)
+    if args.ensemble_type != "all":
+        tpt1 = AverageMeter('TTAAcc@1', ':6.2f', Summary.AVERAGE)  # Test-time adapted accuracy
+        tpt5 = AverageMeter('TTAcc@5', ':6.2f', Summary.AVERAGE)
+        # Progress display
+        progress = ProgressMeter(
+            len(val_loader),
+            [batch_time, top1, tpt1],
+            prefix='Test: ')
+    else:
+        tpt1_single = AverageMeter('SingleTTAAcc@1', ':6.2f', Summary.AVERAGE)
+        tpt5_single = AverageMeter('SingleTTAAcc@5', ':6.2f', Summary.AVERAGE)
+        tpt1_vanilla = AverageMeter('VanillaTTAAcc@1', ':6.2f', Summary.AVERAGE)
+        tpt5_vanilla = AverageMeter('VanillaTTAAcc@5', ':6.2f', Summary.AVERAGE)
+        tpt1_weighted = AverageMeter('WeightedTTAAcc@1', ':6.2f', Summary.AVERAGE)
+        tpt5_weighted = AverageMeter('WeightedTTAAcc@5', ':6.2f', Summary.AVERAGE)
+        # Progress display
+        progress = ProgressMeter(
+            len(val_loader),
+            [batch_time, top1, tpt1_single, tpt1_vanilla, tpt1_weighted],
+            prefix='Test: ')
 
-    # Progress display
-    progress = ProgressMeter(
-        len(val_loader),
-        [batch_time, top1, tpt1],
-        prefix='Test: ')
+
+
 
     # Set model to evaluation mode
     model.eval()
@@ -799,6 +604,27 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             weighted_scores[i] = weight.detach().cpu().tolist()
             # Weighted average of tuned outputs
             tta_output = torch.bmm(weight.unsqueeze(-1).transpose(1, 2), tuned_outputs.unsqueeze(0)).squeeze(1)
+        elif args.ensemble_type == 'all':
+            # Calculate outputs for all three ensemble types
+
+            # 1. 'none' - Use only the first output (no ensembling)
+            tta_output_single = tuned_outputs[0].unsqueeze(0)
+
+            # 2. 'vanilla' - Use the average of all outputs
+            tta_output_vanilla = torch.mean(tuned_outputs, dim=0).unsqueeze(0)
+
+            # 3. 'weighted_rtpt' - Use weighted average based on similarity scores
+            # Calculate similarity matrix between features
+            sim_matrix_images = torch.bmm(clip_features.unsqueeze(0), clip_features.unsqueeze(0).permute(0, 2, 1))
+            # Get top similarity scores
+            score = get_top_sim(sim_matrix_images, args)
+            # Calculate weights based on similarity scores
+            weight = torch.nn.functional.softmax(score/args.softmax_temp, dim=-1)
+            # Store weights in the weighted_scores dictionary as a list for each sample
+            weighted_scores[i] = weight.detach().cpu().tolist()
+            # Weighted average of tuned outputs
+            tta_output_weighted = torch.bmm(weight.unsqueeze(-1).transpose(1, 2), tuned_outputs.unsqueeze(0)).squeeze(1)
+
         else:
             raise ValueError(f"Unknown ensemble type: {args.ensemble_type}")
 
@@ -806,19 +632,52 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
         # Measure accuracy
         acc1, acc5 = accuracy(clip_output, target, topk=(1, 5))  # Original model accuracy
-        tpt_acc1, tpt_acc5 = accuracy(tta_output, target, topk=(1, 5))  # Test-time adapted accuracy
 
-        # Update accuracy metrics
+        # Update original model accuracy metrics
         top1.update(acc1[0], images.size(0))
-        tpt1.update(tpt_acc1[0], images.size(0))
         top5.update(acc5[0], images.size(0))
-        tpt5.update(tpt_acc5[0], images.size(0))
+
+        if args.ensemble_type != "all":
+            # For single ensemble type, calculate and update metrics
+            tpt_acc1, tpt_acc5 = accuracy(tta_output, target, topk=(1, 5))  # Test-time adapted accuracy
+            tpt1.update(tpt_acc1[0], images.size(0))
+            tpt5.update(tpt_acc5[0], images.size(0))
+        else:
+            # For "all" ensemble type, calculate and update metrics for all three types
+            # 1. 'none' ensemble type
+            tpt_acc1_single, tpt_acc5_single = accuracy(tta_output_single, target, topk=(1, 5))
+            tpt1_single.update(tpt_acc1_single[0], images.size(0))
+            tpt5_single.update(tpt_acc5_single[0], images.size(0))
+
+            # 2. 'vanilla' ensemble type
+            tpt_acc1_vanilla, tpt_acc5_vanilla = accuracy(tta_output_vanilla, target, topk=(1, 5))
+            tpt1_vanilla.update(tpt_acc1_vanilla[0], images.size(0))
+            tpt5_vanilla.update(tpt_acc5_vanilla[0], images.size(0))
+
+            # 3. 'weighted_rtpt' ensemble type
+            tpt_acc1_weighted, tpt_acc5_weighted = accuracy(tta_output_weighted, target, topk=(1, 5))
+            tpt1_weighted.update(tpt_acc1_weighted[0], images.size(0))
+            tpt5_weighted.update(tpt_acc5_weighted[0], images.size(0))
+
 
         if logger and (i < 5 or i % 20 == 0):  # Log detailed info for first few samples and periodically
-            if args.eps <= 0:
-                logger.debug(f"Sample {i+1}: Original Model  Acc@1: {acc1[0].item():.2f}, Acc@5: {acc5[0].item():.2f}, TTA Acc@1: {tpt_acc1[0].item():.2f}, Acc@5: {tpt_acc5[0].item():.2f}")
+            if args.ensemble_type != "all":
+                if args.eps <= 0:
+                    logger.debug(f"Sample {i+1}: Original Model  Acc@1: {acc1[0].item():.2f}, Acc@5: {acc5[0].item():.2f}, TTA Acc@1: {tpt_acc1[0].item():.2f}, Acc@5: {tpt_acc5[0].item():.2f}")
+                else:
+                    logger.debug(f"Sample {i+1}: Original Model Adversarial Acc@1: {acc1[0].item():.2f}, Acc@5: {acc5[0].item():.2f} TTA adversarial Acc@1: {tpt_acc1[0].item():.2f}, Acc@5: {tpt_acc5[0].item():.2f}")
             else:
-                logger.debug(f"Sample {i+1}: Original Model Adversarial Acc@1: {acc1[0].item():.2f}, Acc@5: {acc5[0].item():.2f} TTA adversarial Acc@1: {tpt_acc1[0].item():.2f}, Acc@5: {tpt_acc5[0].item():.2f}")
+                # Log metrics for all three ensemble types
+                if args.eps <= 0:
+                    logger.debug(f"Sample {i+1}: Original Model Acc@1: {acc1[0].item():.2f}, Acc@5: {acc5[0].item():.2f}")
+                    logger.debug(f"Sample {i+1}: Single TTA Acc@1: {tpt_acc1_single[0].item():.2f}, Acc@5: {tpt_acc5_single[0].item():.2f}")
+                    logger.debug(f"Sample {i+1}: Vanilla TTA Acc@1: {tpt_acc1_vanilla[0].item():.2f}, Acc@5: {tpt_acc5_vanilla[0].item():.2f}")
+                    logger.debug(f"Sample {i+1}: Weighted TTA Acc@1: {tpt_acc1_weighted[0].item():.2f}, Acc@5: {tpt_acc5_weighted[0].item():.2f}")
+                else:
+                    logger.debug(f"Sample {i+1}: Original Model Adversarial Acc@1: {acc1[0].item():.2f}, Acc@5: {acc5[0].item():.2f}")
+                    logger.debug(f"Sample {i+1}: Single TTA Adversarial Acc@1: {tpt_acc1_single[0].item():.2f}, Acc@5: {tpt_acc5_single[0].item():.2f}")
+                    logger.debug(f"Sample {i+1}: Vanilla TTA Adversarial Acc@1: {tpt_acc1_vanilla[0].item():.2f}, Acc@5: {tpt_acc5_vanilla[0].item():.2f}")
+                    logger.debug(f"Sample {i+1}: Weighted TTA Adversarial Acc@1: {tpt_acc1_weighted[0].item():.2f}, Acc@5: {tpt_acc5_weighted[0].item():.2f}")
 
         # Measure elapsed time
         batch_time.update(time.time() - end)
@@ -827,23 +686,56 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         # Log progress
         if (i+1) % args.print_freq == 0 or (i+1) == len(val_loader):
             if logger:
-                if args.eps <= 0:
-                    logger.info(f'iter:{i+1}/{len(val_loader)}, clip_acc1={top1.avg}, tta_acc1={tpt1.avg}')
-                    logger.info(f'iter:{i+1}/{len(val_loader)}, Original Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}')
+                if args.ensemble_type != "all":
+                    if args.eps <= 0:
+                        logger.info(f'iter:{i+1}/{len(val_loader)}, clip_acc1={top1.avg}, tta_acc1={tpt1.avg}')
+                        logger.info(f'iter:{i+1}/{len(val_loader)}, Original Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}')
+                    else:
+                        logger.info(f'iter:{i+1}/{len(val_loader)}, Original Adv Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Adv Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}')
                 else:
-                    logger.info(f'iter:{i+1}/{len(val_loader)}, Original Adv Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Adv Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}')
+                    # Log metrics for all three ensemble types
+                    if args.eps <= 0:
+                        logger.info(f'iter:{i+1}/{len(val_loader)}, clip_acc1={top1.avg}')
+                        logger.info(f'iter:{i+1}/{len(val_loader)}, Original Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}')
+                        logger.info(f'iter:{i+1}/{len(val_loader)}, Single TTA Acc@1: {tpt1_single.avg:.2f}, Acc@5: {tpt5_single.avg:.2f}')
+                        logger.info(f'iter:{i+1}/{len(val_loader)}, Vanilla TTA Acc@1: {tpt1_vanilla.avg:.2f}, Acc@5: {tpt5_vanilla.avg:.2f}')
+                        logger.info(f'iter:{i+1}/{len(val_loader)}, Weighted TTA Acc@1: {tpt1_weighted.avg:.2f}, Acc@5: {tpt5_weighted.avg:.2f}')
+                    else:
+                        logger.info(f'iter:{i+1}/{len(val_loader)}, Original Adv Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}')
+                        logger.info(f'iter:{i+1}/{len(val_loader)}, Single TTA Adv Acc@1: {tpt1_single.avg:.2f}, Acc@5: {tpt5_single.avg:.2f}')
+                        logger.info(f'iter:{i+1}/{len(val_loader)}, Vanilla TTA Adv Acc@1: {tpt1_vanilla.avg:.2f}, Acc@5: {tpt5_vanilla.avg:.2f}')
+                        logger.info(f'iter:{i+1}/{len(val_loader)}, Weighted TTA Adv Acc@1: {tpt1_weighted.avg:.2f}, Acc@5: {tpt5_weighted.avg:.2f}')
             progress.display(i)
 
     # Display final summary
     progress.display_summary()
 
     if logger:
-        if args.eps <= 0:
-            logger.info(f"Final results - Original Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}")
-            logger.info(f"Improvement from TTA in Acc@1 {tpt1.avg - top1.avg:.2f}, and Acc@5 {tpt5.avg - top5.avg:.2f}")
+        if args.ensemble_type != "all":
+            if args.eps <= 0:
+                logger.info(f"Final results - Original Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}")
+                logger.info(f"Improvement from TTA in Acc@1 {tpt1.avg - top1.avg:.2f}, and Acc@5 {tpt5.avg - top5.avg:.2f}")
+            else:
+                logger.info(f"Final results - Adversarial Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Adversarial Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}")
+                logger.info(f"Improvement from TTA in Adversarial Acc@1 {tpt1.avg - top1.avg:.2f}, and Acc@5 {tpt5.avg - top5.avg:.2f}")
         else:
-            logger.info(f"Final results - Adversarial Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Adversarial Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}")
-            logger.info(f"Improvement from TTA in Adversarial Acc@1 {tpt1.avg - top1.avg:.2f}, and Acc@5 {tpt5.avg - top5.avg:.2f}")
+            # Log final metrics for all three ensemble types
+            if args.eps <= 0:
+                logger.info(f"Final results - Original Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}")
+                logger.info(f"Final results - Single TTA Acc@1: {tpt1_single.avg:.2f}, Acc@5: {tpt5_single.avg:.2f}")
+                logger.info(f"Final results - Vanilla TTA Acc@1: {tpt1_vanilla.avg:.2f}, Acc@5: {tpt5_vanilla.avg:.2f}")
+                logger.info(f"Final results - Weighted TTA Acc@1: {tpt1_weighted.avg:.2f}, Acc@5: {tpt5_weighted.avg:.2f}")
+                logger.info(f"Improvement from Single TTA in Acc@1 {tpt1_single.avg - top1.avg:.2f}, and Acc@5 {tpt5_single.avg - top5.avg:.2f}")
+                logger.info(f"Improvement from Vanilla TTA in Acc@1 {tpt1_vanilla.avg - top1.avg:.2f}, and Acc@5 {tpt5_vanilla.avg - top5.avg:.2f}")
+                logger.info(f"Improvement from Weighted TTA in Acc@1 {tpt1_weighted.avg - top1.avg:.2f}, and Acc@5 {tpt5_weighted.avg - top5.avg:.2f}")
+            else:
+                logger.info(f"Final results - Adversarial Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}")
+                logger.info(f"Final results - Single TTA Adversarial Acc@1: {tpt1_single.avg:.2f}, Acc@5: {tpt5_single.avg:.2f}")
+                logger.info(f"Final results - Vanilla TTA Adversarial Acc@1: {tpt1_vanilla.avg:.2f}, Acc@5: {tpt5_vanilla.avg:.2f}")
+                logger.info(f"Final results - Weighted TTA Adversarial Acc@1: {tpt1_weighted.avg:.2f}, Acc@5: {tpt5_weighted.avg:.2f}")
+                logger.info(f"Improvement from Single TTA in Adversarial Acc@1 {tpt1_single.avg - top1.avg:.2f}, and Acc@5 {tpt5_single.avg - top5.avg:.2f}")
+                logger.info(f"Improvement from Vanilla TTA in Adversarial Acc@1 {tpt1_vanilla.avg - top1.avg:.2f}, and Acc@5 {tpt5_vanilla.avg - top5.avg:.2f}")
+                logger.info(f"Improvement from Weighted TTA in Adversarial Acc@1 {tpt1_weighted.avg - top1.avg:.2f}, and Acc@5 {tpt5_weighted.avg - top5.avg:.2f}")
 
     if args.tta_steps > 0:
 
@@ -876,7 +768,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         logger.info(f"Batch entropies saved to {batch_entropies_path}")
 
     # Save weighted scores to a file if using weighted ensembling
-    if args.ensemble_type == 'weighted_rtpt' and weighted_scores:
+    if (args.ensemble_type == 'weighted_rtpt' and weighted_scores) or (args.ensemble_type == 'all' and weighted_scores):
         weighted_scores_path = os.path.join(args.log_dir, f"{args.weighted_score_name}")
         # Handle long paths on Windows
         weighted_scores_path = handle_long_windows_path(weighted_scores_path)
@@ -889,9 +781,247 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         plot_average_weights(weighted_scores, args.log_dir, logger, filename=f"{args.weighted_score_name[:-5]}_plot.png")
 
 
-    # Return original and test-time adapted accuracies
-    return [top1.avg, top5.avg, tpt1.avg, tpt5.avg]
 
+
+    # Return original and test-time adapted accuracies
+    if args.ensemble_type != "all":
+        return [top1.avg, top5.avg, tpt1.avg, tpt5.avg]
+    else:
+        # Return metrics for all three ensemble types
+        return [
+            top1.avg, top5.avg,                           # Original model
+            tpt1_single.avg, tpt5_single.avg,             # Single ensemble
+            tpt1_vanilla.avg, tpt5_vanilla.avg,           # Vanilla ensemble
+            tpt1_weighted.avg, tpt5_weighted.avg          # Weighted ensemble
+        ]
+
+
+def main():
+    # Record start time for script execution
+    start_time = time.time()
+
+    # Parse arguments and set random seed
+    args = parser.parse_args()
+    set_random_seed(args.seed)
+
+    # Calculate alpha from epsilon if not provided
+    args.alpha = args.eps / args.alpha_eps_ratio
+
+    # Create output directory path with experiment parameters
+    args.output_dir = os.path.join(args.output_dir, args.arch, args.test_sets)
+
+    # Create output directory if it doesn't exist
+    os.makedirs(args.output_dir, exist_ok=True)
+
+    # Set up logging
+    # Create a log name that includes TTA variations
+    log_dir = create_log_dir(args)
+    if args.log_output_dir is None or args.log_output_dir.lower() == "none":
+        log_dir = os.path.join(args.output_dir, log_dir)
+    else:
+        args.log_output_dir = os.path.join(args.log_output_dir, args.arch, args.test_sets)
+        # Create a log directory if it doesn't exist
+
+        #os.makedirs(args.log_output_dir, exist_ok=True)
+        log_dir = os.path.join(args.log_output_dir, log_dir)
+
+    log_dir = handle_long_windows_path(log_dir)
+    args.log_dir = log_dir
+    # Create log directory if it doesn't exist
+    os.makedirs(args.log_dir, exist_ok=True)
+    logger, log_file = setup_logger("log", args.log_dir, level=logging.INFO)
+    logger.info(print_args(args))
+
+    # Ensure GPU is available
+    assert args.gpu is not None
+    set_random_seed(args.seed)
+    logger.info(f"Use GPU: {args.gpu} for training")
+
+    # Determine class names based on dataset
+    dset = args.test_sets
+    if len(dset) > 1:
+        # For multi-character dataset names (e.g., 'Caltech101')
+        # This would require importing the specific classes for each dataset
+        # For now, we keep using eval for this case as it's not a common path
+        classnames = eval(f"{dset.lower()}_classes")
+    else:
+        # For single-character dataset codes (ImageNet variants)
+        assert dset in ['A', 'R', 'K', 'V', 'I']
+        classnames_all = imagenet_classes
+
+        # Select appropriate class names based on dataset code
+        if dset == 'A':
+            # ImageNet-A
+            classnames = [classnames_all[i] for i in imagenet_a_mask]
+        elif dset == 'R':
+            # ImageNet-R
+            classnames = [classnames_all[i] for i, m in enumerate(imagenet_r_mask) if m]
+        elif dset == 'V':
+            # ImageNet-V
+            classnames = [classnames_all[i] for i in imagenet_v_mask]
+        else:
+            # For ImageNet (I) or ImageNet-K
+            classnames = classnames_all
+    args.classnames = classnames
+
+    class_templates = get_zeroshot_templates(dset)
+
+
+
+    # Initialize model with CoOp (Context Optimization)
+    if args.arch in openai_model_dict:
+        actual_model_name = openai_model_dict[args.arch]
+        model = get_coop_openai(actual_model_name, classnames, args.gpu, args.n_ctx, args.ctx_init)
+
+        class_text_embeddings, template_text_embeddings = get_text_embeddings_openai(actual_model_name, classnames, class_templates, args.gpu)
+    else:
+        model = get_coop(args.arch, classnames, args.gpu, args.n_ctx, args.ctx_init)
+        class_text_embeddings, template_text_embeddings = get_text_embeddings(args.arch, classnames, class_templates, args.gpu)
+
+    model_state = None
+
+
+    # Freeze all parameters except prompt learner
+    logger.info("Freezing all parameters except prompt learner")
+    for name, param in model.named_parameters():
+        if "prompt_learner" not in name:
+                param.requires_grad_(False)
+
+    logger.info(f"=> Model created: visual backbone {args.arch}")
+
+    # Move model to GPU
+    if not torch.cuda.is_available():
+        logger.warning('Using CPU, this will be slow')
+    else:
+        assert args.gpu is not None
+        torch.cuda.set_device(args.gpu)
+        model = model.cuda(args.gpu)
+
+    # Set up optimizer for prompt parameters only
+    trainable_param = model.prompt_learner.parameters()
+    optimizer = torch.optim.AdamW(trainable_param, args.lr)
+    optim_state = deepcopy(optimizer.state_dict())
+
+    # Set up additional training parameters
+    scaler = None  # No mixed precision scaling used
+    cudnn.benchmark = not args.no_cudnn_benchmark  # Enable cudnn benchmarking for faster training unless disabled, default is True
+
+
+    # Set up data transformations and evaluation
+
+    # Set up image transformations
+    base_transform = transforms.Compose([
+        transforms.Resize(args.resolution, interpolation=BICUBIC),
+        transforms.CenterCrop(args.resolution)])
+    preprocess = transforms.Compose([
+        transforms.ToTensor(),
+        # normalize is commented out - intentional
+        ])
+
+    # # Create data augmentation transformer
+    data_transform = AugMixAugmenter(base_transform, preprocess, n_views=args.batch_size-1,
+                                    augmix=len(dset)>1, only_base_image=False)
+
+    batchsize = 1 # Process images one at a time for test-time adaptation
+
+    # Create dataset and data loader
+    val_dataset = build_dataset(dset, data_transform, args.data, mode=args.dataset_mode)
+    logger.info(f"Number of test samples: {len(val_dataset)}")
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batchsize, shuffle=False,
+                num_workers=args.workers, pin_memory=not args.no_pin_memory)
+
+    logger.info(f"Evaluating dataset: {dset}")
+
+    # Run evaluation with test-time adaptation
+    results = test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger, template_text_embeddings, class_text_embeddings)
+
+    # Clean up to free memory
+    del val_dataset, val_loader
+
+    # Format and save results
+    if args.ensemble_type != "all":
+        if args.eps <= 0:
+            # Clean accuracy (no adversarial attack)
+            log_msg = f"=> Acc. on testset [{dset}]: Clean Acc @1 {results[0]}/ TTA Clean Acc @1 {results[2]}, Clean Acc @5 {results[1]}/ TTA Clean Acc @5 {results[3]}"
+        else:
+            # Adversarial accuracy
+            log_msg = f"=> Acc. on testset [{dset}]: Adv Acc @1 {results[0]}/ TTA Adv Acc @1 {results[2]}, Adv Acc @5 {results[1]}/ TTA Adv Acc @5 {results[3]}"
+    else:
+        # For "all" ensemble type, results contain metrics for all three ensemble types
+        if args.eps <= 0:
+            # Clean accuracy (no adversarial attack)
+            log_msg = f"=> Acc. on testset [{dset}]:\n" \
+                      f"  Original: Clean Acc @1 {results[0]}/ Clean Acc @5 {results[1]}\n" \
+                      f"  Single TTA: Clean Acc @1 {results[2]}/ Clean Acc @5 {results[3]}\n" \
+                      f"  Vanilla TTA: Clean Acc @1 {results[4]}/ Clean Acc @5 {results[5]}\n" \
+                      f"  Weighted TTA: Clean Acc @1 {results[6]}/ Clean Acc @5 {results[7]}"
+        else:
+            # Adversarial accuracy
+            log_msg = f"=> Acc. on testset [{dset}]:\n" \
+                      f"  Original: Adv Acc @1 {results[0]}/ Adv Acc @5 {results[1]}\n" \
+                      f"  Single TTA: Adv Acc @1 {results[2]}/ Adv Acc @5 {results[3]}\n" \
+                      f"  Vanilla TTA: Adv Acc @1 {results[4]}/ Adv Acc @5 {results[5]}\n" \
+                      f"  Weighted TTA: Adv Acc @1 {results[6]}/ Adv Acc @5 {results[7]}"
+
+    # Log results
+    logger.info(log_msg)
+
+    # Calculate and log total execution time
+    end_time = time.time()
+    execution_time = end_time - start_time
+    logger.info(f"Total script execution time: {execution_time:.2f} seconds ({execution_time/60:.2f} minutes)")
+
+
+
+
+def plot_average_weights(weighted_scores, output_dir, logger=None, filename='average_weights_plot.png'):
+    """
+    Create a plot showing the average weight for each view across all samples.
+
+    Args:
+        weighted_scores (dict): Dictionary mapping sample indices to lists of weights.
+        output_dir (str): Directory to save the plot.
+        logger (logging.Logger, optional): Logger for logging information.
+    """
+    if logger:
+        logger.info("Creating plot of average weights for each view")
+
+    # Convert the dictionary values to a numpy array
+    all_weights = []
+    for key, values in weighted_scores.items():
+        # Ensure values is a 1D array
+        if isinstance(values, (list, np.ndarray)):
+            all_weights.append(np.asarray(values).flatten())
+
+    # Convert to numpy array and calculate average across all samples
+    all_weights = np.array(all_weights)
+    avg_weights = np.mean(all_weights, axis=0)
+
+    # Ensure avg_weights is 1D
+    avg_weights = avg_weights.flatten()
+
+    # Create the plot
+    plt.figure(figsize=(12, 6))
+    x_positions = np.arange(len(avg_weights))
+    plt.bar(x_positions, avg_weights)
+    plt.xlabel('View Index')
+    plt.ylabel('Average Weight')
+    plt.title('Average Weight for Each View')
+    plt.grid(True, linestyle='--', alpha=0.7)
+
+    # Add a horizontal line at the average weight value
+    plt.axhline(y=np.mean(avg_weights), color='r', linestyle='-',
+                label=f'Mean: {np.mean(avg_weights):.4f}')
+    plt.legend()
+
+    # Save the plot
+    plot_path = os.path.join(output_dir, filename)
+    plot_path = handle_long_windows_path(plot_path)
+    plt.savefig(plot_path)
+    plt.close()
+
+    if logger:
+        logger.info(f"Average weights plot saved to {plot_path}")
 
 if __name__ == '__main__':
     # Set up command-line argument parser
@@ -962,8 +1092,8 @@ if __name__ == '__main__':
                         help='Number of test-time adaptation steps')
 
     parser.add_argument('--ensemble_type', default='weighted_rtpt', type=str,
-                        choices=['none', 'vanilla', 'weighted_rtpt'],
-                        help='Type of ensembling to use (none, vanilla, or weighted)')
+                        choices=['none', 'vanilla', 'weighted_rtpt', 'all'],
+                        help='Type of ensembling to use (none, vanilla, weighted_rtpt, or all to report metrics for all types)')
     parser.add_argument('--top_k', default=20, type=int,
                         help='Number of neighbors for similarity calculation')
     parser.add_argument('--softmax_temp', default=0.01, type=float,
