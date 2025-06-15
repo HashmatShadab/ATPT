@@ -17,6 +17,13 @@ class PGDCounterAnchor(Attack):
         alpha (float): step size. (Default: 2/255)
         steps (int): number of steps. (Default: 10)
         random_start (bool): using random initialization of delta. (Default: True)
+        tau_thres (float): threshold for tau computation. (Default: None)
+        beta (float): parameter for weighted perturbation. (Default: None)
+        weighted_perturbation (bool): whether to use weighted perturbation. (Default: True)
+        noise_count (int): number of noisy samples to generate. (Default: 10)
+        noise_sigma (float): standard deviation of Gaussian noise. (Default: 0.1)
+        direction_weight (float): weight for directional loss component. Higher values emphasize 
+                                 pushing features in the direction of original features. (Default: 1.0)
 
     Shape:
         - images: :math:`(N, C, H, W)` where `N = number of batches`, `C = number of channels`,        `H = height` and `W = width`. It must have a range [0, 1].
@@ -24,12 +31,12 @@ class PGDCounterAnchor(Attack):
         - output: :math:`(N, C, H, W)`.
 
     Examples::
-        >>> attack = torchattacks.PGD(model, eps=8/255, alpha=1/255, steps=10, random_start=True, tau_thres=0.20))
+        >>> attack = torchattacks.PGD(model, eps=8/255, alpha=1/255, steps=10, random_start=True, tau_thres=0.20, direction_weight=2.0))
         >>> adv_images = attack(images, labels)
 
     """
 
-    def __init__(self, model, eps=8 / 255, alpha=2 / 255, steps=10, random_start=True, tau_thres=None, beta=None, weighted_perturbation=True, noise_count=10, noise_sigma=0.1):
+    def __init__(self, model, eps=8 / 255, alpha=2 / 255, steps=10, random_start=True, tau_thres=None, beta=None, weighted_perturbation=True, noise_count=10, noise_sigma=0.1, direction_weight=1.0):
         super().__init__("PGDCounterAnchor", model)
         self.eps = eps
         self.alpha = alpha
@@ -41,6 +48,7 @@ class PGDCounterAnchor(Attack):
         self.weighted_perturbation = weighted_perturbation
         self.noise_count = noise_count
         self.noise_sigma = noise_sigma
+        self.direction_weight = direction_weight
 
     def compute_tau(self, images, delta):
         # Assume model(images) returns unnormalized image features
@@ -115,14 +123,33 @@ class PGDCounterAnchor(Attack):
             scheme_sign = (self.tau_thres - diff_ratio).sign()
             ##############################################
 
+            # Calculate feature difference vector (direction from adversarial outputs to original features)
+            # This vector points from the current adversarial features towards the original features
+            feature_diff = original_features - outputs
+
+            # Normalize the direction vector to get a unit vector
+            # Adding a small epsilon (1e-8) to avoid division by zero
+            feature_diff_norm = feature_diff / (feature_diff.norm(dim=1, keepdim=True) + 1e-8)
+
             # Calculate L2 loss between original and adversarial features
+            # This is the standard feature distance minimization objective
             l2_loss = ((((outputs - original_features)**2).sum(1))).sum()
+
+            # Calculate directional loss (dot product of feature difference and its normalized direction)
+            # The negative sign encourages maximizing this dot product, which means
+            # pushing the adversarial features in the direction of original features
+            # This is different from just minimizing distance, as it explicitly considers direction
+            directional_loss = -torch.sum(feature_diff_norm * feature_diff)
+
+            # Combine both losses with weighting controlled by direction_weight parameter
+            # Higher direction_weight values emphasize directional guidance over distance minimization
+            combined_loss = l2_loss + self.direction_weight * directional_loss
 
             # For targeted attacks, we want to maximize the L2 loss
             if self.targeted:
-                cost = -l2_loss
+                cost = -combined_loss
             else:
-                cost = l2_loss
+                cost = combined_loss
 
             # Update adversarial images
             grad = torch.autograd.grad(
