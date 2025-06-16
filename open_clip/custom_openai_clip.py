@@ -392,7 +392,49 @@ class ClipTestTimeTuning(nn.Module):
 
         return logits
 
-    def forward(self, input, get_image_features=False, normalize=False, get_image_text_features=False):
+    def inference_move_image_features(self, image, sigma=0.18, n_anchors=10, alpha=1.4):
+        """
+        image: Tensor of shape [B, C, H, W]
+        sigma: standard deviation for Gaussian noise
+        n_anchors: number of noisy samples to average for anchor
+        alpha: interpolation factor
+        """
+        # Step 1: Encode source feature (adversarial or clean)
+        image_input = self.normalize(image.type(self.dtype))
+        f_source = self.encode_image(image_input)
+        f_source_norm = f_source.norm(dim=-1, keepdim=True)
+        f_source_normalized = f_source / f_source_norm
+
+        # Step 2: Construct anchor by averaging n noisy features
+        f_anchor_sum = torch.zeros_like(f_source)
+        for _ in range(n_anchors):
+            noise = sigma * torch.randn_like(image)
+            noisy_image = image + noise
+            noisy_image = self.normalize(noisy_image.type(self.dtype))
+            f_noisy = self.encode_image(noisy_image)
+            f_anchor_sum += f_noisy
+
+        f_anchor = f_anchor_sum / n_anchors
+        f_anchor_norm = f_anchor.norm(dim=-1, keepdim=True)
+        f_anchor_normalized = f_anchor / f_anchor_norm
+
+        # Step 3: One-step linear interpolation
+        f_moved = (1 - alpha) * f_source_normalized + alpha * f_anchor_normalized
+        f_moved_norm = f_moved.norm(dim=-1, keepdim=True)
+        f_moved = f_moved / f_moved_norm  # Final normalization
+
+        # Step 4: Get text features and normalize
+        text_features = self.get_text_features()
+        text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+
+        # Step 5: Compute logits
+        logit_scale = self.logit_scale.exp()
+        logits = logit_scale * f_moved @ text_features.t()
+
+        return logits
+
+    def forward(self, input, get_image_features=False, normalize=False, get_image_text_features=False,
+                move_image_features=False):
         if isinstance(input, Tuple):
             view_0, view_1, view_2 = input
             return self.contrast_prompt_tuning(view_0, view_1, view_2)
@@ -405,6 +447,8 @@ class ClipTestTimeTuning(nn.Module):
             elif get_image_text_features:
                 image_features, text_features, logit_scale = self.forward_features(input)
                 return image_features, text_features, logit_scale
+            elif move_image_features:
+                return self.inference_move_image_features(input)
             else:
                 return self.inference(input)
 

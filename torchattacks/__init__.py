@@ -26,6 +26,7 @@ from .attacks.spsa import SPSA
 from .attacks.pifgsm import PIFGSM
 from .attacks.pifgsmpp import PIFGSMPP
 from .attacks.pgd_counter_attack import PGDCounter
+from .attacks.pgd_counter_anchor import PGDCounterAnchor
 from .attacks.pgd_clipure_image import PGDClipPureImage
 from .attacks.pgd_counter_and_clipure_image import PGDCounterClipPureImage
 
@@ -63,6 +64,7 @@ __all__ = [
     "RFGSM",
     "PGD",
     "PGDCounter",
+    "PGDCounterAnchor",
     "EOTPGD",
     "FFGSM",
     "TPGD",
