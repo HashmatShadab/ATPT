@@ -40,32 +40,7 @@ COUNTER_ATTACK_W_PERTURBATION=${21:-"true"}
 
 ############################################
 LOG_OUTPUT_DIR=${22:-"none"}
-
-
-# bash train.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 rtpt weighted_rtpt "F:\Code\datasets\atpt_results"
-# bash train.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 rtpt vanilla "F:\Code\datasets\atpt_results"
-# bash train.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 rtpt none "F:\Code\datasets\atpt_results"
-# bash train.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 tpt weighted_rtpt "F:\Code\datasets\atpt_results"
-# bash train.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 tpt vanilla "F:\Code\datasets\atpt_results"
-# bash train.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 tpt none "F:\Code\datasets\atpt_results"
-
-
-
-# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 0 4 RN50 1.0 7 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
-# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 0 4 RN50 4.0 7 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
-# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 ViT-B/16 4.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
-# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 ViT-B/16 1.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
-# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 ViT-L/14 4.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
-# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 ViT-L/14 1.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
-# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 fare2 1.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
-# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 fare2 4.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
-# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 tecoa2 1.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
-# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 tecoa2 4.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
-# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 fare4 1.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
-# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 fare4 4.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
-# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 tecoa4 1.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
-# bash train.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 tecoa4 4.0 100 1 0.1 20 0.01 rtpt weighted_rtpt /mnt/nvme0n1/Dataset/muzammal/atpt_results
-
+DATASET_NAME=${23:-"all"}
 
 
 # Common parameters for all runs
@@ -112,90 +87,91 @@ echo "========================"
 #
 
 
-
-echo "  [1/8] Testing Caltech101 dataset..."
-python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Caltech101 $MODEL $COMMON_PARAMS
-echo "  ✓ Caltech101 dataset testing complete"
-
-echo "  [2/8] Testing Cars dataset..."
- python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Cars $MODEL $COMMON_PARAMS
-echo "  ✓ Cars dataset testing complete"
+if [ "$DATASET_NAME" = "all"   ]; then
 
 
-echo "  [3/8] Testing DTD dataset..."
-python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets DTD $MODEL $COMMON_PARAMS
-echo "  ✓ DTD dataset testing complete"
+  echo "  [1/8] Testing Caltech101 dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Caltech101 $MODEL $COMMON_PARAMS
+  echo "  ✓ Caltech101 dataset testing complete"
 
-echo "  [4/8] Testing Flower102 dataset..."
-python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Flower102 $MODEL $COMMON_PARAMS
-echo "  ✓ Flower102 dataset testing complete"
-
-echo "  [5/8] Testing Aircraft dataset..."
-python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Aircraft $MODEL $COMMON_PARAMS
-echo "  ✓ Aircraft dataset testing complete"
-
-echo "  [6/8] Testing UCF101 dataset..."
-python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets UCF101 $MODEL $COMMON_PARAMS
-echo "  ✓ UCF101 dataset testing complete"
+  echo "  [2/8] Testing Cars dataset..."
+   python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Cars $MODEL $COMMON_PARAMS
+  echo "  ✓ Cars dataset testing complete"
 
 
-echo "  [7/8] Testing eurosat dataset..."
-python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets eurosat $MODEL $COMMON_PARAMS
-echo "  ✓ eurosat dataset testing complete"
+  echo "  [3/8] Testing DTD dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets DTD $MODEL $COMMON_PARAMS
+  echo "  ✓ DTD dataset testing complete"
 
-echo "  [8/8] Testing Pets dataset..."
-python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Pets $MODEL $COMMON_PARAMS
-echo "  ✓ Pets dataset testing complete"
-echo "Fine-grained datasets testing complete"
+  echo "  [4/8] Testing Flower102 dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Flower102 $MODEL $COMMON_PARAMS
+  echo "  ✓ Flower102 dataset testing complete"
 
-# add logic for job ids being the dataset name
-#
-#elif [ "$DATASET_ID" = "caltech101"   ]; then
-#  echo "Running tests on Fine-grained datasets..."
-#  echo "Testing Caltech101 dataset..."
-#  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Caltech101 $MODEL $COMMON_PARAMS
-#  echo "  ✓ Caltech101 dataset testing complete"
-#
-#elif [ "$DATASET_ID" = "cars" ]; then
-#  echo "Running tests on Fine-grained datasets..."
-#  echo "Testing Cars dataset..."
-#   python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Cars $MODEL $COMMON_PARAMS
-#  echo "  ✓ Cars dataset testing complete"
-#
-#elif [ "$DATASET_ID" = "dtd" ]; then
-#  echo "Running tests on Fine-grained datasets..."
-#  echo "Testing DTD dataset..."
-#  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets DTD $MODEL $COMMON_PARAMS
-#  echo "  ✓ DTD dataset testing complete"
-#
-#elif [ "$DATASET_ID" = "flower102" ]; then
-#  echo "Running tests on Fine-grained datasets..."
-#  echo "Testing Flower102 dataset..."
-#  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Flower102 $MODEL $COMMON_PARAMS
-#  echo "  ✓ Flower102 dataset testing complete"
-#
-#elif [ "$DATASET_ID" = "aircraft" ]; then
-#  echo "Running tests on Fine-grained datasets..."
-#  echo "Testing Aircraft dataset..."
-#  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Aircraft $MODEL $COMMON_PARAMS
-#  echo "  ✓ Aircraft dataset testing complete"
-#
-#elif [ "$DATASET_ID" = "ucf101" ]; then
-#  echo "Running tests on Fine-grained datasets..."
-#  echo "Testing UCF101 dataset..."
-#  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets UCF101 $MODEL $COMMON_PARAMS
-#  echo "  ✓ UCF101 dataset testing complete"
-#
-#elif [ "$DATASET_ID" = "eurosat" ]; then
-#  echo "Running tests on Fine-grained datasets..."
-#  echo "Testing eurosat dataset..."
-#  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets eurosat $MODEL $COMMON_PARAMS
-#  echo "  ✓ eurosat dataset testing complete"
-#
-#elif [ "$DATASET_ID" = "pets" ]; then
-#  echo "Running tests on Fine-grained datasets..."
-#  echo "Testing Pets dataset..."
-#  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Pets $MODEL $COMMON_PARAMS
-#  echo "  ✓ Pets dataset testing complete"
-#
-#fi
+  echo "  [5/8] Testing Aircraft dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Aircraft $MODEL $COMMON_PARAMS
+  echo "  ✓ Aircraft dataset testing complete"
+
+  echo "  [6/8] Testing UCF101 dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets UCF101 $MODEL $COMMON_PARAMS
+  echo "  ✓ UCF101 dataset testing complete"
+
+
+  echo "  [7/8] Testing eurosat dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets eurosat $MODEL $COMMON_PARAMS
+  echo "  ✓ eurosat dataset testing complete"
+
+  echo "  [8/8] Testing Pets dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Pets $MODEL $COMMON_PARAMS
+  echo "  ✓ Pets dataset testing complete"
+  echo "Fine-grained datasets testing complete"
+
+
+elif [ "$DATASET_NAME" = "caltech101"   ]; then
+  echo "Running tests on Fine-grained datasets..."
+  echo "Testing Caltech101 dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Caltech101 $MODEL $COMMON_PARAMS
+  echo "  ✓ Caltech101 dataset testing complete"
+
+elif [ "$DATASET_NAME" = "cars" ]; then
+  echo "Running tests on Fine-grained datasets..."
+  echo "Testing Cars dataset..."
+   python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Cars $MODEL $COMMON_PARAMS
+  echo "  ✓ Cars dataset testing complete"
+
+elif [ "$DATASET_NAME" = "dtd" ]; then
+  echo "Running tests on Fine-grained datasets..."
+  echo "Testing DTD dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets DTD $MODEL $COMMON_PARAMS
+  echo "  ✓ DTD dataset testing complete"
+
+elif [ "$DATASET_NAME" = "flower102" ]; then
+  echo "Running tests on Fine-grained datasets..."
+  echo "Testing Flower102 dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Flower102 $MODEL $COMMON_PARAMS
+  echo "  ✓ Flower102 dataset testing complete"
+
+elif [ "$DATASET_NAME" = "aircraft" ]; then
+  echo "Running tests on Fine-grained datasets..."
+  echo "Testing Aircraft dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Aircraft $MODEL $COMMON_PARAMS
+  echo "  ✓ Aircraft dataset testing complete"
+
+elif [ "$DATASET_NAME" = "ucf101" ]; then
+  echo "Running tests on Fine-grained datasets..."
+  echo "Testing UCF101 dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets UCF101 $MODEL $COMMON_PARAMS
+  echo "  ✓ UCF101 dataset testing complete"
+
+elif [ "$DATASET_NAME" = "eurosat" ]; then
+  echo "Running tests on Fine-grained datasets..."
+  echo "Testing eurosat dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets eurosat $MODEL $COMMON_PARAMS
+  echo "  ✓ eurosat dataset testing complete"
+
+elif [ "$DATASET_NAME" = "pets" ]; then
+  echo "Running tests on Fine-grained datasets..."
+  echo "Testing Pets dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Pets $MODEL $COMMON_PARAMS
+  echo "  ✓ Pets dataset testing complete"
+
+fi
