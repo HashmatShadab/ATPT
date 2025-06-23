@@ -1,54 +1,47 @@
 #!/usr/bin/env python3
 """
-get_results.py
---------------
-Print, for every matching *.log file:
+get_results.py  –  long-path–safe version
+----------------------------------------
+Exactly the same CLI and behaviour as before, but now works even when some
+log-file paths are longer than Windows' legacy 260-char MAX_PATH limit.
 
-    <absolute path to log file>
-    Final results - Original Acc@1: …, Acc@5: …, TTA Acc@1: …, Acc@5: …
-
-The script looks for the *last* line in each file that contains the string
-'Final results -' (it can have a timestamp / logger prefix).
-
-Usage examples
---------------
-
-# 1) Just run – uses defaults shown below
-python get_results.py
-
-# 2) Different root folder, keep default glob
-python get_results.py --root /mnt/experiments
-
-# 3) Supply several glob patterns
-python get_results.py --glob 'fare4/*/Clean/**/Inference_Ensemble_n*/log_*.log' \
-                      --glob 'other_expts/**/Inference_Ensemble_n*/log_*.log'
+Key additions
+-------------
+*  ensure_long_path()   → converts any `Path` to `\\?\…` form on Windows.
+*  root_long            → we run `Path.glob()` / `rglob()` on this.
+*  All I/O (`open`, `.exists()`, …) goes through long paths.
 """
 from pathlib import Path
-import argparse
-import re
-import sys
-from typing import Optional        #  <-- add this
+import argparse, re, sys, os
+from typing import Optional
 
 # ----------------------------------------------------------------------
-#  Config - sensible defaults, all override-able on the CLI
+#  Helpers
 # ----------------------------------------------------------------------
-DEFAULT_ROOT  = Path(".")          # current working directory
-DEFAULT_GLOBS = [
-    # Matches every line you showed in the ls listing
-    #   fare4/{dataset}/Clean/Counter_Attack/Eps_4_0_Steps_2_Alpha_1_0/
-    #        tau_0_2_beta_2_0_weighted_pertrubation_True/No_TPT/
-    #        Inference_Ensemble_n{…}/log_*.log
-    "fare4/*/Clean/Counter_Attack/Eps_4_0_Steps_2_Alpha_1_0/"
-    "tau_0_2_beta_2_0_weighted_pertrubation_True/No_TPT/"
-    "Inference_Ensemble_n*/log_*.log"
-]
+def ensure_long_path(p: Path) -> Path:
+    """
+    Prepend \\?\\ (or \\?\\UNC\\ for network shares) **only on Windows** so
+    that Win32 APIs accept paths >260 chars.  On other OSes, returns p.
+    """
+    if os.name != "nt":                       # nothing to do on POSIX
+        return p
+
+    p = p.resolve()                           # absolute, no symlinks
+    s = str(p)
+    if s.startswith("\\\\?\\"):               # already long-form
+        return p
+    if s.startswith("\\\\"):                  # UNC share → \\?\UNC\server\share
+        s = "\\\\?\\UNC\\" + s.lstrip("\\")
+    else:                                     # local drive
+        s = "\\\\?\\" + s
+    return Path(s)
+
 
 FINAL_RE = re.compile(r"Final results\s*-\s*.*", re.I)
 
-
-# ----------------------------------------------------------------------
-def last_final_line(path: Path)  -> Optional[str]:   #  <-- change here
-    """Return the final 'Final results - …' line in *path* (None if absent)."""
+def last_final_line(path: Path) -> Optional[str]:
+    """Return the last line containing 'Final results - …' (or None)."""
+    path = ensure_long_path(path)             # <— long-path magic
     try:
         with path.open(encoding="utf-8", errors="ignore") as fh:
             for line in reversed(fh.readlines()):
@@ -61,38 +54,82 @@ def last_final_line(path: Path)  -> Optional[str]:   #  <-- change here
 
 
 # ----------------------------------------------------------------------
+#  Defaults  (unchanged)
+# ----------------------------------------------------------------------
+DEFAULT_ROOT  = Path(".")
+DEFAULT_GLOBS = [
+    "fare4/*/Clean/Counter_Attack/Eps_4_0_Steps_2_Alpha_1_0/"
+    "tau_0_2_beta_2_0_weighted_pertrubation_True/No_TPT/"
+    "Inference_Ensemble_n*/log_*.log"
+]
+ORDER = ["DTD", "Flower102", "Cars", "Aircraft",
+         "Pets", "Caltech101", "UCF101", "eurosat"]
+
+
+# ----------------------------------------------------------------------
 def main() -> None:
     ap = argparse.ArgumentParser(
         description="Extract the last 'Final results - …' line from log files."
     )
-    ap.add_argument(
-        "--root", type=Path, default=DEFAULT_ROOT,
-        help=f"Top-level directory to search (default: {DEFAULT_ROOT.resolve()})"
-    )
-    ap.add_argument(
-        "--glob", nargs="+", default=DEFAULT_GLOBS,
-        help="One or more pathlib glob patterns *relative* to --root "
-             f"(default: {DEFAULT_GLOBS[0]})"
-    )
+    ap.add_argument("--root", type=Path, default=DEFAULT_ROOT,
+                    help=f"Top-level directory to search (default: {DEFAULT_ROOT.resolve()})")
+    ap.add_argument("--glob", nargs="+", default=DEFAULT_GLOBS,
+                    help="One or more pathlib glob patterns *relative* to --root")
     args = ap.parse_args()
 
     root = args.root.resolve()
     if not root.is_dir():
         sys.exit(f"[ERROR] --root '{root}' is not a directory.")
 
-
-    order = ["DTD", "Flower102", "Cars", "Aircraft", "Pets", "Caltech101", "UCF101", "eurosat"]
+    root_long = ensure_long_path(root)        # safe version for glob()
 
     total_files, files_with_results = 0, 0
+    log_results: list[tuple[Path, str]] = []
+
+    # ------------------------------------------------------------------ #
+    #  Crawl the tree (long-path aware)
+    # ------------------------------------------------------------------ #
     for pat in args.glob:
-        for log_file in root.glob(pat):
+        for log_file in root_long.glob(pat):
             total_files += 1
-            res = last_final_line(log_file)
+            res = last_final_line(log_file)   # opens with long path
             if res:
                 files_with_results += 1
-                print(f"{log_file.resolve()}\n{res}\n")
+                log_results.append((log_file, res))
 
-    # --- summary -------------------------------------------------------
+    # Sort & bucket by dataset
+    def order_index(p: Path) -> int:
+        s = str(p)
+        for i, dataset in enumerate(ORDER):
+            if dataset in s:
+                return i
+        return len(ORDER)
+
+    log_results.sort(key=lambda x: order_index(x[0]))
+    dataset_results = {d: [] for d in ORDER}
+    for log_file, res in log_results:
+        for d in ORDER:
+            if d in str(log_file):
+                dataset_results[d].append((log_file, res))
+                break
+
+    # ------------------------------------------------------------------ #
+    #  Print nicely (strip \\?\ for readability)
+    # ------------------------------------------------------------------ #
+    def pretty(p: Path) -> str:
+        s = str(p)
+        if os.name == "nt" and s.startswith("\\\\?\\"):
+            return s[4:] if not s.startswith("\\\\?\\UNC") else "\\" + s[7:]
+        return s
+
+    for d in ORDER:
+        if dataset_results[d]:
+            for log_file, res in dataset_results[d]:
+                print(f"{pretty(log_file.resolve())}\n{res}\n")
+        else:
+            print(f"{d}: results not available\n")
+
+    # Summary
     if total_files == 0:
         sys.stderr.write("[WARN] No log files matched the supplied pattern(s).\n")
     else:
