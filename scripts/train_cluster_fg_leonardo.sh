@@ -419,15 +419,16 @@ wait_for_jobs() {
 #sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 vit_l_14_datacomp_1b 0.0 0 1 0.1 20 0.01 tpt weighted_rtpt /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 4.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results"
 
 
-# Zero Shot
+echo "Zero Shot"
+
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 0.0 0 0 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data false pgd 0 4.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results flower102"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 4.0 100 0 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data false pgd 0 4.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results flower102"
 
-# Gaussian Noise at Eps 2/255
+echo "Gaussian Noise at Eps 2/255"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 0.0 0 0 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 0 2.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results flower102"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 4.0 100 0 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 0 2.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results flower102"
 
-# Gaussian Noise at Eps 4/255
+echo "Gaussian Noise at Eps 4/255"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 0.0 0 0 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 0 4.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results flower102"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 delta_clip_l14_224  0.0 0 0 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 0 4.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results flower102"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 delta_clip_l14_224  0.0 0 0 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 0 4.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results aircraft"
@@ -438,7 +439,7 @@ sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/
 
 wait_for_jobs
 
-# Counter Attack at Eps 2/255
+echo "Counter Attack at Eps 2/255"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 0.0 0 0 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 2.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results flower102"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 delta_clip_l14_224   0.0 0 0 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 2.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results flower102"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 delta_clip_l14_224   0.0 0 0 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 2.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results dtd"
@@ -446,11 +447,11 @@ sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 delta_clip_l14_224    4.0 100 0 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 2.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results flower102"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 delta_clip_l14_224    4.0 100 0 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 2.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results dtd"
 
-# Counter Attack at Eps 4/255
+echo "Counter Attack at Eps 4/255"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 0.0 0 0 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 4.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results flower102"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 4.0 100 0 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 4.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results flower102"
 
-# RTPT
+echo "RTPT"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 0.0 0 1 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data false pgd 0 4.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results flower102"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data false pgd 0 4.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results flower102"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data false pgd 0 4.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results pets"
@@ -458,7 +459,7 @@ sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/
 
 wait_for_jobs
 
-# RTPT + Counter Attack at Eps 2/255
+echo "RTPT + Counter Attack at Eps 2/255"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 0.0 0 1 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 2.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results pets"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 0.0 0 1 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 2.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results eurosat"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 delta_clip_l14_224   0.0 0 1 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 2.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results pets"
@@ -466,7 +467,7 @@ sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 2.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results eurosat"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 delta_clip_l14_224      4.0 100 1 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 2.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results pets"
 
-# RTPT + Counter Attack at Eps 4/255
+echo "RTPT + Counter Attack at Eps 4/255"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 0.0 0 1 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 4.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results pets"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 0.0 0 1 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 4.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results eurosat"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 delta_clip_l14_224   0.0 0 1 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 4.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results pets"
@@ -476,13 +477,13 @@ sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/
 
 wait_for_jobs
 
-# TPT
+echo "TPT"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 tpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data false pgd 0 4.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results pets"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 tpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data false pgd 0 4.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results eurosat"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 delta_clip_l14_224       4.0 100 1 0.1 20 0.01 tpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data false pgd 0 4.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results pets"
 
 
-# TPT + Counter Attack at Eps 2/255
+echo "TPT + Counter Attack at Eps 2/255"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 0.0 0 1 0.1 20 0.01 tpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 2.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results pets"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 0.0 0 1 0.1 20 0.01 tpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 2.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results eurosat"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 delta_clip_l14_224    0.0 0 1 0.1 20 0.01 tpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 2.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results pets"
@@ -493,7 +494,7 @@ sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/
 
 wait_for_jobs
 
-# TPT + Counter Attack at Eps 4/255
+echo "TPT + Counter Attack at Eps 4/255"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 0.0 0 1 0.1 20 0.01 tpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 4.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results pets"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 ViT-L/14 0.0 0 1 0.1 20 0.01 tpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 4.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results eurosat"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 delta_clip_l14_224    0.0 0 1 0.1 20 0.01 tpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 2 4.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results pets"
