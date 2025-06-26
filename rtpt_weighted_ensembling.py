@@ -49,6 +49,7 @@ from PIL import Image
 import numpy as np
 from helper_functions import plot_image, print_args, rtpt_entropy_avg, entropy_loss_ttl, entropy_of_each_sample, handle_long_windows_path
 import json
+from convert_anchor import convert
 
 
 openai_model_dict = {
@@ -341,6 +342,151 @@ def test_time_tuning(model, inputs, optimizer, scaler, args, logger=None):
             loss = entropy_loss_ttl(output)
         else:
             raise ValueError(f"Unknown loss type: {args.loss_type}")
+
+        if logger and (j == 0 or j == args.tta_steps - 1 or j % 5 == 0):
+            logger.debug(f"Step {j+1}/{args.tta_steps}, Loss: {loss.item():.6f}")
+
+        # Update model parameters
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+    if logger:
+        logger.debug(f"Completed test-time tuning with final loss: {loss.item():.6f}")
+
+    return selected_ids, batch_entropies
+
+def compute_otpt_loss(output, model):
+    """
+    Compute the TPT-OTPT loss which combines entropy loss with an orthogonality term.
+
+    Args:
+        output (torch.Tensor): Model output logits.
+        model (torch.nn.Module): The model being tuned.
+
+
+    Returns:
+        torch.Tensor: The computed loss value.
+    """
+
+    number_of_class = output.shape[1]
+
+    # Calculate entropy loss
+
+    # Get text features from the model
+    text_feature = model.get_text_features()
+    Wwt = torch.matmul(text_feature, text_feature.T)
+    wwt_norm_col_HT = torch.linalg.norm(Wwt, dim=-1)
+    Wwt_val_HT = wwt_norm_col_HT.mean()
+
+    # Create identity matrix on the same device
+    e = torch.eye(Wwt.shape[1], device=args.gpu)
+    M_norm = torch.linalg.norm(Wwt, dim=0, keepdim=True)
+    scaled_e = e * M_norm
+
+    # Subtract the scaled identity matrix from Wwt
+    u = Wwt - scaled_e
+    u_norm = torch.linalg.norm(u, dim=-1, keepdim=True)
+
+    # Normalize and prepare for matrix operations
+    v = u / u_norm
+    normalized_matrix_exp = v.unsqueeze(2)  # Shape: (47, 47, 1)
+    normalized_matrix_T_exp = v.unsqueeze(1)  # Shape: (47, 1, 47)
+
+    # Create batch of matrices through outer products
+    outer_products = normalized_matrix_exp @ normalized_matrix_T_exp  # Shape: (47, 47, 47)
+
+    # Scale the matrix
+    scaled_matrix = 2 * outer_products  # Shape: (47, 47, 47)
+
+    # Create expanded identity matrix and transform
+    identity_matrix_dim = e.unsqueeze(0).expand(Wwt.shape[1], -1, -1)  # Shape: (47, 47, 47)
+    transformed_matrix = identity_matrix_dim - scaled_matrix  # Shape: (47, 47, 47)
+
+    # Prepare Wwt for batch multiplication
+    Wwt_exp = Wwt.unsqueeze(2)  # Shape: (47, 47, 1)
+
+    # Perform batched matrix multiplication
+    Hx = torch.bmm(transformed_matrix, Wwt_exp)  # Shape: (47, 47, 1)
+    Hx = Hx.squeeze(2)  # Shape: (47, 47)
+
+    # Calculate orthogonality term
+    Ht_ortho = Hx - e
+    Ht_ortho_norm = torch.linalg.norm(Ht_ortho, dim=-1)
+    Ht_ortho_norm_val = Ht_ortho_norm.mean()
+
+    # Add orthogonality term to entropy loss
+    return  Ht_ortho_norm_val
+
+
+def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, logger=None):
+    """
+    Perform test-time tuning of the model using entropy minimization.
+
+    This function adapts the model at test time by minimizing the entropy of predictions
+    on the input batch. It selects confident samples based on their entropy and uses
+    them for adaptation.
+
+    Args:
+        model (torch.nn.Module): The model to be tuned.
+        inputs (torch.Tensor): Input tensor of shape [batch_size, channels, height, width].
+        optimizer (torch.optim.Optimizer): Optimizer for updating model parameters.
+        scaler (torch.cuda.amp.GradScaler, optional): Gradient scaler for mixed precision training.
+        args (argparse.Namespace): Arguments containing tuning parameters.
+        logger (logging.Logger, optional): Logger for logging information.
+
+    Returns:
+        None
+    """
+    # Track indices of confident samples
+    selected_idx = None
+
+    if logger:
+        logger.debug(f"Starting test-time tuning with {args.tta_steps} steps")
+
+    selected_ids = []
+    batch_entropies = []
+
+    # Perform test-time adaptation for specified number of steps
+    for j in range(args.tta_steps):
+        # Forward pass
+        output = model(inputs)
+
+        # Use only confident samples for adaptation
+        if selected_idx is not None:
+            # Use previously selected confident samples
+            output = output[selected_idx]
+        else:
+            # Select confident samples based on entropy
+            output, selected_idx, batch_entropy = select_confident_samples(output, args.selection_p)
+            if logger:
+                logger.debug(f"Selected {len(selected_idx)}/{inputs.size(0)} samples for adaptation")
+
+            # convert selected_idx to list
+            selected_idx = selected_idx.tolist()
+            selected_ids.append(selected_idx)
+            batch_entropies.append(batch_entropy)
+
+        # Calculate loss as average entropy (lower is better)
+        if args.tpt_loss == "rtpt":
+            loss = rtpt_entropy_avg(output)
+        elif args.tpt_loss == "tpt":
+            loss = entropy_loss_ttl(output)
+        elif args.tpt_loss == "tpt_otpt":
+            loss_tpt = entropy_loss_ttl(output)
+            loss_otpt = compute_otpt_loss(output, model,)
+            loss = loss_tpt + args.otpt_lambda_term * loss_otpt
+
+
+
+        elif args.tpt_loss == "rtpt_otpt":
+            loss = rtpt_entropy_avg(output)
+
+        else:
+            raise ValueError(f"Unknown loss type: {args.loss_type}")
+
+
+
 
         if logger and (j == 0 or j == args.tta_steps - 1 or j % 5 == 0):
             logger.debug(f"Step {j+1}/{args.tta_steps}, Loss: {loss.item():.6f}")
@@ -676,7 +822,10 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
         # Perform test-time adaptation
         if args.tta_steps > 0:
-            selected_ids, batch_entropies = test_time_tuning(model, images, optimizer, scaler, args, logger)
+            if "otpt" in args.tpt_loss:
+                selected_ids, batch_entropies = test_time_tuning_otpt(model, images, optimizer, scaler, args, logger)
+            else:
+                selected_ids, batch_entropies = test_time_tuning(model, images, optimizer, scaler, args, logger)
             selected_ids_dic[i] = selected_ids
             batch_entropies_dic[i] = batch_entropies
 
@@ -1198,8 +1347,9 @@ if __name__ == '__main__':
                         help='Number of tunable context tokens')
     parser.add_argument('--ctx_init', default=None, type=str,
                         help='Initial values for tunable prompts')
-    parser.add_argument('--tpt_loss', type=str, default='rtpt', choices=['rtpt', 'tpt'])
-    # Add this in the "Test-time adaptation parameters" section
+    parser.add_argument('--tpt_loss', type=str, default='rtpt', choices=['rtpt', 'tpt', 'tpt_otpt', 'rtpt_otpt'])
+    parser.add_argument('--otpt_lambda_term', type=float, default=18.0,
+                        help='Lambda term for orthogonality loss in tpt_otpt')
 
 
     # Experiment parameters
@@ -1251,6 +1401,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--pgd_clip_pure_i_text_embeddings', default='null', choices=["null", "class"], type=str)
     parser.add_argument('--pgd_counter_and_clipure_i_lamda', default=1.0, type=float)
+
 
 
 
