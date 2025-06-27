@@ -434,7 +434,7 @@ def compute_anchor_loss(model, args, logger):
     """
     # 1) Retrieve the current text features (C × D) and normalize
     text_features = model.get_text_features()                  # [C, D]
-    text_features = text_features / text_features.norm(dim=1, keepdim=True)
+    #text_features = text_features / text_features.norm(dim=1, keepdim=True)
 
     # 2) Use your provided `convert` function to compute expanded anchors
     #    We only care about expanding the text anchors, not downstream image features.
@@ -479,6 +479,10 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, logger=None):
 
     selected_ids = []
     batch_entropies = []
+    with torch.no_grad():
+        original_text_features = model.get_text_features()
+        cosine_sim_before = torch.mean(torch.matmul(original_text_features, original_text_features.T))
+    cosine_sim_after_list = []
 
     # Perform test-time adaptation for specified number of steps
     for j in range(args.tta_steps):
@@ -563,10 +567,17 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, logger=None):
         loss.backward()
         optimizer.step()
 
+        with torch.no_grad():
+            current_text_features = model.get_text_features()
+            cosine_sim_after = torch.mean(torch.matmul(current_text_features, current_text_features.T))
+        cosine_sim_after_list.append(cosine_sim_after.item())
+
     if logger:
         logger.debug(f"Completed test-time tuning with final loss: {loss.item():.6f}")
 
-    return selected_ids, batch_entropies
+    # add cosine similarity before in the beginning of the list
+    cosine_sim_after_list.insert(0, cosine_sim_before.item())
+    return selected_ids, batch_entropies, cosine_sim_after_list
 
 def get_top_sim(sim_matrix, args):
     """
@@ -730,12 +741,15 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         tpt5_single = AverageMeter('SingleTTAAcc@5', ':6.2f', Summary.AVERAGE)
         tpt1_vanilla = AverageMeter('VanillaTTAAcc@1', ':6.2f', Summary.AVERAGE)
         tpt5_vanilla = AverageMeter('VanillaTTAAcc@5', ':6.2f', Summary.AVERAGE)
+        tpt1_vanilla_topk = AverageMeter('VanillaTopkTTAAcc@1', ':6.2f', Summary.AVERAGE)
+        tpt5_vanilla_topk = AverageMeter('VanillaTopkTTAAcc@5', ':6.2f', Summary.AVERAGE)
         tpt1_weighted = AverageMeter('WeightedTTAAcc@1', ':6.2f', Summary.AVERAGE)
         tpt5_weighted = AverageMeter('WeightedTTAAcc@5', ':6.2f', Summary.AVERAGE)
+
         # Progress display
         progress = ProgressMeter(
             len(val_loader),
-            [batch_time, top1, tpt1_single, tpt1_vanilla, tpt1_weighted],
+            [batch_time, top1, tpt1_single, tpt1_vanilla, tpt1_vanilla_topk, tpt1_weighted],
             prefix='Test: ')
 
 
@@ -800,10 +814,12 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     selected_ids_dic = {}
     weighted_scores = {}
     batch_entropies_dic = {}
+    cosine_similarities_dic = {}
 
     result_dict_original = {'max_confidence': [], 'prediction': [], 'label': []}
     result_dict_single = {'max_confidence': [], 'prediction': [], 'label': []}
     result_dict_vanilla = {'max_confidence': [], 'prediction': [], 'label': []}
+    result_dict_vanilla_topk = {'max_confidence': [], 'prediction': [], 'label': []}
     result_dict_weighted = {'max_confidence': [], 'prediction': [], 'label': []}
 
     # define a softmax layer
@@ -890,7 +906,8 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         # Perform test-time adaptation
         if args.tta_steps > 0:
             if "otpt" in args.tpt_loss or "anchor" in args.tpt_loss:
-                selected_ids, batch_entropies = test_time_tuning_otpt(model, images, optimizer, scaler, args, logger)
+                selected_ids, batch_entropies, cosine_similarities = test_time_tuning_otpt(model, images, optimizer, scaler, args, logger)
+                cosine_similarities_dic[i] = cosine_similarities
             else:
                 selected_ids, batch_entropies = test_time_tuning(model, images, optimizer, scaler, args, logger)
             selected_ids_dic[i] = selected_ids
@@ -930,7 +947,11 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             # 2. 'vanilla' - Use the average of all outputs
             tta_output_vanilla = torch.mean(tuned_outputs, dim=0).unsqueeze(0)
 
-            # 3. 'weighted_rtpt' - Use weighted average based on similarity scores
+            # 3. 'vanilla_topk' - Use the average of top-k outputs
+            tta_output_topk = tuned_outputs[[selected_ids[-1]]]
+            tta_output_vanilla_topk = torch.mean(tta_output_topk, dim=0).unsqueeze(0)
+
+            # 4. 'weighted_rtpt' - Use weighted average based on similarity scores
             # Calculate similarity matrix between features
             sim_matrix_images = torch.bmm(clip_features.unsqueeze(0), clip_features.unsqueeze(0).permute(0, 2, 1))
             # Get top similarity scores
@@ -1011,8 +1032,19 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             tpt1_vanilla.update(tpt_acc1_vanilla[0], images.size(0))
             tpt5_vanilla.update(tpt_acc5_vanilla[0], images.size(0))
 
+            # 3. 'vanilla_topk' ensemble type
+            tpt_acc1_vanilla_topk, tpt_acc5_vanilla_topk = accuracy(tta_output_vanilla_topk, target, topk=(1, 5))
+            # Calculate the ECE for the vanilla topk ensemble type
+            softmax_tta_output_vanilla_topk = softmax_ece(tta_output_vanilla_topk)
+            max_conf_tta_output_vanilla_topk, max_index_tta_output_vanilla_topk = torch.max(softmax_tta_output_vanilla_topk, dim=1)
+            result_dict_vanilla_topk['max_confidence'].append(max_conf_tta_output_vanilla_topk.item())
+            result_dict_vanilla_topk['prediction'].append(max_index_tta_output_vanilla_topk.item())
+            result_dict_vanilla_topk['label'].append(target.item())
+            tpt1_vanilla_topk.update(tpt_acc1_vanilla_topk[0], images.size(0))
+            tpt5_vanilla_topk.update(tpt_acc5_vanilla_topk[0], images.size(0))
 
-            # 3. 'weighted_rtpt' ensemble type
+
+            # 4. 'weighted_rtpt' ensemble type
             tpt_acc1_weighted, tpt_acc5_weighted = accuracy(tta_output_weighted, target, topk=(1, 5))
             # Calculate the ECE for the weighted ensemble type
             softmax_tta_output_weighted = softmax_ece(tta_output_weighted)
@@ -1037,11 +1069,13 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                     logger.debug(f"Sample {i+1}: Original Model Acc@1: {acc1[0].item():.2f}, Acc@5: {acc5[0].item():.2f}")
                     logger.debug(f"Sample {i+1}: Single TTA Acc@1: {tpt_acc1_single[0].item():.2f}, Acc@5: {tpt_acc5_single[0].item():.2f}")
                     logger.debug(f"Sample {i+1}: Vanilla TTA Acc@1: {tpt_acc1_vanilla[0].item():.2f}, Acc@5: {tpt_acc5_vanilla[0].item():.2f}")
+                    logger.debug(f"Sample {i+1}: Vanilla Topk TTA Acc@1: {tpt_acc1_vanilla_topk[0].item():.2f}, Acc@5: {tpt_acc5_vanilla_topk[0].item():.2f}")
                     logger.debug(f"Sample {i+1}: Weighted TTA Acc@1: {tpt_acc1_weighted[0].item():.2f}, Acc@5: {tpt_acc5_weighted[0].item():.2f}")
                 else:
                     logger.debug(f"Sample {i+1}: Original Model Adversarial Acc@1: {acc1[0].item():.2f}, Acc@5: {acc5[0].item():.2f}")
                     logger.debug(f"Sample {i+1}: Single TTA Adversarial Acc@1: {tpt_acc1_single[0].item():.2f}, Acc@5: {tpt_acc5_single[0].item():.2f}")
                     logger.debug(f"Sample {i+1}: Vanilla TTA Adversarial Acc@1: {tpt_acc1_vanilla[0].item():.2f}, Acc@5: {tpt_acc5_vanilla[0].item():.2f}")
+                    logger.debug(f"Sample {i+1}: Vanilla Topk TTA Adversarial Acc@1: {tpt_acc1_vanilla_topk[0].item():.2f}, Acc@5: {tpt_acc5_vanilla_topk[0].item():.2f}")
                     logger.debug(f"Sample {i+1}: Weighted TTA Adversarial Acc@1: {tpt_acc1_weighted[0].item():.2f}, Acc@5: {tpt_acc5_weighted[0].item():.2f}")
 
         # Measure elapsed time
@@ -1064,11 +1098,13 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                         logger.info(f'iter:{i+1}/{len(val_loader)}, Original Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}')
                         logger.info(f'iter:{i+1}/{len(val_loader)}, Single TTA Acc@1: {tpt1_single.avg:.2f}, Acc@5: {tpt5_single.avg:.2f}')
                         logger.info(f'iter:{i+1}/{len(val_loader)}, Vanilla TTA Acc@1: {tpt1_vanilla.avg:.2f}, Acc@5: {tpt5_vanilla.avg:.2f}')
+                        logger.info(f'iter:{i+1}/{len(val_loader)}, Vanilla Topk TTA Acc@1: {tpt1_vanilla_topk.avg:.2f}, Acc@5: {tpt5_vanilla_topk.avg:.2f}')
                         logger.info(f'iter:{i+1}/{len(val_loader)}, Weighted TTA Acc@1: {tpt1_weighted.avg:.2f}, Acc@5: {tpt5_weighted.avg:.2f}')
                     else:
                         logger.info(f'iter:{i+1}/{len(val_loader)}, Original Adv Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}')
                         logger.info(f'iter:{i+1}/{len(val_loader)}, Single TTA Adv Acc@1: {tpt1_single.avg:.2f}, Acc@5: {tpt5_single.avg:.2f}')
                         logger.info(f'iter:{i+1}/{len(val_loader)}, Vanilla TTA Adv Acc@1: {tpt1_vanilla.avg:.2f}, Acc@5: {tpt5_vanilla.avg:.2f}')
+                        logger.info(f'iter:{i+1}/{len(val_loader)}, Vanilla Topk TTA Adv Acc@1: {tpt1_vanilla_topk.avg:.2f}, Acc@5: {tpt5_vanilla_topk.avg:.2f}')
                         logger.info(f'iter:{i+1}/{len(val_loader)}, Weighted TTA Adv Acc@1: {tpt1_weighted.avg:.2f}, Acc@5: {tpt5_weighted.avg:.2f}')
             progress.display(i)
 
@@ -1089,17 +1125,21 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                 logger.info(f"Final results - Original Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}")
                 logger.info(f"Final results - Single TTA Acc@1: {tpt1_single.avg:.2f}, Acc@5: {tpt5_single.avg:.2f}")
                 logger.info(f"Final results - Vanilla TTA Acc@1: {tpt1_vanilla.avg:.2f}, Acc@5: {tpt5_vanilla.avg:.2f}")
+                logger.info(f"Final results - Vanilla Topk TTA Acc@1: {tpt1_vanilla_topk.avg:.2f}, Acc@5: {tpt5_vanilla_topk.avg:.2f}")
                 logger.info(f"Final results - Weighted TTA Acc@1: {tpt1_weighted.avg:.2f}, Acc@5: {tpt5_weighted.avg:.2f}")
                 logger.info(f"Improvement from Single TTA in Acc@1 {tpt1_single.avg - top1.avg:.2f}, and Acc@5 {tpt5_single.avg - top5.avg:.2f}")
                 logger.info(f"Improvement from Vanilla TTA in Acc@1 {tpt1_vanilla.avg - top1.avg:.2f}, and Acc@5 {tpt5_vanilla.avg - top5.avg:.2f}")
+                logger.info(f"Improvement from Vanilla Topk TTA in Acc@1 {tpt1_vanilla_topk.avg - top1.avg:.2f}, and Acc@5 {tpt5_vanilla_topk.avg - top5.avg:.2f}")
                 logger.info(f"Improvement from Weighted TTA in Acc@1 {tpt1_weighted.avg - top1.avg:.2f}, and Acc@5 {tpt5_weighted.avg - top5.avg:.2f}")
             else:
                 logger.info(f"Final results - Adversarial Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}")
                 logger.info(f"Final results - Single TTA Adversarial Acc@1: {tpt1_single.avg:.2f}, Acc@5: {tpt5_single.avg:.2f}")
                 logger.info(f"Final results - Vanilla TTA Adversarial Acc@1: {tpt1_vanilla.avg:.2f}, Acc@5: {tpt5_vanilla.avg:.2f}")
+                logger.info(f"Final results - Vanilla Topk TTA Adversarial Acc@1: {tpt1_vanilla_topk.avg:.2f}, Acc@5: {tpt5_vanilla_topk.avg:.2f}")
                 logger.info(f"Final results - Weighted TTA Adversarial Acc@1: {tpt1_weighted.avg:.2f}, Acc@5: {tpt5_weighted.avg:.2f}")
                 logger.info(f"Improvement from Single TTA in Adversarial Acc@1 {tpt1_single.avg - top1.avg:.2f}, and Acc@5 {tpt5_single.avg - top5.avg:.2f}")
                 logger.info(f"Improvement from Vanilla TTA in Adversarial Acc@1 {tpt1_vanilla.avg - top1.avg:.2f}, and Acc@5 {tpt5_vanilla.avg - top5.avg:.2f}")
+                logger.info(f"Improvement from Vanilla Topk TTA in Adversarial Acc@1 {tpt1_vanilla_topk.avg - top1.avg:.2f}, and Acc@5 {tpt5_vanilla_topk.avg - top5.avg:.2f}")
                 logger.info(f"Improvement from Weighted TTA in Adversarial Acc@1 {tpt1_weighted.avg - top1.avg:.2f}, and Acc@5 {tpt5_weighted.avg - top5.avg:.2f}")
 
     if args.tta_steps > 0:
@@ -1131,6 +1171,16 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         with open(batch_entropies_path, 'w') as f:
             json.dump(batch_entropies_dic, f, indent=4)
         logger.info(f"Batch entropies saved to {batch_entropies_path}")
+    
+    # save cosine similarities to a file if using otpt or anchor loss
+    if "otpt" in args.tpt_loss or "anchor" in args.tpt_loss:
+        cosine_similarities_path = os.path.join(args.log_dir, "cosine_similarities.json")
+        # Handle long paths on Windows
+        cosine_similarities_path = handle_long_windows_path(cosine_similarities_path)
+
+        with open(cosine_similarities_path, 'w') as f:
+            json.dump(cosine_similarities_dic, f, indent=4)
+        logger.info(f"Cosine similarities saved to {cosine_similarities_path}")
 
     # Save weighted scores to a file if using weighted ensembling
     if (args.ensemble_type == 'weighted_rtpt' and weighted_scores) or (args.ensemble_type == 'all' and weighted_scores):
@@ -1173,6 +1223,15 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         logger.info(f"Results saved to {results_path}")
         acc, ece, bin_acc, bin_confidences = Calculator(result_dict_vanilla, logger)
         logger.info(f"ECE results - Vanilla Acc: {acc:.2f},  ECE: {ece:.2f}")
+    if result_dict_vanilla_topk:
+        results_path = os.path.join(args.log_dir, f"results_vanilla_topk.json")
+        # Handle long paths on Windows
+        results_path = handle_long_windows_path(results_path)
+        with open(results_path, 'w') as f:
+            json.dump(result_dict_vanilla_topk, f, indent=4)
+        logger.info(f"Results saved to {results_path}")
+        acc, ece, bin_acc, bin_confidences = Calculator(result_dict_vanilla_topk, logger)
+        logger.info(f"ECE results - Vanilla Topk Acc: {acc:.2f},  ECE: {ece:.2f}")
 
     if result_dict_weighted:
         results_path = os.path.join(args.log_dir, f"results_weighted.json")
@@ -1194,6 +1253,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             top1.avg, top5.avg,                           # Original model
             tpt1_single.avg, tpt5_single.avg,             # Single ensemble
             tpt1_vanilla.avg, tpt5_vanilla.avg,           # Vanilla ensemble
+            tpt1_vanilla_topk.avg, tpt5_vanilla_topk.avg, # Vanilla Topk ensemble
             tpt1_weighted.avg, tpt5_weighted.avg          # Weighted ensemble
         ]
 
@@ -1356,14 +1416,16 @@ def main():
                       f"  Original: Clean Acc @1 {results[0]}/ Clean Acc @5 {results[1]}\n" \
                       f"  Single TTA: Clean Acc @1 {results[2]}/ Clean Acc @5 {results[3]}\n" \
                       f"  Vanilla TTA: Clean Acc @1 {results[4]}/ Clean Acc @5 {results[5]}\n" \
-                      f"  Weighted TTA: Clean Acc @1 {results[6]}/ Clean Acc @5 {results[7]}"
+                      f"  Vanilla Topk TTA: Clean Acc @1 {results[6]}/ Clean Acc @5 {results[7]}\n" \
+                      f"  Weighted TTA: Clean Acc @1 {results[8]}/ Clean Acc @5 {results[9]}"
         else:
             # Adversarial accuracy
             log_msg = f"=> Acc. on testset [{dset}]:\n" \
                       f"  Original: Adv Acc @1 {results[0]}/ Adv Acc @5 {results[1]}\n" \
                       f"  Single TTA: Adv Acc @1 {results[2]}/ Adv Acc @5 {results[3]}\n" \
                       f"  Vanilla TTA: Adv Acc @1 {results[4]}/ Adv Acc @5 {results[5]}\n" \
-                      f"  Weighted TTA: Adv Acc @1 {results[6]}/ Adv Acc @5 {results[7]}"
+                      f"  Vanilla Topk TTA: Adv Acc @1 {results[6]}/ Adv Acc @5 {results[7]}\n" \
+                      f"  Weighted TTA: Adv Acc @1 {results[8]}/ Adv Acc @5 {results[9]}"
 
     # Log results
     logger.info(log_msg)

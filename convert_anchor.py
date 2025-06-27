@@ -35,7 +35,7 @@ def convert(text_features, downstream_feature = None, dim = 512, logger=None):
     if logger is None:
         logger = logging.getLogger('convert_anchor')
 
-    text_features = text_features /  text_features.norm(dim=-1, keepdim=True)
+    #text_features = text_features /  text_features.norm(dim=-1, keepdim=True)
     logger.info(f"original cos similarity: {torch.mean(torch.matmul(text_features, text_features.T))}")
     anchor = torch.mean(text_features, dim = 0)
     anchor = anchor / torch.norm(anchor)
