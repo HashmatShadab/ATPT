@@ -418,16 +418,14 @@ def compute_otpt_loss(model, args):
     # Add orthogonality term to entropy loss
     return  Ht_ortho_norm_val
 
-def compute_anchor_loss(model, args, logger):
+def compute_anchor_loss(model, expanded_anchors, logger):
     """
-    Compute the anchor‐expansion guidance loss for TPT+Anchor+OTPT.
+    Compute the anchor‐expansion guidance loss for Anchor
 
     Args:
 
         model (torch.nn.Module): The model being tuned.
-        args: Namespace containing at least:
-            - expansion_factor: float
-            - gpu: device index or torch.device
+
 
     Returns:
         torch.Tensor: The computed anchor‐alignment loss value.
@@ -436,17 +434,10 @@ def compute_anchor_loss(model, args, logger):
     text_features = model.get_text_features()                  # [C, D]
     #text_features = text_features / text_features.norm(dim=1, keepdim=True)
 
-    # 2) Use your provided `convert` function to compute expanded anchors
-    #    We only care about expanding the text anchors, not downstream image features.
-    expanded = convert(
-        text_features=text_features.double(),
-        downstream_feature=None,
-        dim=text_features.size(1),
-        logger=logger
-    ).float()  # back to float32             # [C, D]
+
 
     # 3) Compute 1 – cosine similarity between each original and expanded anchor
-    cos_sim = (text_features * expanded).sum(dim=1)            # [C]
+    cos_sim = (text_features * expanded_anchors).sum(dim=1)            # [C]
     anchor_loss = (1.0 - cos_sim).mean()                      # scalar
 
     return anchor_loss
@@ -482,6 +473,7 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, logger=None):
     with torch.no_grad():
         original_text_features = model.get_text_features()
         cosine_sim_before = torch.mean(torch.matmul(original_text_features, original_text_features.T))
+    expanded_anchors = convert(original_text_features.double(), None, original_text_features.size(1), logger).float()
     cosine_sim_after_list = []
 
     # Perform test-time adaptation for specified number of steps
@@ -515,12 +507,12 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, logger=None):
             loss = loss_tpt + args.otpt_lambda_term * loss_otpt
         elif args.tpt_loss == "tpt_anchor":
             loss_tpt = entropy_loss_ttl(output)
-            loss_anchor = compute_anchor_loss(model, args, logger)
+            loss_anchor = compute_anchor_loss(model, expanded_anchors, logger)
             loss = loss_tpt + args.anchor_lambda_term * loss_anchor
         elif args.tpt_loss == "tpt_anchor_otpt":
             # TPT + Anchor + OTPT: entropy + anchor guidance + orthogonality
             loss_tpt = entropy_loss_ttl(output)
-            loss_anchor = compute_anchor_loss(model, args, logger)
+            loss_anchor = compute_anchor_loss(model, expanded_anchors, logger)
             loss_otpt = compute_otpt_loss(model, args)
             loss = (
                     loss_tpt
@@ -538,13 +530,13 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, logger=None):
         elif args.tpt_loss == "rtpt_anchor":
             # RTPT + Anchor: replay‐TPT entropy + anchor guidance
             loss_rtpt = rtpt_entropy_avg(output)
-            loss_anchor = compute_anchor_loss(model, args, logger)
+            loss_anchor = compute_anchor_loss(model, expanded_anchors, logger)
             loss = loss_rtpt + args.anchor_lambda_term * loss_anchor
 
         elif args.tpt_loss == "rtpt_anchor_otpt":
             # RTPT + Anchor + OTPT: replay‐TPT entropy + anchor + orthogonality
             loss_rtpt = rtpt_entropy_avg(output)
-            loss_anchor = compute_anchor_loss(model, args, logger)
+            loss_anchor = compute_anchor_loss(model, expanded_anchors, logger)
             loss_otpt = compute_otpt_loss(model, args)
             loss = (
                     loss_rtpt
