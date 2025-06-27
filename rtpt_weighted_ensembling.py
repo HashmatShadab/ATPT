@@ -505,9 +505,9 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, logger=None):
             batch_entropies.append(batch_entropy)
 
         # Calculate loss as average entropy (lower is better)
-        if args.tpt_loss == "rtpt":
+        if args.tpt_loss == "rtpt_":
             loss = rtpt_entropy_avg(output)
-        elif args.tpt_loss == "tpt":
+        elif args.tpt_loss == "tpt_":
             loss = entropy_loss_ttl(output)
         elif args.tpt_loss == "tpt_otpt":
             loss_tpt = entropy_loss_ttl(output)
@@ -905,7 +905,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
         # Perform test-time adaptation
         if args.tta_steps > 0:
-            if "otpt" in args.tpt_loss or "anchor" in args.tpt_loss:
+            if "otpt" in args.tpt_loss or "anchor" in args.tpt_loss or "tpt_" in args.tpt_loss or "rtpt_" in args.tpt_loss:
                 selected_ids, batch_entropies, cosine_similarities = test_time_tuning_otpt(model, images, optimizer, scaler, args, logger)
                 cosine_similarities_dic[i] = cosine_similarities
             else:
@@ -1173,7 +1173,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         logger.info(f"Batch entropies saved to {batch_entropies_path}")
     
     # save cosine similarities to a file if using otpt or anchor loss
-    if "otpt" in args.tpt_loss or "anchor" in args.tpt_loss:
+    if "otpt" in args.tpt_loss or "anchor" in args.tpt_loss or "tpt_" in args.tpt_loss or "rtpt_" in args.tpt_loss:
         cosine_similarities_path = os.path.join(args.log_dir, "cosine_similarities.json")
         # Handle long paths on Windows
         cosine_similarities_path = handle_long_windows_path(cosine_similarities_path)
@@ -1476,7 +1476,7 @@ if __name__ == '__main__':
                         help='Number of tunable context tokens')
     parser.add_argument('--ctx_init', default=None, type=str,
                         help='Initial values for tunable prompts')
-    parser.add_argument('--tpt_loss', type=str, default='rtpt', choices=['rtpt', 'tpt', 'tpt_otpt', 'rtpt_otpt', 'tpt_anchor', 'tpt_anchor_otpt', 'rtpt_anchor', 'rtpt_anchor_otpt'])
+    parser.add_argument('--tpt_loss', type=str, default='rtpt', choices=['rtpt', 'tpt', 'rtpt_', 'tpt_', 'tpt_otpt', 'rtpt_otpt', 'tpt_anchor', 'tpt_anchor_otpt', 'rtpt_anchor', 'rtpt_anchor_otpt'])
     parser.add_argument('--otpt_lambda_term', type=float, default=18.0,
                         help='Lambda term for orthogonality loss in tpt_otpt')
     parser.add_argument('--anchor_lambda_term', type=float, default=18.0,
