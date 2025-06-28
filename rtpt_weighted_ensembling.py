@@ -145,7 +145,19 @@ def create_log_dir(args):
         counter_attack_part = ["No_Counter_Attack"]
 
     # TPT or no-TPT
-    tpt_part = [f"TPT", f"Optimization_Loss_{args.tpt_loss}_LR_{args.lr}_Optimization_Steps_{args.tta_steps}_View_Selection_Fraction_{args.selection_p}"] if args.tta_steps > 0 else ["No_TPT"]
+    if "otpt" in args.tpt_loss and "anchor" not in args.tpt_loss:
+        tpt_part = [f"TPT",
+                    f"Optimization_Loss_{args.tpt_loss}_otpt_lmbda_{args.otpt_lambda_term}_LR_{args.lr}_Optimization_Steps_{args.tta_steps}_View_Selection_Fraction_{args.selection_p}"] if args.tta_steps > 0 else [
+            "No_TPT"]
+    elif "anchor" in args.tpt_loss and "otpt" not in args.tpt_loss:
+        tpt_part = [f"TPT",
+                    f"Optimization_Loss_{args.tpt_loss}_anchor_lmbda_{args.anchor_lambda_term}_LR_{args.lr}_Optimization_Steps_{args.tta_steps}_View_Selection_Fraction_{args.selection_p}"] if args.tta_steps > 0 else [
+            "No_TPT"]
+    elif "anchor" in args.tpt_loss and "otpt" in args.tpt_loss:
+        tpt_part = [f"TPT",
+                    f"Optimization_Loss_{args.tpt_loss}_anchor_lmbda_{args.anchor_lambda_term}_otpt_lmbda_{args.otpt_lambda_term}_LR_{args.lr}_Optimization_Steps_{args.tta_steps}_View_Selection_Fraction_{args.selection_p}"] if args.tta_steps > 0 else ["No_TPT"]
+    else:
+        tpt_part = [f"TPT", f"Optimization_Loss_{args.tpt_loss}_LR_{args.lr}_Optimization_Steps_{args.tta_steps}_View_Selection_Fraction_{args.selection_p}"] if args.tta_steps > 0 else ["No_TPT"]
 
 
     # Ensemble details
