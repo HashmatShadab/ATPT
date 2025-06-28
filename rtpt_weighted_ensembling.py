@@ -443,7 +443,7 @@ def compute_anchor_loss(model, expanded_anchors, logger):
     return anchor_loss
 
 
-def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, logger=None):
+def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, original_text_features=None, expanded_anchors=None, logger=None):
     """
     Perform test-time tuning of the model using entropy minimization.
 
@@ -457,10 +457,16 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, logger=None):
         optimizer (torch.optim.Optimizer): Optimizer for updating model parameters.
         scaler (torch.cuda.amp.GradScaler, optional): Gradient scaler for mixed precision training.
         args (argparse.Namespace): Arguments containing tuning parameters.
+        original_text_features (torch.Tensor, optional): Pre-computed text features.
+        expanded_anchors (torch.Tensor, optional): Pre-computed expanded anchors.
         logger (logging.Logger, optional): Logger for logging information.
 
     Returns:
-        None
+        tuple: (selected_ids, batch_entropies, cosine_sim_after_list, loss_values_dic)
+            - selected_ids: List of indices of selected confident samples
+            - batch_entropies: List of entropy values for the batch
+            - cosine_sim_after_list: List of cosine similarity values after tuning
+            - loss_values_dic: Dictionary containing individual loss values for each step
     """
     # Track indices of confident samples
     selected_idx = None
@@ -470,10 +476,20 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, logger=None):
 
     selected_ids = []
     batch_entropies = []
-    with torch.no_grad():
-        original_text_features = model.get_text_features()
+    # Dictionary to store individual loss values for each step
+    loss_values_dic = {}
+
+    # Compute text features and expanded anchors if not provided
+    if original_text_features is None:
+        with torch.no_grad():
+            original_text_features = model.get_text_features()
+            cosine_sim_before = torch.mean(torch.matmul(original_text_features, original_text_features.T))
+    else:
         cosine_sim_before = torch.mean(torch.matmul(original_text_features, original_text_features.T))
-    expanded_anchors = convert(original_text_features.double(), None, original_text_features.size(1), logger).float()
+
+    if expanded_anchors is None:
+        expanded_anchors = convert(original_text_features.double(), None, original_text_features.size(1), logger).float()
+
     cosine_sim_after_list = []
 
     # Perform test-time adaptation for specified number of steps
@@ -497,18 +513,29 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, logger=None):
             batch_entropies.append(batch_entropy)
 
         # Calculate loss as average entropy (lower is better)
+        # Initialize a dictionary to store individual loss values for this step
+        step_losses = {}
+
         if args.tpt_loss == "rtpt_":
             loss = rtpt_entropy_avg(output)
+            step_losses["rtpt"] = loss.item()
         elif args.tpt_loss == "tpt_":
             loss = entropy_loss_ttl(output)
+            step_losses["tpt"] = loss.item()
         elif args.tpt_loss == "tpt_otpt":
             loss_tpt = entropy_loss_ttl(output)
             loss_otpt = compute_otpt_loss(model, args)
             loss = loss_tpt + args.otpt_lambda_term * loss_otpt
+            step_losses["tpt"] = loss_tpt.item()
+            step_losses["otpt"] = loss_otpt.item()
+            step_losses["total"] = loss.item()
         elif args.tpt_loss == "tpt_anchor":
             loss_tpt = entropy_loss_ttl(output)
             loss_anchor = compute_anchor_loss(model, expanded_anchors, logger)
             loss = loss_tpt + args.anchor_lambda_term * loss_anchor
+            step_losses["tpt"] = loss_tpt.item()
+            step_losses["anchor"] = loss_anchor.item()
+            step_losses["total"] = loss.item()
         elif args.tpt_loss == "tpt_anchor_otpt":
             # TPT + Anchor + OTPT: entropy + anchor guidance + orthogonality
             loss_tpt = entropy_loss_ttl(output)
@@ -519,6 +546,10 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, logger=None):
                     + args.anchor_lambda_term * loss_anchor
                     + args.otpt_lambda_term * loss_otpt
             )
+            step_losses["tpt"] = loss_tpt.item()
+            step_losses["anchor"] = loss_anchor.item()
+            step_losses["otpt"] = loss_otpt.item()
+            step_losses["total"] = loss.item()
 
             # RTPT variants:
         elif args.tpt_loss == "rtpt_otpt":
@@ -526,12 +557,18 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, logger=None):
             loss_rtpt = rtpt_entropy_avg(output)
             loss_otpt = compute_otpt_loss(model, args)
             loss = loss_rtpt + args.otpt_lambda_term * loss_otpt
+            step_losses["rtpt"] = loss_rtpt.item()
+            step_losses["otpt"] = loss_otpt.item()
+            step_losses["total"] = loss.item()
 
         elif args.tpt_loss == "rtpt_anchor":
             # RTPT + Anchor: replay‐TPT entropy + anchor guidance
             loss_rtpt = rtpt_entropy_avg(output)
             loss_anchor = compute_anchor_loss(model, expanded_anchors, logger)
             loss = loss_rtpt + args.anchor_lambda_term * loss_anchor
+            step_losses["rtpt"] = loss_rtpt.item()
+            step_losses["anchor"] = loss_anchor.item()
+            step_losses["total"] = loss.item()
 
         elif args.tpt_loss == "rtpt_anchor_otpt":
             # RTPT + Anchor + OTPT: replay‐TPT entropy + anchor + orthogonality
@@ -543,9 +580,16 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, logger=None):
                     + args.anchor_lambda_term * loss_anchor
                     + args.otpt_lambda_term * loss_otpt
             )
+            step_losses["rtpt"] = loss_rtpt.item()
+            step_losses["anchor"] = loss_anchor.item()
+            step_losses["otpt"] = loss_otpt.item()
+            step_losses["total"] = loss.item()
 
         else:
             raise ValueError(f"Unknown tpt_loss mode: {args.tpt_loss}")
+
+        # Store the losses for this step in the dictionary
+        loss_values_dic[j] = step_losses
 
 
 
@@ -569,7 +613,7 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, logger=None):
 
     # add cosine similarity before in the beginning of the list
     cosine_sim_after_list.insert(0, cosine_sim_before.item())
-    return selected_ids, batch_entropies, cosine_sim_after_list
+    return selected_ids, batch_entropies, cosine_sim_after_list, loss_values_dic
 
 def get_top_sim(sim_matrix, args):
     """
@@ -807,6 +851,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     weighted_scores = {}
     batch_entropies_dic = {}
     cosine_similarities_dic = {}
+    loss_values_dic = {}
 
     result_dict_original = {'max_confidence': [], 'prediction': [], 'label': []}
     result_dict_single = {'max_confidence': [], 'prediction': [], 'label': []}
@@ -817,6 +862,12 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     # define a softmax layer
     softmax_ece = torch.nn.Softmax(dim=1)
 
+    if "otpt" in args.tpt_loss or "anchor" in args.tpt_loss or "tpt_" in args.tpt_loss or "rtpt_" in args.tpt_loss:
+        # Compute text features and expanded anchors once
+        with torch.no_grad():
+            original_text_features = model.get_text_features()
+        expanded_anchors = convert(original_text_features.double(), None, original_text_features.size(1),
+                                   logger).float()
 
 
     # Iterate through validation data
@@ -898,8 +949,15 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         # Perform test-time adaptation
         if args.tta_steps > 0:
             if "otpt" in args.tpt_loss or "anchor" in args.tpt_loss or "tpt_" in args.tpt_loss or "rtpt_" in args.tpt_loss:
-                selected_ids, batch_entropies, cosine_similarities = test_time_tuning_otpt(model, images, optimizer, scaler, args, logger)
+
+                selected_ids, batch_entropies, cosine_similarities, loss_values = test_time_tuning_otpt(
+                    model, images, optimizer, scaler, args, 
+                    original_text_features=original_text_features, 
+                    expanded_anchors=expanded_anchors, 
+                    logger=logger
+                )
                 cosine_similarities_dic[i] = cosine_similarities
+                loss_values_dic[i] = loss_values
             else:
                 selected_ids, batch_entropies = test_time_tuning(model, images, optimizer, scaler, args, logger)
             selected_ids_dic[i] = selected_ids
@@ -1163,7 +1221,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         with open(batch_entropies_path, 'w') as f:
             json.dump(batch_entropies_dic, f, indent=4)
         logger.info(f"Batch entropies saved to {batch_entropies_path}")
-    
+
     # save cosine similarities to a file if using otpt or anchor loss
     if "otpt" in args.tpt_loss or "anchor" in args.tpt_loss or "tpt_" in args.tpt_loss or "rtpt_" in args.tpt_loss:
         cosine_similarities_path = os.path.join(args.log_dir, "cosine_similarities.json")
@@ -1173,6 +1231,15 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         with open(cosine_similarities_path, 'w') as f:
             json.dump(cosine_similarities_dic, f, indent=4)
         logger.info(f"Cosine similarities saved to {cosine_similarities_path}")
+
+        # Save loss values to a file
+        loss_values_path = os.path.join(args.log_dir, "loss_values.json")
+        # Handle long paths on Windows
+        loss_values_path = handle_long_windows_path(loss_values_path)
+
+        with open(loss_values_path, 'w') as f:
+            json.dump(loss_values_dic, f, indent=4)
+        logger.info(f"Loss values saved to {loss_values_path}")
 
     # Save weighted scores to a file if using weighted ensembling
     if (args.ensemble_type == 'weighted_rtpt' and weighted_scores) or (args.ensemble_type == 'all' and weighted_scores):
