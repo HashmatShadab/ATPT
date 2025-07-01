@@ -455,7 +455,7 @@ def compute_anchor_loss(model, expanded_anchors, logger):
     return anchor_loss
 
 
-def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, original_text_features=None, expanded_anchors=None, logger=None):
+def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, original_text_features=None, expanded_anchors=None, logger=None, max_tta_steps=0,):
     """
     Perform test-time tuning of the model using entropy minimization.
 
@@ -472,6 +472,10 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, original_text_
         original_text_features (torch.Tensor, optional): Pre-computed text features.
         expanded_anchors (torch.Tensor, optional): Pre-computed expanded anchors.
         logger (logging.Logger, optional): Logger for logging information.
+        max_tta_steps (int, optional): If greater than 0 and less than or equal to tta_steps,
+                                      increase the loss (use negative loss) for the first
+                                      max_tta_steps steps. Default is 0.
+
 
     Returns:
         tuple: (selected_ids, batch_entropies, cosine_sim_after_list, loss_values_dic)
@@ -603,17 +607,51 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, original_text_
         # Store the losses for this step in the dictionary
         loss_values_dic[j] = step_losses
 
+        # Check if we should use negative loss for this step
+        original_lr = {}
+        if max_tta_steps > 0 and max_tta_steps <= args.tta_steps and j < max_tta_steps:
+            # Use negative loss to increase it instead of decreasing
+            if logger and (j == 0 or j % 5 == 0):
+                logger.debug(f"Step {j+1}/{args.tta_steps}, Using negative loss to increase it")
+            # Store the original loss value for logging
+            original_loss_value = loss.item()
+            # Negate the loss
+            loss = -loss
+            # Temporarily reduce learning rate for maximization if requested
+            original_lr = {}
+            for param_group in optimizer.param_groups:
+                original_lr[id(param_group)] = param_group['lr']
+                # Reduce learning rate by the specified reduction factor
+                param_group['lr'] = param_group['lr'] / args.lr_reduction_factor
+            if logger and (j == 0 or j % 5 == 0):
+                logger.info(f"Step {j+1}/{args.tta_steps}, Reduced learning rate by factor of {args.lr_reduction_factor} for maximization")
 
+            if logger and (j == 0 or j % 5 == 0):
+                logger.info(f"Step {j+1}/{args.tta_steps}, Original Loss: {original_loss_value:.6f}, Negated Loss: {loss.item():.6f}")
 
+        elif logger and (j == 0 or j == args.tta_steps - 1 or j % 5 == 0):
+            logger.info(f"Step {j+1}/{args.tta_steps}, Loss: {loss.item():.6f}")
 
-
-        if logger and (j == 0 or j == args.tta_steps - 1 or j % 5 == 0):
-            logger.debug(f"Step {j+1}/{args.tta_steps}, Loss: {loss.item():.6f}")
 
         # Update model parameters
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+
+        # Restore original learning rate if it was reduced
+        if original_lr:
+            for param_group in optimizer.param_groups:
+                param_group['lr'] = original_lr[id(param_group)]
+            if logger and (j == 0 or j % 5 == 0):
+                logger.debug(f"Step {j+1}/{args.tta_steps}, Restored original learning rate")
+        # Make sure learning rate is at default value if not in maximization step
+        elif max_tta_steps > 0 and j >= max_tta_steps:
+            # We're past the maximization steps, ensure learning rate is at default
+            for param_group in optimizer.param_groups:
+                # Reset to the learning rate specified in args
+                param_group['lr'] = args.lr
+            if logger and (j == max_tta_steps or j % 5 == 0):
+                logger.debug(f"Step {j+1}/{args.tta_steps}, Ensured learning rate is at default value")
 
         with torch.no_grad():
             current_text_features = model.get_text_features()
@@ -966,7 +1004,8 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                     model, images, optimizer, scaler, args, 
                     original_text_features=original_text_features, 
                     expanded_anchors=expanded_anchors, 
-                    logger=logger
+                    logger=logger,
+                    max_tta_steps=args.max_tta_steps,
                 )
                 cosine_similarities_dic[i] = cosine_similarities
                 loss_values_dic[i] = loss_values
@@ -1576,10 +1615,15 @@ if __name__ == '__main__':
     # Test-time adaptation parameters
     parser.add_argument('--lr', '--learning-rate', default=5e-3, type=float, metavar='LR',
                         help='Learning rate for test-time adaptation', dest='lr')
+    parser.add_argument('--lr_reduction_factor', default=50.0, type=float,
+                        help='Factor by which to reduce learning rate during maximization steps')
     parser.add_argument('--selection_p', default=0.1, type=float,
                         help='Proportion of confident samples to select for adaptation (0.0-1.0)')
     parser.add_argument('--tta_steps', default=1, type=int,
                         help='Number of test-time adaptation steps')
+    parser.add_argument('--max_tta_steps', default=0, type=int,
+                        help='If greater than 0 and less than or equal to tta_steps, increase the loss (use negative loss) for the first max_tta_steps steps')
+
 
     parser.add_argument('--ensemble_type', default='weighted_rtpt', type=str,
                         choices=['none', 'vanilla', 'weighted_rtpt', 'all'],
