@@ -1018,7 +1018,10 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
         # Get outputs after test-time adaptation
         with torch.no_grad():
-            tuned_outputs = model(images)
+            if args.use_class_text_embeddings:
+                tuned_outputs = model(images, text_features=class_text_embeddings)
+            else:
+                tuned_outputs = model(images)
 
         # Handle different types of ensembling
         if args.ensemble_type == 'none':
@@ -1049,7 +1052,10 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             tta_output_vanilla = torch.mean(tuned_outputs, dim=0).unsqueeze(0)
 
             # 3. 'vanilla_topk' - Use the average of top-k outputs
-            tta_output_topk = tuned_outputs[[selected_ids[-1]]]
+            if args.tta_steps > 0:
+                tta_output_topk = tuned_outputs[[selected_ids[-1]]]
+            else:
+                tta_output_topk = tuned_outputs
             tta_output_vanilla_topk = torch.mean(tta_output_topk, dim=0).unsqueeze(0)
 
             # 4. 'weighted_rtpt' - Use weighted average based on similarity scores
@@ -1654,6 +1660,8 @@ if __name__ == '__main__':
     parser.add_argument('--selected_id_name', type=str, default='selected_topk.json',)
     parser.add_argument('--weighted_score_name', type=str, default='weighted_scores.json',)
     parser.add_argument('--batch_entropy_name', type=str, default='entropies.json',)
+    parser.add_argument('--use_class_text_embeddings', type=lambda x: (str(x).lower() == 'true'), default=False,
+                        help='Whether to use class text embeddings in model forward pass')
 
 
     # Run the main function

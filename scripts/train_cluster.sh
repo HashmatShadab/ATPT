@@ -44,7 +44,7 @@ JOB_ID=${23:-1}
 DATASET_ID=${24:-"caltech101"}
 ANCHOR_LAMBDA=${25:-18.0}
 OTPT_LAMBDA=${26:-18.0}
-
+USE_TEXT_EMBED=${27:-"false"}
 
 # bash train.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 rtpt weighted_rtpt "F:\Code\datasets\atpt_results"
 # bash train.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 rtpt vanilla "F:\Code\datasets\atpt_results"
@@ -73,7 +73,7 @@ OTPT_LAMBDA=${26:-18.0}
 
 
 # Common parameters for all runs
-COMMON_PARAMS="--gpu $GPU --n_ctx 4 --ctx_init a_photo_of_a --tpt_loss $TPT_LOSS --anchor_lambda_term $ANCHOR_LAMBDA --otpt_lambda_term $OTPT_LAMBDA"
+COMMON_PARAMS="--gpu $GPU --use_class_text_embeddings $USE_TEXT_EMBED --n_ctx 4 --ctx_init a_photo_of_a --tpt_loss $TPT_LOSS --anchor_lambda_term $ANCHOR_LAMBDA --otpt_lambda_term $OTPT_LAMBDA"
 COMMON_PARAMS+=" --output_dir $OUTPUT_DIR --log_output_dir $LOG_OUTPUT_DIR  --eps $EPSILON --steps $ATTACK_STEPS"
 COMMON_PARAMS+=" --selection_p $FRACTION_CONFIDENT_SAMPLES --tta_steps $TTA_STEPS"
 COMMON_PARAMS+=" --ensemble_type $ENSEMBLE_TYPE --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING"
@@ -87,6 +87,7 @@ MODEL="-a $MODEL_NAME -b 64 --workers $NUM_WORKERS --print-freq 20"
 # Display configuration
 echo "=== Configuration ==="
 echo "GPU: $GPU"
+echo "USE_TEXT_EMBED: $USE_TEXT_EMBED"
 echo "Model: $MODEL_NAME with batch size 64"
 echo "Workers: $NUM_WORKERS"
 echo "Context Init for TPT: a_photo_of_a"

@@ -349,7 +349,18 @@ class ClipTestTimeTuning(nn.Module):
 
         return logits
 
-    def forward(self, input, get_image_features=False, normalize=False, get_image_text_features=False):
+    def inference_text(self, image, text_features):
+
+        image_features = self.image_encoder(self.normalize(image.type(self.dtype)))
+
+        image_features = image_features / image_features.norm(dim=-1, keepdim=True)
+
+        logit_scale = self.logit_scale.exp()
+        logits = logit_scale * image_features @ text_features.t()
+
+        return logits
+
+    def forward(self, input, get_image_features=False, normalize=False, get_image_text_features=False, text_features=None):
         if isinstance(input, Tuple):
             view_0, view_1, view_2 = input
             return self.contrast_prompt_tuning(view_0, view_1, view_2)
@@ -363,7 +374,10 @@ class ClipTestTimeTuning(nn.Module):
                 image_features, text_features, logit_scale = self.forward_features(input)
                 return image_features, text_features, logit_scale
             else:
-                return self.inference(input)
+                if text_features is None:
+                    return self.inference(input)
+                else:
+                    return self.inference_text(input, text_features)
 
     def get_image_features(self, input, normalize=False):
         image_features = self.image_encoder(self.normalize(input.type(self.dtype)))
