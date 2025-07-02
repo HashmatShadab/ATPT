@@ -314,3 +314,16 @@ sbatch run.sh "bash scripts/train_cluster.sh  /l/users/hashmat.malik/downstream_
 sbatch run.sh "bash scripts/train_cluster.sh  /l/users/hashmat.malik/downstream_datasets  0 4 ViT-B/16 0.0 0 4 0.1 20 0.01 tpt_otpt all /l/users/hashmat.malik/atpt_results false pgd 0 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/OTPT_Cscc_Results_max_min_1_100 1000  eurosat 72.0 18.0 false 1 100.0"
 sbatch run.sh "bash scripts/train_cluster.sh  /l/users/hashmat.malik/downstream_datasets  0 4 ViT-B/16 0.0 0 4 0.1 20 0.01 tpt_otpt all /l/users/hashmat.malik/atpt_results false pgd 0 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/OTPT_Cscc_Results_max_min_1_100 1000  pets 72.0 18.0 false 1 100.0"
 wait_for_jobs
+
+## Zeroshot Ensemble
+#sbatch run.sh "bash scripts/train_cluster.sh  /l/users/hashmat.malik/downstream_datasets  0 4 ViT-B/16 0.0 0 0 0.1 20 0.01 tpt_anchor all /l/users/hashmat.malik/atpt_results false pgd 0 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/OTPT_Cscc_Results_ZS_40_Ensemble 1000  dtd 72.0 18.0 true"
+#sbatch run.sh "bash scripts/train_cluster.sh  /l/users/hashmat.malik/downstream_datasets  0 4 ViT-B/16 0.0 0 0 0.1 20 0.01 tpt_anchor all /l/users/hashmat.malik/atpt_results false pgd 0 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/OTPT_Cscc_Results_ZS_40_Ensemble 1000  caltech101 72.0 18.0 true"
+#sbatch run.sh "bash scripts/train_cluster.sh  /l/users/hashmat.malik/downstream_datasets  0 4 ViT-B/16 0.0 0 0 0.1 20 0.01 tpt_anchor all /l/users/hashmat.malik/atpt_results false pgd 0 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/OTPT_Cscc_Results_ZS_40_Ensemble 1000  cars 72.0 18.0 true"
+#sbatch run.sh "bash scripts/train_cluster.sh  /l/users/hashmat.malik/downstream_datasets  0 4 ViT-B/16 0.0 0 0 0.1 20 0.01 tpt_anchor all /l/users/hashmat.malik/atpt_results false pgd 0 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/OTPT_Cscc_Results_ZS_40_Ensemble 1000  flower102 72.0 18.0 true"
+#wait_for_jobs
+#
+#sbatch run.sh "bash scripts/train_cluster.sh  /l/users/hashmat.malik/downstream_datasets  0 4 ViT-B/16 0.0 0 0 0.1 20 0.01 tpt_anchor all /l/users/hashmat.malik/atpt_results false pgd 0 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/OTPT_Cscc_Results_ZS_40_Ensemble 1000  aircraft 72.0 18.0 true"
+#sbatch run.sh "bash scripts/train_cluster.sh  /l/users/hashmat.malik/downstream_datasets  0 4 ViT-B/16 0.0 0 0 0.1 20 0.01 tpt_anchor all /l/users/hashmat.malik/atpt_results false pgd 0 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/OTPT_Cscc_Results_ZS_40_Ensemble 1000  ucf101 72.0 18.0 true"
+#sbatch run.sh "bash scripts/train_cluster.sh  /l/users/hashmat.malik/downstream_datasets  0 4 ViT-B/16 0.0 0 0 0.1 20 0.01 tpt_anchor all /l/users/hashmat.malik/atpt_results false pgd 0 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/OTPT_Cscc_Results_ZS_40_Ensemble 1000  eurosat 72.0 18.0 true"
+#sbatch run.sh "bash scripts/train_cluster.sh  /l/users/hashmat.malik/downstream_datasets  0 4 ViT-B/16 0.0 0 0 0.1 20 0.01 tpt_anchor all /l/users/hashmat.malik/atpt_results false pgd 0 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/OTPT_Cscc_Results_ZS_40_Ensemble 1000  pets 72.0 18.0 true"
+#wait_for_jobs

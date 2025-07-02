@@ -194,7 +194,7 @@ def create_log_dir(args):
 
     return folder_path
 
-def get_zeroshot_templates(dset, template_path='zeroshot-templates.json'):
+def get_zeroshot_templates(dset, template_path='zs_40.json'):
     """
     Load zeroshot templates based on dataset name.
 
