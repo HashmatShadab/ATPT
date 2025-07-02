@@ -45,6 +45,8 @@ DATASET_ID=${24:-"caltech101"}
 ANCHOR_LAMBDA=${25:-18.0}
 OTPT_LAMBDA=${26:-18.0}
 USE_TEXT_EMBED=${27:-"false"}
+MAX_TTA_STEPS=${28:-0}
+LR_REDUCTION=${29:-1.0}
 
 # bash train.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 rtpt weighted_rtpt "F:\Code\datasets\atpt_results"
 # bash train.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 rtpt vanilla "F:\Code\datasets\atpt_results"
@@ -75,7 +77,7 @@ USE_TEXT_EMBED=${27:-"false"}
 # Common parameters for all runs
 COMMON_PARAMS="--gpu $GPU --use_class_text_embeddings $USE_TEXT_EMBED --n_ctx 4 --ctx_init a_photo_of_a --tpt_loss $TPT_LOSS --anchor_lambda_term $ANCHOR_LAMBDA --otpt_lambda_term $OTPT_LAMBDA"
 COMMON_PARAMS+=" --output_dir $OUTPUT_DIR --log_output_dir $LOG_OUTPUT_DIR  --eps $EPSILON --steps $ATTACK_STEPS"
-COMMON_PARAMS+=" --selection_p $FRACTION_CONFIDENT_SAMPLES --tta_steps $TTA_STEPS"
+COMMON_PARAMS+=" --selection_p $FRACTION_CONFIDENT_SAMPLES --tta_steps $TTA_STEPS --max_tta_steps $MAX_TTA_STEPS --lr_reduction_factor $LR_REDUCTION"
 COMMON_PARAMS+=" --ensemble_type $ENSEMBLE_TYPE --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING"
 COMMON_PARAMS+=" --counter_attack $COUNTER_ATTACK --counter_attack_type $COUNTER_ATTACK_TYPE --counter_attack_steps $COUNTER_ATTACK_STEPS --counter_attack_eps $COUNTER_ATTACK_EPSILON"
 COMMON_PARAMS+=" --counter_attack_alpha $COUNTER_ATTACK_ALPHA --counter_attack_tau_thres $COUNTER_ATTACK_TAU_THRES --counter_attack_beta $COUNTER_ATTACK_BETA --counter_attack_weighted_perturbations $COUNTER_ATTACK_W_PERTURBATION"
