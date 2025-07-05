@@ -386,7 +386,7 @@ def compute_otpt_loss(model, args):
     # Calculate entropy loss
 
     # Get text features from the model
-    text_feature = model.get_text_features()
+    text_feature = model.get_text_features(normalize=True)
     Wwt = torch.matmul(text_feature, text_feature.T)
     wwt_norm_col_HT = torch.linalg.norm(Wwt, dim=-1)
     Wwt_val_HT = wwt_norm_col_HT.mean()
@@ -443,7 +443,7 @@ def compute_anchor_loss(model, expanded_anchors, logger):
         torch.Tensor: The computed anchor‐alignment loss value.
     """
     # 1) Retrieve the current text features (C × D) and normalize
-    text_features = model.get_text_features()                  # [C, D]
+    text_features = model.get_text_features(normalize=True)                  # [C, D]
     #text_features = text_features / text_features.norm(dim=1, keepdim=True)
 
 
@@ -498,7 +498,7 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, original_text_
     # Compute text features and expanded anchors if not provided
     if original_text_features is None:
         with torch.no_grad():
-            original_text_features = model.get_text_features()
+            original_text_features = model.get_text_features(normalize=True)
             cosine_sim_before = torch.mean(torch.matmul(original_text_features, original_text_features.T))
     else:
         cosine_sim_before = torch.mean(torch.matmul(original_text_features, original_text_features.T))
@@ -654,7 +654,7 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, original_text_
                 logger.debug(f"Step {j+1}/{args.tta_steps}, Ensured learning rate is at default value")
 
         with torch.no_grad():
-            current_text_features = model.get_text_features()
+            current_text_features = model.get_text_features(normalize=True)
             cosine_sim_after = torch.mean(torch.matmul(current_text_features, current_text_features.T))
         cosine_sim_after_list.append(cosine_sim_after.item())
 
@@ -915,7 +915,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     if "otpt" in args.tpt_loss or "anchor" in args.tpt_loss or "tpt_" in args.tpt_loss or "rtpt_" in args.tpt_loss:
         # Compute text features and expanded anchors once
         with torch.no_grad():
-            original_text_features = model.get_text_features()
+            original_text_features = model.get_text_features(normalize=True)
         expanded_anchors = convert(original_text_features.double(), None, original_text_features.size(1),
                                    logger).float()
 

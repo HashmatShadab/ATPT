@@ -367,11 +367,14 @@ class ClipTestTimeTuning(nn.Module):
         return F.normalize(features, dim=-1) if normalize else features
 
 
-    def get_text_features(self):
+    def get_text_features(self, normalize=False):
         text_features = []
         prompts = self.prompt_learner()
         tokenized_prompts = self.prompt_learner.tokenized_prompts
         t_features = self.model.encode_text_embeddings(prompts, tokenized_prompts)
+        if normalize:
+            t_norm = t_features.norm(dim=-1, keepdim=True)
+            t_features = t_features / t_norm
 
         return t_features
 

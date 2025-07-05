@@ -327,12 +327,15 @@ class ClipTestTimeTuning(nn.Module):
     def reset_classnames(self, classnames, arch):
         self.prompt_learner.reset_classnames(classnames, arch)
 
-    def get_text_features(self):
+    def get_text_features(self, normalize=True):
         text_features = []
         prompts = self.prompt_learner()
         tokenized_prompts = self.prompt_learner.tokenized_prompts
         t_features = self.text_encoder(prompts, tokenized_prompts)
-        text_features.append(t_features / t_features.norm(dim=-1, keepdim=True))
+        if normalize:
+            text_features.append(t_features / t_features.norm(dim=-1, keepdim=True))
+        else:
+            text_features.append(t_features)
         text_features = torch.stack(text_features, dim=0)
 
         return torch.mean(text_features, dim=0)
