@@ -37,17 +37,64 @@ def ensure_long_path(p: Path) -> Path:
     return Path(s)
 
 
-FINAL_RE = re.compile(r"Final results\s*-\s*.*", re.I)
+FINAL_RE = re.compile(r"(Final results\s*-\s*.*|Original: Clean Acc @1.*|Single TTA: Clean Acc @1.*|Vanilla TTA: Clean Acc @1.*|Vanilla Topk TTA: Clean Acc @1.*|Weighted TTA: Clean Acc @1.*|=> Acc\. on testset \[.*\]: Clean Acc @1.*)", re.I)
 
 def last_final_line(path: Path) -> Optional[str]:
-    """Return the last line containing 'Final results - …' (or None)."""
+    """Return the last line containing 'Final results - …' or accuracy results (or None).
+
+    Matches patterns like:
+    - 'Final results - ...'
+    - 'Original: Clean Acc @1 ...'
+    - 'Single TTA: Clean Acc @1 ...'
+    - 'Vanilla TTA: Clean Acc @1 ...'
+    - 'Vanilla Topk TTA: Clean Acc @1 ...'
+    - 'Weighted TTA: Clean Acc @1 ...'
+    - '=> Acc. on testset [dataset]: Clean Acc @1 ...'
+    """
     path = ensure_long_path(path)             # <— long-path magic
     try:
         with path.open(encoding="utf-8", errors="ignore") as fh:
-            for line in reversed(fh.readlines()):
+            lines = fh.readlines()
+            # Find all lines that match the pattern
+            matches = []
+            for line in reversed(lines):
                 m = FINAL_RE.search(line)
                 if m:
-                    return m.group(0).strip()
+                    matches.append(m.group(0).strip())
+
+            # Define the order for the results
+            def get_result_order(result):
+                if "Final results - Original" in result:
+                    return 0
+                elif "Final results - Single TTA" in result:
+                    return 1
+                elif "Final results - Vanilla TTA" in result:
+                    return 2
+                elif "Final results - Vanilla Topk" in result:
+                    return 3
+                elif "Final results - Weighted TTA" in result:
+                    return 4
+                elif "Final results" in result:
+                    return 5
+                elif "Original: Clean Acc" in result:
+                    return 6
+                elif "Single TTA: Clean Acc" in result:
+                    return 7
+                elif "Vanilla TTA: Clean Acc" in result:
+                    return 8
+                elif "Vanilla Topk TTA: Clean Acc" in result:
+                    return 9
+                elif "Weighted TTA: Clean Acc" in result:
+                    return 10
+                else:
+                    return 11
+
+            # Sort the matches according to the defined order
+            matches.sort(key=get_result_order)
+
+            # Return all matches as a single string, separated by newlines
+            if matches:
+                return "\n".join(matches)
     except (OSError, UnicodeDecodeError):
         pass
     return None
@@ -69,7 +116,7 @@ ORDER = ["DTD", "Flower102", "Cars", "Aircraft",
 # ----------------------------------------------------------------------
 def main() -> None:
     ap = argparse.ArgumentParser(
-        description="Extract the last 'Final results - …' line from log files."
+        description="Extract the last results line from log files (Final results or accuracy metrics)."
     )
     ap.add_argument("--root", type=Path, default=DEFAULT_ROOT,
                     help=f"Top-level directory to search (default: {DEFAULT_ROOT.resolve()})")
