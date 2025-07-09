@@ -25,6 +25,6 @@ wait_for_jobs() {
     done
 }
 
-wait_for_jobs
+#wait_for_jobs
 sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 RN50 1.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results true"
 sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 fare4 1.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results true"
