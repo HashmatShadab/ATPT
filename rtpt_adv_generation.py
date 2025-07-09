@@ -125,6 +125,8 @@ def main():
     # Create a log name that includes TTA variations
     # Format floating point values and ensure filename is valid
     log_name = f"ADV_Generation_eps_{args.eps}_steps_{args.steps}"
+    if args.image_feature_purify:
+        log_name = f"Noisy_anchors_{log_name}"
 
     # Update log name if counter_attack is True
     if args.counter_attack:
@@ -497,6 +499,9 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     total = 0
     adv_emb_correct = 0
     purify_emb_correct = 0
+
+    diff_ratio_clean = 0
+    diff_ratio_adv = 0
     # Iterate through validation data
     for i, data in enumerate(val_loader):
         # Handle different return formats (with or without path)
@@ -528,20 +533,32 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         # Model forward pass
         with torch.no_grad():
             # Adv
-            adv_logits = model(adv_images)
+            if args.image_feature_purify:
+                adv_logits, diff_ratio = model(adv_images, move_image_features=True )
+                diff_ratio_adv += diff_ratio.item()
+            else:
+                adv_logits = model(adv_images)
+
             adv_probs = adv_logits.softmax(dim=-1)
             _, adv_pred = adv_probs.max(1)
             adv_correct += adv_pred.eq(target).sum().item()
 
             # If using counter-attack, pass the counter-attacked images to the model
             if args.counter_attack:
+
                 adv_logits_counter = model(adv_images_counter)
                 adv_probs_counter = adv_logits_counter.softmax(dim=-1)
                 _, adv_pred_counter = adv_probs_counter.max(1)
                 adv_correct_counter += adv_pred_counter.eq(target).sum().item()
 
+
+
             # Clean
-            clean_logits = model(images)
+            if args.image_feature_purify:
+                clean_logits, diff_ratio = model(images, move_image_features=True)
+                diff_ratio_clean += diff_ratio.item()
+            else:
+                clean_logits = model(images)
             clean_probs = clean_logits.softmax(dim=-1)
             _, clean_pred = clean_probs.max(1)
             clean_correct += clean_pred.eq(target).sum().item()
@@ -590,18 +607,25 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     # Calculate final accuracy
     original_accuracy = clean_correct / total
     adv_accuracy = adv_correct / total
+    diff_ratio_clean = diff_ratio_clean / len(val_loader)
+    diff_ratio_adv = diff_ratio_adv / len(val_loader)
 
 
     if args.counter_attack:
         adv_accuracy_counter = adv_correct_counter / total
     if logger and args.counter_attack:
         logger.info(f"Final Clean accuracy: {original_accuracy:.4f} | Adversarial accuracy: {adv_accuracy:.4f} | Counter-attack accuracy: {adv_accuracy_counter:.4f} ")
+        logger.info(f"Diff_ratio_clean: {diff_ratio_clean:.4f} | Diff_ratio_adv: {diff_ratio_adv:.4f} ")
     elif logger and not args.counter_attack:
         logger.info(f"Original accuracy: {original_accuracy:.4f}")
         logger.info(f"Adversarial accuracy: {adv_accuracy:.4f}")
+        logger.info(f"Diff_ratio_clean: {diff_ratio_clean:.4f} | Diff_ratio_adv: {diff_ratio_adv:.4f} ")
+
     else:
         print(f"Original accuracy: {original_accuracy:.4f}")
         print(f"Adversarial accuracy: {adv_accuracy:.4f}")
+        logger.info(f"Diff_ratio_clean: {diff_ratio_clean:.4f} | Diff_ratio_adv: {diff_ratio_adv:.4f} ")
+
 
 
 
@@ -679,6 +703,15 @@ if __name__ == '__main__':
 
     parser.add_argument('--pgd_clip_pure_i_text_embeddings', default='null', choices=["null", "class"], type=str)
     parser.add_argument('--pgd_counter_and_clipure_i_lamda', default=1.0, type=float)
+
+    # Image feature Purification
+    parser.add_argument('--image_feature_purify', default=False, type=lambda x: (str(x).lower() == 'true'))
+    parser.add_argument('--image_feature_purify_type', default='noisy_anchor', choices=["noisy_anchor"], type=str)
+    parser.add_argument('--image_feature_purify_noisy_anchors', default=10, type=int)
+    parser.add_argument('--image_feature_purify_anchors_alpha', default=1.2, type=float)
+    parser.add_argument('--image_feature_purify_noisy_sigma', default=0.18, type=float)
+
+
 
 
     # Test-time adaptation parameters
