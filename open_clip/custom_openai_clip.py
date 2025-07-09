@@ -395,7 +395,7 @@ class ClipTestTimeTuning(nn.Module):
 
         return logits
 
-    def inference_move_image_features(self, image, sigma=0.18, n_anchors=10, alpha=1.4):
+    def inference_move_image_features(self, image, sigma=0.18, n_anchors=10, alpha=1.0):
         """
         image: Tensor of shape [B, C, H, W]
         sigma: standard deviation for Gaussian noise
@@ -409,13 +409,25 @@ class ClipTestTimeTuning(nn.Module):
         f_source_normalized = f_source / f_source_norm
 
         # Step 2: Construct anchor by averaging n noisy features
-        f_anchor_sum = torch.zeros_like(f_source)
-        for _ in range(n_anchors):
-            noise = sigma * torch.randn_like(image)
-            noisy_image = image + noise
-            noisy_image = self.normalize(noisy_image.type(self.dtype))
-            f_noisy = self.encode_image(noisy_image)
-            f_anchor_sum += f_noisy
+        # Generate all noisy samples at once
+        batch_size = image.size(0)
+        # Create a batch of noisy images [n_anchors*batch_size, C, H, W]
+        noise_batch = sigma * torch.randn(n_anchors, batch_size, *image.shape[1:], device=image.device)
+        noisy_images = image.unsqueeze(0) + noise_batch  # [n_anchors, batch_size, C, H, W]
+        noisy_images = noisy_images.view(n_anchors * batch_size, *image.shape[1:])  # [n_anchors*batch_size, C, H, W]
+
+        # Normalize and process all noisy images in one batch
+        noisy_images = self.normalize(noisy_images.type(self.dtype))
+        f_noisy_all = self.encode_image(noisy_images)  # [n_anchors*batch_size, feature_dim]
+
+        # Reshape to [n_anchors, batch_size, feature_dim] and sum across anchors
+        f_noisy_all = f_noisy_all.view(n_anchors, batch_size, -1)
+
+        # Calculate diff_ratio between f_source_normalized and normalized f_noisy_all
+        f_noisy_normalized = f_noisy_all / f_noisy_all.norm(dim=-1, keepdim=True)  # [n_anchors, batch_size, feature_dim]
+        diff_ratio = (f_noisy_normalized - f_source_normalized.unsqueeze(0)).norm(dim=-1) / f_source_normalized.norm(dim=-1).unsqueeze(0)  # [n_anchors, batch_size]
+
+        f_anchor_sum = f_noisy_all.sum(dim=0)  # [batch_size, feature_dim]
 
         f_anchor = f_anchor_sum / n_anchors
         f_anchor_norm = f_anchor.norm(dim=-1, keepdim=True)
@@ -434,7 +446,7 @@ class ClipTestTimeTuning(nn.Module):
         logit_scale = self.logit_scale.exp()
         logits = logit_scale * f_moved @ text_features.t()
 
-        return logits
+        return logits, diff_ratio
 
     def forward(self, input, get_image_features=False, normalize=False, get_image_text_features=False,
                 move_image_features=False):
@@ -451,7 +463,8 @@ class ClipTestTimeTuning(nn.Module):
                 image_features, text_features, logit_scale = self.forward_features(input)
                 return image_features, text_features, logit_scale
             elif move_image_features:
-                return self.inference_move_image_features(input)
+                logits, diff_ratio = self.inference_move_image_features(input)
+                return logits
             else:
                 return self.inference(input)
 
