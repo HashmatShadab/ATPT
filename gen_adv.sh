@@ -4,6 +4,8 @@
 # This script runs the RTPT model on various datasets with specified parameters
 #
 
+
+
 echo "=== Starting ATPT Training Script ==="
 echo "Initializing parameters..."
 
