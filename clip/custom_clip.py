@@ -363,7 +363,63 @@ class ClipTestTimeTuning(nn.Module):
 
         return logits
 
-    def forward(self, input, get_image_features=False, normalize=False, get_image_text_features=False, text_features=None):
+    def inference_move_image_features(self, image, sigma=0.18, n_anchors=10, alpha=1.2):
+        """
+        image: Tensor of shape [B, C, H, W]
+        sigma: standard deviation for Gaussian noise
+        n_anchors: number of noisy samples to average for anchor
+        alpha: interpolation factor
+        """
+        # Step 1: Encode source feature (adversarial or clean)
+        image_input = self.normalize(image.type(self.dtype))
+        f_source = self.image_encoder(image_input)
+        f_source_norm = f_source.norm(dim=-1, keepdim=True)
+        f_source_normalized = f_source / f_source_norm
+
+        # Step 2: Construct anchor by averaging n noisy features
+        # Generate all noisy samples at once
+        batch_size = image.size(0)
+        # Create a batch of noisy images [n_anchors*batch_size, C, H, W]
+        noise_batch = sigma * torch.randn(n_anchors, batch_size, *image.shape[1:], device=image.device)
+        noisy_images = image.unsqueeze(0) + noise_batch  # [n_anchors, batch_size, C, H, W]
+        noisy_images = noisy_images.view(n_anchors * batch_size, *image.shape[1:])  # [n_anchors*batch_size, C, H, W]
+
+        # Normalize and process all noisy images in one batch
+        noisy_images = self.normalize(noisy_images.type(self.dtype))
+        f_noisy_all = self.image_encoder(noisy_images)  # [n_anchors*batch_size, feature_dim]
+
+        # Reshape to [n_anchors, batch_size, feature_dim] and sum across anchors
+        f_noisy_all = f_noisy_all.view(n_anchors, batch_size, -1)
+
+        # Calculate diff_ratio between f_source_normalized and normalized f_noisy_all
+        f_noisy_normalized = f_noisy_all / f_noisy_all.norm(dim=-1, keepdim=True)  # [n_anchors, batch_size, feature_dim]
+        diff_ratio = (f_noisy_normalized - f_source_normalized.unsqueeze(0)).norm(dim=-1) / f_source_normalized.norm(dim=-1).unsqueeze(0)  # [n_anchors, batch_size]
+        diff_ratio_mean = diff_ratio.mean().item()
+        if diff_ratio_mean < 0.90:
+            alpha = 0.0
+
+        f_anchor_sum = f_noisy_normalized.sum(dim=0)  # [batch_size, feature_dim]
+
+        f_anchor = f_anchor_sum / n_anchors
+        f_anchor_norm = f_anchor.norm(dim=-1, keepdim=True)
+        f_anchor_normalized = f_anchor / f_anchor_norm
+
+        # Step 3: One-step linear interpolation
+        f_moved = (1 - alpha) * f_source_normalized + alpha * f_anchor_normalized
+        f_moved_norm = f_moved.norm(dim=-1, keepdim=True)
+        f_moved = f_moved / f_moved_norm  # Final normalization
+
+        # Step 4: Get text features and normalize
+        text_features = self.get_text_features()
+
+        # Step 5: Compute logits
+        logit_scale = self.logit_scale.exp()
+        logits = logit_scale * f_moved @ text_features.t()
+
+        return logits, diff_ratio.mean()
+
+    def forward(self, input, get_image_features=False, normalize=False, get_image_text_features=False, text_features=None,
+                move_image_features=False):
         if isinstance(input, Tuple):
             view_0, view_1, view_2 = input
             return self.contrast_prompt_tuning(view_0, view_1, view_2)
@@ -376,9 +432,13 @@ class ClipTestTimeTuning(nn.Module):
             elif get_image_text_features:
                 image_features, text_features, logit_scale = self.forward_features(input)
                 return image_features, text_features, logit_scale
+            elif move_image_features:
+                logits, diff_ratio = self.inference_move_image_features(input)
+                return logits, diff_ratio
             else:
                 if text_features is None:
                     return self.inference(input)
+
                 else:
                     return self.inference_text(input, text_features)
 
