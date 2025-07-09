@@ -159,6 +159,13 @@ def create_log_dir(args):
     else:
         tpt_part = [f"TPT", f"Optimization_Loss_{args.tpt_loss}_LR_{args.lr}_Optimization_Steps_{args.tta_steps}_View_Selection_Fraction_{args.selection_p}"] if args.tta_steps > 0 else ["No_TPT"]
 
+    if args.image_feature_purify:
+        if args.image_feature_purify_type == "noisy_anchor":
+            image_feature_purify_part = [f"Image_Feature_Purify",
+                                        f"Type_{args.image_feature_purify_type}",
+                                        f"Anchors_{args.image_feature_purify_noisy_anchors}_Alpha_{args.image_feature_purify_anchors_alpha}_Sigma_{args.image_feature_purify_noisy_sigma}"]
+    else:
+        image_feature_purify_part = []
 
     # Ensemble details
     if args.ensemble_type == "weighted_rtpt":
@@ -180,6 +187,8 @@ def create_log_dir(args):
         path_parts.append(part)
 
     for part in tpt_part:
+        path_parts.append(part)
+    for part in image_feature_purify_part:
         path_parts.append(part)
     for part in ensemble_part:
         path_parts.append(part)
@@ -1018,7 +1027,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
         # Get outputs after test-time adaptation
         with torch.no_grad():
-            if args.use_class_text_embeddings:
+            if args.use_class_text_embeddings and args.tta_steps == 0:
                 tuned_outputs = model(images, text_features=class_text_embeddings)
             else:
                 tuned_outputs = model(images)
@@ -1312,7 +1321,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         plot_average_weights(weighted_scores, args.log_dir, logger, filename=f"{args.weighted_score_name[:-5]}_plot.png")
 
     # Save the results dictionary if not empty
-    if result_dict_original:
+    if result_dict_original  and len(result_dict_original['max_confidence']) > 0:
         results_path = os.path.join(args.log_dir, f"results_original.json")
         # Handle long paths on Windows
         results_path = handle_long_windows_path(results_path)
@@ -1321,7 +1330,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         logger.info(f"Results saved to {results_path}")
         acc, ece, bin_acc, incorrect_confidences = Calculator(result_dict_original, logger)
         logger.info(f"ECE results - Original Acc: {acc:.2f},  ECE: {ece:.2f}")
-    if result_dict_single:
+    if result_dict_single  and len(result_dict_single['max_confidence']) > 0:
         results_path = os.path.join(args.log_dir, f"results_single.json")
         # Handle long paths on Windows
         results_path = handle_long_windows_path(results_path)
@@ -1330,7 +1339,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         logger.info(f"Results saved to {results_path}")
         acc, ece, bin_acc, incorrect_confidences = Calculator(result_dict_single, logger)
         logger.info(f"ECE results - Single Acc: {acc:.2f},  ECE: {ece:.2f}")
-    if result_dict_vanilla:
+    if result_dict_vanilla  and len(result_dict_vanilla['max_confidence']) > 0:
         results_path = os.path.join(args.log_dir, f"results_vanilla.json")
         # Handle long paths on Windows
         results_path = handle_long_windows_path(results_path)
@@ -1339,7 +1348,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         logger.info(f"Results saved to {results_path}")
         acc, ece, bin_acc, bin_confidences = Calculator(result_dict_vanilla, logger)
         logger.info(f"ECE results - Vanilla Acc: {acc:.2f},  ECE: {ece:.2f}")
-    if result_dict_vanilla_topk:
+    if result_dict_vanilla_topk  and len(result_dict_vanilla_topk['max_confidence']) > 0:
         results_path = os.path.join(args.log_dir, f"results_vanilla_topk.json")
         # Handle long paths on Windows
         results_path = handle_long_windows_path(results_path)
@@ -1349,7 +1358,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         acc, ece, bin_acc, bin_confidences = Calculator(result_dict_vanilla_topk, logger)
         logger.info(f"ECE results - Vanilla Topk Acc: {acc:.2f},  ECE: {ece:.2f}")
 
-    if result_dict_weighted:
+    if result_dict_weighted  and len(result_dict_weighted['max_confidence']) > 0:
         results_path = os.path.join(args.log_dir, f"results_weighted.json")
         # Handle long paths on Windows
         results_path = handle_long_windows_path(results_path)
@@ -1653,6 +1662,14 @@ if __name__ == '__main__':
 
     parser.add_argument('--pgd_clip_pure_i_text_embeddings', default='null', choices=["null", "class"], type=str)
     parser.add_argument('--pgd_counter_and_clipure_i_lamda', default=1.0, type=float)
+
+    # Image feature Purification
+    parser.add_argument('--image_feature_purify', default=False, type=lambda x: (str(x).lower() == 'true'))
+    parser.add_argument('--image_feature_purify_type', default='noisy_anchor', choices=["noisy_anchor"], type=str)
+    parser.add_argument('--image_feature_purify_noisy_anchors', default=10, type=int)
+    parser.add_argument('--image_feature_purify_anchors_alpha', default=1.2, type=float)
+    parser.add_argument('--image_feature_purify_noisy_sigma', default=0.18, type=float)
+
 
 
 
