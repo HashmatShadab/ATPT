@@ -426,6 +426,9 @@ class ClipTestTimeTuning(nn.Module):
         # Calculate diff_ratio between f_source_normalized and normalized f_noisy_all
         f_noisy_normalized = f_noisy_all / f_noisy_all.norm(dim=-1, keepdim=True)  # [n_anchors, batch_size, feature_dim]
         diff_ratio = (f_noisy_normalized - f_source_normalized.unsqueeze(0)).norm(dim=-1) / f_source_normalized.norm(dim=-1).unsqueeze(0)  # [n_anchors, batch_size]
+        diff_ratio_mean = diff_ratio.mean().item()
+        if diff_ratio_mean < 0.90:
+            alpha = 0.0
 
         f_anchor_sum = f_noisy_all.sum(dim=0)  # [batch_size, feature_dim]
 
@@ -446,7 +449,7 @@ class ClipTestTimeTuning(nn.Module):
         logit_scale = self.logit_scale.exp()
         logits = logit_scale * f_moved @ text_features.t()
 
-        return logits, diff_ratio
+        return logits, diff_ratio.mean()
 
     def forward(self, input, get_image_features=False, normalize=False, get_image_text_features=False,
                 move_image_features=False):
@@ -464,7 +467,7 @@ class ClipTestTimeTuning(nn.Module):
                 return image_features, text_features, logit_scale
             elif move_image_features:
                 logits, diff_ratio = self.inference_move_image_features(input)
-                return logits
+                return logits, diff_ratio
             else:
                 return self.inference(input)
 
