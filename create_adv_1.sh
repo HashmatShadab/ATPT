@@ -26,5 +26,4 @@ wait_for_jobs() {
 }
 
 #wait_for_jobs
-sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 RN50 1.0 7 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results true"
-sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 fare4 4.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results true"
+sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 RN50 4.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results /l/users/hashmat.malik/atpt_results true noisy_anchor 10 1.2 0.18 0.0"

@@ -27,8 +27,14 @@ FRACTION_CONFIDENT_SAMPLES=${8:-0.1}
 TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX=${9:-20}
 SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING=${10:-0.01}
 OUTPUT_DIR=${11:-"output_results"}
-NOISY_ANCHOR=${12:-"false"}
+LOG_OUTPUT_DIR=${12:-"output_results"}
 
+IMAGE_PURIFY=${13:-"false"}
+PURIFY_TYPE=${14:-"noisy_anchor"}
+NOISY_ANCHORS=${15:-10}
+ANCHORS_ALPHA=${16:-1.2}
+NOISY_SIGMA=${17:-0.18}
+DIFF_THRESHOLD=${18:-0.85}
 # bash gen_adv.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 "F:\Code\datasets\atpt_results"
 
 
@@ -48,11 +54,11 @@ NOISY_ANCHOR=${12:-"false"}
 # bash gen_adv.sh /mnt/nvme0n1/Dataset/muzammal/downstream_datasets 3 4 tecoa4 4.0 100 1 0.1 20 0.01 /mnt/nvme0n1/Dataset/muzammal/atpt_results
 
 # Common parameters for all runs
-COMMON_PARAMS="--gpu 0 --ctx_init a_photo_of_a --output_dir $OUTPUT_DIR --workers $NUM_WORKERS"
+COMMON_PARAMS="--gpu 0 --ctx_init a_photo_of_a --output_dir $OUTPUT_DIR --log_output_dir $LOG_OUTPUT_DIR --workers $NUM_WORKERS"
 COMMON_PARAMS+=" --eps $EPSILON --steps $ATTACK_STEPS --tta_steps $TTA_STEPS"
 COMMON_PARAMS+=" --selection_p $FRACTION_CONFIDENT_SAMPLES"
 COMMON_PARAMS+=" --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX"
-COMMON_PARAMS+=" --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING --print-freq 20 --image_feature_purify $NOISY_ANCHOR"
+COMMON_PARAMS+=" --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING --print-freq 20 --image_feature_purify $IMAGE_PURIFY --image_feature_purify_type $PURIFY_TYPE --image_feature_purify_noisy_anchors $NOISY_ANCHORS --image_feature_purify_anchors_alpha $ANCHORS_ALPHA --image_feature_purify_noisy_sigma $NOISY_SIGMA --image_feature_purify_diff_threshold $DIFF_THRESHOLD"
 
 # Model parameters
 MODEL="-a $MODEL_NAME -b 64"

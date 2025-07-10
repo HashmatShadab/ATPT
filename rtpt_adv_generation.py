@@ -116,9 +116,11 @@ def main():
 
     # Create output directory path with experiment parameters
     args.output_dir = os.path.join(args.output_dir, args.arch, args.test_sets)
+    args.log_output_dir = os.path.join(args.log_output_dir, args.arch, args.test_sets)
 
     # Create output directory if it doesn't exist
     os.makedirs(args.output_dir, exist_ok=True)
+    os.makedirs(args.log_output_dir, exist_ok=True)
 
     # Set up logging
 
@@ -126,13 +128,13 @@ def main():
     # Format floating point values and ensure filename is valid
     log_name = f"ADV_Generation_eps_{args.eps}_steps_{args.steps}"
     if args.image_feature_purify:
-        log_name = f"Noisy_anchors_{log_name}"
+        log_name = f"{log_name}_Purification_type_{args.image_feature_purify_type}_anchors_{args.image_feature_purify_noisy_anchors}_alpha_{args.image_feature_purify_anchors_alpha}_sigma_{args.image_feature_purify_noisy_sigma}_threshold_{args.image_feature_purify_diff_threshold}"
 
     # Update log name if counter_attack is True
     if args.counter_attack:
         log_name = f"{log_name}_counter_attack_eps_{args.counter_attack_eps}_steps_{args.counter_attack_steps}_alpha_{args.counter_attack_alpha}_tau_thres_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_perturbations_{args.counter_attack_weighted_perturbations}"
 
-    logger, log_file = setup_logger(log_name, args.output_dir, level=logging.INFO)
+    logger, log_file = setup_logger(log_name, args.log_output_dir, level=logging.INFO)
     logger.info(print_args(args))
 
     # Ensure GPU is available
@@ -493,12 +495,12 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         if logger:
             logger.info(f"Using directory for adversarial images: {adv_images_dir}")
 
-    adv_correct = 0
-    clean_correct = 0
+    adv_correct_purify = 0
+    clean_correct_purify = 0
     adv_correct_counter = 0
+    adv_correct_orig = 0
+    clean_correct_orig = 0
     total = 0
-    adv_emb_correct = 0
-    purify_emb_correct = 0
 
     diff_ratio_clean = 0
     diff_ratio_adv = 0
@@ -532,16 +534,38 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
         # Model forward pass
         with torch.no_grad():
-            # Adv
-            if args.image_feature_purify:
-                adv_logits, diff_ratio = model(adv_images, move_image_features=True )
-                diff_ratio_adv += diff_ratio.item()
-            else:
-                adv_logits = model(adv_images)
 
-            adv_probs = adv_logits.softmax(dim=-1)
-            _, adv_pred = adv_probs.max(1)
-            adv_correct += adv_pred.eq(target).sum().item()
+            # Adversarial examples
+            if args.image_feature_purify:
+                # Create a dictionary of image feature purification parameters
+                purify_params = {
+                    'sigma': args.image_feature_purify_noisy_sigma,
+                    'n_anchors': args.image_feature_purify_noisy_anchors,
+                    'alpha': args.image_feature_purify_anchors_alpha,
+                    'diff_threshold': args.image_feature_purify_diff_threshold,
+                }
+                # Compute adversarial accuracy with purification
+                adv_logits_purify, diff_ratio = model(adv_images, move_image_features=True, purify_params=purify_params)
+                # Calculate metrics for purified adversarial images
+                adv_probs_purify = adv_logits_purify.softmax(dim=-1)
+                _, adv_pred_purify = adv_probs_purify.max(1)
+                adv_correct_purify += adv_pred_purify.eq(target).sum().item()
+
+                diff_ratio_adv += diff_ratio.item()
+
+                # Compute original adversarial accuracy without purification
+                adv_logits = model(adv_images)
+                adv_probs = adv_logits.softmax(dim=-1)
+                _, adv_pred = adv_probs.max(1)
+                adv_correct_orig += adv_pred.eq(target).sum().item()
+
+
+            else:
+                # Compute original adversarial accuracy without purification
+                adv_logits = model(adv_images)
+                adv_probs = adv_logits.softmax(dim=-1)
+                _, adv_pred = adv_probs.max(1)
+                adv_correct_orig += adv_pred.eq(target).sum().item()
 
             # If using counter-attack, pass the counter-attacked images to the model
             if args.counter_attack:
@@ -553,21 +577,51 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
 
 
-            # Clean
+            # Clean Samples
             if args.image_feature_purify:
-                clean_logits, diff_ratio = model(images, move_image_features=True)
+                # Create a dictionary of image feature purification parameters
+                purify_params = {
+                    'sigma': args.image_feature_purify_noisy_sigma,
+                    'n_anchors': args.image_feature_purify_noisy_anchors,
+                    'alpha': args.image_feature_purify_anchors_alpha,
+                    'diff_threshold': args.image_feature_purify_diff_threshold,
+                }
+                # Compute clean accuracy with purification
+                clean_logits_purify, diff_ratio = model(images, move_image_features=True, purify_params=purify_params)
+                # Calculate metrics for purified clean images
+                clean_probs_purify = clean_logits_purify.softmax(dim=-1)
+                _, clean_pred_purify = clean_probs_purify.max(1)
+                clean_correct_purify += clean_pred_purify.eq(target).sum().item()
                 diff_ratio_clean += diff_ratio.item()
+
+                # Compute original clean accuracy without purification
+                clean_logits = model(images)
+                clean_probs = clean_logits.softmax(dim=-1)
+                _, clean_pred = clean_probs.max(1)
+                clean_correct_orig += clean_pred.eq(target).sum().item()
+
+
             else:
                 clean_logits = model(images)
-            clean_probs = clean_logits.softmax(dim=-1)
-            _, clean_pred = clean_probs.max(1)
-            clean_correct += clean_pred.eq(target).sum().item()
+                clean_probs = clean_logits.softmax(dim=-1)
+                _, clean_pred = clean_probs.max(1)
+                clean_correct_orig += clean_pred.eq(target).sum().item()
+
 
 
             total += target.size(0)
 
         # Free memory
-        del images, adv_logits, adv_probs, adv_pred, clean_logits, clean_probs, clean_pred
+        del images
+
+        if args.image_feature_purify:
+            del adv_logits_purify, adv_probs_purify, adv_pred_purify
+            del adv_logits, adv_probs, adv_pred
+            del clean_logits_purify, clean_probs_purify, clean_pred_purify
+            del clean_logits, clean_probs, clean_pred
+        else:
+            del adv_logits, adv_probs, adv_pred
+            del clean_logits_purify, clean_probs_purify, clean_pred_purify
 
         if args.counter_attack:
             del adv_images_counter, adv_logits_counter, adv_probs_counter, adv_pred_counter
@@ -592,12 +646,24 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         # purify_emb_correct += purify_emb_pred.eq(target).sum().item()
         ############### Not working ###############################
 
-        if logger and args.counter_attack:
-            logger.info(
-                f"Batch {i + 1}/{len(val_loader)}: Clean accuracy {clean_correct / total:.4f} | Adv accuracy: {adv_correct / total:.4f} | Counter-attack accuracy: {adv_correct_counter / total:.4f}")
-        else:
-            logger.info(
-                f"Batch {i + 1}/{len(val_loader)}: Clean accuracy {clean_correct / total:.4f} | Adv accuracy: {adv_correct / total:.4f} ")
+        if logger:
+            if args.image_feature_purify:
+                if args.counter_attack:
+                    logger.info(
+                        f"Batch {i + 1}/{len(val_loader)}: Clean orig accuracy {clean_correct_orig / total:.4f} | Clean purify accuracy {clean_correct_purify / total:.4f} | "
+                        f"Adv orig accuracy: {adv_correct_orig / total:.4f} | Adv purify accuracy: {adv_correct_purify / total:.4f} | "
+                        f"Counter-attack accuracy: {adv_correct_counter / total:.4f}")
+                else:
+                    logger.info(
+                        f"Batch {i + 1}/{len(val_loader)}: Clean orig accuracy {clean_correct_orig / total:.4f} | Clean purify accuracy {clean_correct_purify / total:.4f} | "
+                        f"Adv orig accuracy: {adv_correct_orig / total:.4f} | Adv purify accuracy: {adv_correct_purify / total:.4f}")
+            else:
+                if args.counter_attack:
+                    logger.info(
+                        f"Batch {i + 1}/{len(val_loader)}: Clean accuracy {clean_correct_purify / total:.4f} | Adv accuracy: {adv_correct_purify / total:.4f} | Counter-attack accuracy: {adv_correct_counter / total:.4f}")
+                else:
+                    logger.info(
+                        f"Batch {i + 1}/{len(val_loader)}: Clean accuracy {clean_correct_purify / total:.4f} | Adv accuracy: {adv_correct_purify / total:.4f} ")
 
 
 
@@ -605,26 +671,42 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         end = time.time()
 
     # Calculate final accuracy
-    original_accuracy = clean_correct / total
-    adv_accuracy = adv_correct / total
+    original_accuracy_purify = clean_correct_purify / total
+    adv_accuracy_purify = adv_correct_purify / total
+    original_accuracy_orig = clean_correct_orig / total
+    adv_accuracy_orig = adv_correct_orig / total
     diff_ratio_clean = diff_ratio_clean / len(val_loader)
     diff_ratio_adv = diff_ratio_adv / len(val_loader)
 
-
     if args.counter_attack:
         adv_accuracy_counter = adv_correct_counter / total
-    if logger and args.counter_attack:
-        logger.info(f"Final Clean accuracy: {original_accuracy:.4f} | Adversarial accuracy: {adv_accuracy:.4f} | Counter-attack accuracy: {adv_accuracy_counter:.4f} ")
-        logger.info(f"Diff_ratio_clean: {diff_ratio_clean:.4f} | Diff_ratio_adv: {diff_ratio_adv:.4f} ")
-    elif logger and not args.counter_attack:
-        logger.info(f"Original accuracy: {original_accuracy:.4f}")
-        logger.info(f"Adversarial accuracy: {adv_accuracy:.4f}")
-        logger.info(f"Diff_ratio_clean: {diff_ratio_clean:.4f} | Diff_ratio_adv: {diff_ratio_adv:.4f} ")
 
+    if logger:
+        if args.image_feature_purify:
+            if args.counter_attack:
+                logger.info(f"Final Clean orig accuracy: {original_accuracy_orig:.4f} | Clean purify accuracy: {original_accuracy_purify:.4f}")
+                logger.info(f"Final Adv orig accuracy: {adv_accuracy_orig:.4f} | Adv purify accuracy: {adv_accuracy_purify:.4f} | Counter-attack accuracy: {adv_accuracy_counter:.4f}")
+                logger.info(f"Diff_ratio_clean: {diff_ratio_clean:.4f} | Diff_ratio_adv: {diff_ratio_adv:.4f}")
+            else:
+                logger.info(f"Final Clean orig accuracy: {original_accuracy_orig:.4f} | Clean purify accuracy: {original_accuracy_purify:.4f}")
+                logger.info(f"Final Adv orig accuracy: {adv_accuracy_orig:.4f} | Adv purify accuracy: {adv_accuracy_purify:.4f}")
+                logger.info(f"Diff_ratio_clean: {diff_ratio_clean:.4f} | Diff_ratio_adv: {diff_ratio_adv:.4f}")
+        else:
+            if args.counter_attack:
+                logger.info(f"Final Clean accuracy: {original_accuracy_purify:.4f} | Adversarial accuracy: {adv_accuracy_purify:.4f} | Counter-attack accuracy: {adv_accuracy_counter:.4f}")
+                logger.info(f"Diff_ratio_clean: {diff_ratio_clean:.4f} | Diff_ratio_adv: {diff_ratio_adv:.4f}")
+            else:
+                logger.info(f"Original accuracy: {original_accuracy_purify:.4f}")
+                logger.info(f"Adversarial accuracy: {adv_accuracy_purify:.4f}")
+                logger.info(f"Diff_ratio_clean: {diff_ratio_clean:.4f} | Diff_ratio_adv: {diff_ratio_adv:.4f}")
     else:
-        print(f"Original accuracy: {original_accuracy:.4f}")
-        print(f"Adversarial accuracy: {adv_accuracy:.4f}")
-        logger.info(f"Diff_ratio_clean: {diff_ratio_clean:.4f} | Diff_ratio_adv: {diff_ratio_adv:.4f} ")
+        if args.image_feature_purify:
+            print(f"Clean orig accuracy: {original_accuracy_orig:.4f} | Clean purify accuracy: {original_accuracy_purify:.4f}")
+            print(f"Adv orig accuracy: {adv_accuracy_orig:.4f} | Adv purify accuracy: {adv_accuracy_purify:.4f}")
+        else:
+            print(f"Original accuracy: {original_accuracy_purify:.4f}")
+            print(f"Adversarial accuracy: {adv_accuracy_purify:.4f}")
+        print(f"Diff_ratio_clean: {diff_ratio_clean:.4f} | Diff_ratio_adv: {diff_ratio_adv:.4f}")
 
 
 
@@ -681,6 +763,8 @@ if __name__ == '__main__':
                         help='Random seed for reproducibility')
     parser.add_argument('--output_dir', type=str, default='output_results/ckps/rtpt',
                         help='Directory to save results')
+    parser.add_argument('--log_output_dir', type=str, default='output_results/ckps/rtpt',
+                        help='Directory to save results')
 
     # Adversarial attack parameters
     parser.add_argument('--eps', default=1.0, type=float,
@@ -710,6 +794,8 @@ if __name__ == '__main__':
     parser.add_argument('--image_feature_purify_noisy_anchors', default=10, type=int)
     parser.add_argument('--image_feature_purify_anchors_alpha', default=1.2, type=float)
     parser.add_argument('--image_feature_purify_noisy_sigma', default=0.18, type=float)
+    parser.add_argument('--image_feature_purify_diff_threshold', default=0.85, type=float)
+
 
 
 

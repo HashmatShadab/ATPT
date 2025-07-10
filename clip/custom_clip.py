@@ -121,7 +121,7 @@ class PromptLearner(nn.Module):
             ctx_vectors = torch.empty(n_ctx, ctx_dim, dtype=dtype)
             nn.init.normal_(ctx_vectors, std=0.02)
             prompt_prefix = " ".join(["X"] * n_ctx)
-        
+
         self.prompt_prefix = prompt_prefix
 
         print(f'Initial context: "{prompt_prefix}"')
@@ -315,7 +315,7 @@ class ClipTestTimeTuning(nn.Module):
         self.criterion = criterion
 
         self.normalize = ImageNormalizer(mu, std).cuda(device)
-        
+
     @property
     def dtype(self):
         return self.image_encoder.conv1.weight.dtype
@@ -341,12 +341,12 @@ class ClipTestTimeTuning(nn.Module):
         return torch.mean(text_features, dim=0)
 
     def inference(self, image):
-        
+
         image_features = self.image_encoder(self.normalize(image.type(self.dtype)))
 
         text_features = self.get_text_features()
         image_features = image_features / image_features.norm(dim=-1, keepdim=True)
-       
+
         logit_scale = self.logit_scale.exp()
         logits = logit_scale * image_features @ text_features.t()
 
@@ -363,7 +363,7 @@ class ClipTestTimeTuning(nn.Module):
 
         return logits
 
-    def inference_move_image_features(self, image, sigma=0.18, n_anchors=10, alpha=1.2):
+    def inference_move_image_features(self, image, sigma=0.18, n_anchors=10, alpha=1.2, diff_threshold=0.85):
         """
         image: Tensor of shape [B, C, H, W]
         sigma: standard deviation for Gaussian noise
@@ -395,7 +395,7 @@ class ClipTestTimeTuning(nn.Module):
         f_noisy_normalized = f_noisy_all / f_noisy_all.norm(dim=-1, keepdim=True)  # [n_anchors, batch_size, feature_dim]
         diff_ratio = (f_noisy_normalized - f_source_normalized.unsqueeze(0)).norm(dim=-1) / f_source_normalized.norm(dim=-1).unsqueeze(0)  # [n_anchors, batch_size]
         diff_ratio_mean = diff_ratio.mean().item()
-        if diff_ratio_mean < 0.90:
+        if diff_ratio_mean < diff_threshold:
             alpha = 0.0
 
         f_anchor_sum = f_noisy_normalized.sum(dim=0)  # [batch_size, feature_dim]
@@ -419,7 +419,7 @@ class ClipTestTimeTuning(nn.Module):
         return logits, diff_ratio.mean()
 
     def forward(self, input, get_image_features=False, normalize=False, get_image_text_features=False, text_features=None,
-                move_image_features=False):
+                move_image_features=False, purify_params=None):
         if isinstance(input, Tuple):
             view_0, view_1, view_2 = input
             return self.contrast_prompt_tuning(view_0, view_1, view_2)
@@ -433,7 +433,17 @@ class ClipTestTimeTuning(nn.Module):
                 image_features, text_features, logit_scale = self.forward_features(input)
                 return image_features, text_features, logit_scale
             elif move_image_features:
-                logits, diff_ratio = self.inference_move_image_features(input)
+                # Set default values if purify_params is not provided
+                if purify_params is None:
+                    purify_params = {'sigma': 0.18, 'n_anchors': 10, 'alpha': 1.2, 'diff_threshold':0.85}
+
+                # Extract parameters from the dictionary
+                sigma = purify_params.get('sigma', 0.18)
+                n_anchors = purify_params.get('n_anchors', 10)
+                alpha = purify_params.get('alpha', 1.2)
+                diff_threshold = purify_params.get('diff_threshold', 0.85)
+
+                logits, diff_ratio = self.inference_move_image_features(input, sigma=sigma, n_anchors=n_anchors, alpha=alpha, diff_threshold=diff_threshold)
                 return logits, diff_ratio
             else:
                 if text_features is None:
@@ -446,14 +456,14 @@ class ClipTestTimeTuning(nn.Module):
         image_features = self.image_encoder(self.normalize(input.type(self.dtype)))
 
         return F.normalize(image_features, dim=-1) if normalize else image_features
-        
+
     def forward_features(self, input):
         image_features = self.image_encoder(self.normalize(input.type(self.dtype)))
 
         text_features = self.get_text_features()       
 
         image_features = image_features / image_features.norm(dim=-1, keepdim=True)
-        
+
         logit_scale = self.logit_scale.exp()
         # logits = logit_scale * image_features @ text_features.t()
         return image_features, text_features, logit_scale

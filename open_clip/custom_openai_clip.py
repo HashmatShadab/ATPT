@@ -395,7 +395,7 @@ class ClipTestTimeTuning(nn.Module):
 
         return logits
 
-    def inference_move_image_features(self, image, sigma=0.18, n_anchors=10, alpha=1.0):
+    def inference_move_image_features(self, image, sigma=0.18, n_anchors=10, alpha=1.0, diff_threshold=0.85):
         """
         image: Tensor of shape [B, C, H, W]
         sigma: standard deviation for Gaussian noise
@@ -427,7 +427,7 @@ class ClipTestTimeTuning(nn.Module):
         f_noisy_normalized = f_noisy_all / f_noisy_all.norm(dim=-1, keepdim=True)  # [n_anchors, batch_size, feature_dim]
         diff_ratio = (f_noisy_normalized - f_source_normalized.unsqueeze(0)).norm(dim=-1) / f_source_normalized.norm(dim=-1).unsqueeze(0)  # [n_anchors, batch_size]
         diff_ratio_mean = diff_ratio.mean().item()
-        if diff_ratio_mean < 0.90:
+        if diff_ratio_mean < diff_threshold:
             alpha = 0.0
 
         f_anchor_sum = f_noisy_all.sum(dim=0)  # [batch_size, feature_dim]
@@ -452,7 +452,7 @@ class ClipTestTimeTuning(nn.Module):
         return logits, diff_ratio.mean()
 
     def forward(self, input, get_image_features=False, normalize=False, get_image_text_features=False,
-                move_image_features=False):
+                move_image_features=False, purify_params=None):
         if isinstance(input, Tuple):
             view_0, view_1, view_2 = input
             return self.contrast_prompt_tuning(view_0, view_1, view_2)
@@ -466,7 +466,17 @@ class ClipTestTimeTuning(nn.Module):
                 image_features, text_features, logit_scale = self.forward_features(input)
                 return image_features, text_features, logit_scale
             elif move_image_features:
-                logits, diff_ratio = self.inference_move_image_features(input)
+                # Set default values if purify_params is not provided
+                if purify_params is None:
+                    purify_params = {'sigma': 0.18, 'n_anchors': 10, 'alpha': 1.2, 'diff_threshold': 0.85}
+
+                    # Extract parameters from the dictionary
+                sigma = purify_params.get('sigma', 0.18)
+                n_anchors = purify_params.get('n_anchors', 10)
+                alpha = purify_params.get('alpha', 1.2)
+                diff_threshold = purify_params.get('diff_threshold', 0.85)
+
+                logits, diff_ratio = self.inference_move_image_features(input, sigma=sigma, n_anchors=n_anchors, alpha=alpha, diff_threshold=diff_threshold)
                 return logits, diff_ratio
             else:
                 return self.inference(input)
