@@ -31,6 +31,8 @@ sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 Vi
 sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results /l/users/hashmat.malik/Projects/ATPT/Purify_Results_Cscc true noisy_anchor 3 1.2 0.18 0.0"
 sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results /l/users/hashmat.malik/Projects/ATPT/Purify_Results_Cscc true noisy_anchor 5 1.2 0.18 0.0"
 sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results /l/users/hashmat.malik/Projects/ATPT/Purify_Results_Cscc true noisy_anchor 7 1.2 0.18 0.0"
+wait_for_jobs
+
 sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results /l/users/hashmat.malik/Projects/ATPT/Purify_Results_Cscc true noisy_anchor 9 1.2 0.18 0.0"
 sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results /l/users/hashmat.malik/Projects/ATPT/Purify_Results_Cscc true noisy_anchor 10 1.4 0.18 0.0"
 
@@ -41,10 +43,13 @@ sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 Vi
 # Alpha 1.2 Sigma 0.06
 sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results /l/users/hashmat.malik/Projects/ATPT/Purify_Results_Cscc true noisy_anchor 1 1.2 0.06 0.0"
 sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results /l/users/hashmat.malik/Projects/ATPT/Purify_Results_Cscc true noisy_anchor 3 1.2 0.06 0.0"
+wait_for_jobs
+
 sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results /l/users/hashmat.malik/Projects/ATPT/Purify_Results_Cscc true noisy_anchor 5 1.2 0.06 0.0"
 sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results /l/users/hashmat.malik/Projects/ATPT/Purify_Results_Cscc true noisy_anchor 7 1.2 0.06 0.0"
 sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results /l/users/hashmat.malik/Projects/ATPT/Purify_Results_Cscc true noisy_anchor 9 1.2 0.06 0.0"
 sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results /l/users/hashmat.malik/Projects/ATPT/Purify_Results_Cscc true noisy_anchor 10 1.4 0.06 0.0"
+wait_for_jobs
 
 
 #sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 delta_clip_l14_224 4.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results /l/users/hashmat.malik/Projects/ATPT/Purify_Results_Cscc true noisy_anchor 1 1.2 0.06 0.0"
@@ -55,12 +60,14 @@ sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 Vi
 sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results /l/users/hashmat.malik/Projects/ATPT/Purify_Results_Cscc true noisy_anchor 3 1.2 0.12 0.0"
 sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results /l/users/hashmat.malik/Projects/ATPT/Purify_Results_Cscc true noisy_anchor 5 1.2 0.12 0.0"
 sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results /l/users/hashmat.malik/Projects/ATPT/Purify_Results_Cscc true noisy_anchor 7 1.2 0.12 0.0"
+wait_for_jobs
+
 sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results /l/users/hashmat.malik/Projects/ATPT/Purify_Results_Cscc true noisy_anchor 9 1.2 0.12 0.0"
 sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results /l/users/hashmat.malik/Projects/ATPT/Purify_Results_Cscc true noisy_anchor 10 1.4 0.12 0.0"
 
 #sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 delta_clip_l14_224 4.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results /l/users/hashmat.malik/Projects/ATPT/Purify_Results_Cscc true noisy_anchor 1 1.2 0.12 0.0"
 #sbatch run.sh "bash gen_adv.sh /l/users/hashmat.malik/downstream_datasets 0 4 fare4 4.0 100 1 0.1 20 0.01 /l/users/hashmat.malik/atpt_results /l/users/hashmat.malik/Projects/ATPT/Purify_Results_Cscc true noisy_anchor 1 1.2 0.12 0.0"
 
-wait_for_jobs
+#wait_for_jobs
 
 
