@@ -559,6 +559,13 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                 _, adv_pred = adv_probs.max(1)
                 adv_correct_orig += adv_pred.eq(target).sum().item()
 
+                logger.info("======================== Adversarial Image Evaluation ==========================")
+                logger.info(f"target: {target}")
+                logger.info(f"adv_pred: {adv_pred}")
+                logger.info(f"adv_correct_orig: {adv_correct_orig} = {adv_correct_orig - adv_pred.eq(target).sum().item()} + {adv_pred.eq(target).sum().item()}")
+                logger.info(f"adv_pred_purify: {adv_pred_purify}")
+                logger.info(f"adv_correct_purify: {adv_correct_purify} = {adv_correct_purify - adv_pred_purify.eq(target).sum().item()} + {adv_pred_purify.eq(target).sum().item()}")
+
 
             else:
                 # Compute original adversarial accuracy without purification
@@ -600,6 +607,13 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                 _, clean_pred = clean_probs.max(1)
                 clean_correct_orig += clean_pred.eq(target).sum().item()
 
+                logger.info("======================== Clean Image Evaluation ==========================")
+                logger.info(f"target: {target}")
+                logger.info(f"clean_pred: {clean_pred}")
+                logger.info(f"clean_correct_orig: {clean_correct_orig}")
+                logger.info(f"clean_pred_purify: {clean_pred_purify}")
+                logger.info(f"clean_correct_purify: {clean_correct_purify}")
+
 
             else:
                 clean_logits = model(images)
@@ -621,7 +635,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             del clean_logits, clean_probs, clean_pred
         else:
             del adv_logits, adv_probs, adv_pred
-            del clean_logits_purify, clean_probs_purify, clean_pred_purify
+            del clean_logits, clean_probs, clean_pred
 
         if args.counter_attack:
             del adv_images_counter, adv_logits_counter, adv_probs_counter, adv_pred_counter
@@ -648,22 +662,16 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
         if logger:
             if args.image_feature_purify:
-                if args.counter_attack:
-                    logger.info(
-                        f"Batch {i + 1}/{len(val_loader)}: Clean orig accuracy {clean_correct_orig / total:.4f} | Clean purify accuracy {clean_correct_purify / total:.4f} | "
-                        f"Adv orig accuracy: {adv_correct_orig / total:.4f} | Adv purify accuracy: {adv_correct_purify / total:.4f} | "
-                        f"Counter-attack accuracy: {adv_correct_counter / total:.4f}")
-                else:
-                    logger.info(
-                        f"Batch {i + 1}/{len(val_loader)}: Clean orig accuracy {clean_correct_orig / total:.4f} | Clean purify accuracy {clean_correct_purify / total:.4f} | "
-                        f"Adv orig accuracy: {adv_correct_orig / total:.4f} | Adv purify accuracy: {adv_correct_purify / total:.4f}")
+                logger.info(
+                    f"Batch {i + 1}/{len(val_loader)}: Clean orig accuracy {clean_correct_orig / total:.4f} | Clean purify accuracy {clean_correct_purify / total:.4f} | "
+                    f"Adv orig accuracy: {adv_correct_orig / total:.4f} | Adv purify accuracy: {adv_correct_purify / total:.4f}")
             else:
                 if args.counter_attack:
                     logger.info(
-                        f"Batch {i + 1}/{len(val_loader)}: Clean accuracy {clean_correct_purify / total:.4f} | Adv accuracy: {adv_correct_purify / total:.4f} | Counter-attack accuracy: {adv_correct_counter / total:.4f}")
+                        f"Batch {i + 1}/{len(val_loader)}: Clean accuracy {clean_correct_orig / total:.4f} | Adv accuracy: {adv_correct_orig / total:.4f} | Counter-attack accuracy: {adv_correct_counter / total:.4f}")
                 else:
                     logger.info(
-                        f"Batch {i + 1}/{len(val_loader)}: Clean accuracy {clean_correct_purify / total:.4f} | Adv accuracy: {adv_correct_purify / total:.4f} ")
+                        f"Batch {i + 1}/{len(val_loader)}: Clean accuracy {clean_correct_orig / total:.4f} | Adv accuracy: {adv_correct_orig / total:.4f} ")
 
 
 
@@ -683,30 +691,26 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     if logger:
         if args.image_feature_purify:
-            if args.counter_attack:
-                logger.info(f"Final Clean orig accuracy: {original_accuracy_orig:.4f} | Clean purify accuracy: {original_accuracy_purify:.4f}")
-                logger.info(f"Final Adv orig accuracy: {adv_accuracy_orig:.4f} | Adv purify accuracy: {adv_accuracy_purify:.4f} | Counter-attack accuracy: {adv_accuracy_counter:.4f}")
-                logger.info(f"Diff_ratio_clean: {diff_ratio_clean:.4f} | Diff_ratio_adv: {diff_ratio_adv:.4f}")
-            else:
-                logger.info(f"Final Clean orig accuracy: {original_accuracy_orig:.4f} | Clean purify accuracy: {original_accuracy_purify:.4f}")
-                logger.info(f"Final Adv orig accuracy: {adv_accuracy_orig:.4f} | Adv purify accuracy: {adv_accuracy_purify:.4f}")
-                logger.info(f"Diff_ratio_clean: {diff_ratio_clean:.4f} | Diff_ratio_adv: {diff_ratio_adv:.4f}")
+            logger.info(f"Final Clean orig accuracy: {original_accuracy_orig:.4f} | Clean purify accuracy: {original_accuracy_purify:.4f}")
+            logger.info(f"Final Adv orig accuracy: {adv_accuracy_orig:.4f} | Adv purify accuracy: {adv_accuracy_purify:.4f}")
+            logger.info(f"Diff_ratio_clean: {diff_ratio_clean:.4f} | Diff_ratio_adv: {diff_ratio_adv:.4f}")
         else:
             if args.counter_attack:
-                logger.info(f"Final Clean accuracy: {original_accuracy_purify:.4f} | Adversarial accuracy: {adv_accuracy_purify:.4f} | Counter-attack accuracy: {adv_accuracy_counter:.4f}")
-                logger.info(f"Diff_ratio_clean: {diff_ratio_clean:.4f} | Diff_ratio_adv: {diff_ratio_adv:.4f}")
+                logger.info(f"Final Clean accuracy: {original_accuracy_orig:.4f} | Adversarial accuracy: {adv_accuracy_orig:.4f} | Counter-attack accuracy: {adv_accuracy_counter:.4f}")
             else:
-                logger.info(f"Original accuracy: {original_accuracy_purify:.4f}")
-                logger.info(f"Adversarial accuracy: {adv_accuracy_purify:.4f}")
-                logger.info(f"Diff_ratio_clean: {diff_ratio_clean:.4f} | Diff_ratio_adv: {diff_ratio_adv:.4f}")
+                logger.info(f"Original accuracy: {original_accuracy_orig:.4f}")
+                logger.info(f"Adversarial accuracy: {adv_accuracy_orig:.4f}")
     else:
         if args.image_feature_purify:
             print(f"Clean orig accuracy: {original_accuracy_orig:.4f} | Clean purify accuracy: {original_accuracy_purify:.4f}")
             print(f"Adv orig accuracy: {adv_accuracy_orig:.4f} | Adv purify accuracy: {adv_accuracy_purify:.4f}")
+            print(f"Diff_ratio_clean: {diff_ratio_clean:.4f} | Diff_ratio_adv: {diff_ratio_adv:.4f}")
         else:
-            print(f"Original accuracy: {original_accuracy_purify:.4f}")
-            print(f"Adversarial accuracy: {adv_accuracy_purify:.4f}")
-        print(f"Diff_ratio_clean: {diff_ratio_clean:.4f} | Diff_ratio_adv: {diff_ratio_adv:.4f}")
+            if args.counter_attack:
+                print(f"Original accuracy: {original_accuracy_orig:.4f} | Adversarial accuracy: {adv_accuracy_orig:.4f} | Counter-attack accuracy: {adv_accuracy_counter:.4f}")
+            else:
+                print(f"Original accuracy: {original_accuracy_orig:.4f}")
+                print(f"Adversarial accuracy: {adv_accuracy_orig:.4f}")
 
 
 
