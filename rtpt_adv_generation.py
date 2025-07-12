@@ -798,7 +798,7 @@ if __name__ == '__main__':
     parser.add_argument('--image_feature_purify_noisy_anchors', default=10, type=int)
     parser.add_argument('--image_feature_purify_anchors_alpha', default=1.2, type=float)
     parser.add_argument('--image_feature_purify_noisy_sigma', default=0.18, type=float)
-    parser.add_argument('--image_feature_purify_diff_threshold', default=0.85, type=float)
+    parser.add_argument('--image_feature_purify_diff_threshold', default=0.0, type=float)
 
 
 

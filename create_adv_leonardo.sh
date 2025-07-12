@@ -26,6 +26,56 @@ wait_for_jobs() {
 }
 
 #sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets GPU WORKERS vit_l_14_datacomp_1b EPS STEPS TTA_STEPS 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results PURIFY TYPE ANCHORS ALPHA SIGMA THRESH"
+# Alpha 1.0 Sigma 0.18
+sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 vit_l_14_datacomp_1b 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 1.0 0.18 0.0"
+sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 1.0 0.18 0.0"
+#sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 delta_clip_l14_224 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 1.0 0.18 0.0"
+#sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 fare4 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 1.0 0.18 0.0"
+
+# Alpha 1.0 Sigma 0.06
+sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 vit_l_14_datacomp_1b 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 1.0 0.06 0.0"
+sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 1.0 0.06 0.0"
+#sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 delta_clip_l14_224 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 1.0 0.06 0.0"
+#sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 fare4 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 1.0 0.06 0.0"
+
+# Alpha 1.0 Sigma 0.12
+sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 vit_l_14_datacomp_1b 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 1.0 0.12 0.0"
+sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 1.0 0.12 0.0"
+#sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 delta_clip_l14_224 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 1.0 0.12 0.0"
+#sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 fare4 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 1.0 0.12 0.0"
+
+wait_for_jobs
+
+
+# Alpha 0.8 Sigma 0.18
+sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 vit_l_14_datacomp_1b 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 0.8 0.18 0.0"
+sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 0.8 0.18 0.0"
+#sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 delta_clip_l14_224 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 0.8 0.18 0.0"
+#sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 fare4 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 0.8 0.18 0.0"
+
+# Alpha 0.8 Sigma 0.06
+sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 vit_l_14_datacomp_1b 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 0.8 0.06 0.0"
+sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 0.8 0.06 0.0"
+#sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 delta_clip_l14_224 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 0.8 0.06 0.0"
+#sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 fare4 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 0.8 0.06 0.0"
+
+# Alpha 0.8 Sigma 0.12
+sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 vit_l_14_datacomp_1b 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 0.8 0.12 0.0"
+sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 0.8 0.12 0.0"
+#sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 delta_clip_l14_224 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 0.8 0.12 0.0"
+#sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 fare4 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 0.8 0.12 0.0"
+
+wait_for_jobs
+
+
+
+
+
+
+
+
+
+
 # Alpha 1.2 Sigma 0.18
 sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 vit_l_14_datacomp_1b 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 1.2 0.18 0.0"
 sbatch run_1d.sh "bash gen_adv.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets 0 4 ViT-L/14 4.0 100 1 0.1 20 0.01 /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Purify_Results true noisy_anchor 1 1.2 0.18 0.0"
