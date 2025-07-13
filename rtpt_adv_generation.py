@@ -516,6 +516,14 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     clean_correct_orig = 0
     total = 0
 
+    # New counters for tracking accuracy on correctly/incorrectly classified clean samples
+    adv_correct_purify_clean_correct = 0
+    adv_correct_purify_clean_incorrect = 0
+    clean_correct_purify_clean_correct = 0
+    clean_correct_purify_clean_incorrect = 0
+    total_clean_correct = 0
+    total_clean_incorrect = 0
+
     diff_ratio_clean = 0
     diff_ratio_adv = 0
     # Iterate through validation data
@@ -621,12 +629,30 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                 _, clean_pred = clean_probs.max(1)
                 clean_correct_orig += clean_pred.eq(target).sum().item()
 
+                # Track which samples are correctly/incorrectly classified in clean evaluation
+                clean_correct_mask = clean_pred.eq(target)
+                clean_incorrect_mask = ~clean_correct_mask
+                total_clean_correct += clean_correct_mask.sum().item()
+                total_clean_incorrect += clean_incorrect_mask.sum().item()
+
+                # Update counters for adversarial purified accuracy on clean correct/incorrect samples
+                adv_correct_purify_clean_correct += (adv_pred_purify.eq(target) & clean_correct_mask).sum().item()
+                adv_correct_purify_clean_incorrect += (adv_pred_purify.eq(target) & clean_incorrect_mask).sum().item()
+
+                # Update counters for clean purified accuracy on clean correct/incorrect samples
+                clean_correct_purify_clean_correct += (clean_pred_purify.eq(target) & clean_correct_mask).sum().item()
+                clean_correct_purify_clean_incorrect += (clean_pred_purify.eq(target) & clean_incorrect_mask).sum().item()
+
                 logger.info("======================== Clean Image Evaluation ==========================")
                 logger.info(f"target: {target}")
                 logger.info(f"clean_pred: {clean_pred}")
                 logger.info(f"clean_correct_orig: {clean_correct_orig}")
                 logger.info(f"clean_pred_purify: {clean_pred_purify}")
                 logger.info(f"clean_correct_purify: {clean_correct_purify}")
+                logger.info(f"adv_correct_purify_clean_correct: {adv_correct_purify_clean_correct}")
+                logger.info(f"adv_correct_purify_clean_incorrect: {adv_correct_purify_clean_incorrect}")
+                logger.info(f"clean_correct_purify_clean_correct: {clean_correct_purify_clean_correct}")
+                logger.info(f"clean_correct_purify_clean_incorrect: {clean_correct_purify_clean_incorrect}")
 
                 # Save bar plots for the first correctly classified clean sample in each batch
                 if args.save_plots and plots_saved < 50:
@@ -769,9 +795,19 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
         if logger:
             if args.image_feature_purify:
+                # Calculate batch-level accuracy metrics for clean correct/incorrect samples
+                batch_adv_accuracy_purify_clean_correct = adv_correct_purify_clean_correct / total_clean_correct if total_clean_correct > 0 else 0
+                batch_adv_accuracy_purify_clean_incorrect = adv_correct_purify_clean_incorrect / total_clean_incorrect if total_clean_incorrect > 0 else 0
+                batch_clean_accuracy_purify_clean_correct = clean_correct_purify_clean_correct / total_clean_correct if total_clean_correct > 0 else 0
+                batch_clean_accuracy_purify_clean_incorrect = clean_correct_purify_clean_incorrect / total_clean_incorrect if total_clean_incorrect > 0 else 0
+
                 logger.info(
                     f"Batch {i + 1}/{len(val_loader)}: Clean orig accuracy {clean_correct_orig / total:.4f} | Clean purify accuracy {clean_correct_purify / total:.4f} | "
-                    f"Adv orig accuracy: {adv_correct_orig / total:.4f} | Adv purify accuracy: {adv_correct_purify / total:.4f}")
+                    f"Adv orig accuracy: {adv_correct_orig / total:.4f} | Adv purify accuracy: {adv_correct_purify / total:.4f} | "
+                    f"Adv purify acc on clean correct: {batch_adv_accuracy_purify_clean_correct:.4f} | "
+                    f"Adv purify acc on clean incorrect: {batch_adv_accuracy_purify_clean_incorrect:.4f} | "
+                    f"Clean purify acc on clean correct: {batch_clean_accuracy_purify_clean_correct:.4f} | "
+                    f"Clean purify acc on clean incorrect: {batch_clean_accuracy_purify_clean_incorrect:.4f}")
             else:
                 if args.counter_attack:
                     logger.info(
@@ -793,6 +829,12 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     diff_ratio_clean = diff_ratio_clean / len(val_loader)
     diff_ratio_adv = diff_ratio_adv / len(val_loader)
 
+    # Calculate accuracy on correctly/incorrectly classified clean samples
+    adv_accuracy_purify_clean_correct = adv_correct_purify_clean_correct / total_clean_correct if total_clean_correct > 0 else 0
+    adv_accuracy_purify_clean_incorrect = adv_correct_purify_clean_incorrect / total_clean_incorrect if total_clean_incorrect > 0 else 0
+    clean_accuracy_purify_clean_correct = clean_correct_purify_clean_correct / total_clean_correct if total_clean_correct > 0 else 0
+    clean_accuracy_purify_clean_incorrect = clean_correct_purify_clean_incorrect / total_clean_incorrect if total_clean_incorrect > 0 else 0
+
     if args.counter_attack:
         adv_accuracy_counter = adv_correct_counter / total
 
@@ -801,6 +843,14 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             logger.info(f"Final Clean orig accuracy: {original_accuracy_orig:.4f} | Clean purify accuracy: {original_accuracy_purify:.4f}")
             logger.info(f"Final Adv orig accuracy: {adv_accuracy_orig:.4f} | Adv purify accuracy: {adv_accuracy_purify:.4f}")
             logger.info(f"Diff_ratio_clean: {diff_ratio_clean:.4f} | Diff_ratio_adv: {diff_ratio_adv:.4f}")
+            logger.info(f"Adv purify accuracy on clean correct samples: {adv_accuracy_purify_clean_correct:.4f} ({adv_correct_purify_clean_correct}/{total_clean_correct})")
+
+            logger.info(f"Net Adv purify accuracy (assuming incorrect samples are not attacked): {(adv_correct_purify_clean_correct+clean_accuracy_purify_clean_incorrect)/total:.4f} ({adv_correct_purify_clean_correct}+{clean_correct_purify_clean_incorrect}/{total})")
+
+
+            logger.info(f"Adv purify accuracy on clean incorrect samples: {adv_accuracy_purify_clean_incorrect:.4f} ({adv_correct_purify_clean_incorrect}/{total_clean_incorrect})")
+            logger.info(f"Clean purify accuracy on clean correct samples: {clean_accuracy_purify_clean_correct:.4f} ({clean_correct_purify_clean_correct}/{total_clean_correct})")
+            logger.info(f"Clean purify accuracy on clean incorrect samples: {clean_accuracy_purify_clean_incorrect:.4f} ({clean_correct_purify_clean_incorrect}/{total_clean_incorrect})")
         else:
             if args.counter_attack:
                 logger.info(f"Final Clean accuracy: {original_accuracy_orig:.4f} | Adversarial accuracy: {adv_accuracy_orig:.4f} | Counter-attack accuracy: {adv_accuracy_counter:.4f}")
@@ -812,6 +862,14 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             print(f"Clean orig accuracy: {original_accuracy_orig:.4f} | Clean purify accuracy: {original_accuracy_purify:.4f}")
             print(f"Adv orig accuracy: {adv_accuracy_orig:.4f} | Adv purify accuracy: {adv_accuracy_purify:.4f}")
             print(f"Diff_ratio_clean: {diff_ratio_clean:.4f} | Diff_ratio_adv: {diff_ratio_adv:.4f}")
+            print(f"Adv purify accuracy on clean correct samples: {adv_accuracy_purify_clean_correct:.4f} ({adv_correct_purify_clean_correct}/{total_clean_correct})")
+
+            logger.info(f"Net Adv purify accuracy (assuming incorrect samples are not attacked): {(adv_correct_purify_clean_correct+clean_accuracy_purify_clean_incorrect)/total:.4f} ({adv_correct_purify_clean_correct}+{clean_accuracy_purify_clean_incorrect}/{total_clean_correct})")
+
+
+            print(f"Adv purify accuracy on clean incorrect samples: {adv_accuracy_purify_clean_incorrect:.4f} ({adv_correct_purify_clean_incorrect}/{total_clean_incorrect})")
+            print(f"Clean purify accuracy on clean correct samples: {clean_accuracy_purify_clean_correct:.4f} ({clean_correct_purify_clean_correct}/{total_clean_correct})")
+            print(f"Clean purify accuracy on clean incorrect samples: {clean_accuracy_purify_clean_incorrect:.4f} ({clean_correct_purify_clean_incorrect}/{total_clean_incorrect})")
         else:
             if args.counter_attack:
                 print(f"Original accuracy: {original_accuracy_orig:.4f} | Adversarial accuracy: {adv_accuracy_orig:.4f} | Counter-attack accuracy: {adv_accuracy_counter:.4f}")
