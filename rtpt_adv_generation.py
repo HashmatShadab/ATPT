@@ -19,6 +19,8 @@ import torch.utils.data.distributed
 import torchvision.transforms as transforms
 from PIL import Image
 import torch.nn.functional as F
+import matplotlib.pyplot as plt
+import numpy as np
 
 try:
     from torchvision.transforms import InterpolationMode
@@ -44,7 +46,7 @@ import torchattacks
 import os
 from torchvision import transforms
 
-from helper_functions import print_args
+from helper_functions import print_args, plot_probability_bar
 from torch.nn.functional import cosine_similarity
 import torch
 from PIL import Image
@@ -430,6 +432,18 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     Returns:
         list: [original_accuracy, test_time_adapted_accuracy]
     """
+    # Counters for saved bar plots
+    plots_saved = 0
+    purify_correct_clean_wrong_plots_saved = 0
+    # Create directory for saving bar plots if needed
+    if args.image_feature_purify and args.save_plots:
+        bar_plots_dir = os.path.join(args.log_output_dir, "bar_plots")
+        purify_correct_clean_wrong_dir = os.path.join(args.log_output_dir, "purify_correct_clean_wrong_plots")
+        os.makedirs(bar_plots_dir, exist_ok=True)
+        os.makedirs(purify_correct_clean_wrong_dir, exist_ok=True)
+        if logger:
+            logger.info(f"Created directory for bar plots: {bar_plots_dir}")
+            logger.info(f"Created directory for purify correct but clean wrong plots: {purify_correct_clean_wrong_dir}")
 
     # Set model to evaluation mode
     model.eval()
@@ -614,6 +628,99 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                 logger.info(f"clean_pred_purify: {clean_pred_purify}")
                 logger.info(f"clean_correct_purify: {clean_correct_purify}")
 
+                # Save bar plots for the first correctly classified clean sample in each batch
+                if args.save_plots and plots_saved < 50:
+                    # Find the first correctly classified clean sample in the batch
+                    correct_indices = (clean_pred.eq(target)).nonzero(as_tuple=True)[0]
+                    if len(correct_indices) > 0:
+                        # Get the first correctly classified sample index
+                        idx = correct_indices[0].item()
+
+                        # Create a figure with 3 subplots side by side
+                        fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+
+                        # Plot clean probabilities in the first subplot
+                        axes[0].set_title("Clean Sample")
+                        clean_probs_np = clean_probs[idx].detach().cpu().numpy()
+                        x = np.arange(len(clean_probs_np))
+                        colors = ['blue'] * len(clean_probs_np)
+                        colors[target[idx].item()] = 'red'
+                        axes[0].bar(x, clean_probs_np, color=colors)
+                        axes[0].set_ylabel("Probability")
+                        axes[0].set_xlabel("Class")
+
+                        # Plot adversarial probabilities in the second subplot
+                        axes[1].set_title("Adversarial Sample")
+                        adv_probs_np = adv_probs[idx].detach().cpu().numpy()
+                        axes[1].bar(x, adv_probs_np, color=colors)
+                        axes[1].set_ylabel("Probability")
+                        axes[1].set_xlabel("Class")
+
+                        # Plot adversarial purified probabilities in the third subplot
+                        axes[2].set_title("Adversarial Purified Sample")
+                        adv_probs_purify_np = adv_probs_purify[idx].detach().cpu().numpy()
+                        axes[2].bar(x, adv_probs_purify_np, color=colors)
+                        axes[2].set_ylabel("Probability")
+                        axes[2].set_xlabel("Class")
+
+                        # Add a main title
+                        plt.suptitle(f"Batch {i}, Sample {idx}")
+                        plt.tight_layout()
+
+                        # Save the figure
+                        save_path = os.path.join(bar_plots_dir, f"batch_{i}_sample_{idx}.png")
+                        plt.savefig(save_path)
+                        plt.close(fig)
+
+                        plots_saved += 1
+                        logger.info(f"Saved bar plot {plots_saved}/50 to {save_path}")
+
+                # Save bar plots for samples where adversarial purified is correct but clean is wrong
+                if args.save_plots and purify_correct_clean_wrong_plots_saved < 50:
+                    # Find indices where adversarial purified is correct but clean is wrong
+                    purify_correct_clean_wrong_indices = ((adv_pred_purify.eq(target)) & (~clean_pred.eq(target))).nonzero(as_tuple=True)[0]
+                    if len(purify_correct_clean_wrong_indices) > 0:
+                        # Get the first such sample index
+                        idx = purify_correct_clean_wrong_indices[0].item()
+
+                        # Create a figure with 3 subplots side by side
+                        fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+
+                        # Plot clean probabilities in the first subplot
+                        axes[0].set_title("Clean Sample (Wrong)")
+                        clean_probs_np = clean_probs[idx].detach().cpu().numpy()
+                        x = np.arange(len(clean_probs_np))
+                        colors = ['blue'] * len(clean_probs_np)
+                        colors[target[idx].item()] = 'red'
+                        axes[0].bar(x, clean_probs_np, color=colors)
+                        axes[0].set_ylabel("Probability")
+                        axes[0].set_xlabel("Class")
+
+                        # Plot adversarial probabilities in the second subplot
+                        axes[1].set_title("Adversarial Sample")
+                        adv_probs_np = adv_probs[idx].detach().cpu().numpy()
+                        axes[1].bar(x, adv_probs_np, color=colors)
+                        axes[1].set_ylabel("Probability")
+                        axes[1].set_xlabel("Class")
+
+                        # Plot adversarial purified probabilities in the third subplot
+                        axes[2].set_title("Adversarial Purified Sample (Correct)")
+                        adv_probs_purify_np = adv_probs_purify[idx].detach().cpu().numpy()
+                        axes[2].bar(x, adv_probs_purify_np, color=colors)
+                        axes[2].set_ylabel("Probability")
+                        axes[2].set_xlabel("Class")
+
+                        # Add a main title
+                        plt.suptitle(f"Batch {i}, Sample {idx} - Purify Correct, Clean Wrong")
+                        plt.tight_layout()
+
+                        # Save the figure
+                        save_path = os.path.join(purify_correct_clean_wrong_dir, f"batch_{i}_sample_{idx}.png")
+                        plt.savefig(save_path)
+                        plt.close(fig)
+
+                        purify_correct_clean_wrong_plots_saved += 1
+                        logger.info(f"Saved purify correct, clean wrong plot {purify_correct_clean_wrong_plots_saved}/50 to {save_path}")
 
             else:
                 clean_logits = model(images)
@@ -799,6 +906,8 @@ if __name__ == '__main__':
     parser.add_argument('--image_feature_purify_anchors_alpha', default=1.2, type=float)
     parser.add_argument('--image_feature_purify_noisy_sigma', default=0.18, type=float)
     parser.add_argument('--image_feature_purify_diff_threshold', default=0.0, type=float)
+    parser.add_argument('--save_plots', default=False, type=lambda x: (str(x).lower() == 'true'),
+                        help='Whether to save probability bar plots during evaluation')
 
 
 

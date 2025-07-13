@@ -434,48 +434,132 @@ def entropy_loss_ttl(outputs: torch.Tensor) -> torch.Tensor:
 
 
 
-def test_uncertainty_functions():
+# def test_uncertainty_functions():
+#     """
+#     Run test cases to evaluate different uncertainty calculation functions.
+#
+#     This function creates various test tensors and runs them through the
+#     uncertainty calculation functions to demonstrate their behavior.
+#     """
+#     print("\n===== TESTING UNCERTAINTY CALCULATION FUNCTIONS =====\n")
+#
+#     # Create test tensors with different characteristics
+#
+#     # Case 1: Highly confident predictions (low entropy)
+#     logits = torch.tensor([
+#         [10.0, 0.1, 0.1, 0.1],  # Very confident in first class
+#         [0.1, 9.0, 0.1, 0.1],   # Very confident in second class
+#         [0.1, 0.1, 8.0, 0.1]    # Very confident in third class
+#     ])
+#     print(f"Input logits shape:{logits.shape}")
+#     print(f"Input logits:\n {logits}")
+#     # Test calculate_entropy
+#     entropy = calculate_entropy(logits)
+#     print(f"\nEntropy per sample: {entropy}")
+#
+#     # Test entropy_avg
+#     avg_entropy = entropy_avg(logits)
+#     print(f"Average entropy: {avg_entropy.item():.6f}")
+#
+#     # Test compute_expected_kl_divergence
+#     expected_kl = compute_expected_kl_divergence(logits)
+#     print(f"Expected KL divergence (epistemic uncertainty): {expected_kl.item():.6f}")
+#
+#
+#     # Total loss
+#     print(f"Total Loss: {avg_entropy.item() + expected_kl.item():.6f}")
+#
+#     entropy_ttl = entropy_loss_ttl(logits)
+#     print(f"Entropy TTL: {entropy_ttl.item():.6f}")
+
+
+
+
+
+def plot_probability_bar(probs, correct_class, class_names=None, figsize=(10, 6), title=None):
     """
-    Run test cases to evaluate different uncertainty calculation functions.
+    Plots a bar chart of probabilities with the correct class highlighted in red.
 
-    This function creates various test tensors and runs them through the 
-    uncertainty calculation functions to demonstrate their behavior.
+    Args:
+        probs (torch.Tensor): Probability tensor of shape (num_classes,)
+        correct_class (int): Index of the correct class
+        class_names (list, optional): List of class names for x-axis labels
+        figsize (tuple, optional): Figure size (width, height)
+        title (str, optional): Title for the plot
+
+    Returns:
+        matplotlib.figure.Figure: The created figure
     """
-    print("\n===== TESTING UNCERTAINTY CALCULATION FUNCTIONS =====\n")
+    # Convert tensor to numpy if needed
+    if isinstance(probs, torch.Tensor):
+        probs = probs.detach().cpu().numpy()
 
-    # Create test tensors with different characteristics
+    # Create figure and axis
+    fig, ax = plt.subplots(figsize=figsize)
 
-    # Case 1: Highly confident predictions (low entropy)
-    logits = torch.tensor([
-        [10.0, 0.1, 0.1, 0.1],  # Very confident in first class
-        [0.1, 9.0, 0.1, 0.1],   # Very confident in second class
-        [0.1, 0.1, 8.0, 0.1]    # Very confident in third class
-    ])
-    print(f"Input logits shape:{logits.shape}")
-    print(f"Input logits:\n {logits}")
-    # Test calculate_entropy
-    entropy = calculate_entropy(logits)
-    print(f"\nEntropy per sample: {entropy}")
+    # Get number of classes
+    num_classes = len(probs)
 
-    # Test entropy_avg
-    avg_entropy = entropy_avg(logits)
-    print(f"Average entropy: {avg_entropy.item():.6f}")
+    # Create x-axis positions
+    x = np.arange(num_classes)
 
-    # Test compute_expected_kl_divergence
-    expected_kl = compute_expected_kl_divergence(logits)
-    print(f"Expected KL divergence (epistemic uncertainty): {expected_kl.item():.6f}")
+    # Create colors array (all blue except correct class which is red)
+    colors = ['blue'] * num_classes
+    colors[correct_class] = 'red'
 
+    # Plot bars
+    bars = ax.bar(x, probs, color=colors)
 
-    # Total loss
-    print(f"Total Loss: {avg_entropy.item() + expected_kl.item():.6f}")
+    # Add value labels on top of bars
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2., height,
+                f'{height:.3f}',
+                ha='center', va='bottom', rotation=0)
 
-    entropy_ttl = entropy_loss_ttl(logits)
-    print(f"Entropy TTL: {entropy_ttl.item():.6f}")
+    # Set title and labels
+    if title:
+        ax.set_title(title)
+    else:
+        ax.set_title(f'Class Probabilities (Correct Class: {correct_class})')
 
+    ax.set_ylabel('Probability')
+    ax.set_xlabel('Class')
 
+    # Set x-axis ticks
+    if class_names:
+        # If there are too many classes, show only a subset or rotate labels
+        if len(class_names) > 20:
+            # Show every nth label to avoid overcrowding
+            n = max(1, len(class_names) // 20)
+            ax.set_xticks(x[::n])
+            ax.set_xticklabels(class_names[::n], rotation=45, ha='right')
+        else:
+            ax.set_xticks(x)
+            ax.set_xticklabels(class_names, rotation=45, ha='right')
+    else:
+        ax.set_xticks(x)
 
+    # Highlight the correct class with a different colored bar
+    ax.get_xticklabels()[correct_class].set_color('red')
+
+    # Add a grid for better readability
+    ax.grid(axis='y', linestyle='--', alpha=0.7)
+
+    # Adjust layout
+    plt.tight_layout()
+
+    return fig
 
 
 # Run the tests if this file is executed directly
 if __name__ == "__main__":
-    test_uncertainty_functions()
+    # test_uncertainty_functions()
+
+    # Test the probability bar plot function
+    probs = torch.softmax(torch.tensor([0.1, 0.5, 2.0, 0.3, 0.1]), dim=0)
+    correct_class = 2
+    class_names = ['Class A', 'Class B', 'Class C', 'Class D', 'Class E']
+
+    fig = plot_probability_bar(probs, correct_class, class_names)
+    plt.show()
