@@ -29,12 +29,13 @@ class PGD(Attack):
 
     """
 
-    def __init__(self, model, eps=8 / 255, alpha=2 / 255, steps=10, random_start=True):
+    def __init__(self, model, eps=8 / 255, alpha=2 / 255, steps=10, random_start=True, image_only_attack=False):
         super().__init__("PGD", model)
         self.eps = eps
         self.alpha = alpha
         self.steps = steps
         self.random_start = random_start
+        self.image_only_attack = image_only_attack
         self.supported_mode = ["default", "targeted"]
 
     def forward(self, images, labels):
@@ -48,8 +49,16 @@ class PGD(Attack):
         if self.targeted:
             target_labels = self.get_target_label(images, labels)
 
+
+
         loss = nn.CrossEntropyLoss()
+        cosine_sim = nn.CosineSimilarity(dim=1, eps=1e-6)
+
         adv_images = images.clone().detach()
+
+        if self.image_only_attack:
+            with torch.no_grad():
+                original_output_features = self.get_logits(images, get_image_features=True, normalize=True)
 
         if self.random_start:
             # Starting at a uniformly random point
@@ -58,17 +67,28 @@ class PGD(Attack):
             )
             adv_images = torch.clamp(adv_images, min=0, max=1).detach()
 
+        #cost_list = []
         for _ in range(self.steps):
             # Create a fresh copy for gradient computation
             adv_images_for_grad = adv_images.clone().detach().requires_grad_(True)
-            outputs = self.get_logits(adv_images_for_grad)
 
-            # Calculate loss
-            if self.targeted:
-                cost = -loss(outputs, target_labels)
+            if self.image_only_attack:
+                outputs = self.get_logits(adv_images_for_grad, get_image_features=True, normalize=True)
+                # COmpute cosine simialrity between original features and output features
+                cost = -cosine_sim(original_output_features, outputs).mean()
+
             else:
-                cost = loss(outputs, labels)
 
+                outputs = self.get_logits(adv_images_for_grad)
+
+                # Calculate loss
+                if self.targeted:
+                    cost = -loss(outputs, target_labels)
+                else:
+                    cost = loss(outputs, labels)
+
+
+            #cost_list.append(cost.item())
             # Update adversarial images
             grad = torch.autograd.grad(
                 cost, adv_images_for_grad, retain_graph=False, create_graph=False

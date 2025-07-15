@@ -129,6 +129,8 @@ def main():
     # Create a log name that includes TTA variations
     # Format floating point values and ensure filename is valid
     log_name = f"ADV_Generation_eps_{args.eps}_steps_{args.steps}"
+    if args.image_only_attack:
+        log_name += "_image_only_attack"
     if args.image_feature_purify:
         log_name = f"{log_name}_Purification_type_{args.image_feature_purify_type}_anchors_{args.image_feature_purify_noisy_anchors}_alpha_{args.image_feature_purify_anchors_alpha}_sigma_{args.image_feature_purify_noisy_sigma}_threshold_{args.image_feature_purify_diff_threshold}"
 
@@ -456,9 +458,9 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     if args.eps > 0.0:
         assert args.steps > 0
         # Create PGD attack with specified parameters
-        atk = torchattacks.PGD(model, eps=args.eps/255, alpha=args.alpha/255, steps=args.steps)
+        atk = torchattacks.PGD(model, eps=args.eps/255, alpha=args.alpha/255, steps=args.steps, image_only_attack=args.image_only_attack)
         if logger:
-            logger.info(f"Using PGD attack with epsilon: {args.eps/255:.6f}, alpha: {args.alpha/255:.6f}, steps: {args.steps}")
+            logger.info(f"Using PGD attack with epsilon: {args.eps/255:.6f}, alpha: {args.alpha/255:.6f}, steps: {args.steps} image only attack {args.image_only_attack}")
 
     if args.counter_attack:
         # Create counter-attack with specified parameters
@@ -501,7 +503,11 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     end = time.time()
     # Create directory for saving adversarial images if needed
-    adv_images_dir = os.path.join(args.output_dir, f"adv_images_eps_{args.eps}_alpha_{args.alpha}_steps_{args.steps}")
+    if args.image_only_attack:
+        adv_images_dir = os.path.join(args.output_dir, f"adv_images_eps_{args.eps}_alpha_{args.alpha}_steps_{args.steps}_image_only_attack")
+    else:
+        adv_images_dir = os.path.join(args.output_dir, f"adv_images_eps_{args.eps}_alpha_{args.alpha}_steps_{args.steps}")
+
 
 
     if args.eps > 0.0:
@@ -936,6 +942,7 @@ if __name__ == '__main__':
                         help='Directory to save results')
 
     # Adversarial attack parameters
+    parser.add_argument('--image_only_attack', default=False, type=lambda x: (str(x).lower() == 'true') )
     parser.add_argument('--eps', default=1.0, type=float,
                         help='Epsilon for adversarial attack (0.0 for clean evaluation)')
     parser.add_argument('--alpha', default=0.0, type=float,
