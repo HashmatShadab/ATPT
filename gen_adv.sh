@@ -126,7 +126,7 @@ if [ "$DATASET_ID" = "all"   ]; then
 
 elif [ "$DATASET_ID" = "dtd"   ]; then
   echo "  [1/8] Adv Examples  DTD dataset..."
-  CUDA_VISIBLE_DEVICES=$GPU python rtpt_adv_generation.py $DATA_ROOT --test_sets DTD $MODEL $COMMON_PARAMS
+  python rtpt_adv_generation.py $DATA_ROOT --test_sets DTD $MODEL $COMMON_PARAMS
   echo "  ✓ DTD dataset Adv Examples  complete"
 
 elif [ "$DATASET_ID" = "flower102"   ]; then
