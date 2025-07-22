@@ -1591,7 +1591,7 @@ if __name__ == '__main__':
                         help='Mini-batch size for augmentation')
     parser.add_argument('-p', '--print-freq', default=20, type=int, metavar='N',
                         help='Print frequency (default: 200)')
-    parser.add_argument('--gpu', default=0, type=int,
+    parser.add_argument('--gpu', default="cuda", type="str",
                         help='GPU id to use')
     parser.add_argument('--no_cudnn_benchmark', action='store_true',
                         help='Disable cudnn benchmarking for potentially more deterministic behavior')
