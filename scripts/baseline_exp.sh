@@ -492,11 +492,11 @@ wait_for_jobs() {
 #wait_for_jobs
 #sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results false pgd 0 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 5000 aircraft"
 #sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results false pgd 0 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 6000 ucf101"
-#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results false pgd 0 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 7000 eurosat"
-#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results false pgd 0 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 8000 pets"
+sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results false pgd 0 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 7000 eurosat"
+sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results false pgd 0 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 8000 pets"
 #
 ## Wait for all jobs to complete before proceeding
-#wait_for_jobs
+wait_for_jobs
 #
 #echo "Running Clean TPT experiments Ensembling: None"
 #sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results false pgd 0 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 1000 dtd"
@@ -540,43 +540,43 @@ sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_d
 sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 2.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 4000 flower102"
 
 # Wait for all jobs to complete before proceeding
-wait_for_jobs
-sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 2.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 5000 aircraft"
-sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 2.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 6000 ucf101"
-sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 2.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 7000 eurosat"
-sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 2.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 8000 pets"
+#wait_for_jobs
+#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 2.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 5000 aircraft"
+#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 2.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 6000 ucf101"
+#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 2.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 7000 eurosat"
+#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 2.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 8000 pets"
 
 # Wait for all jobs to complete before proceeding
-wait_for_jobs
+#wait_for_jobs
 
 #Eps 4/255
-
-echo "Running Adv (Eps 4.0 Steps 100) TPT experiments Ensembling: None with Counter Attacks Eps 4/255"
-sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 1000 dtd"
-sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 2000 caltech101"
-sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 3000 cars"
-sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 4000 flower102"
-
-# Wait for all jobs to complete before proceeding
-wait_for_jobs
-sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 5000 aircraft"
-sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 6000 ucf101"
-sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 7000 eurosat"
-sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 8000 pets"
-
-# Wait for all jobs to complete before proceeding
-wait_for_jobs
-
-
-echo "Running Clean TPT experiments Ensembling: None with Counter Attacks Eps 4/255"
-sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 1000 dtd"
-sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 2000 caltech101"
-sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 3000 cars"
-sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 4000 flower102"
-wait_for_jobs
-sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 5000 aircraft"
-sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 6000 ucf101"
-sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 7000 eurosat"
-sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 8000 pets"
-# Wait for all jobs to complete before proceeding
-
+#
+#echo "Running Adv (Eps 4.0 Steps 100) TPT experiments Ensembling: None with Counter Attacks Eps 4/255"
+#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 1000 dtd"
+#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 2000 caltech101"
+#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 3000 cars"
+#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 4000 flower102"
+#
+## Wait for all jobs to complete before proceeding
+#wait_for_jobs
+#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 5000 aircraft"
+#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 6000 ucf101"
+#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 7000 eurosat"
+#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 4.0 100 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 8000 pets"
+#
+## Wait for all jobs to complete before proceeding
+#wait_for_jobs
+#
+#
+#echo "Running Clean TPT experiments Ensembling: None with Counter Attacks Eps 4/255"
+#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 1000 dtd"
+#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 2000 caltech101"
+#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 3000 cars"
+#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 4000 flower102"
+#wait_for_jobs
+#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 5000 aircraft"
+#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 6000 ucf101"
+#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 7000 eurosat"
+#sbatch run.sh "bash scripts/train_cluster.sh /l/users/hashmat.malik/downstream_datasets  0 4 $MODEL_NAME 0.0 0 1 0.1 20 0.01 tpt all /l/users/hashmat.malik/atpt_results true pgd 2 4.0 1.0 0.2 2.0 true /l/users/hashmat.malik/Projects/ATPT/Final_Results 8000 pets"
+## Wait for all jobs to complete before proceeding
+#
