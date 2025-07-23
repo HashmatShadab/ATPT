@@ -51,4 +51,106 @@ pip install packaging==24.2
 pip install gdown==5.2.0
 pip install git+https://github.com/fra31/auto-attack
 
+
 ```
+
+
+## Leonardo HPC Access Guide
+
+
+
+To verify VPN connection:
+
+```bash
+curl ipinfo.io
+```
+
+Make sure the IP belongs to Italy.
+
+---
+
+## 🔐 Generate SSH Keyring (Every 12 Hours)
+
+```bash
+step ssh login fatemeh.mohammadi@unimi.it --provisioner cineca-hpc
+```
+
+> Each run gives **12 hours access**.
+> You will need **OTP**.
+
+---
+
+## 💻 Connect to Leonardo HPC
+
+To connect to a random login node:
+
+```bash
+ssh Leonardo
+```
+
+To always connect to Login Node 1 (useful for `tmux` or `screen`):
+
+```bash
+ssh Leonardo_01
+```
+
+> ⚠️ **Login node usage:**
+>
+> * Only for installation, data transfer, and internet access
+> * **Do not use for long compute tasks**
+> * **Never hold a node idle**, jobs will be auto-cancelled
+
+---
+
+## 📁 Workspace Directory
+
+Use this directory as your base workspace:
+
+```
+/leonardo_work/EUHPC_R04_192/fmohamma
+```
+
+Create and work inside your **project folder** under this path.
+
+---
+
+## 🚀 Launching Compute Nodes
+
+### 🧪 Interactive Mode (for debugging)
+
+```bash
+srun --pty --account=EUHPC_R04_192 \
+     --nodes=1 \
+     --ntasks-per-node=4 \
+     --cpus-per-task=8 \
+     --time=24:00:00 \
+     --partition=boost_usr_prod \
+     --gres=gpu:4 \
+     /bin/bash
+```
+
+Exit the session when done:
+
+```bash
+exit
+```
+
+
+
+## 📊 Check Quota
+
+Check balance:
+
+```bash
+saldo -b
+```
+
+Check compute quota:
+
+```bash
+cinQuota
+```
+
+---
+
+
