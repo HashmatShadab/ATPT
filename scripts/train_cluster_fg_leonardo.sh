@@ -446,7 +446,7 @@ echo "Gaussian Noise at Eps 2/255"
 
 #sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 fare4 0.0 0 0 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 0 2.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results ucf101"
 sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 fare4 4.0 100 0 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 0 2.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results cars"
-sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 fare4 4.0 100 0 0 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 0 2.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results pets"
+sbatch run_1d.sh "bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 fare4 4.0 100 0 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 0 2.0 1.0 0.2 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results pets"
 
 
 
