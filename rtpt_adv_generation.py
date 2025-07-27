@@ -132,7 +132,10 @@ def main():
     if args.image_only_attack:
         log_name += "_image_only_attack"
     if args.image_feature_purify:
-        log_name = f"{log_name}_Purification_type_{args.image_feature_purify_type}_anchors_{args.image_feature_purify_noisy_anchors}_alpha_{args.image_feature_purify_anchors_alpha}_sigma_{args.image_feature_purify_noisy_sigma}_threshold_{args.image_feature_purify_diff_threshold}"
+        if args.image_feature_purify_type == 'noisy_anchor':
+            log_name = f"{log_name}_Purification_type_{args.image_feature_purify_type}_anchors_{args.image_feature_purify_noisy_anchors}_alpha_{args.image_feature_purify_anchors_alpha}_sigma_{args.image_feature_purify_noisy_sigma}_threshold_{args.image_feature_purify_diff_threshold}"
+        elif args.image_feature_purify_type == 'clip_pure':
+            log_name = f"{log_name}_Purification_type_{args.image_feature_purify_type}_steps_{args.image_feature_clipure_steps}_step_size_{args.image_feature_clipure_step_size}"
 
     # Update log name if counter_attack is True
     if args.counter_attack:
@@ -560,26 +563,41 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         # Pass adversarial images to the model
         adv_images = adv_images.cuda(args.gpu, non_blocking=True)
 
+        from contextlib import nullcontext
+
+        context = nullcontext()
         # Model forward pass
-        with torch.no_grad():
+        with context:
 
             # Adversarial examples
             if args.image_feature_purify:
                 # Create a dictionary of image feature purification parameters
-                purify_params = {
-                    'sigma': args.image_feature_purify_noisy_sigma,
-                    'n_anchors': args.image_feature_purify_noisy_anchors,
-                    'alpha': args.image_feature_purify_anchors_alpha,
-                    'diff_threshold': args.image_feature_purify_diff_threshold,
-                }
-                # Compute adversarial accuracy with purification
-                adv_logits_purify, diff_ratio = model(adv_images, move_image_features=True, purify_params=purify_params)
+                if args.image_feature_purify_type == "noisy_anchor":
+                    purify_params = {
+                        'sigma': args.image_feature_purify_noisy_sigma,
+                        'n_anchors': args.image_feature_purify_noisy_anchors,
+                        'alpha': args.image_feature_purify_anchors_alpha,
+                        'diff_threshold': args.image_feature_purify_diff_threshold,
+                    }
+                    # Compute adversarial accuracy with purification
+                    adv_logits_purify, diff_ratio = model(adv_images, move_image_features_noisy_anchor=True, purify_params=purify_params)
+                    diff_ratio_adv += diff_ratio.item()
+                elif args.image_feature_purify_type == "clip_pure":
+                    purify_params = {
+                        'steps': args.image_feature_clipure_steps,
+                        'step_size': args.image_feature_clipure_step_size,
+                    }
+                    # Compute adversarial accuracy with purification
+                    adv_logits_purify = model(adv_images, move_image_features_text_anchor=True,
+                                                          purify_params=purify_params, null_text_features=template_text_embeddings)
+                else:
+                    raise ValueError(f"Unknown  type: {args.image_feature_purify_type}")
+
                 # Calculate metrics for purified adversarial images
                 adv_probs_purify = adv_logits_purify.softmax(dim=-1)
                 _, adv_pred_purify = adv_probs_purify.max(1)
                 adv_correct_purify += adv_pred_purify.eq(target).sum().item()
 
-                diff_ratio_adv += diff_ratio.item()
 
                 # Compute original adversarial accuracy without purification
                 adv_logits = model(adv_images)
@@ -615,19 +633,32 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             # Clean Samples
             if args.image_feature_purify:
                 # Create a dictionary of image feature purification parameters
-                purify_params = {
-                    'sigma': args.image_feature_purify_noisy_sigma,
-                    'n_anchors': args.image_feature_purify_noisy_anchors,
-                    'alpha': args.image_feature_purify_anchors_alpha,
-                    'diff_threshold': args.image_feature_purify_diff_threshold,
-                }
-                # Compute clean accuracy with purification
-                clean_logits_purify, diff_ratio = model(images, move_image_features=True, purify_params=purify_params)
+                if args.image_feature_purify_type == "noisy_anchor":
+                    purify_params = {
+                        'sigma': args.image_feature_purify_noisy_sigma,
+                        'n_anchors': args.image_feature_purify_noisy_anchors,
+                        'alpha': args.image_feature_purify_anchors_alpha,
+                        'diff_threshold': args.image_feature_purify_diff_threshold,
+                    }
+                    # Compute clean accuracy with purification
+                    clean_logits_purify, diff_ratio = model(images, move_image_features_noisy_anchor=True, purify_params=purify_params)
+                    diff_ratio_clean += diff_ratio.item()
+                elif args.image_feature_purify_type == "clip_pure":
+                    purify_params = {
+                        'steps': args.image_feature_clipure_steps,
+                        'step_size': args.image_feature_clipure_step_size,
+                    }
+                    # Compute clean accuracy with purification
+                    clean_logits_purify = model(images, move_image_features_text_anchor=True,
+                                                            purify_params=purify_params, null_text_features=template_text_embeddings)
+                else:
+                    raise ValueError(f"Unknown  type: {args.image_feature_purify_type}")
+
+
                 # Calculate metrics for purified clean images
                 clean_probs_purify = clean_logits_purify.softmax(dim=-1)
                 _, clean_pred_purify = clean_probs_purify.max(1)
                 clean_correct_purify += clean_pred_purify.eq(target).sum().item()
-                diff_ratio_clean += diff_ratio.item()
 
                 # Compute original clean accuracy without purification
                 clean_logits = model(images)
@@ -966,11 +997,18 @@ if __name__ == '__main__':
 
     # Image feature Purification
     parser.add_argument('--image_feature_purify', default=False, type=lambda x: (str(x).lower() == 'true'))
-    parser.add_argument('--image_feature_purify_type', default='noisy_anchor', choices=["noisy_anchor"], type=str)
+    parser.add_argument('--image_feature_purify_type', default='noisy_anchor', choices=["noisy_anchor", "clip_pure"], type=str)
     parser.add_argument('--image_feature_purify_noisy_anchors', default=10, type=int)
     parser.add_argument('--image_feature_purify_anchors_alpha', default=1.2, type=float)
     parser.add_argument('--image_feature_purify_noisy_sigma', default=0.18, type=float)
     parser.add_argument('--image_feature_purify_diff_threshold', default=0.0, type=float)
+
+    parser.add_argument('--image_feature_clipure_steps', default=10, type=int)
+    parser.add_argument('--image_feature_clipure_step_size', default=10.0, type=float)
+
+
+
+
     parser.add_argument('--save_plots', default=False, type=lambda x: (str(x).lower() == 'true'),
                         help='Whether to save probability bar plots during evaluation')
 

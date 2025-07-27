@@ -20,7 +20,7 @@ DOWNLOAD_ROOT='cache/clip'
 
 mu = (0.48145466, 0.4578275, 0.40821073)
 std = (0.26862954, 0.26130258, 0.27577711)
-
+from torch.nn.functional import cosine_similarity
 
 class ImageNormalizer(nn.Module):
 
@@ -363,7 +363,7 @@ class ClipTestTimeTuning(nn.Module):
 
         return logits
 
-    def inference_move_image_features(self, image, sigma=0.18, n_anchors=10, alpha=1.2, diff_threshold=0.85):
+    def inference_move_image_features_noisy_anchor(self, image, sigma=0.18, n_anchors=10, alpha=1.2, diff_threshold=0.85):
         """
         image: Tensor of shape [B, C, H, W]
         sigma: standard deviation for Gaussian noise
@@ -418,8 +418,65 @@ class ClipTestTimeTuning(nn.Module):
 
         return logits, diff_ratio.mean()
 
-    def forward(self, input, get_image_features=False, normalize=False, get_image_text_features=False, text_features=None,
-                move_image_features=False, purify_params=None):
+    def inference_move_image_features_text_anchor(self, image, steps=10, step_size=10.0, null_text_features=None):
+        """
+        image: Tensor of shape [B, C, H, W]
+        steps: number of steps for gradient descent
+        step_size: step size for gradient descent
+        """
+        # Step 1: Encode source feature (adversarial or clean)
+        image_input = self.normalize(image.type(self.dtype))
+        image_embedding = self.image_encoder(image_input)
+        image_embedding_norm = image_embedding.norm(dim=-1, keepdim=True)
+        image_embedding = image_embedding / image_embedding_norm
+
+        batch, device = image_embedding.shape[0], image_embedding.device
+
+        # Step 2: Make sure requires gradient is True for image embeddings
+        if not image_embedding.requires_grad:
+            image_embedding.requires_grad = True
+
+        # Step 3: Load Null Text features
+        # null_text_features = null_text_features.mean(dim=1)
+        null_text_features = null_text_features.repeat(batch, 1).to(device)
+
+
+        # Step 4: Run image embedding optimization
+        momentum = torch.zeros_like(image_embedding)
+        norm = "L2"
+        gamma = 0.
+
+        for i in range(steps):
+            r = torch.norm(image_embedding, dim=1, keepdim=True)
+            u = image_embedding / r
+
+            logits_uncond = cosine_similarity(image_embedding, null_text_features, dim=1)
+            loss = - logits_uncond
+            grad = torch.autograd.grad(loss, image_embedding, torch.ones_like(loss), retain_graph=True)[0]
+
+            grad_u = r * grad
+
+            if norm == "Linf":
+                momentum = gamma * momentum - (1 - gamma) * grad_u / torch.norm(grad_u, p=1)
+                u = u + step_size * momentum.sign()
+            elif norm == "L2":
+                momentum = gamma * momentum - (1 - gamma) * grad_u / torch.norm(grad_u, p=2)
+                u = u + step_size * momentum
+
+            u = u / torch.norm(u, dim=1, keepdim=True)
+            image_embedding = r * u
+
+        # Get text features and normalize
+        text_features = self.get_text_features()
+
+        # Step 5: Compute logits
+        logit_scale = self.logit_scale.exp()
+        logits = logit_scale * image_embedding @ text_features.t()
+
+        return logits
+
+    def forward(self, input, get_image_features=False, normalize=False, get_image_text_features=False, text_features=None, null_text_features=None,
+                move_image_features_noisy_anchor=False, move_image_features_text_anchor=False, purify_params=None):
         if isinstance(input, Tuple):
             view_0, view_1, view_2 = input
             return self.contrast_prompt_tuning(view_0, view_1, view_2)
@@ -432,7 +489,7 @@ class ClipTestTimeTuning(nn.Module):
             elif get_image_text_features:
                 image_features, text_features, logit_scale = self.forward_features(input)
                 return image_features, text_features, logit_scale
-            elif move_image_features:
+            elif move_image_features_noisy_anchor:
                 # Set default values if purify_params is not provided
                 if purify_params is None:
                     purify_params = {'sigma': 0.18, 'n_anchors': 10, 'alpha': 1.2, 'diff_threshold':0.85}
@@ -443,8 +500,20 @@ class ClipTestTimeTuning(nn.Module):
                 alpha = purify_params.get('alpha', 1.2)
                 diff_threshold = purify_params.get('diff_threshold', 0.85)
 
-                logits, diff_ratio = self.inference_move_image_features(input, sigma=sigma, n_anchors=n_anchors, alpha=alpha, diff_threshold=diff_threshold)
+                logits, diff_ratio = self.inference_move_image_features_noisy_anchor(input, sigma=sigma, n_anchors=n_anchors, alpha=alpha, diff_threshold=diff_threshold)
                 return logits, diff_ratio
+            elif move_image_features_text_anchor:
+                # Set default values if purify_params is not provided
+                if purify_params is None:
+                    purify_params = {'steps': 10, 'step_size': 10.0}
+
+                # Extract parameters from the dictionary
+                steps = purify_params.get('steps', 10)
+                step_size = purify_params.get('step_size', 10.0)
+
+
+                logits = self.inference_move_image_features_text_anchor(input, steps=steps, step_size=step_size, null_text_features=null_text_features)
+                return logits
             else:
                 if text_features is None:
                     return self.inference(input)
@@ -540,19 +609,21 @@ def get_text_embeddings(clip_arch, classnames, class_templates, device="cuda"):
     all_text_features = torch.stack(all_text_features, dim=0)  # [num_classes, D]
 
     null_templates = [template.format(c="") for template in class_templates]
-    temp_emb_all = []
+    all_null_text_features = []
 
-    for temp in null_templates:
-        text_purify = tokenize(temp, context_length=40).to(device)
+    texts_null = tokenize(null_templates, context_length=40).to(device)
 
-        text_embed = text_encoder(text_purify)
-        text_embed = text_embed / text_embed.norm()
-        temp_emb_all.append(text_embed)
+    text_null_features = text_encoder(texts_null)
+    text_null_features = text_null_features / text_null_features.norm(dim=-1, keepdim=True)
+    mean_text_null_feature = text_null_features.mean(dim=0)
+    mean_text_null_feature = mean_text_null_feature / mean_text_null_feature.norm()
 
-    temp_emb_all = torch.stack(temp_emb_all, dim=1).to(device)
+    all_null_text_features.append(mean_text_null_feature)
+
+    all_null_text_features = torch.stack(all_null_text_features, dim=0).to(device)
 
     # delete clip, text_encoder
     del clip
     del text_encoder
 
-    return all_text_features, temp_emb_all
+    return all_text_features, all_null_text_features
