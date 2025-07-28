@@ -464,7 +464,7 @@ def compute_anchor_loss(model, expanded_anchors, logger):
     return anchor_loss
 
 
-def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, original_text_features=None, expanded_anchors=None, logger=None, max_tta_steps=0,):
+def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, class_text_embeddings=None, original_text_features=None, expanded_anchors=None, logger=None, max_tta_steps=0,):
     """
     Perform test-time tuning of the model using entropy minimization.
 
@@ -520,7 +520,8 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, original_text_
     # Perform test-time adaptation for specified number of steps
     for j in range(args.tta_steps):
         # Forward pass
-        output = model(inputs)
+        with torch.no_grad():
+            output = model(inputs, text_features=class_text_embeddings)
 
         # Use only confident samples for adaptation
         if selected_idx is not None:
@@ -540,6 +541,8 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, original_text_
         # Calculate loss as average entropy (lower is better)
         # Initialize a dictionary to store individual loss values for this step
         step_losses = {}
+        output = model(inputs)
+        output = output[selected_idx]
 
         if args.tpt_loss == "rtpt_":
             loss = rtpt_entropy_avg(output)
@@ -1012,7 +1015,8 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                 selected_ids, batch_entropies, cosine_similarities, loss_values = test_time_tuning_otpt(
                     model, images, optimizer, scaler, args, 
                     original_text_features=original_text_features, 
-                    expanded_anchors=expanded_anchors, 
+                    expanded_anchors=expanded_anchors,
+                    class_text_embeddings=class_text_embeddings,
                     logger=logger,
                     max_tta_steps=args.max_tta_steps,
                 )
