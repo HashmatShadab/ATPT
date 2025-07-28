@@ -129,8 +129,17 @@ def main():
     # Create a log name that includes TTA variations
     # Format floating point values and ensure filename is valid
     log_name = f"ADV_Generation_eps_{args.eps}_steps_{args.steps}"
+    if args.transferability:
+        log_name = f"ADV_Generation_source_model_{args.source_model}_eps_{args.eps}_steps_{args.steps}"
+    else:
+        log_name = f"ADV_Generation_eps_{args.eps}_steps_{args.steps}"
+
     if args.image_only_attack:
         log_name += "_image_only_attack"
+    elif args.image_predicted_label_attack:
+        log_name += "_image_predicted_label_attack"
+    else:
+        log_name = log_name
     if args.image_feature_purify:
         if args.image_feature_purify_type == 'noisy_anchor':
             log_name = f"{log_name}_Purification_type_{args.image_feature_purify_type}_anchors_{args.image_feature_purify_noisy_anchors}_alpha_{args.image_feature_purify_anchors_alpha}_sigma_{args.image_feature_purify_noisy_sigma}_threshold_{args.image_feature_purify_diff_threshold}"
@@ -461,9 +470,9 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     if args.eps > 0.0:
         assert args.steps > 0
         # Create PGD attack with specified parameters
-        atk = torchattacks.PGD(model, eps=args.eps/255, alpha=args.alpha/255, steps=args.steps, image_only_attack=args.image_only_attack)
+        atk = torchattacks.PGD(model, eps=args.eps/255, alpha=args.alpha/255, steps=args.steps, image_only_attack=args.image_only_attack, image_predicted_label_attack=args.image_predicted_label_attack)
         if logger:
-            logger.info(f"Using PGD attack with epsilon: {args.eps/255:.6f}, alpha: {args.alpha/255:.6f}, steps: {args.steps} image only attack {args.image_only_attack}")
+            logger.info(f"Using PGD attack with epsilon: {args.eps/255:.6f}, alpha: {args.alpha/255:.6f}, steps: {args.steps} image only attack {args.image_only_attack} image predicted label attack {args.image_predicted_label_attack}")
 
     if args.counter_attack:
         # Create counter-attack with specified parameters
@@ -508,9 +517,14 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     # Create directory for saving adversarial images if needed
     if args.image_only_attack:
         adv_images_dir = os.path.join(args.output_dir, f"adv_images_eps_{args.eps}_alpha_{args.alpha}_steps_{args.steps}_image_only_attack")
+    elif args.image_predicted_label_attack:
+        adv_images_dir = os.path.join(args.output_dir, f"adv_images_eps_{args.eps}_alpha_{args.alpha}_steps_{args.steps}_image_predicted_label_attack")
     else:
         adv_images_dir = os.path.join(args.output_dir, f"adv_images_eps_{args.eps}_alpha_{args.alpha}_steps_{args.steps}")
 
+    if args.transferability:
+        adv_images_dir = adv_images_dir.replace(args.arch, args.source_model)
+        logger.info(f"Adversarial examples will be loaded from {adv_images_dir} and evaluated on {args.arch}")
 
 
     if args.eps > 0.0:
@@ -940,6 +954,10 @@ if __name__ == '__main__':
                         help='Model architecture (RN50, ViT-B/32, etc.)')
     parser.add_argument('--resolution', default=224, type=int,
                         help='CLIP image resolution')
+    parser.add_argument('--transferability', default=False, type=lambda x: (str(x).lower() == 'true'))
+    parser.add_argument('--source_model', default='fare4', type=str, help="model on which adversarial examples will be generated")
+
+
 
     # Hardware and performance parameters
     parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
@@ -974,6 +992,8 @@ if __name__ == '__main__':
 
     # Adversarial attack parameters
     parser.add_argument('--image_only_attack', default=False, type=lambda x: (str(x).lower() == 'true') )
+    parser.add_argument('--image_predicted_label_attack', default=False, type=lambda x: (str(x).lower() == 'true') )
+
     parser.add_argument('--eps', default=1.0, type=float,
                         help='Epsilon for adversarial attack (0.0 for clean evaluation)')
     parser.add_argument('--alpha', default=0.0, type=float,

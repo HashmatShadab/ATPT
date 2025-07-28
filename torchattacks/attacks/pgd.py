@@ -29,13 +29,14 @@ class PGD(Attack):
 
     """
 
-    def __init__(self, model, eps=8 / 255, alpha=2 / 255, steps=10, random_start=True, image_only_attack=False):
+    def __init__(self, model, eps=8 / 255, alpha=2 / 255, steps=10, random_start=True, image_only_attack=False, image_predicted_label_attack=False):
         super().__init__("PGD", model)
         self.eps = eps
         self.alpha = alpha
         self.steps = steps
         self.random_start = random_start
         self.image_only_attack = image_only_attack
+        self.image_predicted_label_attack = image_predicted_label_attack
         self.supported_mode = ["default", "targeted"]
 
     def forward(self, images, labels):
@@ -85,7 +86,12 @@ class PGD(Attack):
                 if self.targeted:
                     cost = -loss(outputs, target_labels)
                 else:
-                    cost = loss(outputs, labels)
+                    if self.image_predicted_label_attack:
+                        # get predicted labels and use them to compute the cost
+                        predicted_labels = torch.argmax(outputs, dim=1)
+                        cost = loss(outputs, predicted_labels)
+                    else:
+                        cost = loss(outputs, labels)
 
 
             #cost_list.append(cost.item())
