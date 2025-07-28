@@ -520,8 +520,9 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, class_text_emb
     # Perform test-time adaptation for specified number of steps
     for j in range(args.tta_steps):
         # Forward pass
-        with torch.no_grad():
-            output = model(inputs, text_features=class_text_embeddings)
+        # with torch.no_grad():
+        #     output = model(inputs, text_features=class_text_embeddings)
+        output = model(inputs)
 
         # Use only confident samples for adaptation
         if selected_idx is not None:
@@ -541,8 +542,8 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, class_text_emb
         # Calculate loss as average entropy (lower is better)
         # Initialize a dictionary to store individual loss values for this step
         step_losses = {}
-        output = model(inputs)
-        output = output[selected_idx]
+        # output = model(inputs)
+        # output = output[selected_idx]
 
         if args.tpt_loss == "rtpt_":
             loss = rtpt_entropy_avg(output)
