@@ -217,8 +217,12 @@ def get_zeroshot_templates(dset, template_path='zeroshot-templates.json'):
     Raises:
         ValueError: If dataset name is unknown.
     """
-    with open(template_path, 'r') as f:
-        templates = json.load(f)
+    if template_path == "80_imagenet":
+        with open('zeroshot-templates.json', 'r') as f:
+            templates = json.load(f)
+    else:
+        with open(template_path, 'r') as f:
+            templates = json.load(f)
 
     dset = dset.lower()
 
@@ -240,8 +244,10 @@ def get_zeroshot_templates(dset, template_path='zeroshot-templates.json'):
 
     if dset not in dataset_key_map:
         raise ValueError(f"Unknown dataset: {dset}")
-
-    key = dataset_key_map[dset]
+    if template_path == "80_imagenet":
+        key = 'imagenet1k'
+    else:
+        key = dataset_key_map[dset]
     return templates[key]
 
 def ECE_Loss(num_bins, predictions, confidences, correct):
@@ -519,10 +525,12 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, class_text_emb
 
     # Perform test-time adaptation for specified number of steps
     for j in range(args.tta_steps):
-        # Forward pass
-        # with torch.no_grad():
-        #     output = model(inputs, text_features=class_text_embeddings)
-        output = model(inputs)
+        # 1. Forward pass
+        with torch.no_grad():
+            output = model(inputs, text_features=class_text_embeddings)
+
+        # 2. Forward pass
+        # output = model(inputs)
 
         # Use only confident samples for adaptation
         if selected_idx is not None:
@@ -542,8 +550,10 @@ def test_time_tuning_otpt(model, inputs, optimizer, scaler, args, class_text_emb
         # Calculate loss as average entropy (lower is better)
         # Initialize a dictionary to store individual loss values for this step
         step_losses = {}
-        # output = model(inputs)
-        # output = output[selected_idx]
+
+        # 2. Forward Pass
+        output = model(inputs)
+        output = output[selected_idx]
 
         if args.tpt_loss == "rtpt_":
             loss = rtpt_entropy_avg(output)
@@ -1456,7 +1466,7 @@ def main():
             classnames = classnames_all
     args.classnames = classnames
 
-    class_templates = get_zeroshot_templates(dset)
+    class_templates = get_zeroshot_templates(dset, args.zs_template_path)
 
 
 
@@ -1684,6 +1694,8 @@ if __name__ == '__main__':
     parser.add_argument('--batch_entropy_name', type=str, default='entropies.json',)
     parser.add_argument('--use_class_text_embeddings', type=lambda x: (str(x).lower() == 'true'), default=False,
                         help='Whether to use class text embeddings in model forward pass')
+    parser.add_argument('--zs_template_path', type=str, default='zeroshot-templates.json')
+
 
 
     # Run the main function
