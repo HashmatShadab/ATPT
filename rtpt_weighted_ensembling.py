@@ -175,12 +175,24 @@ def create_log_dir(args):
     else:
         ensemble_part = [f"Inference_Ensemble_{args.ensemble_type}"]
 
+    if args.use_class_text_embeddings:
+        ensemble_part = [f"{ensemble_part[0]}_use_text_embedding_{args.zs_template_path.split('.')[0]}"]
+
     # Adversarial-specific part (include eps and attack steps if adversarial)
     if data_type == "Adversarial":
         if args.transferability:
-            data_type =f"{data_type}_source_model_{args.source_model}_Eps_{args.eps}_Steps_{args.steps}" if args.eps > 0 else ""
+            data_type =f"{data_type}_source_model_{args.source_model}_Eps_{args.eps}_Steps_{args.steps}"
         else:
-            data_type = f"{data_type}_Eps_{args.eps}_Steps_{args.steps}" if args.eps > 0 else ""
+            data_type = f"{data_type}_Eps_{args.eps}_Steps_{args.steps}"
+
+        if args.image_only_attack:
+            data_type += "_image_only_attack"
+        elif args.image_predicted_label_attack:
+            data_type += "_image_predicted_label_attack"
+        else:
+            data_type = data_type
+    else:
+        data_type = ""
 
     # Combine folder structure
     # Create a list of path parts
@@ -220,8 +232,13 @@ def get_zeroshot_templates(dset, template_path='zeroshot-templates.json'):
     Raises:
         ValueError: If dataset name is unknown.
     """
-    with open(template_path, 'r') as f:
-        templates = json.load(f)
+
+    if template_path == "80_imagenet":
+        with open('zeroshot-templates.json', 'r') as f:
+            templates = json.load(f)
+    else:
+        with open(template_path, 'r') as f:
+            templates = json.load(f)
 
     dset = dset.lower()
 
@@ -244,8 +261,12 @@ def get_zeroshot_templates(dset, template_path='zeroshot-templates.json'):
     if dset not in dataset_key_map:
         raise ValueError(f"Unknown dataset: {dset}")
 
-    key = dataset_key_map[dset]
+    if template_path == "80_imagenet":
+        key = 'imagenet1k'
+    else:
+        key = dataset_key_map[dset]
     return templates[key]
+
 
 def ECE_Loss(num_bins, predictions, confidences, correct):
     #ipdb.set_trace()
@@ -864,9 +885,10 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     if args.eps > 0.0:
         assert args.steps > 0
         # Create PGD attack with specified parameters
-        atk = torchattacks.PGD(model, eps=args.eps/255, alpha=args.alpha/255, steps=args.steps)
+        atk = torchattacks.PGD(model, eps=args.eps/255, alpha=args.alpha/255, steps=args.steps,
+                               image_only_attack=args.image_only_attack, image_predicted_label_attack=args.image_predicted_label_attack)
         if logger:
-            logger.info(f"Using PGD attack with epsilon: {args.eps}, alpha: {args.alpha}, steps: {args.steps}")
+            logger.info(f"Using PGD attack with epsilon: {args.eps/255:.6f}, alpha: {args.alpha/255:.6f}, steps: {args.steps} image only attack {args.image_only_attack} image predicted label attack {args.image_predicted_label_attack}")
 
     if args.counter_attack:
         # Create counter-attack with specified parameters
@@ -903,10 +925,21 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     end = time.time()
     # Create directory for saving adversarial images if needed
-    adv_images_dir = os.path.join(args.output_dir, f"adv_images_eps_{args.eps}_alpha_{args.alpha}_steps_{args.steps}")
+
+    if args.image_only_attack:
+        adv_images_dir = os.path.join(args.output_dir,
+                                      f"adv_images_eps_{args.eps}_alpha_{args.alpha}_steps_{args.steps}_image_only_attack")
+    elif args.image_predicted_label_attack:
+        adv_images_dir = os.path.join(args.output_dir,
+                                      f"adv_images_eps_{args.eps}_alpha_{args.alpha}_steps_{args.steps}_image_predicted_label_attack")
+    else:
+        adv_images_dir = os.path.join(args.output_dir,
+                                      f"adv_images_eps_{args.eps}_alpha_{args.alpha}_steps_{args.steps}")
+
     if args.transferability:
         adv_images_dir = adv_images_dir.replace(args.arch, args.source_model)
         logger.info(f"Adversarial examples will be loaded from {adv_images_dir} and evaluated on {args.arch}")
+
     if args.eps > 0.0:
         os.makedirs(adv_images_dir, exist_ok=True)
         if logger:
@@ -1457,7 +1490,7 @@ def main():
             classnames = classnames_all
     args.classnames = classnames
 
-    class_templates = get_zeroshot_templates(dset)
+    class_templates = get_zeroshot_templates(dset, args.zs_template_path)
 
 
 
@@ -1626,6 +1659,10 @@ if __name__ == '__main__':
                         help='Directory to save log results')
 
     # Adversarial attack parameters
+    parser.add_argument('--image_only_attack', default=False, type=lambda x: (str(x).lower() == 'true') )
+    parser.add_argument('--image_predicted_label_attack', default=False, type=lambda x: (str(x).lower() == 'true') )
+
+
     parser.add_argument('--eps', default=0.0, type=float,
                         help='Epsilon for adversarial attack (0.0 for clean evaluation)')
     parser.add_argument('--alpha', default=0.0, type=float,
@@ -1688,6 +1725,8 @@ if __name__ == '__main__':
     parser.add_argument('--batch_entropy_name', type=str, default='entropies.json',)
     parser.add_argument('--use_class_text_embeddings', type=lambda x: (str(x).lower() == 'true'), default=False,
                         help='Whether to use class text embeddings in model forward pass')
+    parser.add_argument('--zs_template_path', type=str, default='zeroshot-templates.json')
+
 
 
     # Run the main function
