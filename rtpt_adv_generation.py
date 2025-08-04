@@ -470,7 +470,12 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     if args.eps > 0.0:
         assert args.steps > 0
         # Create PGD attack with specified parameters
-        atk = torchattacks.PGD(model, eps=args.eps/255, alpha=args.alpha/255, steps=args.steps, image_only_attack=args.image_only_attack, image_predicted_label_attack=args.image_predicted_label_attack)
+        if args.image_only_attack:
+            atk = torchattacks.PGD_PRM(model, eps=args.eps/255, alpha=args.alpha/255, steps=args.steps)
+        else:
+            atk = torchattacks.PGD(model, eps=args.eps / 255, alpha=args.alpha / 255, steps=args.steps,
+                                   image_only_attack=args.image_only_attack,
+                                   image_predicted_label_attack=args.image_predicted_label_attack)
         if logger:
             logger.info(f"Using PGD attack with epsilon: {args.eps/255:.6f}, alpha: {args.alpha/255:.6f}, steps: {args.steps} image only attack {args.image_only_attack} image predicted label attack {args.image_predicted_label_attack}")
 
