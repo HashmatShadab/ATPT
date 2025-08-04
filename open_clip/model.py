@@ -281,9 +281,21 @@ class CLIP(nn.Module):
                 no_wd.add('visual.' + n)
         return no_wd
 
-    def encode_image(self, image, normalize: bool = False):
-        features = self.visual(image)
-        return F.normalize(features, dim=-1) if normalize else features
+    def encode_image(self, image, normalize: bool = False, get_all_layers=False):
+        if not get_all_layers:
+            features = self.visual(image)
+            return F.normalize(features, dim=-1) if normalize else features
+        else:
+            all_clip_features = self.visual(image, get_all_layers=True)['image_intermediates']
+
+            if normalize:
+                all_normalized_features = []
+                for f in all_clip_features:
+                    all_normalized_features.append(F.normalize(f, dim=-1))
+                return all_normalized_features
+            else:
+                return all_clip_features
+
 
     def encode_text(self, text, normalize: bool = False):
         cast_dtype = self.transformer.get_cast_dtype()

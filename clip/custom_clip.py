@@ -475,7 +475,7 @@ class ClipTestTimeTuning(nn.Module):
 
         return logits
 
-    def forward(self, input, get_image_features=False, normalize=False, get_image_text_features=False, text_features=None, null_text_features=None,
+    def forward(self, input, get_prm_layer_features=False, get_image_features=False, normalize=False, get_image_text_features=False, text_features=None, null_text_features=None,
                 move_image_features_noisy_anchor=False, move_image_features_text_anchor=False, purify_params=None):
         if isinstance(input, Tuple):
             view_0, view_1, view_2 = input
@@ -486,6 +486,9 @@ class ClipTestTimeTuning(nn.Module):
             if get_image_features:
                 image_features = self.get_image_features(input, normalize=normalize)
                 return image_features
+            if get_prm_layer_features:
+                image_features_all_layers = self.get_image_features_all_layers(input, normalize=normalize)
+                return image_features_all_layers
             elif get_image_text_features:
                 image_features, text_features, logit_scale = self.forward_features(input)
                 return image_features, text_features, logit_scale
@@ -525,6 +528,20 @@ class ClipTestTimeTuning(nn.Module):
         image_features = self.image_encoder(self.normalize(input.type(self.dtype)))
 
         return F.normalize(image_features, dim=-1) if normalize else image_features
+
+    def get_image_features_all_layers(self, input, normalize=False):
+        image_features_all_layers_list = self.image_encoder(self.normalize(input.type(self.dtype)), get_all_layers=True)
+        # if normalize, normalize all the features
+        if normalize:
+            normalized_layers = []
+            for layer in image_features_all_layers_list:
+                normalized_layers.append(F.normalize(layer, dim=-1))
+            return normalized_layers
+        else:
+            return image_features_all_layers_list
+
+
+
 
     def forward_features(self, input):
         image_features = self.image_encoder(self.normalize(input.type(self.dtype)))

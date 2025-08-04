@@ -362,10 +362,21 @@ class ClipTestTimeTuning(nn.Module):
     def reset_classnames(self, classnames, arch):
         self.prompt_learner.reset_classnames(classnames, arch)
 
-    def encode_image(self, image, normalize: bool = False):
-        features = self.model.encode_image(image)
-        # F.normalize doesn't modify the input tensor in-place, so this is safe
-        return F.normalize(features, dim=-1) if normalize else features
+    def encode_image(self, image, normalize: bool = False, get_all_layers=False):
+        if not get_all_layers:
+            features = self.model.encode_image(image)
+            # F.normalize doesn't modify the input tensor in-place, so this is safe
+            return F.normalize(features, dim=-1) if normalize else features
+        else:
+            image_features_all_layers_list = self.model.encode_image(image, get_all_layers=True)
+            # if normalize, normalize all the features
+            if normalize:
+                normalized_layers = []
+                for layer in image_features_all_layers_list:
+                    normalized_layers.append(F.normalize(layer, dim=-1))
+                return normalized_layers
+            else:
+                return image_features_all_layers_list
 
 
     def get_text_features(self, normalize=False):
@@ -525,7 +536,7 @@ class ClipTestTimeTuning(nn.Module):
 
         return logits
 
-    def forward(self, input, get_image_features=False, normalize=False, get_image_text_features=False, text_features=None, null_text_features=False,
+    def forward(self, input, get_prm_layer_features=False, get_image_features=False, normalize=False, get_image_text_features=False, text_features=None, null_text_features=False,
                 move_image_features_noisy_anchor=False, move_image_features_text_anchor=False, purify_params=None):
         if isinstance(input, Tuple):
             view_0, view_1, view_2 = input
@@ -536,6 +547,9 @@ class ClipTestTimeTuning(nn.Module):
             if get_image_features:
                 image_features = self.encode_image(self.normalize(input.type(self.dtype)), normalize=normalize)
                 return image_features
+            if get_prm_layer_features:
+                image_features_all_layers = self.encode_image(self.normalize(input.type(self.dtype)), normalize=normalize, get_all_layers=True)
+                return image_features_all_layers
             elif get_image_text_features:
                 image_features, text_features, logit_scale = self.forward_features(input)
                 return image_features, text_features, logit_scale
