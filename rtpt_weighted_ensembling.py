@@ -186,7 +186,7 @@ def create_log_dir(args):
             data_type = f"{data_type}_Eps_{args.eps}_Steps_{args.steps}"
 
         if args.image_only_attack:
-            data_type += "_image_only_attack"
+            data_type += f"_image_only_attack_{args.image_only_attack_type}"
         elif args.image_predicted_label_attack:
             data_type += "_image_predicted_label_attack"
         else:
@@ -886,7 +886,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         assert args.steps > 0
         # Create PGD attack with specified parameters
         atk = torchattacks.PGD(model, eps=args.eps/255, alpha=args.alpha/255, steps=args.steps,
-                               image_only_attack=args.image_only_attack, image_predicted_label_attack=args.image_predicted_label_attack)
+                               image_only_attack=False, image_predicted_label_attack=args.image_predicted_label_attack)
         if logger:
             logger.info(f"Using PGD attack with epsilon: {args.eps/255:.6f}, alpha: {args.alpha/255:.6f}, steps: {args.steps} image only attack {args.image_only_attack} image predicted label attack {args.image_predicted_label_attack}")
 
@@ -928,7 +928,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     if args.image_only_attack:
         adv_images_dir = os.path.join(args.output_dir,
-                                      f"adv_images_eps_{args.eps}_alpha_{args.alpha}_steps_{args.steps}_image_only_attack")
+                                      f"adv_images_eps_{args.eps}_alpha_{args.alpha}_steps_{args.steps}_image_only_attack_{args.image_only_attack_type}")
     elif args.image_predicted_label_attack:
         adv_images_dir = os.path.join(args.output_dir,
                                       f"adv_images_eps_{args.eps}_alpha_{args.alpha}_steps_{args.steps}_image_predicted_label_attack")
@@ -1660,6 +1660,8 @@ if __name__ == '__main__':
 
     # Adversarial attack parameters
     parser.add_argument('--image_only_attack', default=False, type=lambda x: (str(x).lower() == 'true') )
+    parser.add_argument('--image_only_attack_type', default='prm', choices=["prm", "prm_adam"], type=str)
+
     parser.add_argument('--image_predicted_label_attack', default=False, type=lambda x: (str(x).lower() == 'true') )
 
 
