@@ -1015,7 +1015,8 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
         # Get original model outputs and features
         with torch.no_grad():
-            clip_output = model(image)  # Output for original image
+            purify_params = {'sigma': args.image_feature_purify_noisy_sigma, 'n_anchors': args.image_feature_purify_noisy_anchors, 'alpha': 1.0, 'diff_threshold': 0.0}
+            clip_output,_ = model(image, move_image_features_noisy_anchor=True, purify_params=purify_params)  # Output for original image
             clip_features, _, _ = model.forward_features(images)  # Features for all images
             # clip_outputs = model(images)  # Outputs for all images
 

@@ -43,11 +43,13 @@ LOG_OUTPUT_DIR=${22:-"none"}
 DATASET_NAME=${23:-"all"}
 USE_CLASS_EMBEDDING_FOR_ZS=${24:-"false"}
 ZS_TEMPLATE_PATH=${25:-"zeroshot-templates.json"}
+NOISY_SIGMA=${26:-0.18}
+NOISY_ANCHORS=${27:-10}
 
 # Common parameters for all runs
 COMMON_PARAMS="--gpu $GPU --n_ctx 4 --ctx_init a_photo_of_a --tpt_loss $TPT_LOSS --use_class_text_embeddings $USE_CLASS_EMBEDDING_FOR_ZS --zs_template_path $ZS_TEMPLATE_PATH"
 COMMON_PARAMS+=" --output_dir $OUTPUT_DIR --log_output_dir $LOG_OUTPUT_DIR  --eps $EPSILON --steps $ATTACK_STEPS"
-COMMON_PARAMS+=" --selection_p $FRACTION_CONFIDENT_SAMPLES --tta_steps $TTA_STEPS"
+COMMON_PARAMS+=" --selection_p $FRACTION_CONFIDENT_SAMPLES --tta_steps $TTA_STEPS --image_feature_purify_noisy_anchors $NOISY_ANCHORS --image_feature_purify_noisy_sigma $NOISY_SIGMA"
 COMMON_PARAMS+=" --ensemble_type $ENSEMBLE_TYPE --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING"
 COMMON_PARAMS+=" --counter_attack $COUNTER_ATTACK --counter_attack_type $COUNTER_ATTACK_TYPE --counter_attack_steps $COUNTER_ATTACK_STEPS --counter_attack_eps $COUNTER_ATTACK_EPSILON"
 COMMON_PARAMS+=" --counter_attack_alpha $COUNTER_ATTACK_ALPHA --counter_attack_tau_thres $COUNTER_ATTACK_TAU_THRES --counter_attack_beta $COUNTER_ATTACK_BETA --counter_attack_weighted_perturbations $COUNTER_ATTACK_W_PERTURBATION"
@@ -82,6 +84,10 @@ echo "Counter Attack Beta: $COUNTER_ATTACK_BETA"
 echo "Counter Attack Weighted Perturbations: $COUNTER_ATTACK_W_PERTURBATION"
 echo "ZS Use Class Embedding: $USE_CLASS_EMBEDDING_FOR_ZS"
 echo "Class Embedding template $ZS_TEMPLATE_PATH"
+echo "Noisy Sigma: $NOISY_SIGMA"
+echo "Noisy Anchors: $NOISY_ANCHORS"
+echo "Dataset Name: $DATASET_NAME"
+
 echo "========================"
 
 
