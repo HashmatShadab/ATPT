@@ -7,6 +7,7 @@ from .attacks.fgsm import FGSM
 from .attacks.bim import BIM
 from .attacks.rfgsm import RFGSM
 from .attacks.pgd import PGD
+from .attacks.pgd_prm import PGD_PRM
 from .attacks.eotpgd import EOTPGD
 from .attacks.ffgsm import FFGSM
 from .attacks.tpgd import TPGD
@@ -63,6 +64,7 @@ __all__ = [
     "BIM",
     "RFGSM",
     "PGD",
+    "PGD_PRM",
     "PGDCounter",
     "PGDCounterAnchor",
     "EOTPGD",
