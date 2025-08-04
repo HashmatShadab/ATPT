@@ -78,13 +78,20 @@ class Attack(object):
             inputs = self.normalize(inputs)
         get_image_features = kwargs.get("get_image_features", False)
         normalize = kwargs.get("normalize", False)
-        if not get_image_features:
+        get_prm_layer_features = kwargs.get("get_prm_layer_features", False)
+        if not get_image_features and not get_prm_layer_features:
             logits = self.model(inputs)
         else:
             if normalize:
-                logits = self.model(inputs, get_image_features=True, normalize=True)
+                if get_prm_layer_features:
+                    logits = self.model(inputs, get_prm_layer_features=True, normalize=True)
+                else:
+                    logits = self.model(inputs, get_image_features=True, normalize=True)
             else:
-                logits = self.model(inputs, get_image_features=True)
+                if get_prm_layer_features:
+                    logits = self.model(inputs, get_prm_layer_features=True)
+                else:
+                    logits = self.model(inputs, get_image_features=True)
         return logits
 
     @wrapper_method

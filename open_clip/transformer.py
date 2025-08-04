@@ -751,6 +751,7 @@ class VisionTransformer(nn.Module):
             intermediates_only: bool = False,
             output_fmt: str = 'NCHW',
             output_extra_tokens: bool = False,
+            num_prefix_tokens=1,
     ) -> Dict[str, Union[torch.Tensor, List[torch.Tensor]]]:
         """ Forward features that returns intermediates.
 
@@ -765,23 +766,27 @@ class VisionTransformer(nn.Module):
         Returns:
 
         """
-        assert output_fmt in ('NCHW', 'NLC'), 'Output format must be one of NCHW or NLC.'
+        assert output_fmt in ('NCHW', 'NLC', 'LNC'), 'Output format must be one of NCHW or NLC.'
         reshape = output_fmt == 'NCHW'
 
         # forward pass
         B, _, height, width = x.shape
-        x = self._embeds(x)
+        x_before = self._embeds(x)
         x, intermediates = self.transformer.forward_intermediates(
-            x,
+            x_before,
             indices=indices,
             stop_early=stop_early,
         )
+
+        # add x_before to intermediates in the beginning
+
+        intermediates.insert(0, x_before)
 
         # process intermediates
         if normalize_intermediates:
             # apply final norm to all intermediates
             intermediates = [self.ln_post(xi) for xi in intermediates]
-        num_prefix_tokens = 1  # one class token that's always there (as of now)
+        num_prefix_tokens = num_prefix_tokens  # one class token that's always there (as of now)
         if num_prefix_tokens:
             # split prefix (e.g. class, distill) and spatial feature tokens
             prefix_tokens = [y[:, 0:num_prefix_tokens] for y in intermediates]
@@ -792,6 +797,9 @@ class VisionTransformer(nn.Module):
             # reshape to BCHW output format
             H, W = height // self.patch_size[0], width // self.patch_size[1]
             intermediates = [y.reshape(B, H, W, -1).permute(0, 3, 1, 2).contiguous() for y in intermediates]
+        if output_fmt == 'LNC' and not reshape:
+            # reshape to LNC output format
+            intermediates = [y.permute(1, 0, 2).contiguous() for y in intermediates]
 
         output = {'image_intermediates': intermediates}
         if prefix_tokens is not None and output_extra_tokens:
@@ -824,18 +832,22 @@ class VisionTransformer(nn.Module):
             self.proj = None
         return take_indices
 
-    def forward(self, x: torch.Tensor):
-        x = self._embeds(x)
-        x = self.transformer(x)
-        pooled, tokens = self._pool(x)
+    def forward(self, x: torch.Tensor, get_all_layers=False):
+        if not get_all_layers:
+            x = self._embeds(x)
+            x = self.transformer(x)
+            pooled, tokens = self._pool(x)
 
-        if self.proj is not None:
-            pooled = pooled @ self.proj
+            if self.proj is not None:
+                pooled = pooled @ self.proj
 
-        if self.output_tokens:
-            return pooled, tokens
+            if self.output_tokens:
+                return pooled, tokens
 
-        return pooled
+            return pooled
+        else:
+            intermediate_outputs = self.forward_intermediates(x, intermediates_only=True, output_fmt="LNC", num_prefix_tokens=0)
+            return intermediate_outputs
 
 
 def text_global_pool(

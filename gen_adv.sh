@@ -36,7 +36,8 @@ ANCHORS_ALPHA=${16:-1.2}
 NOISY_SIGMA=${17:-0.18}
 DIFF_THRESHOLD=${18:-0.85}
 IMAGE_ONLY_ATTACK=${19:-"false"}
-DATASET_ID=${20:-"all"}
+IMAGE_ONLY_ATTACK_TYPE=${20:-"prm"}
+DATASET_ID=${21:-"all"}
 
 # bash gen_adv.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 "F:\Code\datasets\atpt_results"
 
@@ -58,7 +59,7 @@ DATASET_ID=${20:-"all"}
 
 # Common parameters for all runs
 COMMON_PARAMS="--gpu 0 --ctx_init a_photo_of_a --output_dir $OUTPUT_DIR --log_output_dir $LOG_OUTPUT_DIR --workers $NUM_WORKERS"
-COMMON_PARAMS+=" --eps $EPSILON --steps $ATTACK_STEPS --tta_steps $TTA_STEPS --image_only_attack $IMAGE_ONLY_ATTACK"
+COMMON_PARAMS+=" --eps $EPSILON --steps $ATTACK_STEPS --tta_steps $TTA_STEPS --image_only_attack $IMAGE_ONLY_ATTACK --image_only_attack $IMAGE_ONLY_ATTACK_TYPE"
 COMMON_PARAMS+=" --selection_p $FRACTION_CONFIDENT_SAMPLES"
 COMMON_PARAMS+=" --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX"
 COMMON_PARAMS+=" --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING --print-freq 20 --image_feature_purify $IMAGE_PURIFY --image_feature_purify_type $PURIFY_TYPE --image_feature_purify_noisy_anchors $NOISY_ANCHORS --image_feature_purify_anchors_alpha $ANCHORS_ALPHA --image_feature_purify_noisy_sigma $NOISY_SIGMA --image_feature_purify_diff_threshold $DIFF_THRESHOLD"
@@ -78,6 +79,17 @@ echo "Fraction Confident Samples: $FRACTION_CONFIDENT_SAMPLES"
 echo "Top K Neighbours: $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX"
 echo "Softmax Temperature: $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING"
 echo "Model: $MODEL_NAME with batch size 64"
+echo "Output Directory: $OUTPUT_DIR"
+echo "Log Output Directory: $LOG_OUTPUT_DIR"
+echo "Image Feature Purify: $IMAGE_PURIFY"
+echo "Image Feature Purify Type: $PURIFY_TYPE"
+echo "Image Feature Purify Noisy Anchors: $NOISY_ANCHORS"
+echo "Image Feature Purify Anchors Alpha: $ANCHORS_ALPHA"
+echo "Image Feature Purify Noisy Sigma: $NOISY_SIGMA"
+echo "Image Feature Purify Diff Threshold: $DIFF_THRESHOLD"
+echo "Image Only Attack: $IMAGE_ONLY_ATTACK"
+echo "Image Only Attack Type: $IMAGE_ONLY_ATTACK_TYPE"
+echo "Dataset ID: $DATASET_ID"
 echo "========================"
 
 #
