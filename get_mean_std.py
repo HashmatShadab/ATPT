@@ -448,6 +448,10 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     This function evaluates the model on a validation dataset, applying test-time adaptation
     to improve performance. It can also evaluate robustness against adversarial attacks
     if specified in the arguments.
+    
+    The function supports resuming from a previous run if interrupted. It saves checkpoints
+    periodically during processing, which can be used to resume from the last saved state.
+    This is useful for long-running computations on large datasets.
 
     Args:
         val_loader (torch.utils.data.DataLoader): Validation data loader.
@@ -457,7 +461,12 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         optim_state (dict): Optimizer state dictionary for resetting.
         scaler (torch.cuda.amp.GradScaler, optional): Gradient scaler for mixed precision.
         args (argparse.Namespace): Arguments containing evaluation parameters.
+            args.resume (bool): Whether to resume from a previous run if checkpoint exists.
+            args.checkpoint_freq (int): Frequency of saving checkpoints (in number of batches).
         data_transform (callable): Data transformation function.
+        logger (logging.Logger, optional): Logger for logging information.
+        template_text_embeddings (torch.Tensor, optional): Template text embeddings.
+        class_text_embeddings (torch.Tensor, optional): Class text embeddings.
 
     Returns:
         list: [original_accuracy, test_time_adapted_accuracy]
@@ -508,53 +517,84 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     else:
         adv_images_dir = os.path.join(args.output_dir, "Clean_images")
 
+    # Create directory for saving statistics and checkpoints
+    stats_dir = os.path.join(args.output_dir, "mean_statistics")
+    os.makedirs(stats_dir, exist_ok=True)
+    checkpoint_path = os.path.join(stats_dir, "checkpoint.pt")
 
     os.makedirs(adv_images_dir, exist_ok=True)
     if logger:
         logger.info(f"Using directory : {adv_images_dir}")
+        logger.info(f"Statistics will be saved to: {stats_dir}")
 
 
     adv_correct_orig = 0
     clean_correct_orig = 0
     total = 0
     
-    # Initialize accumulators for online computation of mean and variance
-    # This implementation uses Welford's online algorithm for computing mean and variance
+    # Initialize accumulators for online computation of mean
+    # This implementation uses tensor operations to efficiently compute means
     # in a single pass without storing all data points in memory.
-    # This is much more memory-efficient for large datasets compared to the approach
-    # of storing all tensors and then computing statistics at the end.
+    # This is memory-efficient for large datasets compared to storing all tensors.
     #
-    # The algorithm works by maintaining running statistics:
-    # - count: number of samples seen so far
-    # - mean: running mean updated with each new sample
-    # - M2: sum of squared differences from the current mean
+    # The algorithm works by:
+    # 1. Computing the mean across the batch dimension using torch.mean()
+    # 2. Updating the running mean using a weighted average formula:
+    #    updated_mean = (prev_count * old_mean + batch_size * batch_mean) / new_count
     #
-    # For each new value x:
-    # 1. Increment count
-    # 2. Compute delta = x - mean
-    # 3. Update mean = mean + delta/count
-    # 4. Compute delta2 = x - mean (using the updated mean)
-    # 5. Update M2 = M2 + delta*delta2
-    #
-    # At the end, variance = M2/(count-1)
+    # This vectorized approach is much faster than using loops over batch samples
     
-    # For cls_token
-    cls_token_count = 0
-    cls_token_mean = None
-    cls_token_m2 = None  # For computing variance using Welford's algorithm
-    
-    # For features_after_attention and features_after_mlp
-    # We'll initialize these after seeing the first batch to get the dimensions
-    attention_counts = None
-    attention_means = None
-    attention_m2s = None
-    
-    mlp_counts = None
-    mlp_means = None
-    mlp_m2s = None
+    # ===== Resume functionality =====
+    # Check if we should resume from a previous run by loading the checkpoint
+    # This allows the script to continue from where it left off if it was interrupted
+    start_batch_idx = 0
+    if  os.path.exists(checkpoint_path):
+        if logger:
+            logger.info(f"Resuming from checkpoint: {checkpoint_path}")
+        
+        # Load checkpoint containing all the statistics and state information
+        checkpoint = torch.load(checkpoint_path)
+        
+        # Restore all the statistics accumulators from the checkpoint
+        # This ensures we continue with the exact same state as when the checkpoint was saved
+        cls_token_count = checkpoint['cls_token_count']
+        cls_token_mean = checkpoint['cls_token_mean']
+        attention_counts = checkpoint['attention_counts']
+        attention_means = checkpoint['attention_means']
+        mlp_counts = checkpoint['mlp_counts']
+        mlp_means = checkpoint['mlp_means']
+        
+        # Start from the next batch after the one that was checkpointed
+        start_batch_idx = checkpoint['batch_idx'] + 1
+        
+        # Restore the total samples processed counter
+        total = checkpoint['total']
+        
+        if logger:
+            logger.info(f"Resuming from batch {start_batch_idx} with {total} samples processed so far")
+    else:
+        # If not resuming, initialize all accumulators from scratch
+        
+        # For cls_token
+        cls_token_count = 0
+        cls_token_mean = None
+        
+        # For features_after_attention and features_after_mlp
+        # We'll initialize these after seeing the first batch to get the dimensions
+        attention_counts = None
+        attention_means = None
+        
+        mlp_counts = None
+        mlp_means = None
 
     # Iterate through validation data
     for i, data in enumerate(val_loader):
+        # ===== Resume functionality: Skip already processed batches =====
+        # When resuming from a checkpoint, we need to skip batches that were already processed
+        # This ensures we don't double-count samples and maintain deterministic results
+        if i < start_batch_idx:
+            continue
+            
         # Handle different return formats (with or without path)
         if len(data) == 3:
             images, target, path = data
@@ -574,15 +614,10 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             # Pass adversarial images to the model
             adv_images = adv_images.cuda(args.gpu, non_blocking=True)
 
-            from contextlib import nullcontext
 
-            context = nullcontext()
-            # Model forward pass
-            with context:
-
-                # Adversarial examples
-                # Compute original adversarial accuracy without purification
-                adv_cls_token, adv_features_after_attention, adv_features_after_mlp = model(adv_images)
+            # Adversarial examples
+            # Compute original adversarial accuracy without purification
+            adv_cls_token, adv_features_after_attention, adv_features_after_mlp = model(adv_images)
 
 
 
@@ -592,90 +627,134 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         # features_after_attention is a list of features for each layer: each tensor is of shape (N,B,D) N is the number of tokens, B is the batch size, D is the dimension of the CLIP model
         # features_after_mlp is a list of features for each layer: each tensor is of shape N,B,D) N is the number of tokens, B is the batch size, D is the dimension of the CLIP model
 
-        # Process cls_token using Welford's online algorithm
+        # Process cls_token using tensor operations
+        # Move tensor to CPU to save GPU memory and detach from computation graph
         cls_token_cpu = cls_token.detach().cpu()
-        batch_size = cls_token_cpu.size(0)
+        batch_size = cls_token_cpu.size(0)  # Get the current batch size
         
-        # Initialize mean and M2 accumulators if this is the first batch
+        # Initialize mean accumulator if this is the first batch
         if cls_token_mean is None:
+            # Create a tensor with the same shape as a single cls_token
             cls_token_mean = torch.zeros_like(cls_token_cpu[0])
-            cls_token_m2 = torch.zeros_like(cls_token_cpu[0])
+            cls_token_count = 0
         
-        # Update cls_token statistics
-        for b in range(batch_size):
-            cls_token_count += 1
-            delta = cls_token_cpu[b] - cls_token_mean
-            cls_token_mean += delta / cls_token_count
-            delta2 = cls_token_cpu[b] - cls_token_mean
-            cls_token_m2 += delta * delta2
+        # Update running mean using batch mean
+        # Compute mean across the batch dimension
+        cls_token_batch_mean = torch.mean(cls_token_cpu, dim=0)
+        
+        # Update the running mean with the new batch
+        # Formula: updated_mean = (count * old_mean + batch_size * batch_mean) / (count + batch_size)
+        cls_token_mean = (cls_token_count * cls_token_mean + batch_size * cls_token_batch_mean) / (cls_token_count + batch_size)
+        cls_token_count += batch_size
         
         # Initialize feature accumulators if this is the first batch
         if attention_counts is None:
-            # Initialize for features_after_attention
-            num_attention_layers = len(features_after_attention)
+            # Get the number of layers in the model
+            num_layers = len(features_after_attention)
+            
+            # Create lists to store counters and means for each layer
             attention_counts = []
             attention_means = []
-            attention_m2s = []
-            
-            # Initialize for features_after_mlp
-            num_mlp_layers = len(features_after_mlp)
             mlp_counts = []
             mlp_means = []
-            mlp_m2s = []
             
-            for layer_idx in range(num_attention_layers):
-                # Get dimensions for this layer
+            # Initialize accumulators for all layers at once
+            for layer_idx in range(num_layers):
+                # Get dimensions for this layer: num_tokens (e.g., 197 for ViT), batch_size, feature_dim
                 num_tokens, _, feature_dim = features_after_attention[layer_idx].shape
                 
-                # Initialize counters and accumulators for each token in this layer
+                # Create counter and mean tensors using direct initialization
                 attention_counts.append(torch.zeros(num_tokens, dtype=torch.int64))
                 attention_means.append(torch.zeros(num_tokens, feature_dim))
-                attention_m2s.append(torch.zeros(num_tokens, feature_dim))
-                
-                # Initialize for MLP features
                 mlp_counts.append(torch.zeros(num_tokens, dtype=torch.int64))
                 mlp_means.append(torch.zeros(num_tokens, feature_dim))
-                mlp_m2s.append(torch.zeros(num_tokens, feature_dim))
         
-        # Update statistics for each layer
+        # Process each layer to update running means using tensor operations
+        # This vectorized approach is significantly faster than nested loops:
+        # 1. It computes means across the batch dimension in a single operation
+        # 2. It updates all feature dimensions for each token simultaneously
+        # 3. It avoids Python loop overhead by leveraging optimized C++/CUDA implementations
         for layer_idx in range(len(features_after_attention)):
-            # Process features_after_attention
+            # Move attention features to CPU to save GPU memory
             attention_features = features_after_attention[layer_idx].detach().cpu()
-            num_tokens, batch_size, _ = attention_features.shape
+            num_tokens, batch_size, feature_dim = attention_features.shape
             
-            # Update statistics for each token
-            for token_idx in range(num_tokens):
-                for b in range(batch_size):
-                    # Update using Welford's algorithm
-                    attention_counts[layer_idx][token_idx] += 1
-                    count = attention_counts[layer_idx][token_idx].item()
-                    
-                    delta = attention_features[token_idx, b] - attention_means[layer_idx][token_idx]
-                    attention_means[layer_idx][token_idx] += delta / count
-                    delta2 = attention_features[token_idx, b] - attention_means[layer_idx][token_idx]
-                    attention_m2s[layer_idx][token_idx] += delta * delta2
+            # Compute mean across batch dimension for each token position
+            # This replaces the nested loops with a single tensor operation
+            batch_attention_means = torch.mean(attention_features, dim=1)  # Shape: [num_tokens, feature_dim]
             
-            # Process features_after_mlp
+            # Update counts for all token positions at once
+            prev_counts = attention_counts[layer_idx].clone().unsqueeze(1)  # Shape: [num_tokens, 1]
+            attention_counts[layer_idx] += batch_size
+            new_counts = attention_counts[layer_idx].clone().unsqueeze(1)  # Shape: [num_tokens, 1]
+            
+            # Update running means for all token positions at once using vectorized operations
+            # Formula: updated_mean = (prev_count * old_mean + batch_size * batch_mean) / new_count
+            attention_means[layer_idx] = (prev_counts * attention_means[layer_idx] + 
+                                         batch_size * batch_attention_means) / new_counts
+            
+            # Move MLP features to CPU to save GPU memory
             mlp_features = features_after_mlp[layer_idx].detach().cpu()
             
-            # Update statistics for each token
-            for token_idx in range(num_tokens):
-                for b in range(batch_size):
-                    # Update using Welford's algorithm
-                    mlp_counts[layer_idx][token_idx] += 1
-                    count = mlp_counts[layer_idx][token_idx].item()
-                    
-                    delta = mlp_features[token_idx, b] - mlp_means[layer_idx][token_idx]
-                    mlp_means[layer_idx][token_idx] += delta / count
-                    delta2 = mlp_features[token_idx, b] - mlp_means[layer_idx][token_idx]
-                    mlp_m2s[layer_idx][token_idx] += delta * delta2
+            # Compute mean across batch dimension for each token position
+            # This replaces the nested loops with a single tensor operation
+            batch_mlp_means = torch.mean(mlp_features, dim=1)  # Shape: [num_tokens, feature_dim]
+            
+            # Update counts for all token positions at once
+            prev_counts = mlp_counts[layer_idx].clone().unsqueeze(1)  # Shape: [num_tokens, 1]
+            mlp_counts[layer_idx] += batch_size
+            new_counts = mlp_counts[layer_idx].clone().unsqueeze(1)  # Shape: [num_tokens, 1]
+            
+            # Update running means for all token positions at once using vectorized operations
+            # Formula: updated_mean = (prev_count * old_mean + batch_size * batch_mean) / new_count
+            mlp_means[layer_idx] = (prev_counts * mlp_means[layer_idx] + 
+                                   batch_size * batch_mlp_means) / new_counts
         
-        if logger and i % 10 == 0:
-            # Track memory usage every 10 batches
-            cpu_mem, gpu_mem = get_memory_usage()
-            logger.info(f"Processed batch {i}/{len(val_loader)} - Memory usage: CPU: {cpu_mem:.2f} MB, GPU: {gpu_mem:.2f} MB")
+        # Print progress information periodically
+        if logger:
+            # Track and log progress more frequently for smaller datasets
+            log_freq = max(1, len(val_loader) // 20)  # Log approximately 20 times during processing
+            
+            if i % log_freq == 0 or i == len(val_loader) - 1:  # Log at regular intervals and at the end
+                # Get current memory usage
+                cpu_mem, gpu_mem = get_memory_usage()
+                
+                # Calculate progress percentage
+                progress = (i + 1) / len(val_loader) * 100
+                
+                # Log detailed progress information
+                logger.info(f"Progress: {progress:.1f}% - Processed batch {i+1}/{len(val_loader)} with {batch_size} samples")
+                logger.info(f"Memory usage: CPU: {cpu_mem:.2f} MB, GPU: {gpu_mem:.2f} MB")
+                logger.info(f"Total samples processed so far: {total + batch_size}")
 
         total += target.size(0)
+
+        # ===== Checkpoint saving =====
+        # Save checkpoint periodically based on the checkpoint frequency
+        # This allows resuming the computation if the script is interrupted
+        if args.checkpoint_freq > 0 and (i + 1) % args.checkpoint_freq == 0:
+            # Create checkpoint dictionary with all necessary state information
+            # This includes:
+            # - Current batch index to know where to resume from
+            # - Total samples processed so far
+            # - All statistics accumulators (counts and means)
+            checkpoint = {
+                'batch_idx': i,
+                'total': total,
+                'cls_token_count': cls_token_count,
+                # Move tensors to CPU before saving to avoid GPU memory issues
+                'cls_token_mean': cls_token_mean.cpu() if cls_token_mean is not None else None,
+                'attention_counts': [count.cpu() for count in attention_counts] if attention_counts is not None else None,
+                'attention_means': [mean.cpu() for mean in attention_means] if attention_means is not None else None,
+                'mlp_counts': [count.cpu() for count in mlp_counts] if mlp_counts is not None else None,
+                'mlp_means': [mean.cpu() for mean in mlp_means] if mlp_means is not None else None
+            }
+            
+            # Save checkpoint to disk
+            torch.save(checkpoint, checkpoint_path)
+            
+            if logger:
+                logger.info(f"Saved checkpoint at batch {i+1}/{len(val_loader)} ({(i+1)/len(val_loader)*100:.1f}%)")
 
         # Free memory
         del images
@@ -684,87 +763,105 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         torch.cuda.empty_cache()
         end = time.time()
 
-    # Finalize statistics computation
+    # ===== Finalize and save statistics =====
     if logger:
-        logger.info("Finalizing statistics computation...")
+        logger.info("=" * 50)
+        logger.info("Finalizing statistics computation and saving results...")
+        logger.info(f"Total samples processed: {total}")
     
-    # Create directory for saving statistics
-    stats_dir = os.path.join(args.output_dir, "mean_statistics")
-    os.makedirs(stats_dir, exist_ok=True)
-    
-    # For cls_token, compute standard deviation from M2
-    # Variance = M2 / (count - 1)
-    cls_token_var = cls_token_m2 / (cls_token_count - 1) if cls_token_count > 1 else torch.zeros_like(cls_token_m2)
-    cls_token_std = torch.sqrt(cls_token_var)
-    
-    # Save cls_token statistics
-    torch.save(cls_token_mean, os.path.join(stats_dir, "cls_token_mean.pt"))
-    torch.save(cls_token_std, os.path.join(stats_dir, "cls_token_std.pt"))
+    # Create directory for saving statistics (already created earlier)
     if logger:
-        logger.info(f"Saved cls_token mean with shape {cls_token_mean.shape} to {os.path.join(stats_dir, 'cls_token_mean.pt')}")
-        logger.info(f"Saved cls_token std with shape {cls_token_std.shape} to {os.path.join(stats_dir, 'cls_token_std.pt')}")
+        logger.info(f"Saving final statistics to directory: {stats_dir}")
+        
+    # ===== Checkpoint cleanup =====
+    # Clean up checkpoint file if processing completed successfully
+    # This prevents accidentally resuming from an old checkpoint when a full run has completed
+    # The checkpoint is only needed if the script is interrupted before completion
+    if os.path.exists(checkpoint_path):
+        os.remove(checkpoint_path)
+        if logger:
+            logger.info(f"Removed checkpoint file as processing completed successfully")
     
-    # Compute and save statistics for features_after_attention for each layer
+    # ----- Save CLS token mean -----
+    cls_token_path = os.path.join(stats_dir, "cls_token_mean.pt")
+    torch.save(cls_token_mean, cls_token_path)
+    if logger:
+        logger.info(f"Saved CLS token mean with shape {cls_token_mean.shape}")
+        logger.info(f"File: {cls_token_path}")
+    
+    # ----- Save attention feature means for each layer -----
+    if logger:
+        logger.info(f"\nSaving attention feature means for {len(attention_means)} layers:")
+    
     for layer_idx in range(len(attention_means)):
-        # Compute standard deviation from M2
-        # Variance = M2 / (count - 1)
-        attention_vars = torch.zeros_like(attention_means[layer_idx])
-        for token_idx in range(attention_counts[layer_idx].size(0)):
-            count = attention_counts[layer_idx][token_idx].item()
-            if count > 1:
-                attention_vars[token_idx] = attention_m2s[layer_idx][token_idx] / (count - 1)
-        
-        attention_stds = torch.sqrt(attention_vars)
-        
-        # Save the statistics
-        torch.save(attention_means[layer_idx], os.path.join(stats_dir, f"features_after_attention_layer_{layer_idx}_mean.pt"))
-        torch.save(attention_stds, os.path.join(stats_dir, f"features_after_attention_layer_{layer_idx}_std.pt"))
+        # Create filename for this layer
+        attention_path = os.path.join(stats_dir, f"features_after_attention_layer_{layer_idx}_mean.pt")
+        # Save the mean statistics
+        torch.save(attention_means[layer_idx], attention_path)
         if logger:
-            logger.info(f"Saved features_after_attention statistics for layer {layer_idx} with shape {attention_means[layer_idx].shape}")
+            shape_info = f"{attention_means[layer_idx].shape}"
+            logger.info(f"Layer {layer_idx}: shape {shape_info}")
     
-    # Compute and save statistics for features_after_mlp for each layer
+    # ----- Save MLP feature means for each layer -----
+    if logger:
+        logger.info(f"\nSaving MLP feature means for {len(mlp_means)} layers:")
+    
     for layer_idx in range(len(mlp_means)):
-        # Compute standard deviation from M2
-        # Variance = M2 / (count - 1)
-        mlp_vars = torch.zeros_like(mlp_means[layer_idx])
-        for token_idx in range(mlp_counts[layer_idx].size(0)):
-            count = mlp_counts[layer_idx][token_idx].item()
-            if count > 1:
-                mlp_vars[token_idx] = mlp_m2s[layer_idx][token_idx] / (count - 1)
-        
-        mlp_stds = torch.sqrt(mlp_vars)
-        
-        # Save the statistics
-        torch.save(mlp_means[layer_idx], os.path.join(stats_dir, f"features_after_mlp_layer_{layer_idx}_mean.pt"))
-        torch.save(mlp_stds, os.path.join(stats_dir, f"features_after_mlp_layer_{layer_idx}_std.pt"))
+        # Create filename for this layer
+        mlp_path = os.path.join(stats_dir, f"features_after_mlp_layer_{layer_idx}_mean.pt")
+        # Save the mean statistics
+        torch.save(mlp_means[layer_idx], mlp_path)
         if logger:
-            logger.info(f"Saved features_after_mlp statistics for layer {layer_idx} with shape {mlp_means[layer_idx].shape}")
+            shape_info = f"{mlp_means[layer_idx].shape}"
+            logger.info(f"Layer {layer_idx}: shape {shape_info}")
     
-    # Save a summary of the statistics in a text file
-    with open(os.path.join(stats_dir, "statistics_summary.txt"), "w") as f:
+    # ----- Save a summary of the statistics in a text file -----
+    summary_path = os.path.join(stats_dir, "statistics_summary.txt")
+    with open(summary_path, "w") as f:
+        f.write("=" * 50 + "\n")
+        f.write("MEAN STATISTICS SUMMARY\n")
+        f.write("=" * 50 + "\n\n")
+        
         f.write(f"Dataset: {args.test_sets}\n")
         f.write(f"Model architecture: {args.arch}\n")
-        f.write(f"Total samples processed: {total}\n\n")
+        f.write(f"Total samples processed: {total}\n")
+        f.write(f"Total batches processed: {len(val_loader)}\n")
+        f.write(f"Batch size: {args.batch_size}\n")
+        f.write(f"Resume enabled: {args.resume}\n")
+        f.write(f"Checkpoint frequency: Every {args.checkpoint_freq} batches\n\n")
         
-        f.write(f"CLS token statistics:\n")
-        f.write(f"  - Mean shape: {cls_token_mean.shape}\n")
-        f.write(f"  - Std shape: {cls_token_std.shape}\n\n")
+        # Add timestamp for reproducibility
+        from datetime import datetime
+        f.write(f"Completed on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
         
-        f.write(f"Features after attention statistics:\n")
+        f.write("CLS token statistics:\n")
+        f.write(f"  - Mean shape: {cls_token_mean.shape}\n\n")
+        
+        f.write("Features after attention statistics:\n")
         for layer_idx in range(len(attention_means)):
             f.write(f"  - Layer {layer_idx} shape: {attention_means[layer_idx].shape}\n")
         f.write("\n")
         
-        f.write(f"Features after MLP statistics:\n")
+        f.write("Features after MLP statistics:\n")
         for layer_idx in range(len(mlp_means)):
             f.write(f"  - Layer {layer_idx} shape: {mlp_means[layer_idx].shape}\n")
+    
+    if logger:
+        logger.info(f"\n[OK] Saved summary to {summary_path}")
+        logger.info("=" * 50)
+        logger.info("Statistics computation completed successfully!")
     
     # Final memory usage tracking
     final_cpu_mem, final_gpu_mem = get_memory_usage()
     if logger:
-        logger.info(f"All mean and std statistics computed and saved to {stats_dir}")
-        logger.info(f"Final memory usage - CPU: {final_cpu_mem:.2f} MB, GPU: {final_gpu_mem:.2f} MB")
-        logger.info(f"Memory change - CPU: {final_cpu_mem - initial_cpu_mem:.2f} MB, GPU: {final_gpu_mem - initial_gpu_mem:.2f} MB")
+        logger.info("\n" + "=" * 50)
+        logger.info("MEMORY USAGE SUMMARY")
+        logger.info("=" * 50)
+        logger.info(f"Initial memory - CPU: {initial_cpu_mem:.2f} MB, GPU: {initial_gpu_mem:.2f} MB")
+        logger.info(f"Final memory   - CPU: {final_cpu_mem:.2f} MB, GPU: {final_gpu_mem:.2f} MB")
+        logger.info(f"Memory change  - CPU: {final_cpu_mem - initial_cpu_mem:.2f} MB, GPU: {final_gpu_mem - initial_gpu_mem:.2f} MB")
+        logger.info("=" * 50)
+        logger.info(f"All mean statistics have been successfully computed and saved to {stats_dir}")
 
 
 if __name__ == '__main__':
@@ -777,6 +874,12 @@ if __name__ == '__main__':
                         help='Dataset to evaluate on (e.g., Caltech101, A, R, K, V, I for ImageNet variants)')
     parser.add_argument('--dataset_mode', type=str, default='test',
                         help='Dataset split to use (train, val, test)')
+    
+    # Resume parameters
+    parser.add_argument('--resume', action='store_true',
+                        help='Resume from a previous run if state file exists')
+    parser.add_argument('--checkpoint_freq', type=int, default=10,
+                        help='Frequency of saving checkpoints (in number of batches)')
 
     # Model parameters
     parser.add_argument('-a', '--arch', metavar='ARCH', default='delta_clip_l14_224',
