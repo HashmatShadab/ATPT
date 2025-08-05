@@ -186,15 +186,27 @@ class ResidualAttentionBlock(nn.Module):
         ]))
         self.ln_2 = LayerNorm(d_model)
         self.attn_mask = attn_mask
+        
+        # Store intermediate features
+        self.features_after_attention = None
+        self.features_after_mlp = None
 
     def attention(self, x: torch.Tensor):
         self.attn_mask = self.attn_mask.to(dtype=x.dtype, device=x.device) if self.attn_mask is not None else None
         return self.attn(x, x, x, need_weights=False, attn_mask=self.attn_mask)[0]
 
-    def forward(self, x: torch.Tensor):
-        x = x + self.attention(self.ln_1(x))
-        x = x + self.mlp(self.ln_2(x))
-        return x
+    def forward(self, x: torch.Tensor, return_features=False):
+        attn_output = self.attention(self.ln_1(x))
+        x_after_attn = x + attn_output
+        self.features_after_attention = x_after_attn
+        
+        mlp_output = self.mlp(self.ln_2(x_after_attn))
+        x_after_mlp = x_after_attn + mlp_output
+        self.features_after_mlp = x_after_mlp
+        
+        if return_features:
+            return x_after_mlp, self.features_after_attention, self.features_after_mlp
+        return x_after_mlp
 
 # class Transformer_text(nn.Module):
 #     def __init__(self, width: int, layers: int, heads: int, attn_mask: torch.Tensor = None):
@@ -211,10 +223,21 @@ class Transformer(nn.Module):
         super().__init__()
         self.width = width
         self.layers = layers
-        self.resblocks = nn.Sequential(*[ResidualAttentionBlock(width, heads, attn_mask) for _ in range(layers)])
+        self.resblocks = nn.ModuleList([ResidualAttentionBlock(width, heads, attn_mask) for _ in range(layers)])
 
-    def forward(self, x: torch.Tensor):
-        return self.resblocks(x)
+    def forward(self, x: torch.Tensor, return_features=False):
+        if not return_features:
+            for resblock in self.resblocks:
+                x = resblock(x)
+            return x
+        else:
+            features_after_attention = []
+            features_after_mlp = []
+            for resblock in self.resblocks:
+                x, attn_features, mlp_features = resblock(x, return_features=True)
+                features_after_attention.append(attn_features)
+                features_after_mlp.append(mlp_features)
+            return x, features_after_attention, features_after_mlp
 
 
 class VisionTransformer(nn.Module):
@@ -234,7 +257,7 @@ class VisionTransformer(nn.Module):
         self.ln_post = LayerNorm(width)
         self.proj = nn.Parameter(scale * torch.randn(width, output_dim))
 
-    def forward(self, x: torch.Tensor, get_all_layers=False):
+    def forward(self, x: torch.Tensor, get_all_layers=False, get_block_features=False):
         x = self.conv1(x)  # shape = [*, width, grid, grid]
         x = x.reshape(x.shape[0], x.shape[1], -1)  # shape = [*, width, grid ** 2]
         x = x.permute(0, 2, 1)  # shape = [*, grid ** 2, width]
@@ -244,7 +267,18 @@ class VisionTransformer(nn.Module):
 
         x = x.permute(1, 0, 2)  # NLD -> LND
 
-        if not get_all_layers:
+        if get_block_features:
+            # Get features after attention and after MLP for each block
+            x, features_after_attention, features_after_mlp = self.transformer(x, return_features=True)
+            x = x.permute(1, 0, 2)  # LND -> NLD
+            
+            # Apply final layer norm and projection to CLS token
+            cls_token = self.ln_post(x[:, 0, :])
+            if self.proj is not None:
+                cls_token = cls_token @ self.proj
+                
+            return cls_token, features_after_attention, features_after_mlp
+        elif not get_all_layers:
             x = self.transformer(x)
             x = x.permute(1, 0, 2)  # LND -> NLD
 
@@ -379,9 +413,18 @@ class CLIP(nn.Module):
     def dtype(self):
         return self.visual.conv1.weight.dtype
 
-    def encode_image(self, image, normalize=False):
-        features = self.visual(image.type(self.dtype))
-        return F.normalize(features, dim=-1) if normalize else features
+    def encode_image(self, image, normalize=False, get_block_features=False):
+        if get_block_features:
+            if isinstance(self.visual, VisionTransformer):
+                features, features_after_attention, features_after_mlp = self.visual(image.type(self.dtype), get_block_features=True)
+                if normalize:
+                    features = F.normalize(features, dim=-1)
+                return features, features_after_attention, features_after_mlp
+            else:
+                raise NotImplementedError("Block feature extraction is only supported for VisionTransformer models")
+        else:
+            features = self.visual(image.type(self.dtype))
+            return F.normalize(features, dim=-1) if normalize else features
 
     def encode_text(self, text):
         x = self.token_embedding(text).type(self.dtype)  # [batch_size, n_ctx, d_model]

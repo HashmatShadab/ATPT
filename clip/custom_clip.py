@@ -475,7 +475,7 @@ class ClipTestTimeTuning(nn.Module):
 
         return logits
 
-    def forward(self, input, get_prm_layer_features=False, get_image_features=False, normalize=False, get_image_text_features=False, text_features=None, null_text_features=None,
+    def forward(self, input, get_prm_layer_features=False, get_image_features=True, normalize=False, get_image_text_features=False, text_features=None, null_text_features=None,
                 move_image_features_noisy_anchor=False, move_image_features_text_anchor=False, purify_params=None):
         if isinstance(input, Tuple):
             view_0, view_1, view_2 = input
@@ -484,8 +484,8 @@ class ClipTestTimeTuning(nn.Module):
             return self.directional_prompt_tuning(input)
         else:
             if get_image_features:
-                image_features = self.get_image_features(input, normalize=normalize)
-                return image_features
+                cls_token, features_after_attention, features_after_mlp = self.get_image_features(input, normalize=normalize)
+                return cls_token, features_after_attention, features_after_mlp
             if get_prm_layer_features:
                 image_features_all_layers = self.get_image_features_all_layers(input, normalize=normalize)
                 return image_features_all_layers
@@ -525,9 +525,9 @@ class ClipTestTimeTuning(nn.Module):
                     return self.inference_text(input, text_features)
 
     def get_image_features(self, input, normalize=False):
-        image_features = self.image_encoder(self.normalize(input.type(self.dtype)))
+        cls_token, features_after_attention, features_after_mlp = self.image_encoder(self.normalize(input.type(self.dtype)), get_block_features=True)
 
-        return F.normalize(image_features, dim=-1) if normalize else image_features
+        return cls_token, features_after_attention, features_after_mlp
 
     def get_image_features_all_layers(self, input, normalize=False):
         image_features_all_layers_list = self.image_encoder(self.normalize(input.type(self.dtype)), get_all_layers=True)
