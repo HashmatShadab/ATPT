@@ -362,11 +362,11 @@ class ClipTestTimeTuning(nn.Module):
     def reset_classnames(self, classnames, arch):
         self.prompt_learner.reset_classnames(classnames, arch)
 
-    def encode_image(self, image, normalize: bool = False, get_all_layers=False):
+    def encode_image(self, image, normalize: bool = False, get_all_layers=False, get_block_features=True):
         if not get_all_layers:
-            features = self.model.encode_image(image)
+            cls_token, features_after_attention, features_after_mlp = self.model.encode_image(image, get_block_features=True)
             # F.normalize doesn't modify the input tensor in-place, so this is safe
-            return F.normalize(features, dim=-1) if normalize else features
+            return cls_token, features_after_attention, features_after_mlp
         else:
             image_features_all_layers_list = self.model.encode_image(image, get_all_layers=True)
             # if normalize, normalize all the features
@@ -392,7 +392,7 @@ class ClipTestTimeTuning(nn.Module):
 
     def inference(self, image):
 
-        image_features = self.encode_image(self.normalize(image.type(self.dtype)))
+        image_features, _, _ = self.encode_image(self.normalize(image.type(self.dtype)))
         # Use non-in-place normalization to avoid modifying tensors in the computation graph
         image_norm = image_features.norm(dim=-1, keepdim=True)
         image_features_normalized = image_features / image_norm
@@ -409,7 +409,7 @@ class ClipTestTimeTuning(nn.Module):
 
     def inference_text(self, image, text_features):
 
-        image_features = self.encode_image(self.normalize(image.type(self.dtype)))
+        image_features, _, _ = self.encode_image(self.normalize(image.type(self.dtype)))
         # Use non-in-place normalization to avoid modifying tensors in the computation graph
         image_norm = image_features.norm(dim=-1, keepdim=True)
         image_features_normalized = image_features / image_norm
@@ -433,7 +433,7 @@ class ClipTestTimeTuning(nn.Module):
         """
         # Step 1: Encode source feature (adversarial or clean)
         image_input = self.normalize(image.type(self.dtype))
-        f_source = self.encode_image(image_input)
+        f_source, _, _ = self.encode_image(image_input)
         f_source_norm = f_source.norm(dim=-1, keepdim=True)
         f_source_normalized = f_source / f_source_norm
 
@@ -447,7 +447,7 @@ class ClipTestTimeTuning(nn.Module):
 
         # Normalize and process all noisy images in one batch
         noisy_images = self.normalize(noisy_images.type(self.dtype))
-        f_noisy_all = self.encode_image(noisy_images)  # [n_anchors*batch_size, feature_dim]
+        f_noisy_all, _, _ = self.encode_image(noisy_images)  # [n_anchors*batch_size, feature_dim]
 
         # Reshape to [n_anchors, batch_size, feature_dim] and sum across anchors
         f_noisy_all = f_noisy_all.view(n_anchors, batch_size, -1)
@@ -487,7 +487,7 @@ class ClipTestTimeTuning(nn.Module):
         """
         # Step 1: Encode source feature (adversarial or clean)
         image_input = self.normalize(image.type(self.dtype))
-        image_embedding = self.encode_image(image_input)
+        image_embedding, _, _ = self.encode_image(image_input)
         image_embedding_norm = image_embedding.norm(dim=-1, keepdim=True)
         image_embedding = image_embedding / image_embedding_norm
 
@@ -536,7 +536,7 @@ class ClipTestTimeTuning(nn.Module):
 
         return logits
 
-    def forward(self, input, get_prm_layer_features=False, get_image_features=False, normalize=False, get_image_text_features=False, text_features=None, null_text_features=False,
+    def forward(self, input, get_prm_layer_features=False, get_image_features=True, normalize=False, get_image_text_features=False, text_features=None, null_text_features=False,
                 move_image_features_noisy_anchor=False, move_image_features_text_anchor=False, purify_params=None):
         if isinstance(input, Tuple):
             view_0, view_1, view_2 = input
@@ -545,8 +545,8 @@ class ClipTestTimeTuning(nn.Module):
             return self.directional_prompt_tuning(input)
         else:
             if get_image_features:
-                image_features = self.encode_image(self.normalize(input.type(self.dtype)), normalize=normalize)
-                return image_features
+                cls_token, features_after_attention, features_after_mlp = self.encode_image(self.normalize(input.type(self.dtype)), normalize=normalize, get_block_features=True)
+                return cls_token, features_after_attention, features_after_mlp
             if get_prm_layer_features:
                 image_features_all_layers = self.encode_image(self.normalize(input.type(self.dtype)), normalize=normalize, get_all_layers=True)
                 return image_features_all_layers
@@ -584,7 +584,7 @@ class ClipTestTimeTuning(nn.Module):
                     return self.inference_text(input, text_features)
 
     def forward_features(self, input):
-        image_features = self.encode_image(self.normalize(input.type(self.dtype)))
+        image_features, _, _ = self.encode_image(self.normalize(input.type(self.dtype)))
         # Use non-in-place normalization to avoid modifying tensors in the computation graph
         image_norm = image_features.norm(dim=-1, keepdim=True)
         image_features_normalized = image_features / image_norm

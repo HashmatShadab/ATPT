@@ -262,12 +262,29 @@ class ResidualAttentionBlock(nn.Module):
             k_x: Optional[torch.Tensor] = None,
             v_x: Optional[torch.Tensor] = None,
             attn_mask: Optional[torch.Tensor] = None,
+            return_features: bool = False,
     ):
         k_x = self.ln_1_kv(k_x) if hasattr(self, "ln_1_kv") and k_x is not None else None
         v_x = self.ln_1_kv(v_x) if hasattr(self, "ln_1_kv") and v_x is not None else None
-        x = q_x + self.ls_1(self.attention(q_x=self.ln_1(q_x), k_x=k_x, v_x=v_x, attn_mask=attn_mask))
-        x = x + self.ls_2(self.mlp(self.ln_2(x)))
-        return x
+        
+        # Apply attention
+        attn_output = self.attention(q_x=self.ln_1(q_x), k_x=k_x, v_x=v_x, attn_mask=attn_mask)
+        x = q_x + self.ls_1(attn_output)
+        
+        # Save features after attention
+        features_after_attention = x.clone() if return_features else None
+        
+        # Apply MLP
+        mlp_output = self.mlp(self.ln_2(x))
+        x = x + self.ls_2(mlp_output)
+        
+        # Save features after MLP
+        features_after_mlp = x.clone() if return_features else None
+        
+        if return_features:
+            return x, features_after_attention, features_after_mlp
+        else:
+            return x
 
 
 class CustomResidualAttentionBlock(nn.Module):
@@ -311,10 +328,25 @@ class CustomResidualAttentionBlock(nn.Module):
     def get_reference_weight(self):
         return self.mlp.c_fc.weight
 
-    def forward(self, x: torch.Tensor, attn_mask: Optional[torch.Tensor] = None):
-        x = x + self.ls_1(self.ln_attn(self.attn(self.ln_1(x), attn_mask=attn_mask)))
-        x = x + self.ls_2(self.mlp(self.ln_2(x)))
-        return x
+    def forward(self, x: torch.Tensor, attn_mask: Optional[torch.Tensor] = None, return_features: bool = False):
+        # Apply attention
+        attn_output = self.ln_attn(self.attn(self.ln_1(x), attn_mask=attn_mask))
+        x = x + self.ls_1(attn_output)
+        
+        # Save features after attention
+        features_after_attention = x.clone() if return_features else None
+        
+        # Apply MLP
+        mlp_output = self.mlp(self.ln_2(x))
+        x = x + self.ls_2(mlp_output)
+        
+        # Save features after MLP
+        features_after_mlp = x.clone() if return_features else None
+        
+        if return_features:
+            return x, features_after_attention, features_after_mlp
+        else:
+            return x
 
 
 class CustomTransformer(nn.Module):
@@ -404,20 +436,42 @@ class CustomTransformer(nn.Module):
         self.resblocks = self.resblocks[:max_index + 1]  # truncate blocks
         return take_indices
 
-    def forward(self, x: torch.Tensor, attn_mask: Optional[torch.Tensor] = None):
+    def forward(self, x: torch.Tensor, attn_mask: Optional[torch.Tensor] = None, return_block_features: bool = False):
         if not self.batch_first:
             x = x.transpose(0, 1)  # NLD -> LND
 
-        for r in self.resblocks:
-            if self.grad_checkpointing and not torch.jit.is_scripting():
-                # TODO: handle kwargs https://github.com/pytorch/pytorch/issues/79887#issuecomment-1161758372
-                x = checkpoint(r, x, None, None, attn_mask, use_reentrant=False)
-            else:
-                x = r(x, attn_mask=attn_mask)
+        if return_block_features:
+            features_after_attention = []
+            features_after_mlp = []
+            
+            for r in self.resblocks:
+                if self.grad_checkpointing and not torch.jit.is_scripting():
+                    # Can't use checkpointing with custom return values
+                    x, attn_output, mlp_output = r(x, attn_mask=attn_mask, return_features=True)
+                else:
+                    x, attn_output, mlp_output = r(x, attn_mask=attn_mask, return_features=True)
+                
+                features_after_attention.append(attn_output)
+                features_after_mlp.append(mlp_output)
+            
+            if not self.batch_first:
+                x = x.transpose(0, 1)  # LND -> NLD
+                # Also transpose the feature lists
+                features_after_attention = [f.transpose(0, 1) for f in features_after_attention]
+                features_after_mlp = [f.transpose(0, 1) for f in features_after_mlp]
+            
+            return x, features_after_attention, features_after_mlp
+        else:
+            for r in self.resblocks:
+                if self.grad_checkpointing and not torch.jit.is_scripting():
+                    # TODO: handle kwargs https://github.com/pytorch/pytorch/issues/79887#issuecomment-1161758372
+                    x = checkpoint(r, x, None, None, attn_mask, use_reentrant=False)
+                else:
+                    x = r(x, attn_mask=attn_mask)
 
-        if not self.batch_first:
-            x = x.transpose(0, 1)  # NLD -> LND
-        return x
+            if not self.batch_first:
+                x = x.transpose(0, 1)  # LND -> NLD
+            return x
 
 
 class Transformer(nn.Module):
@@ -494,20 +548,42 @@ class Transformer(nn.Module):
         self.resblocks = self.resblocks[:max_index + 1]  # truncate blocks
         return take_indices
 
-    def forward(self, x: torch.Tensor, attn_mask: Optional[torch.Tensor] = None):
+    def forward(self, x: torch.Tensor, attn_mask: Optional[torch.Tensor] = None, return_block_features: bool = False):
         if not self.batch_first:
             x = x.transpose(0, 1).contiguous()    # NLD -> LND
 
-        for r in self.resblocks:
-            if self.grad_checkpointing and not torch.jit.is_scripting():
-                # TODO: handle kwargs https://github.com/pytorch/pytorch/issues/79887#issuecomment-1161758372
-                x = checkpoint(r, x, None, None, attn_mask, use_reentrant=False)
-            else:
-                x = r(x, attn_mask=attn_mask)
+        if return_block_features:
+            features_after_attention = []
+            features_after_mlp = []
+            
+            for r in self.resblocks:
+                if self.grad_checkpointing and not torch.jit.is_scripting():
+                    # Can't use checkpointing with custom return values
+                    x, attn_output, mlp_output = r(x, attn_mask=attn_mask, return_features=True)
+                else:
+                    x, attn_output, mlp_output = r(x, attn_mask=attn_mask, return_features=True)
+                
+                features_after_attention.append(attn_output)
+                features_after_mlp.append(mlp_output)
+            
+            if not self.batch_first:
+                x = x.transpose(0, 1)    # LND -> NLD
+                # Also transpose the feature lists
+                features_after_attention = [f.transpose(0, 1) for f in features_after_attention]
+                features_after_mlp = [f.transpose(0, 1) for f in features_after_mlp]
+            
+            return x, features_after_attention, features_after_mlp
+        else:
+            for r in self.resblocks:
+                if self.grad_checkpointing and not torch.jit.is_scripting():
+                    # TODO: handle kwargs https://github.com/pytorch/pytorch/issues/79887#issuecomment-1161758372
+                    x = checkpoint(r, x, None, None, attn_mask, use_reentrant=False)
+                else:
+                    x = r(x, attn_mask=attn_mask)
 
-        if not self.batch_first:
-            x = x.transpose(0, 1)    # LND -> NLD
-        return x
+            if not self.batch_first:
+                x = x.transpose(0, 1)    # LND -> NLD
+            return x
 
 
 def _expand_token(token, batch_size: int):
@@ -832,19 +908,32 @@ class VisionTransformer(nn.Module):
             self.proj = None
         return take_indices
 
-    def forward(self, x: torch.Tensor, get_all_layers=False):
+    def forward(self, x: torch.Tensor, get_all_layers=False, get_block_features=True):
         if not get_all_layers:
             x = self._embeds(x)
-            x = self.transformer(x)
-            pooled, tokens = self._pool(x)
 
-            if self.proj is not None:
-                pooled = pooled @ self.proj
+            if get_block_features:
+                x, features_after_attention, features_after_mlp = self.transformer(x, return_block_features=True)
+                pooled, tokens = self._pool(x)
 
-            if self.output_tokens:
-                return pooled, tokens
+                if self.proj is not None:
+                    pooled = pooled @ self.proj
 
-            return pooled
+                if self.output_tokens:
+                    return pooled, tokens, features_after_attention, features_after_mlp
+
+                return pooled, features_after_attention, features_after_mlp
+            else:
+                x = self.transformer(x)
+                pooled, tokens = self._pool(x)
+
+                if self.proj is not None:
+                    pooled = pooled @ self.proj
+
+                if self.output_tokens:
+                    return pooled, tokens
+
+                return pooled
         else:
             intermediate_outputs = self.forward_intermediates(x, intermediates_only=True, output_fmt="LNC", num_prefix_tokens=0)
             return intermediate_outputs
