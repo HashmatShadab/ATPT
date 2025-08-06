@@ -59,7 +59,7 @@ DATASET_ID=${21:-"all"}
 
 # Common parameters for all runs
 COMMON_PARAMS="--gpu 0 --ctx_init a_photo_of_a --output_dir $OUTPUT_DIR --log_output_dir $LOG_OUTPUT_DIR --workers $NUM_WORKERS"
-COMMON_PARAMS+=" --eps $EPSILON --steps $ATTACK_STEPS --tta_steps $TTA_STEPS --image_only_attack $IMAGE_ONLY_ATTACK --image_only_attack $IMAGE_ONLY_ATTACK_TYPE"
+COMMON_PARAMS+=" --eps $EPSILON --steps $ATTACK_STEPS --tta_steps $TTA_STEPS --image_only_attack $IMAGE_ONLY_ATTACK --image_only_attack_type $IMAGE_ONLY_ATTACK_TYPE"
 COMMON_PARAMS+=" --selection_p $FRACTION_CONFIDENT_SAMPLES"
 COMMON_PARAMS+=" --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX"
 COMMON_PARAMS+=" --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING --print-freq 20 --image_feature_purify $IMAGE_PURIFY --image_feature_purify_type $PURIFY_TYPE --image_feature_purify_noisy_anchors $NOISY_ANCHORS --image_feature_purify_anchors_alpha $ANCHORS_ALPHA --image_feature_purify_noisy_sigma $NOISY_SIGMA --image_feature_purify_diff_threshold $DIFF_THRESHOLD"
