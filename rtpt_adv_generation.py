@@ -484,7 +484,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                                    image_only_attack=False,
                                    image_predicted_label_attack=args.image_predicted_label_attack)
         if logger:
-            logger.info(f"Using PGD attack with epsilon: {args.eps/255:.6f}, alpha: {args.alpha/255:.6f}, steps: {args.steps} image only attack {args.image_only_attack} image predicted label attack {args.image_predicted_label_attack}")
+            logger.info(f"Using PGD attack with epsilon: {args.eps/255:.6f}, alpha: {args.alpha/255:.6f}, steps: {args.steps} image only attack {args.image_only_attack} image only attack type  {args.image_only_attack_type} image predicted label attack {args.image_predicted_label_attack}")
 
     if args.counter_attack:
         # Create counter-attack with specified parameters
@@ -536,7 +536,8 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     if args.transferability:
         adv_images_dir = adv_images_dir.replace(args.arch, args.source_model)
-        logger.info(f"Adversarial examples will be loaded from {adv_images_dir} and evaluated on {args.arch}")
+
+    logger.info(f"Adversarial examples will be loaded from {adv_images_dir} and evaluated on {args.arch}")
 
 
     if args.eps > 0.0:
