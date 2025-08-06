@@ -876,8 +876,6 @@ if __name__ == '__main__':
                         help='Dataset split to use (train, val, test)')
     
     # Resume parameters
-    parser.add_argument('--resume', action='store_true',
-                        help='Resume from a previous run if state file exists')
     parser.add_argument('--checkpoint_freq', type=int, default=10,
                         help='Frequency of saving checkpoints (in number of batches)')
 
