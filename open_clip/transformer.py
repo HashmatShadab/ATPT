@@ -563,8 +563,8 @@ class Transformer(nn.Module):
                 else:
                     x, attn_output, mlp_output = r(x, attn_mask=attn_mask, return_features=True)
                 
-                features_after_attention.append(attn_output)
-                features_after_mlp.append(mlp_output)
+                features_after_attention.append(attn_output.permute(1, 0, 2))
+                features_after_mlp.append(mlp_output.permute(1, 0, 2))
             
             if not self.batch_first:
                 x = x.transpose(0, 1)    # LND -> NLD

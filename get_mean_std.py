@@ -622,7 +622,8 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
 
         # Clean Samples
-        cls_token, features_after_attention, features_after_mlp = model(images)
+        with torch.no_grad():
+            cls_token, features_after_attention, features_after_mlp = model(images)
         # cls_token shape : (B, D) Batch size, D is the dimension of the CLIP model
         # features_after_attention is a list of features for each layer: each tensor is of shape (N,B,D) N is the number of tokens, B is the batch size, D is the dimension of the CLIP model
         # features_after_mlp is a list of features for each layer: each tensor is of shape N,B,D) N is the number of tokens, B is the batch size, D is the dimension of the CLIP model
