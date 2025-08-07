@@ -714,7 +714,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         # Print progress information periodically
         if logger:
             # Track and log progress more frequently for smaller datasets
-            log_freq = max(1, len(val_loader) // 20)  # Log approximately 20 times during processing
+            log_freq = max(1, 20)  # Log approximately 20 times during processing
             
             if i % log_freq == 0 or i == len(val_loader) - 1:  # Log at regular intervals and at the end
                 # Get current memory usage
@@ -828,7 +828,6 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         f.write(f"Total samples processed: {total}\n")
         f.write(f"Total batches processed: {len(val_loader)}\n")
         f.write(f"Batch size: {args.batch_size}\n")
-        f.write(f"Resume enabled: {args.resume}\n")
         f.write(f"Checkpoint frequency: Every {args.checkpoint_freq} batches\n\n")
         
         # Add timestamp for reproducibility
