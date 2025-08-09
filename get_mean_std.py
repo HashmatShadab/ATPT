@@ -778,10 +778,10 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     # Clean up checkpoint file if processing completed successfully
     # This prevents accidentally resuming from an old checkpoint when a full run has completed
     # The checkpoint is only needed if the script is interrupted before completion
-    if os.path.exists(checkpoint_path):
-        os.remove(checkpoint_path)
-        if logger:
-            logger.info(f"Removed checkpoint file as processing completed successfully")
+    # if os.path.exists(checkpoint_path):
+    #     os.remove(checkpoint_path)
+    #     if logger:
+    #         logger.info(f"Removed checkpoint file as processing completed successfully")
     
     # ----- Save CLS token mean -----
     cls_token_path = os.path.join(stats_dir, "cls_token_mean.pt")
