@@ -163,7 +163,13 @@ def create_log_dir(args):
         if args.image_feature_purify_type == "noisy_anchor":
             image_feature_purify_part = [f"Image_Feature_Purify",
                                         f"Type_{args.image_feature_purify_type}",
-                                        f"Anchors_{args.image_feature_purify_noisy_anchors}_Alpha_{args.image_feature_purify_anchors_alpha}_Sigma_{args.image_feature_purify_noisy_sigma}"]
+                                        f"Anchors_{args.image_feature_purify_noisy_anchors}_Alpha_{args.image_feature_purify_anchors_alpha}_Sigma_{args.image_feature_purify_noisy_sigma}_threshold_{args.image_feature_purify_diff_threshold}"]
+        elif args.image_feature_purify_type == 'clip_pure':
+            image_feature_purify_part = [f"Image_Feature_Purify",
+                                         f"Type_{args.image_feature_purify_type}",
+                                         f"steps_{args.image_feature_clipure_steps}_step_size_{args.image_feature_clipure_step_size}"]
+
+
     else:
         image_feature_purify_part = []
 
@@ -192,7 +198,7 @@ def create_log_dir(args):
         else:
             data_type = data_type
     else:
-        data_type = ""
+        data_type = data_type
 
     # Combine folder structure
     # Create a list of path parts
@@ -847,6 +853,8 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     batch_time = AverageMeter('Time', ':6.3f', Summary.NONE)
     top1 = AverageMeter('Acc@1', ':6.2f', Summary.AVERAGE)  # Original model accuracy
     top5 = AverageMeter('Acc@5', ':6.2f', Summary.AVERAGE)
+    top1_clean = AverageMeter('Clean-Acc@1', ':6.2f', Summary.AVERAGE)  # Original model accuracy
+    top5_clean = AverageMeter('Clean-Acc@5', ':6.2f', Summary.AVERAGE)
     if args.ensemble_type != "all":
         tpt1 = AverageMeter('TTAAcc@1', ':6.2f', Summary.AVERAGE)  # Test-time adapted accuracy
         tpt5 = AverageMeter('TTAcc@5', ':6.2f', Summary.AVERAGE)
@@ -868,7 +876,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         # Progress display
         progress = ProgressMeter(
             len(val_loader),
-            [batch_time, top1, tpt1_single, tpt1_vanilla, tpt1_vanilla_topk, tpt1_weighted],
+            [batch_time, top1_clean, top1, tpt1_single, tpt1_vanilla, tpt1_vanilla_topk, tpt1_weighted],
             prefix='Test: ')
 
 
@@ -952,6 +960,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     loss_values_dic = {}
 
     result_dict_original = {'max_confidence': [], 'prediction': [], 'label': []}
+    result_dict_original_clean = {'max_confidence': [], 'prediction': [], 'label': []}
     result_dict_single = {'max_confidence': [], 'prediction': [], 'label': []}
     result_dict_vanilla = {'max_confidence': [], 'prediction': [], 'label': []}
     result_dict_vanilla_topk = {'max_confidence': [], 'prediction': [], 'label': []}
@@ -967,7 +976,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         expanded_anchors = convert(original_text_features.double(), None, original_text_features.size(1),
                                    logger).float()
 
-
+    avg_diff_ratio = torch.zeros(64)
     # Iterate through validation data
     for i, data in enumerate(val_loader):
         # Handle different return formats (with or without path)
@@ -976,6 +985,11 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         else:
             images, target = data
             path = None
+
+        ### create a clone of the images which is a list of tensor images
+        clean_images_list = []
+        for img in images:
+            clean_images_list.append(img.clone())
 
         assert args.gpu is not None
         target = target.cuda(args.gpu, non_blocking=True)
@@ -1020,7 +1034,9 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             # Handle list of tensors (augmented views)
             for k in range(len(images)):
                 images[k] = images[k].cuda(args.gpu, non_blocking=True)
+                clean_images_list[k] = clean_images_list[k].cuda(args.gpu, non_blocking=True)
             image = images[0]  # Original image is the first one
+            clean_image = clean_images_list[0]
         else:
             # Handle single tensor
             if len(images.size()) > 4:
@@ -1032,6 +1048,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
         # Concatenate all images (original and augmented views)
         images = torch.cat(images, dim=0)
+        clean_images = torch.cat(clean_images_list, dim=0)
 
         # Reset model to initial state for each batch
         with torch.no_grad():
@@ -1042,6 +1059,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         with torch.no_grad():
             clip_output = model(image)  # Output for original image
             clip_features, _, _ = model.forward_features(images)  # Features for all images
+            clean_clip_output = model(clean_image)
             # clip_outputs = model(images)  # Outputs for all images
 
         # Perform test-time adaptation
@@ -1069,7 +1087,21 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             if args.use_class_text_embeddings and args.tta_steps == 0:
                 tuned_outputs = model(images, text_features=class_text_embeddings)
             else:
-                tuned_outputs = model(images)
+                if args.image_feature_purify:
+                    # Create a dictionary of image feature purification parameters
+                    if args.image_feature_purify_type == "noisy_anchor":
+                        purify_params = {
+                            'sigma': args.image_feature_purify_noisy_sigma,
+                            'n_anchors': args.image_feature_purify_noisy_anchors,
+                            'alpha': args.image_feature_purify_anchors_alpha,
+                            'diff_threshold': args.image_feature_purify_diff_threshold,
+                        }
+                        # Compute adversarial accuracy with purification
+                        tuned_outputs, diff_ratio = model(images, move_image_features_noisy_anchor=True,
+                                                              purify_params=purify_params)
+                        avg_diff_ratio += diff_ratio.cpu()
+                else:
+                    tuned_outputs = model(images)
 
         # Handle different types of ensembling
         if args.ensemble_type == 'none':
@@ -1125,6 +1157,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
         # Measure accuracy
         acc1, acc5 = accuracy(clip_output, target, topk=(1, 5))  # Original model accuracy
+        clean_acc1, clean_acc5 = accuracy(clean_clip_output, target, topk=(1, 5)) # Original clean model accuracy
 
         # Calculate ECE
         softmax_clip_output = softmax_ece(clip_output)
@@ -1136,6 +1169,17 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         # Update original model accuracy metrics
         top1.update(acc1[0], images.size(0))
         top5.update(acc5[0], images.size(0))
+
+        # Calculate ECE on clean
+        softmax_clean_clip_output = softmax_ece(clean_clip_output)
+        max_conf_clean_clip_output, max_index_clean_clip_output = torch.max(softmax_clean_clip_output, dim=1)
+        result_dict_original_clean['max_confidence'].append(max_conf_clean_clip_output.item())
+        result_dict_original_clean['prediction'].append(max_index_clean_clip_output.item())
+        result_dict_original_clean['label'].append(target.item())
+
+        # Update the original clean model accuracy metrics
+        top1_clean.update(clean_acc1[0], images.size(0))
+        top5_clean.update(clean_acc5[0], images.size(0))
 
         if args.ensemble_type != "all":
             # For single ensemble type, calculate and update metrics
@@ -1215,18 +1259,20 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         if logger and (i < 5 or i % 20 == 0):  # Log detailed info for first few samples and periodically
             if args.ensemble_type != "all":
                 if args.eps <= 0:
-                    logger.debug(f"Sample {i+1}: Original Model  Acc@1: {acc1[0].item():.2f}, Acc@5: {acc5[0].item():.2f}, TTA Acc@1: {tpt_acc1[0].item():.2f}, Acc@5: {tpt_acc5[0].item():.2f}")
+                    logger.debug(f"Sample {i+1}: Original Clean Model  Acc@1: {clean_acc1[0].item():.2f}, Acc@5: {clean_acc5[0].item():.2f}, Original Model  Acc@1: {acc1[0].item():.2f}, Acc@5: {acc5[0].item():.2f}, TTA Acc@1: {tpt_acc1[0].item():.2f}, Acc@5: {tpt_acc5[0].item():.2f}")
                 else:
-                    logger.debug(f"Sample {i+1}: Original Model Adversarial Acc@1: {acc1[0].item():.2f}, Acc@5: {acc5[0].item():.2f} TTA adversarial Acc@1: {tpt_acc1[0].item():.2f}, Acc@5: {tpt_acc5[0].item():.2f}")
+                    logger.debug(f"Sample {i+1}: Original Clean Model  Acc@1: {clean_acc1[0].item():.2f}, Acc@5: {clean_acc5[0].item():.2f} Original Model Adversarial Acc@1: {acc1[0].item():.2f}, Acc@5: {acc5[0].item():.2f} TTA adversarial Acc@1: {tpt_acc1[0].item():.2f}, Acc@5: {tpt_acc5[0].item():.2f}")
             else:
                 # Log metrics for all three ensemble types
                 if args.eps <= 0:
+                    logger.debug(f"Sample {i+1}: Original Clean Model Acc@1: {clean_acc1[0].item():.2f}, Acc@5: {clean_acc5[0].item():.2f}")
                     logger.debug(f"Sample {i+1}: Original Model Acc@1: {acc1[0].item():.2f}, Acc@5: {acc5[0].item():.2f}")
                     logger.debug(f"Sample {i+1}: Single TTA Acc@1: {tpt_acc1_single[0].item():.2f}, Acc@5: {tpt_acc5_single[0].item():.2f}")
                     logger.debug(f"Sample {i+1}: Vanilla TTA Acc@1: {tpt_acc1_vanilla[0].item():.2f}, Acc@5: {tpt_acc5_vanilla[0].item():.2f}")
                     logger.debug(f"Sample {i+1}: Vanilla Topk TTA Acc@1: {tpt_acc1_vanilla_topk[0].item():.2f}, Acc@5: {tpt_acc5_vanilla_topk[0].item():.2f}")
                     logger.debug(f"Sample {i+1}: Weighted TTA Acc@1: {tpt_acc1_weighted[0].item():.2f}, Acc@5: {tpt_acc5_weighted[0].item():.2f}")
                 else:
+                    logger.debug(f"Sample {i+1}: Original Clean Model  Acc@1: {clean_acc1[0].item():.2f}, Acc@5: {clean_acc5[0].item():.2f}")
                     logger.debug(f"Sample {i+1}: Original Model Adversarial Acc@1: {acc1[0].item():.2f}, Acc@5: {acc5[0].item():.2f}")
                     logger.debug(f"Sample {i+1}: Single TTA Adversarial Acc@1: {tpt_acc1_single[0].item():.2f}, Acc@5: {tpt_acc5_single[0].item():.2f}")
                     logger.debug(f"Sample {i+1}: Vanilla TTA Adversarial Acc@1: {tpt_acc1_vanilla[0].item():.2f}, Acc@5: {tpt_acc5_vanilla[0].item():.2f}")
@@ -1242,20 +1288,24 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             if logger:
                 if args.ensemble_type != "all":
                     if args.eps <= 0:
+                        logger.info(f'iter:{i+1}/{len(val_loader)}, clip_clean_acc1={top1_clean.avg}, tta_acc1={tpt1.avg}')
                         logger.info(f'iter:{i+1}/{len(val_loader)}, clip_acc1={top1.avg}, tta_acc1={tpt1.avg}')
-                        logger.info(f'iter:{i+1}/{len(val_loader)}, Original Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}')
+                        logger.info(f'iter:{i+1}/{len(val_loader)}, Original Clean Acc@1: {top1_clean.avg:.2f}, Acc@5: {top5_clean.avg:.2f}, Original Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}')
                     else:
-                        logger.info(f'iter:{i+1}/{len(val_loader)}, Original Adv Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Adv Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}')
+                        logger.info(f'iter:{i+1}/{len(val_loader)}, Original Clean Acc@1: {top1_clean.avg:.2f}, Acc@5: {top5_clean.avg:.2f}, Original Adv Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Adv Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}')
                 else:
                     # Log metrics for all three ensemble types
                     if args.eps <= 0:
+                        logger.info(f'iter:{i+1}/{len(val_loader)}, clip_clean_acc1={top1_clean.avg}')
                         logger.info(f'iter:{i+1}/{len(val_loader)}, clip_acc1={top1.avg}')
+                        logger.info(f'iter:{i+1}/{len(val_loader)}, Original Clean Acc@1: {top1_clean.avg:.2f}, Acc@5: {top5_clean.avg:.2f}')
                         logger.info(f'iter:{i+1}/{len(val_loader)}, Original Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}')
                         logger.info(f'iter:{i+1}/{len(val_loader)}, Single TTA Acc@1: {tpt1_single.avg:.2f}, Acc@5: {tpt5_single.avg:.2f}')
                         logger.info(f'iter:{i+1}/{len(val_loader)}, Vanilla TTA Acc@1: {tpt1_vanilla.avg:.2f}, Acc@5: {tpt5_vanilla.avg:.2f}')
                         logger.info(f'iter:{i+1}/{len(val_loader)}, Vanilla Topk TTA Acc@1: {tpt1_vanilla_topk.avg:.2f}, Acc@5: {tpt5_vanilla_topk.avg:.2f}')
                         logger.info(f'iter:{i+1}/{len(val_loader)}, Weighted TTA Acc@1: {tpt1_weighted.avg:.2f}, Acc@5: {tpt5_weighted.avg:.2f}')
                     else:
+                        logger.info(f'iter:{i+1}/{len(val_loader)}, Original Clean Acc@1: {top1_clean.avg:.2f}, Acc@5: {top5_clean.avg:.2f}')
                         logger.info(f'iter:{i+1}/{len(val_loader)}, Original Adv Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}')
                         logger.info(f'iter:{i+1}/{len(val_loader)}, Single TTA Adv Acc@1: {tpt1_single.avg:.2f}, Acc@5: {tpt5_single.avg:.2f}')
                         logger.info(f'iter:{i+1}/{len(val_loader)}, Vanilla TTA Adv Acc@1: {tpt1_vanilla.avg:.2f}, Acc@5: {tpt5_vanilla.avg:.2f}')
@@ -1269,14 +1319,15 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     if logger:
         if args.ensemble_type != "all":
             if args.eps <= 0:
-                logger.info(f"Final results - Original Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}")
+                logger.info(f"Final results - Original Clean Acc@1: {top1_clean.avg:.2f}, Acc@5: {top5_clean.avg:.2f}, Original Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}")
                 logger.info(f"Improvement from TTA in Acc@1 {tpt1.avg - top1.avg:.2f}, and Acc@5 {tpt5.avg - top5.avg:.2f}")
             else:
-                logger.info(f"Final results - Adversarial Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Adversarial Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}")
+                logger.info(f"Final results - Original Clean Acc@1: {top1_clean.avg:.2f}, Acc@5: {top5_clean.avg:.2f}, Adversarial Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}, TTA Adversarial Acc@1: {tpt1.avg:.2f}, Acc@5: {tpt5.avg:.2f}")
                 logger.info(f"Improvement from TTA in Adversarial Acc@1 {tpt1.avg - top1.avg:.2f}, and Acc@5 {tpt5.avg - top5.avg:.2f}")
         else:
             # Log final metrics for all three ensemble types
             if args.eps <= 0:
+                logger.info(f"Final results - Original Clean Acc@1: {top1_clean.avg:.2f}, Acc@5: {top5_clean.avg:.2f}")
                 logger.info(f"Final results - Original Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}")
                 logger.info(f"Final results - Single TTA Acc@1: {tpt1_single.avg:.2f}, Acc@5: {tpt5_single.avg:.2f}")
                 logger.info(f"Final results - Vanilla TTA Acc@1: {tpt1_vanilla.avg:.2f}, Acc@5: {tpt5_vanilla.avg:.2f}")
@@ -1287,6 +1338,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                 logger.info(f"Improvement from Vanilla Topk TTA in Acc@1 {tpt1_vanilla_topk.avg - top1.avg:.2f}, and Acc@5 {tpt5_vanilla_topk.avg - top5.avg:.2f}")
                 logger.info(f"Improvement from Weighted TTA in Acc@1 {tpt1_weighted.avg - top1.avg:.2f}, and Acc@5 {tpt5_weighted.avg - top5.avg:.2f}")
             else:
+                logger.info(f"Final results - Original Clean Acc@1: {top1_clean.avg:.2f}, Acc@5: {top5_clean.avg:.2f}")
                 logger.info(f"Final results - Adversarial Acc@1: {top1.avg:.2f}, Acc@5: {top5.avg:.2f}")
                 logger.info(f"Final results - Single TTA Adversarial Acc@1: {tpt1_single.avg:.2f}, Acc@5: {tpt5_single.avg:.2f}")
                 logger.info(f"Final results - Vanilla TTA Adversarial Acc@1: {tpt1_vanilla.avg:.2f}, Acc@5: {tpt5_vanilla.avg:.2f}")
@@ -1360,57 +1412,192 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         plot_average_weights(weighted_scores, args.log_dir, logger, filename=f"{args.weighted_score_name[:-5]}_plot.png")
 
     # Save the results dictionary if not empty
+    if result_dict_original_clean  and len(result_dict_original_clean['max_confidence']) > 0:
+        acc, ece, bin_acc, incorrect_confidences = Calculator(result_dict_original_clean, logger)
+        logger.info(f"ECE results - Original Acc: {acc:.2f},  ECE: {ece:.2f}")
+        # the dictionary has three keys "max_confidence", "prediction" and "label". Each key is associated with a list of values for each sample, get the indices of correctly classisifed as well as incorrectly classified samples
+        predictions_clean = result_dict_original_clean['prediction']
+        labels_clean = result_dict_original_clean['label']
+        # Get indices of correctly classified samples
+        correct_clean_indices = [i for i, (p, l) in enumerate(zip(predictions_clean, labels_clean)) if p == l]
+        incorrect_clean_indices = [i for i, (p, l) in enumerate(zip(predictions_clean, labels_clean)) if p != l]
+        result_dict_original_clean["correct_clean_indices"] = correct_clean_indices
+        result_dict_original_clean["incorrect_clean_indices"] = incorrect_clean_indices
+        results_path = os.path.join(args.log_dir, f"results_original_clean.json")
+        # Handle long paths on Windows
+        results_path = handle_long_windows_path(results_path)
+        with open(results_path, 'w') as f:
+            json.dump(result_dict_original_clean, f, indent=4)
+        logger.info(f"Results saved to {results_path}")
+
     if result_dict_original  and len(result_dict_original['max_confidence']) > 0:
         results_path = os.path.join(args.log_dir, f"results_original.json")
+        logger.info(f"Results saved to {results_path}")
+        acc, ece, bin_acc, incorrect_confidences = Calculator(result_dict_original, logger)
+        logger.info(f"ECE results - Original Acc: {acc:.2f},  ECE: {ece:.2f}")
+        predictions_original = result_dict_original['prediction']
+        number_of_correct_predictions_from_correct_clean_indices_original = [predictions_original[i]==labels_clean[i] for i in correct_clean_indices]
+        number_of_incorrect_predictions_from_correct_clean_indices_original = [predictions_original[i]==labels_clean[i] for i in incorrect_clean_indices]
+        correct_idx_incorrect_predictions_from_correct_clean_indices_original = [
+            idx for idx, ok in
+            zip(incorrect_clean_indices, number_of_incorrect_predictions_from_correct_clean_indices_original) if ok
+        ]
+        logger.info(f"Number of correct predictions from correct clean indices: {sum(number_of_correct_predictions_from_correct_clean_indices_original)} out of {len(correct_clean_indices)}")
+        logger.info(f"Number of correct predictions from incorrect clean indices: {sum(number_of_incorrect_predictions_from_correct_clean_indices_original)} out of {len(incorrect_clean_indices)}")
+        logger.info(f"The sample indices which are correctly classified from incorrect clean predictions are: {correct_idx_incorrect_predictions_from_correct_clean_indices_original}")
+
+        result_dict_original["number_of_correct_predictions_from_correct_clean_indices"] = f"{sum(number_of_correct_predictions_from_correct_clean_indices_original)} out of {len(correct_clean_indices)}"
+        result_dict_original["number_of_incorrect_predictions_from_correct_clean_indices"] = f" {sum(number_of_incorrect_predictions_from_correct_clean_indices_original)} out of {len(incorrect_clean_indices)}"
+        result_dict_original["sample_indices_correct_classified_from_incorrect_clean_predictions"] = correct_idx_incorrect_predictions_from_correct_clean_indices_original
+
+
         # Handle long paths on Windows
         results_path = handle_long_windows_path(results_path)
         with open(results_path, 'w') as f:
             json.dump(result_dict_original, f, indent=4)
-        logger.info(f"Results saved to {results_path}")
-        acc, ece, bin_acc, incorrect_confidences = Calculator(result_dict_original, logger)
-        logger.info(f"ECE results - Original Acc: {acc:.2f},  ECE: {ece:.2f}")
+
+
     if result_dict_single  and len(result_dict_single['max_confidence']) > 0:
         results_path = os.path.join(args.log_dir, f"results_single.json")
+        logger.info(f"Results saved to {results_path}")
+        acc, ece, bin_acc, incorrect_confidences = Calculator(result_dict_single, logger)
+        logger.info(f"ECE results - Single Acc: {acc:.2f},  ECE: {ece:.2f}")
+        predictions_single = result_dict_single['prediction']
+        number_of_correct_predictions_from_correct_clean_indices_single = [predictions_single[i]==labels_clean[i] for i in correct_clean_indices]
+        number_of_incorrect_predictions_from_correct_clean_indices_single = [predictions_single[i]==labels_clean[i] for i in incorrect_clean_indices]
+        correct_idx_incorrect_predictions_from_correct_clean_indices_single = [
+            idx for idx, ok in
+            zip(incorrect_clean_indices, number_of_incorrect_predictions_from_correct_clean_indices_single) if ok
+        ]
+        logger.info(f"Number of correct predictions from correct clean indices: {sum(number_of_correct_predictions_from_correct_clean_indices_single)} out of {len(correct_clean_indices)}")
+        logger.info(f"Number of correct predictions from incorrect clean indices: {sum(number_of_incorrect_predictions_from_correct_clean_indices_single)} out of {len(incorrect_clean_indices)}")
+        logger.info(f"The sample indices which are correctly classified from incorrect clean predictions are: {correct_idx_incorrect_predictions_from_correct_clean_indices_single}")
+
+        result_dict_single[
+            "number_of_correct_predictions_from_correct_clean_indices"] = f"{sum(number_of_correct_predictions_from_correct_clean_indices_single)} out of {len(correct_clean_indices)}"
+        result_dict_single[
+            "number_of_incorrect_predictions_from_correct_clean_indices"] = f" {sum(number_of_incorrect_predictions_from_correct_clean_indices_single)} out of {len(incorrect_clean_indices)}"
+        result_dict_single[
+            "sample_indices_correct_classified_from_incorrect_clean_predictions"] = correct_idx_incorrect_predictions_from_correct_clean_indices_single
+
         # Handle long paths on Windows
         results_path = handle_long_windows_path(results_path)
         with open(results_path, 'w') as f:
             json.dump(result_dict_single, f, indent=4)
-        logger.info(f"Results saved to {results_path}")
-        acc, ece, bin_acc, incorrect_confidences = Calculator(result_dict_single, logger)
-        logger.info(f"ECE results - Single Acc: {acc:.2f},  ECE: {ece:.2f}")
+
+
     if result_dict_vanilla  and len(result_dict_vanilla['max_confidence']) > 0:
         results_path = os.path.join(args.log_dir, f"results_vanilla.json")
+
+        logger.info(f"Results saved to {results_path}")
+        acc, ece, bin_acc, bin_confidences = Calculator(result_dict_vanilla, logger)
+        logger.info(f"ECE results - Vanilla Acc: {acc:.2f},  ECE: {ece:.2f}")
+
+        predictions_vanilla = result_dict_vanilla['prediction']
+        number_of_correct_predictions_from_correct_clean_indices_vanilla = [predictions_vanilla[i] == labels_clean[i] for
+                                                                           i in correct_clean_indices]
+        number_of_incorrect_predictions_from_correct_clean_indices_vanilla = [predictions_vanilla[i] == labels_clean[i]
+                                                                             for i in incorrect_clean_indices]
+        correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla = [
+            idx for idx, ok in
+            zip(incorrect_clean_indices,number_of_incorrect_predictions_from_correct_clean_indices_vanilla) if ok
+        ]
+
+        logger.info(
+            f"Number of correct predictions from correct clean indices: {sum(number_of_correct_predictions_from_correct_clean_indices_vanilla)} out of {len(correct_clean_indices)}")
+        logger.info(
+            f"Number of correct predictions from incorrect clean indices: {sum(number_of_incorrect_predictions_from_correct_clean_indices_vanilla)} out of {len(incorrect_clean_indices)}")
+        logger.info(f"The sample indices which are correctly classified from incorrect clean predictions are: {correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla}")
+
+        result_dict_vanilla[
+            "number_of_correct_predictions_from_correct_clean_indices"] = f"{sum(number_of_correct_predictions_from_correct_clean_indices_vanilla)} out of {len(correct_clean_indices)}"
+        result_dict_vanilla[
+            "number_of_incorrect_predictions_from_correct_clean_indices"] = f" {sum(number_of_incorrect_predictions_from_correct_clean_indices_vanilla)} out of {len(incorrect_clean_indices)}"
+        result_dict_vanilla[
+            "sample_indices_correct_classified_from_incorrect_clean_predictions"] = correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla
+
         # Handle long paths on Windows
         results_path = handle_long_windows_path(results_path)
         with open(results_path, 'w') as f:
             json.dump(result_dict_vanilla, f, indent=4)
-        logger.info(f"Results saved to {results_path}")
-        acc, ece, bin_acc, bin_confidences = Calculator(result_dict_vanilla, logger)
-        logger.info(f"ECE results - Vanilla Acc: {acc:.2f},  ECE: {ece:.2f}")
+
+
     if result_dict_vanilla_topk  and len(result_dict_vanilla_topk['max_confidence']) > 0:
         results_path = os.path.join(args.log_dir, f"results_vanilla_topk.json")
-        # Handle long paths on Windows
-        results_path = handle_long_windows_path(results_path)
-        with open(results_path, 'w') as f:
-            json.dump(result_dict_vanilla_topk, f, indent=4)
+
         logger.info(f"Results saved to {results_path}")
         acc, ece, bin_acc, bin_confidences = Calculator(result_dict_vanilla_topk, logger)
         logger.info(f"ECE results - Vanilla Topk Acc: {acc:.2f},  ECE: {ece:.2f}")
 
-    if result_dict_weighted  and len(result_dict_weighted['max_confidence']) > 0:
-        results_path = os.path.join(args.log_dir, f"results_weighted.json")
+        predictions_vanilla_topk = result_dict_vanilla_topk['prediction']
+        number_of_correct_predictions_from_correct_clean_indices_vanilla_topk = [predictions_vanilla_topk[i] == labels_clean[i]
+                                                                            for
+                                                                            i in correct_clean_indices]
+        number_of_incorrect_predictions_from_correct_clean_indices_vanilla_topk = [predictions_vanilla_topk[i] == labels_clean[i]
+                                                                              for i in incorrect_clean_indices]
+        correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla_topk = [
+            idx for idx, ok in
+            zip(incorrect_clean_indices, number_of_incorrect_predictions_from_correct_clean_indices_vanilla_topk) if ok
+        ]
+
+        logger.info(
+            f"Number of correct predictions from correct clean indices: {sum(number_of_correct_predictions_from_correct_clean_indices_vanilla_topk)} out of {len(correct_clean_indices)}")
+        logger.info(
+            f"Number of correct predictions from incorrect clean indices: {sum(number_of_incorrect_predictions_from_correct_clean_indices_vanilla_topk)} out of {len(incorrect_clean_indices)}")
+        logger.info(f"The sample indices which are correctly classified from incorrect clean predictions are: {correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla_topk}")
+
+
+
         # Handle long paths on Windows
         results_path = handle_long_windows_path(results_path)
         with open(results_path, 'w') as f:
-            json.dump(result_dict_weighted, f, indent=4)
+            json.dump(result_dict_vanilla_topk, f, indent=4)
+
+
+
+    if result_dict_weighted  and len(result_dict_weighted['max_confidence']) > 0:
+        results_path = os.path.join(args.log_dir, f"results_weighted.json")
+
         logger.info(f"Results saved to {results_path}")
         acc, ece, bin_acc, bin_confidences = Calculator(result_dict_weighted, logger)
         logger.info(f"ECE results - Weighted Acc: {acc:.2f},  ECE: {ece:.2f}")
 
+        predictions_weighted = result_dict_weighted['prediction']
+        number_of_correct_predictions_from_correct_clean_indices_weighted = [predictions_weighted[i] == labels_clean[i]
+                                                                            for
+                                                                            i in correct_clean_indices]
+        number_of_incorrect_predictions_from_correct_clean_indices_weighted = [predictions_weighted[i] == labels_clean[i]
+                                                                              for i in incorrect_clean_indices]
+        correct_idx_incorrect_predictions_from_correct_clean_indices_weighted = [
+            idx for idx, ok in
+            zip(incorrect_clean_indices, number_of_incorrect_predictions_from_correct_clean_indices_weighted) if ok
+        ]
+        logger.info(
+            f"Number of correct predictions from correct clean indices: {sum(number_of_correct_predictions_from_correct_clean_indices_weighted)} out of {len(correct_clean_indices)}")
+        logger.info(
+            f"Number of correct predictions from incorrect clean indices: {sum(number_of_incorrect_predictions_from_correct_clean_indices_weighted)} out of {len(incorrect_clean_indices)}")
+        logger.info(f"The sample indices which are correctly classified from incorrect clean predictions are: {correct_idx_incorrect_predictions_from_correct_clean_indices_weighted}")
+
+        result_dict_weighted[
+            "number_of_correct_predictions_from_correct_clean_indices"] = f"{sum(number_of_correct_predictions_from_correct_clean_indices_weighted)} out of {len(correct_clean_indices)}"
+        result_dict_weighted[
+            "number_of_incorrect_predictions_from_correct_clean_indices"] = f" {sum(number_of_incorrect_predictions_from_correct_clean_indices_weighted)} out of {len(incorrect_clean_indices)}"
+        result_dict_weighted[
+            "sample_indices_correct_classified_from_incorrect_clean_predictions"] = correct_idx_incorrect_predictions_from_correct_clean_indices_weighted
+
+        # Handle long paths on Windows
+        results_path = handle_long_windows_path(results_path)
+        with open(results_path, 'w') as f:
+            json.dump(result_dict_weighted, f, indent=4)
+
+    if args.image_feature_purify:
+        if args.image_feature_purify_type == "noisy_anchor":
+            avg_diff_ratio = avg_diff_ratio/len(val_loader)
+            logger.info(f"Average diff ratio: {avg_diff_ratio:.2f}")
 
     # Return original and test-time adapted accuracies
     if args.ensemble_type != "all":
-        return [top1.avg, top5.avg, tpt1.avg, tpt5.avg]
+        return [top1_clean.avg, top1.avg, top5.avg, tpt1.avg, tpt5.avg]
     else:
         # Return metrics for all three ensemble types
         return [
@@ -1418,7 +1605,9 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             tpt1_single.avg, tpt5_single.avg,             # Single ensemble
             tpt1_vanilla.avg, tpt5_vanilla.avg,           # Vanilla ensemble
             tpt1_vanilla_topk.avg, tpt5_vanilla_topk.avg, # Vanilla Topk ensemble
-            tpt1_weighted.avg, tpt5_weighted.avg          # Weighted ensemble
+            tpt1_weighted.avg, tpt5_weighted.avg,          # Weighted ensemble
+            top1_clean.avg, top5_clean.avg,  # Original clean model
+
         ]
 
 
@@ -1568,15 +1757,16 @@ def main():
     if args.ensemble_type != "all":
         if args.eps <= 0:
             # Clean accuracy (no adversarial attack)
-            log_msg = f"=> Acc. on testset [{dset}]: Clean Acc @1 {results[0]}/ TTA Clean Acc @1 {results[2]}, Clean Acc @5 {results[1]}/ TTA Clean Acc @5 {results[3]}"
+            log_msg = f"=> Acc. on testset [{dset}]: Clean Acc @1 {results[0]}, Clean Acc @1 {results[1]}/ TTA Clean Acc @1 {results[3]}, Clean Acc @5 {results[2]}/ TTA Clean Acc @5 {results[4]}"
         else:
             # Adversarial accuracy
-            log_msg = f"=> Acc. on testset [{dset}]: Adv Acc @1 {results[0]}/ TTA Adv Acc @1 {results[2]}, Adv Acc @5 {results[1]}/ TTA Adv Acc @5 {results[3]}"
+            log_msg = f"=> Acc. on testset [{dset}]: Clean Acc @1 {results[0]}, Adv Acc @1 {results[1]}/ TTA Adv Acc @1 {results[3]}, Adv Acc @5 {results[2]}/ TTA Adv Acc @5 {results[4]}"
     else:
         # For "all" ensemble type, results contain metrics for all three ensemble types
         if args.eps <= 0:
             # Clean accuracy (no adversarial attack)
             log_msg = f"=> Acc. on testset [{dset}]:\n" \
+                      f"  Original Clean: Clean Acc @1 {results[10]}/ Clean Acc @5 {results[11]}\n" \
                       f"  Original: Clean Acc @1 {results[0]}/ Clean Acc @5 {results[1]}\n" \
                       f"  Single TTA: Clean Acc @1 {results[2]}/ Clean Acc @5 {results[3]}\n" \
                       f"  Vanilla TTA: Clean Acc @1 {results[4]}/ Clean Acc @5 {results[5]}\n" \
@@ -1585,6 +1775,7 @@ def main():
         else:
             # Adversarial accuracy
             log_msg = f"=> Acc. on testset [{dset}]:\n" \
+                      f"  Original: Clean Acc @1 {results[10]}/ Clean Acc @5 {results[11]}\n" \
                       f"  Original: Adv Acc @1 {results[0]}/ Adv Acc @5 {results[1]}\n" \
                       f"  Single TTA: Adv Acc @1 {results[2]}/ Adv Acc @5 {results[3]}\n" \
                       f"  Vanilla TTA: Adv Acc @1 {results[4]}/ Adv Acc @5 {results[5]}\n" \
@@ -1713,10 +1904,17 @@ if __name__ == '__main__':
 
     # Image feature Purification
     parser.add_argument('--image_feature_purify', default=False, type=lambda x: (str(x).lower() == 'true'))
-    parser.add_argument('--image_feature_purify_type', default='noisy_anchor', choices=["noisy_anchor"], type=str)
+    parser.add_argument('--image_feature_purify_type', default='noisy_anchor', choices=["noisy_anchor", "clip_pure"], type=str)
     parser.add_argument('--image_feature_purify_noisy_anchors', default=10, type=int)
     parser.add_argument('--image_feature_purify_anchors_alpha', default=1.2, type=float)
     parser.add_argument('--image_feature_purify_noisy_sigma', default=0.18, type=float)
+    parser.add_argument('--image_feature_purify_diff_threshold', default=0.0, type=float)
+
+    parser.add_argument('--image_feature_clipure_steps', default=10, type=int)
+    parser.add_argument('--image_feature_clipure_step_size', default=10.0, type=float)
+
+
+
 
 
 
