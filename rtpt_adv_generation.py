@@ -608,7 +608,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                     }
                     # Compute adversarial accuracy with purification
                     adv_logits_purify, diff_ratio = model(adv_images, move_image_features_noisy_anchor=True, purify_params=purify_params)
-                    diff_ratio_adv += diff_ratio.item()
+                    diff_ratio_adv += diff_ratio.mean.item()
                 elif args.image_feature_purify_type == "clip_pure":
                     purify_params = {
                         'steps': args.image_feature_clipure_steps,
@@ -669,7 +669,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                     }
                     # Compute clean accuracy with purification
                     clean_logits_purify, diff_ratio = model(images, move_image_features_noisy_anchor=True, purify_params=purify_params)
-                    diff_ratio_clean += diff_ratio.item()
+                    diff_ratio_clean += diff_ratio.mean.item()
                 elif args.image_feature_purify_type == "clip_pure":
                     purify_params = {
                         'steps': args.image_feature_clipure_steps,
