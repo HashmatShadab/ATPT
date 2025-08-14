@@ -162,12 +162,10 @@ def create_log_dir(args):
     if args.image_feature_purify:
         if args.image_feature_purify_type == "noisy_anchor":
             image_feature_purify_part = [f"Image_Feature_Purify",
-                                        f"Type_{args.image_feature_purify_type}",
-                                        f"Anchors_{args.image_feature_purify_noisy_anchors}_Alpha_{args.image_feature_purify_anchors_alpha}_Sigma_{args.image_feature_purify_noisy_sigma}_threshold_{args.image_feature_purify_diff_threshold}"]
+                                        f"Type_{args.image_feature_purify_type}_Anchors_{args.image_feature_purify_noisy_anchors}_Alpha_{args.image_feature_purify_anchors_alpha}_Sigma_{args.image_feature_purify_noisy_sigma}_threshold_{args.image_feature_purify_diff_threshold}"]
         elif args.image_feature_purify_type == 'clip_pure':
             image_feature_purify_part = [f"Image_Feature_Purify",
-                                         f"Type_{args.image_feature_purify_type}",
-                                         f"steps_{args.image_feature_clipure_steps}_step_size_{args.image_feature_clipure_step_size}"]
+                                         f"Type_{args.image_feature_purify_type}_steps_{args.image_feature_clipure_steps}_step_size_{args.image_feature_clipure_step_size}"]
 
 
     else:

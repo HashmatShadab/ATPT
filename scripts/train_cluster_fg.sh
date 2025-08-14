@@ -47,6 +47,15 @@ SOURCE_MODEL_NAME=${25:-"RN50"} # Options: RN50, ViT-B/16
 IMAGE_ONLY_ATTACK=${26:-"false"} #
 IMAGE_ONLY_ATTACK_TYPE=${27:-"prm"} #
 
+
+IMAGE_FEATURE_PURIFY=${28:-"false"} #
+IMAGE_FEATURE_PURIFY_TYPE=${29:-"noisy_anchor"} #
+IMAGE_FEATURE_PURIFY_NOISY_ANCHORS=${30:-10} #
+IMAGE_FEATURE_PURIFY_ANCHORS_ALPHA=${31:-1.2} #
+IMAGE_FEATURE_PURIFY_NOISY_SIGMA=${32:-0.18} #
+IMAGE_FEATURE_PURIFY_DIFF_THRESHOLD=${33:-0.0} #
+
+
 # Common parameters for all runs
 COMMON_PARAMS="--gpu $GPU --n_ctx 4 --ctx_init a_photo_of_a --tpt_loss $TPT_LOSS"
 COMMON_PARAMS+=" --output_dir $OUTPUT_DIR --log_output_dir $LOG_OUTPUT_DIR  --eps $EPSILON --steps $ATTACK_STEPS --transferability $TRANSFERABILITY --source_model $SOURCE_MODEL_NAME --image_only_attack $IMAGE_ONLY_ATTACK --image_only_attack_type $IMAGE_ONLY_ATTACK_TYPE"
@@ -54,6 +63,7 @@ COMMON_PARAMS+=" --selection_p $FRACTION_CONFIDENT_SAMPLES --tta_steps $TTA_STEP
 COMMON_PARAMS+=" --ensemble_type $ENSEMBLE_TYPE --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING"
 COMMON_PARAMS+=" --counter_attack $COUNTER_ATTACK --counter_attack_type $COUNTER_ATTACK_TYPE --counter_attack_steps $COUNTER_ATTACK_STEPS --counter_attack_eps $COUNTER_ATTACK_EPSILON"
 COMMON_PARAMS+=" --counter_attack_alpha $COUNTER_ATTACK_ALPHA --counter_attack_tau_thres $COUNTER_ATTACK_TAU_THRES --counter_attack_beta $COUNTER_ATTACK_BETA --counter_attack_weighted_perturbations $COUNTER_ATTACK_W_PERTURBATION"
+COMMON_PARAMS+=" --image_feature_purify $IMAGE_FEATURE_PURIFY --image_feature_purify_type $IMAGE_FEATURE_PURIFY_TYPE --image_feature_purify_noisy_anchors $IMAGE_FEATURE_PURIFY_NOISY_ANCHORS --image_feature_purify_anchors_alpha $IMAGE_FEATURE_PURIFY_ANCHORS_ALPHA --image_feature_purify_noisy_sigma $IMAGE_FEATURE_PURIFY_NOISY_SIGMA --image_feature_purify_diff_threshold $IMAGE_FEATURE_PURIFY_DIFF_THRESHOLD"
 
 # Model parameters
 MODEL="-a $MODEL_NAME -b 64 --workers $NUM_WORKERS --print-freq 20"
