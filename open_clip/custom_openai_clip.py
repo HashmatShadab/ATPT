@@ -441,10 +441,12 @@ class ClipTestTimeTuning(nn.Module):
         # Generate all noisy samples at once
         batch_size = image.size(0)
         # Create a batch of noisy images [n_anchors*batch_size, C, H, W]
+        # number of noisy augmentations for each sample in the batch is equal to n_anchors
         noise_batch = sigma * torch.randn(n_anchors, batch_size, *image.shape[1:], device=image.device)
         noisy_images = image.unsqueeze(0) + noise_batch  # [n_anchors, batch_size, C, H, W]
-        noisy_images = noisy_images.view(n_anchors * batch_size, *image.shape[1:])  # [n_anchors*batch_size, C, H, W]
 
+        # Reshape to [n_anchors*batch_size, C, H, W] in order to pass through the network in a single batch
+        noisy_images = noisy_images.view(n_anchors * batch_size, *image.shape[1:])  # [n_anchors*batch_size, C, H, W]
         # Normalize and process all noisy images in one batch
         noisy_images = self.normalize(noisy_images.type(self.dtype))
         f_noisy_all = self.encode_image(noisy_images)  # [n_anchors*batch_size, feature_dim]
@@ -455,9 +457,11 @@ class ClipTestTimeTuning(nn.Module):
         # Calculate diff_ratio between f_source_normalized and normalized f_noisy_all
         f_noisy_normalized = f_noisy_all / f_noisy_all.norm(dim=-1, keepdim=True)  # [n_anchors, batch_size, feature_dim]
         diff_ratio = (f_noisy_normalized - f_source_normalized.unsqueeze(0)).norm(dim=-1) / f_source_normalized.norm(dim=-1).unsqueeze(0)  # [n_anchors, batch_size]
-        diff_ratio_mean = diff_ratio.mean().item()
-        if diff_ratio_mean < diff_threshold:
-            alpha = 0.0
+        diff_ratio_mean = diff_ratio.mean(dim=0)
+        # Initialize alpha as a vector (length = batch_size) with the same initial value
+        alpha_vector = torch.full_like(diff_ratio_mean, fill_value=alpha)
+        # Set alpha values to 0.0 where diff_ratio_mean < diff_threshold
+        alpha_vector[diff_ratio_mean < diff_threshold] = 0.0
 
         f_anchor_sum = f_noisy_all.sum(dim=0)  # [batch_size, feature_dim]
 
@@ -466,7 +470,7 @@ class ClipTestTimeTuning(nn.Module):
         f_anchor_normalized = f_anchor / f_anchor_norm
 
         # Step 3: One-step linear interpolation
-        f_moved = (1 - alpha) * f_source_normalized + alpha * f_anchor_normalized
+        f_moved = (1 - alpha_vector.unsqueeze(1)) * f_source_normalized + alpha_vector.unsqueeze(1) * f_anchor_normalized
         f_moved_norm = f_moved.norm(dim=-1, keepdim=True)
         f_moved = f_moved / f_moved_norm  # Final normalization
 
@@ -478,7 +482,7 @@ class ClipTestTimeTuning(nn.Module):
         logit_scale = self.logit_scale.exp()
         logits = logit_scale * f_moved @ text_features.t()
 
-        return logits, diff_ratio.mean()
+        return logits, diff_ratio_mean
 
     def inference_move_image_features_text_anchor(self, image, steps=10, step_size=10.0, null_text_features=None):
         """

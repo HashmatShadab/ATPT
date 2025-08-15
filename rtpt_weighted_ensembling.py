@@ -1095,9 +1095,14 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                             'diff_threshold': args.image_feature_purify_diff_threshold,
                         }
                         # Compute adversarial accuracy with purification
-                        tuned_outputs, diff_ratio = model(images, move_image_features_noisy_anchor=True,
+                        tuned_outputs_first, diff_ratio = model(images[0].unsqueeze(0), move_image_features_noisy_anchor=True,
                                                               purify_params=purify_params)
+                        tuned_outputs_remaining = model(images[1:])
+                        #tuned_outputs is tuned_outputs_first + tuned_outputs_remaining
+                        tuned_outputs = torch.cat([tuned_outputs_first, tuned_outputs_remaining], dim=0)
+
                         avg_diff_ratio += diff_ratio.cpu()
+                        del tuned_outputs_first, tuned_outputs_remaining
                 else:
                     tuned_outputs = model(images)
 
