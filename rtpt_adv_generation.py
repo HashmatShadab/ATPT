@@ -607,8 +607,9 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                         'diff_threshold': args.image_feature_purify_diff_threshold,
                     }
                     # Compute adversarial accuracy with purification
-                    adv_logits_purify, diff_ratio = model(adv_images, move_image_features_noisy_anchor=True, purify_params=purify_params)
-                    diff_ratio_adv += diff_ratio.mean().item()
+                    with torch.no_grad():
+                        adv_logits_purify, diff_ratio = model(adv_images, move_image_features_noisy_anchor=True, purify_params=purify_params)
+                        diff_ratio_adv += diff_ratio.mean().item()
                 elif args.image_feature_purify_type == "clip_pure":
                     purify_params = {
                         'steps': args.image_feature_clipure_steps,
@@ -627,9 +628,10 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
 
                 # Compute original adversarial accuracy without purification
-                adv_logits = model(adv_images)
-                adv_probs = adv_logits.softmax(dim=-1)
-                _, adv_pred = adv_probs.max(1)
+                with torch.no_grad():
+                    adv_logits = model(adv_images)
+                    adv_probs = adv_logits.softmax(dim=-1)
+                    _, adv_pred = adv_probs.max(1)
                 adv_correct_orig += adv_pred.eq(target).sum().item()
 
                 logger.info("======================== Adversarial Image Evaluation ==========================")
@@ -642,17 +644,18 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
             else:
                 # Compute original adversarial accuracy without purification
-                adv_logits = model(adv_images)
-                adv_probs = adv_logits.softmax(dim=-1)
-                _, adv_pred = adv_probs.max(1)
+                with torch.no_grad():
+                    adv_logits = model(adv_images)
+                    adv_probs = adv_logits.softmax(dim=-1)
+                    _, adv_pred = adv_probs.max(1)
                 adv_correct_orig += adv_pred.eq(target).sum().item()
 
             # If using counter-attack, pass the counter-attacked images to the model
             if args.counter_attack:
-
-                adv_logits_counter = model(adv_images_counter)
-                adv_probs_counter = adv_logits_counter.softmax(dim=-1)
-                _, adv_pred_counter = adv_probs_counter.max(1)
+                with torch.no_grad():
+                    adv_logits_counter = model(adv_images_counter)
+                    adv_probs_counter = adv_logits_counter.softmax(dim=-1)
+                    _, adv_pred_counter = adv_probs_counter.max(1)
                 adv_correct_counter += adv_pred_counter.eq(target).sum().item()
 
 
@@ -668,8 +671,9 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                         'diff_threshold': args.image_feature_purify_diff_threshold,
                     }
                     # Compute clean accuracy with purification
-                    clean_logits_purify, diff_ratio = model(images, move_image_features_noisy_anchor=True, purify_params=purify_params)
-                    diff_ratio_clean += diff_ratio.mean().item()
+                    with torch.no_grad():
+                        clean_logits_purify, diff_ratio = model(images, move_image_features_noisy_anchor=True, purify_params=purify_params)
+                        diff_ratio_clean += diff_ratio.mean().item()
                 elif args.image_feature_purify_type == "clip_pure":
                     purify_params = {
                         'steps': args.image_feature_clipure_steps,
@@ -688,9 +692,10 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                 clean_correct_purify += clean_pred_purify.eq(target).sum().item()
 
                 # Compute original clean accuracy without purification
-                clean_logits = model(images)
-                clean_probs = clean_logits.softmax(dim=-1)
-                _, clean_pred = clean_probs.max(1)
+                with torch.no_grad():
+                    clean_logits = model(images)
+                    clean_probs = clean_logits.softmax(dim=-1)
+                    _, clean_pred = clean_probs.max(1)
                 clean_correct_orig += clean_pred.eq(target).sum().item()
 
                 # Track which samples are correctly/incorrectly classified in clean evaluation
@@ -813,9 +818,10 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                         logger.info(f"Saved purify correct, clean wrong plot {purify_correct_clean_wrong_plots_saved}/50 to {save_path}")
 
             else:
-                clean_logits = model(images)
-                clean_probs = clean_logits.softmax(dim=-1)
-                _, clean_pred = clean_probs.max(1)
+                with torch.no_grad():
+                    clean_logits = model(images)
+                    clean_probs = clean_logits.softmax(dim=-1)
+                    _, clean_pred = clean_probs.max(1)
                 clean_correct_orig += clean_pred.eq(target).sum().item()
 
 
@@ -823,19 +829,28 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             total += target.size(0)
 
         # Free memory
-        del images
+        del images, adv_images, target
+        
+        # Clear additional temporary variables
+        if 'path' in locals():
+            del path
 
         if args.image_feature_purify:
             del adv_logits_purify, adv_probs_purify, adv_pred_purify
             del adv_logits, adv_probs, adv_pred
             del clean_logits_purify, clean_probs_purify, clean_pred_purify
             del clean_logits, clean_probs, clean_pred
+            if 'clean_correct_mask' in locals():
+                del clean_correct_mask, clean_incorrect_mask
         else:
             del adv_logits, adv_probs, adv_pred
             del clean_logits, clean_probs, clean_pred
 
         if args.counter_attack:
             del adv_images_counter, adv_logits_counter, adv_probs_counter, adv_pred_counter
+
+        # Force garbage collection and clear GPU cache more frequently
+        torch.cuda.empty_cache()
 
 
         ############### Not working ###############################

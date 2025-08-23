@@ -65,7 +65,7 @@ COMMON_PARAMS+=" --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX"
 COMMON_PARAMS+=" --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING --print-freq 20 --image_feature_purify $IMAGE_PURIFY --image_feature_purify_type $PURIFY_TYPE --image_feature_purify_noisy_anchors $NOISY_ANCHORS --image_feature_purify_anchors_alpha $ANCHORS_ALPHA --image_feature_purify_noisy_sigma $NOISY_SIGMA --image_feature_purify_diff_threshold $DIFF_THRESHOLD"
 
 # Model parameters
-MODEL="-a $MODEL_NAME -b 64"
+MODEL="-a $MODEL_NAME -b 8 --adv_bs 8"
 
 # Display configuration
 echo "=== Configuration ==="
@@ -78,7 +78,7 @@ echo "TTA Steps: $TTA_STEPS"
 echo "Fraction Confident Samples: $FRACTION_CONFIDENT_SAMPLES"
 echo "Top K Neighbours: $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX"
 echo "Softmax Temperature: $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING"
-echo "Model: $MODEL_NAME with batch size 64"
+echo "Model: $MODEL_NAME with batch size 8"
 echo "Output Directory: $OUTPUT_DIR"
 echo "Log Output Directory: $LOG_OUTPUT_DIR"
 echo "Image Feature Purify: $IMAGE_PURIFY"
