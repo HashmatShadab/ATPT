@@ -200,4 +200,35 @@ elif [ "$DATASET_NAME" = "pets" ]; then
   python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Pets $MODEL $COMMON_PARAMS
   echo "  ✓ Pets dataset testing complete"
 
+elif [ "$DATASET_NAME" = "pets" ]; then
+  echo "Running tests on Fine-grained datasets..."
+  echo "Testing Pets dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets Pets $MODEL $COMMON_PARAMS
+  echo "  ✓ Pets dataset testing complete"
+
+elif [ "$DATASET_NAME" = "A" ]; then
+  echo "  [1/5] Adv Examples  ImageNet-A dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets A $MODEL $COMMON_PARAMS
+  echo "  ✓ A dataset testing complete"
+
+elif [ "$DATASET_NAME" = "R" ]; then
+  echo "  [2/5] Adv Examples  ImageNet-R dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets R $MODEL $COMMON_PARAMS
+  echo "  ✓ R dataset testing complete"
+
+elif [ "$DATASET_NAME" = "K" ]; then
+  echo "  [3/5] Adv Examples  ImageNet-S dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets K $MODEL $COMMON_PARAMS
+  echo "  ✓ K dataset testing complete"
+
+elif [ "$DATASET_NAME" = "V" ]; then
+  echo "  [4/5] Adv Examples  ImageNet-V dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets V $MODEL $COMMON_PARAMS
+  echo "  ✓ V dataset testing complete"
+
+elif [ "$DATASET_NAME" = "I" ]; then
+  echo "  [5/5] Adv Examples  ImageNet dataset..."
+  python rtpt_weighted_ensembling.py $DATA_ROOT --test_sets I $MODEL $COMMON_PARAMS
+  echo "  ✓ I dataset testing complete"
+
 fi
