@@ -483,6 +483,8 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             atk = torchattacks.PGD(model, eps=args.eps / 255, alpha=args.alpha / 255, steps=args.steps,
                                    image_only_attack=False,
                                    image_predicted_label_attack=args.image_predicted_label_attack)
+    else:
+        atk = torchattacks.PGD(model, eps=0.0, alpha=0, steps=0, random_start=False)
         if logger:
             logger.info(f"Using PGD attack with epsilon: {args.eps/255:.6f}, alpha: {args.alpha/255:.6f}, steps: {args.steps} image only attack {args.image_only_attack} image only attack type  {args.image_only_attack_type} image predicted label attack {args.image_predicted_label_attack}")
 
@@ -540,10 +542,9 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     logger.info(f"Adversarial examples will be loaded from {adv_images_dir} and evaluated on {args.arch}")
 
 
-    if args.eps > 0.0:
-        os.makedirs(adv_images_dir, exist_ok=True)
-        if logger:
-            logger.info(f"Using directory for adversarial images: {adv_images_dir}")
+    os.makedirs(adv_images_dir, exist_ok=True)
+    if logger:
+        logger.info(f"Using directory for adversarial images: {adv_images_dir}")
 
     adv_correct_purify = 0
     clean_correct_purify = 0
