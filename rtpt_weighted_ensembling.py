@@ -198,6 +198,10 @@ def create_log_dir(args):
     else:
         data_type = data_type
 
+    if args.diffpure:
+        data_type = f"{data_type}_after_diffpure"
+
+
     # Combine folder structure
     # Create a list of path parts
     path_parts = []
@@ -945,6 +949,9 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     if args.transferability:
         adv_images_dir = adv_images_dir.replace(args.arch, args.source_model)
         logger.info(f"Adversarial examples will be loaded from {adv_images_dir} and evaluated on {args.arch}")
+
+    if args.diffpure:
+        adv_images_dir = f"{adv_images_dir}_after_diffpure"
 
     if args.eps > 0.0:
         os.makedirs(adv_images_dir, exist_ok=True)
@@ -1890,6 +1897,9 @@ if __name__ == '__main__':
     parser.add_argument('--softmax_temp', default=0.01, type=float,
                         help='Temperature parameter for softmax in similarity weighting')
 
+
+    # DiffPure
+    parser.add_argument('--diffpure', default=False, type=lambda x: (str(x).lower() == 'true'))
 
 
     # Counter-attack parameters
