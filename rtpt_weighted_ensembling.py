@@ -133,7 +133,7 @@ def create_log_dir(args):
                 elif args.counter_attack_tau=="noisy":
                     counter_attack_part = [f"Counter_Attack",
                                            f"Eps_{args.counter_attack_eps}_Steps_{args.counter_attack_steps}_Alpha_{args.counter_attack_alpha}",
-                                           f"Tau_{args.counter_attack_tau}_tauthresh_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_pertrubation_{args.counter_attack_weighted_perturbations}"
+                                           f"Tau_{args.counter_attack_tau}_num_anchors_{args.counter_attack_noisy_tau_num_anchors}_tauthresh_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_pertrubation_{args.counter_attack_weighted_perturbations}"
                                            ]
 
             elif args.counter_attack_init_noise == "gaussian":
@@ -145,7 +145,7 @@ def create_log_dir(args):
                 elif args.counter_attack_tau=="noisy":
                     counter_attack_part = [f"Counter_Attack",
                                            f"Init_Sigma_{args.counter_attack_gaussian_sigma}_Eps_{args.counter_attack_eps}_Steps_{args.counter_attack_steps}_Alpha_{args.counter_attack_alpha}",
-                                           f"Tau_{args.counter_attack_tau}_tauthresh__beta_{args.counter_attack_beta}_weighted_pertrubation_{args.counter_attack_weighted_perturbations}"
+                                           f"Tau_{args.counter_attack_tau}_num_anchors_{args.counter_attack_noisy_tau_num_anchors}_tauthresh_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_pertrubation_{args.counter_attack_weighted_perturbations}"
                                            ]
             else:
                 raise ValueError("Invalid init_noise value. Supported values: 'uniform', 'gaussian'")
@@ -809,10 +809,11 @@ def get_adversarial_image(image, target, attack, path, index, output_dir, logger
         """
         if counter_atk:
             # If using counter-attack, apply it to the loaded tensor
-            adv_tensor = counter_atk(adv_tensor.unsqueeze(0), target)
+            adv_tensor, diff_ratio = counter_atk(adv_tensor.unsqueeze(0), target)
             if logger:
                 logger.debug(f"Applied counter-attack to loaded adversarial image with shape: {adv_tensor.shape}")
-
+        else:
+            diff_ratio = 0.0
         adv_tensor = adv_tensor.squeeze(0)
         img_adv = transforms.ToPILImage()(adv_tensor)
 
@@ -849,7 +850,7 @@ def get_adversarial_image(image, target, attack, path, index, output_dir, logger
         raise FileNotFoundError(f"Adversarial image not found at {adv_img_path}. Please generate it first.")
 
 
-    return img_adv
+    return img_adv, diff_ratio
 
 
 def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger=None, template_text_embeddings=None, class_text_embeddings=None):
@@ -931,7 +932,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                                               weighted_perturbation=args.counter_attack_weighted_perturbations,
                                               init_noise=args.counter_attack_init_noise,
                                               gaussian_sigma=args.counter_attack_gaussian_sigma,
-                                              tau_type=args.counter_attack_tau)
+                                              tau_type=args.counter_attack_tau, num_anchors=args.counter_attack_noisy_tau_num_anchors)
         elif args.counter_attack_type == "pgd_clip_pure_i":
             if args.pgd_clip_pure_i_text_embeddings=="null":
                 embeddings = template_text_embeddings
@@ -1008,6 +1009,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     avg_diff_ratio = torch.zeros(64)
     diff_ratio_list = []
+    diff_ratio_list_counter_attack = []
     # Iterate through validation data
     for i, data in enumerate(val_loader):
         # Handle different return formats (with or without path)
@@ -1032,7 +1034,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                 logger.debug(f"Original image shape: {image.shape}, target: {target.item()}")
 
             # Get adversarial image (either generate or load from cache)
-            img_adv = get_adversarial_image(
+            img_adv, diff_ratio_counter_attack = get_adversarial_image(
                 image, target, atk, path, i, adv_images_dir, logger=logger,  counter_atk=counter_atk if args.counter_attack else None
             )
 
@@ -1048,7 +1050,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             if logger and i == 0:
                 logger.debug(f"Original image shape: {image.shape}, target: {target.item()}")
             # Get adversarial image (either generate or load from cache)
-            img_adv = counter_atk(image, target)
+            img_adv, diff_ratio_counter_attack = counter_atk(image, target)
             img_adv = img_adv.squeeze(0)
             img_adv = transforms.ToPILImage()(img_adv)
             # Apply data transformations to adversarial image
@@ -1060,6 +1062,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         else:
             logger.info(f"Evaluating clean images without adversarial attack or counter-attack")
 
+        diff_ratio_list_counter_attack.append(diff_ratio_counter_attack)
         # Process images based on their format
         if isinstance(images, list):
             # Handle list of tensors (augmented views)
@@ -1629,7 +1632,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     if args.image_feature_purify:
         if args.image_feature_purify_type == "noisy_anchor":
-            results_path = os.path.join(args.log_dir, f"results_diff_ratio.json")
+            results_path = os.path.join(args.log_dir, f"results_purify_noisy_anchor_diff_ratio.json")
             save_dic = {}
             save_dic["diff_ratio"] = diff_ratio_list
             save_dic["avergae_diff_ratio"] =  avg_diff_ratio/len(val_loader)
@@ -1640,6 +1643,16 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             results_path = handle_long_windows_path(results_path)
             with open(results_path, 'w') as f:
                 json.dump(save_dic, f, indent=4)
+
+    results_path = os.path.join(args.log_dir, f"results_counter_attack_diff_ratio.json")
+    results_path = handle_long_windows_path(results_path)
+    save_dic = {}
+    save_dic["diff_ratio"] = diff_ratio_list_counter_attack
+    save_dic["avergae_diff_ratio"] =  sum(diff_ratio_list_counter_attack)/len(diff_ratio_list_counter_attack)
+    logger.info(f"Average Counter Attack diff ratio: {save_dic['avergae_diff_ratio']:.2f}")
+    with open(results_path, 'w') as f:
+        json.dump(save_dic, f, indent=4)
+
 
     # Return original and test-time adapted accuracies
     if args.ensemble_type != "all":
@@ -1945,6 +1958,7 @@ if __name__ == '__main__':
     parser.add_argument('--counter_attack_eps', default=4.0, type=float)
     parser.add_argument('--counter_attack_alpha', default=1.0, type=float)
     parser.add_argument('--counter_attack_tau', default='normal', choices=["normal", "noisy"], type=str)
+    parser.add_argument('--counter_attack_noisy_tau_num_anchors', default=10, type=int)
     parser.add_argument('--counter_attack_tau_thres', default=0.2, type=float)
     parser.add_argument('--counter_attack_beta', default=2.0, type=float)
     parser.add_argument('--counter_attack_weighted_perturbations', default=True, type=lambda x: (str(x).lower() == 'true') )

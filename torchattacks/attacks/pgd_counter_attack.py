@@ -30,7 +30,7 @@ class PGDCounter(Attack):
     """
 
     def __init__(self, model, eps=8 / 255, alpha=2 / 255, steps=10, random_start=True, tau_thres=None, beta=None, weighted_perturbation=True, init_noise="uniform", gaussian_sigma=0.18,
-                 tau_type="normal"):
+                 tau_type="normal", num_anchors=10):
         super().__init__("PGDCounter", model)
         self.eps = eps
         self.alpha = alpha
@@ -43,14 +43,15 @@ class PGDCounter(Attack):
         self.init_noise = init_noise
         self.gaussian_sigma = gaussian_sigma
         self.tau_type = tau_type
+        self.num_anchors = num_anchors
 
 
     def compute_tau(self, images, delta):
         # Assume model(images) returns unnormalized image features
 
         with torch.no_grad():
-            orig_feat = self.model(images)  # shape [bs, feat_dim]
-            noisy_feat = self.model(images + delta)
+            orig_feat = self.model(images, get_image_features=True)  # shape [bs, feat_dim]
+            noisy_feat = self.model(images + delta, get_image_features=True)
             diff_ratio = (noisy_feat - orig_feat).norm(dim=-1) / orig_feat.norm(dim=-1)  # [bs]
         return diff_ratio
 
@@ -73,7 +74,7 @@ class PGDCounter(Attack):
         device = images.device
 
         # 1️ Get base (clean) feature representation
-        orig_feat = self.model(images)  # [B, feat_dim]
+        orig_feat = self.model(images, get_image_features=True)  # [B, feat_dim]
         orig_feat_norm = orig_feat.norm(dim=-1, keepdim=True)
         orig_feat_normalized = orig_feat / orig_feat_norm
 
@@ -87,7 +88,7 @@ class PGDCounter(Attack):
 
 
         # 3️ Compute features for all noisy samples together
-        f_noisy_all  = self.model(noisy_images)  # [num_anchors*B, feat_dim]
+        f_noisy_all  = self.model(noisy_images, get_image_features=True)  # [num_anchors*B, feat_dim]
         # Reshape back to [n_anchors, batch_size, feature_dim]
         f_noisy_all = f_noisy_all.view(num_anchors, B, -1)
 
@@ -142,12 +143,12 @@ class PGDCounter(Attack):
             ################################################
         elif self.tau_type == "noisy":
             tau_sigma = self.gaussian_sigma
-            number_of_anchors = 10
+            number_of_anchors = self.num_anchors
             diff_ratio = self.compute_tau_noisy(images, tau_sigma, number_of_anchors)
 
 
         if self.steps == 0:
-            return adv_images
+            return adv_images, diff_ratio.item()
 
         for _ in range(self.steps):
             # Create a fresh copy for gradient computation
@@ -210,4 +211,4 @@ class PGDCounter(Attack):
         del original_features
         torch.cuda.empty_cache()
 
-        return adv_images
+        return adv_images, diff_ratio.item()
