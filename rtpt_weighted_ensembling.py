@@ -124,10 +124,32 @@ def create_log_dir(args):
     ]
     if args.counter_attack:
         if args.counter_attack_type == "pgd":
-            counter_attack_part = [f"Counter_Attack",
-                                   f"Eps_{args.counter_attack_eps}_Steps_{args.counter_attack_steps}_Alpha_{args.counter_attack_alpha}",
-                                   f"tau_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_pertrubation_{args.counter_attack_weighted_perturbations}"
-                                   ]
+            if args.counter_attack_init_noise == "uniform":
+                if args.counter_attack_tau=="normal":
+                    counter_attack_part = [f"Counter_Attack",
+                                           f"Eps_{args.counter_attack_eps}_Steps_{args.counter_attack_steps}_Alpha_{args.counter_attack_alpha}",
+                                           f"tau_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_pertrubation_{args.counter_attack_weighted_perturbations}"
+                                           ]
+                elif args.counter_attack_tau=="noisy":
+                    counter_attack_part = [f"Counter_Attack",
+                                           f"Eps_{args.counter_attack_eps}_Steps_{args.counter_attack_steps}_Alpha_{args.counter_attack_alpha}",
+                                           f"Tau_{args.counter_attack_tau}_tauthresh_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_pertrubation_{args.counter_attack_weighted_perturbations}"
+                                           ]
+
+            elif args.counter_attack_init_noise == "gaussian":
+                if args.counter_attack_tau=="normal":
+                    counter_attack_part = [f"Counter_Attack",
+                                           f"Init_Sigma_{args.counter_attack_gaussian_sigma}_Eps_{args.counter_attack_eps}_Steps_{args.counter_attack_steps}_Alpha_{args.counter_attack_alpha}",
+                                           f"tau_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_pertrubation_{args.counter_attack_weighted_perturbations}"
+                                           ]
+                elif args.counter_attack_tau=="noisy":
+                    counter_attack_part = [f"Counter_Attack",
+                                           f"Init_Sigma_{args.counter_attack_gaussian_sigma}_Eps_{args.counter_attack_eps}_Steps_{args.counter_attack_steps}_Alpha_{args.counter_attack_alpha}",
+                                           f"Tau_{args.counter_attack_tau}_tauthresh__beta_{args.counter_attack_beta}_weighted_pertrubation_{args.counter_attack_weighted_perturbations}"
+                                           ]
+            else:
+                raise ValueError("Invalid init_noise value. Supported values: 'uniform', 'gaussian'")
+
         elif args.counter_attack_type == "pgd_clip_pure_i":
             counter_attack_part = [f"Counter_Attack_PGDCLIPPureImage",
                                    f"Eps_{args.counter_attack_eps}_Steps_{args.counter_attack_steps}_Alpha_{args.counter_attack_alpha}_textembed_{args.pgd_clip_pure_i_text_embeddings}",
@@ -906,7 +928,10 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             counter_atk = torchattacks.PGDCounter(model, eps=args.counter_attack_eps / 255,
                                               alpha=args.counter_attack_alpha / 255, steps=args.counter_attack_steps,
                                               tau_thres=args.counter_attack_tau_thres, beta=args.counter_attack_beta,
-                                              weighted_perturbation=args.counter_attack_weighted_perturbations)
+                                              weighted_perturbation=args.counter_attack_weighted_perturbations,
+                                              init_noise=args.counter_attack_init_noise,
+                                              gaussian_sigma=args.counter_attack_gaussian_sigma,
+                                              tau_type=args.counter_attack_tau)
         elif args.counter_attack_type == "pgd_clip_pure_i":
             if args.pgd_clip_pure_i_text_embeddings=="null":
                 embeddings = template_text_embeddings
@@ -982,6 +1007,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                                    logger).float()
 
     avg_diff_ratio = torch.zeros(64)
+    diff_ratio_list = []
     # Iterate through validation data
     for i, data in enumerate(val_loader):
         # Handle different return formats (with or without path)
@@ -1109,6 +1135,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                         tuned_outputs = torch.cat([tuned_outputs_first, tuned_outputs_remaining], dim=0)
 
                         avg_diff_ratio += diff_ratio.cpu()
+                        diff_ratio_list.append(diff_ratio.cpu())
                         del tuned_outputs_first, tuned_outputs_remaining
                 else:
                     tuned_outputs = model(images)
@@ -1441,8 +1468,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         logger.info(f"Results saved to {results_path}")
 
     if result_dict_original  and len(result_dict_original['max_confidence']) > 0:
-        results_path = os.path.join(args.log_dir, f"results_original.json")
-        logger.info(f"Results saved to {results_path}")
+
         acc, ece, bin_acc, incorrect_confidences = Calculator(result_dict_original, logger)
         logger.info(f"ECE results - Original Acc: {acc:.2f},  ECE: {ece:.2f}")
         predictions_original = result_dict_original['prediction']
@@ -1460,7 +1486,8 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         result_dict_original["number_of_incorrect_predictions_from_correct_clean_indices"] = f" {sum(number_of_incorrect_predictions_from_correct_clean_indices_original)} out of {len(incorrect_clean_indices)}"
         result_dict_original["sample_indices_correct_classified_from_incorrect_clean_predictions"] = correct_idx_incorrect_predictions_from_correct_clean_indices_original
 
-
+        results_path = os.path.join(args.log_dir, f"results_original.json")
+        logger.info(f"Results saved to {results_path}")
         # Handle long paths on Windows
         results_path = handle_long_windows_path(results_path)
         with open(results_path, 'w') as f:
@@ -1602,8 +1629,17 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     if args.image_feature_purify:
         if args.image_feature_purify_type == "noisy_anchor":
+            results_path = os.path.join(args.log_dir, f"results_diff_ratio.json")
+            save_dic = {}
+            save_dic["diff_ratio"] = diff_ratio_list
+            save_dic["avergae_diff_ratio"] =  avg_diff_ratio/len(val_loader)
             avg_diff_ratio = avg_diff_ratio/len(val_loader)
             logger.info(f"Average diff ratio: {avg_diff_ratio:.2f}")
+
+            # Handle long paths on Windows
+            results_path = handle_long_windows_path(results_path)
+            with open(results_path, 'w') as f:
+                json.dump(save_dic, f, indent=4)
 
     # Return original and test-time adapted accuracies
     if args.ensemble_type != "all":
@@ -1908,9 +1944,12 @@ if __name__ == '__main__':
     parser.add_argument('--counter_attack_steps', default=2, type=int)
     parser.add_argument('--counter_attack_eps', default=4.0, type=float)
     parser.add_argument('--counter_attack_alpha', default=1.0, type=float)
+    parser.add_argument('--counter_attack_tau', default='normal', choices=["normal", "noisy"], type=str)
     parser.add_argument('--counter_attack_tau_thres', default=0.2, type=float)
     parser.add_argument('--counter_attack_beta', default=2.0, type=float)
     parser.add_argument('--counter_attack_weighted_perturbations', default=True, type=lambda x: (str(x).lower() == 'true') )
+    parser.add_argument('--counter_attack_init_noise', default='uniform', choices=["uniform", "gaussian"], type=str)
+    parser.add_argument('--counter_attack_gaussian_sigma', default=0.18, type=float)
 
     parser.add_argument('--pgd_clip_pure_i_text_embeddings', default='null', choices=["null", "class"], type=str)
     parser.add_argument('--pgd_counter_and_clipure_i_lamda', default=1.0, type=float)

@@ -29,7 +29,8 @@ class PGDCounter(Attack):
 
     """
 
-    def __init__(self, model, eps=8 / 255, alpha=2 / 255, steps=10, random_start=True, tau_thres=None, beta=None, weighted_perturbation=True):
+    def __init__(self, model, eps=8 / 255, alpha=2 / 255, steps=10, random_start=True, tau_thres=None, beta=None, weighted_perturbation=True, init_noise="uniform", gaussian_sigma=0.18,
+                 tau_type="normal"):
         super().__init__("PGDCounter", model)
         self.eps = eps
         self.alpha = alpha
@@ -39,6 +40,9 @@ class PGDCounter(Attack):
         self.tau_thres = tau_thres
         self.beta = beta
         self.weighted_perturbation = weighted_perturbation
+        self.init_noise = init_noise
+        self.gaussian_sigma = gaussian_sigma
+        self.tau_type = tau_type
 
 
     def compute_tau(self, images, delta):
@@ -49,6 +53,52 @@ class PGDCounter(Attack):
             noisy_feat = self.model(images + delta)
             diff_ratio = (noisy_feat - orig_feat).norm(dim=-1) / orig_feat.norm(dim=-1)  # [bs]
         return diff_ratio
+
+    @torch.no_grad()
+    def compute_tau_noisy(self, images, sigma=0.18, num_anchors=10):
+        """
+        Compute tau using multiple Gaussian-noisy anchors.
+        Used when self.tau_type == 'noisy'.
+
+        Args:
+            images (torch.Tensor): Clean images [B, C, H, W], values in [0,1].
+            sigma (float): Standard deviation for Gaussian noise.
+            num_anchors (int): Number of noisy samples per image.
+
+        Returns:
+            diff_ratio_mean (torch.Tensor): [B] mean tau per image.
+            diff_ratio_all (torch.Tensor): [num_anchors, B] per-anchor tau (optional, for analysis).
+        """
+        assert images.dim() == 4, "images must be [B,C,H,W]"
+        device = images.device
+
+        # 1️ Get base (clean) feature representation
+        orig_feat = self.model(images)  # [B, feat_dim]
+        orig_feat_norm = orig_feat.norm(dim=-1, keepdim=True)
+        orig_feat_normalized = orig_feat / orig_feat_norm
+
+        # 2️ Generate Gaussian noisy versions in a single batch
+        B = images.size(0)
+        noise_batch = sigma * torch.randn(num_anchors, B, *images.shape[1:], device=device)
+        noisy_images = images.unsqueeze(0) + noise_batch  # [n_anchors, batch_size, C, H, W]
+
+        # Reshape to [n_anchors*batch_size, C, H, W] in order to pass through the network in a single batch
+        noisy_images = noisy_images.view(num_anchors * B, *images.shape[1:])  # [n_anchors*batch_size, C, H, W]
+
+
+        # 3️ Compute features for all noisy samples together
+        f_noisy_all  = self.model(noisy_images)  # [num_anchors*B, feat_dim]
+        # Reshape back to [n_anchors, batch_size, feature_dim]
+        f_noisy_all = f_noisy_all.view(num_anchors, B, -1)
+
+        # Calculate diff_ratio between f_source_normalized and normalized f_noisy_all
+        f_noisy_normalized = f_noisy_all / f_noisy_all.norm(dim=-1,
+                                                            keepdim=True)  # [n_anchors, batch_size, feature_dim]
+        diff_ratio = (f_noisy_normalized - orig_feat_normalized.unsqueeze(0)).norm(dim=-1) / orig_feat_normalized.norm(
+            dim=-1).unsqueeze(0)  # [n_anchors, batch_size]
+        diff_ratio_mean = diff_ratio.mean(dim=0)
+
+        return diff_ratio_mean
 
     def forward(self, images, labels):
         r"""
@@ -72,16 +122,29 @@ class PGDCounter(Attack):
 
         if self.random_start:
             # Starting at a uniformly random point
-            adv_images = adv_images + torch.empty_like(adv_images).uniform_(
-                -self.eps, self.eps
-            )
+            if self.init_noise == "uniform":
+                adv_images = adv_images + torch.empty_like(adv_images).uniform_(
+                    -self.eps, self.eps
+                )
+            elif self.init_noise == "gaussian":
+                sigma = self.gaussian_sigma
+                noise = torch.randn_like(adv_images) * sigma
+                adv_images = adv_images + noise
+            else:
+                raise ValueError(f"Unknown init_noise type: {self.init_noise}")
             adv_images = torch.clamp(adv_images, min=0, max=1).detach()
 
-        #################################################
-        delta_initial = adv_images - images
-        deltas_per_step = [delta_initial.clone().detach()]
-        diff_ratio = self.compute_tau(images, delta_initial)
-        ################################################
+        if self.tau_type == "normal":
+            #################################################
+            delta_initial = adv_images - images
+            deltas_per_step = [delta_initial.clone().detach()]
+            diff_ratio = self.compute_tau(images, delta_initial)
+            ################################################
+        elif self.tau_type == "noisy":
+            tau_sigma = self.gaussian_sigma
+            number_of_anchors = 10
+            diff_ratio = self.compute_tau_noisy(images, tau_sigma, number_of_anchors)
+
 
         if self.steps == 0:
             return adv_images
