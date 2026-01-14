@@ -962,7 +962,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         if logger:
             logger.info(
                 f"Using counter-attack with epsilon: {args.counter_attack_eps:.6f}, alpha: {args.alpha:.6f}, steps: {args.counter_attack_steps}, "
-                f"tau_thres: {args.counter_attack_tau_thres}, beta: {args.counter_attack_beta}, weighted perturbation: {args.counter_attack_weighted_perturbations}")
+                f"Tau Type {args.counter_attack_tau} tau_thres: {args.counter_attack_tau_thres}, beta: {args.counter_attack_beta}, weighted perturbation: {args.counter_attack_weighted_perturbations}")
 
     end = time.time()
     # Create directory for saving adversarial images if needed
