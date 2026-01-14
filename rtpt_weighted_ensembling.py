@@ -135,6 +135,11 @@ def create_log_dir(args):
                                            f"Eps_{args.counter_attack_eps}_Steps_{args.counter_attack_steps}_Alpha_{args.counter_attack_alpha}",
                                            f"Tau_{args.counter_attack_tau}_num_anchors_{args.counter_attack_noisy_tau_num_anchors}_tauthresh_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_pertrubation_{args.counter_attack_weighted_perturbations}"
                                            ]
+                elif args.counter_attack_tau=="normal_anchors":
+                    counter_attack_part = [f"Counter_Attack",
+                                           f"Eps_{args.counter_attack_eps}_Steps_{args.counter_attack_steps}_Alpha_{args.counter_attack_alpha}",
+                                           f"Tau_{args.counter_attack_tau}_num_anchors_{args.counter_attack_noisy_tau_num_anchors}_tauthresh_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_pertrubation_{args.counter_attack_weighted_perturbations}"
+                                           ]
 
             elif args.counter_attack_init_noise == "gaussian":
                 if args.counter_attack_tau=="normal":
@@ -1957,7 +1962,7 @@ if __name__ == '__main__':
     parser.add_argument('--counter_attack_steps', default=2, type=int)
     parser.add_argument('--counter_attack_eps', default=4.0, type=float)
     parser.add_argument('--counter_attack_alpha', default=1.0, type=float)
-    parser.add_argument('--counter_attack_tau', default='normal', choices=["normal", "noisy"], type=str)
+    parser.add_argument('--counter_attack_tau', default='normal', choices=["normal", "noisy", "normal_anchors"], type=str)
     parser.add_argument('--counter_attack_noisy_tau_num_anchors', default=10, type=int)
     parser.add_argument('--counter_attack_tau_thres', default=0.2, type=float)
     parser.add_argument('--counter_attack_beta', default=2.0, type=float)
