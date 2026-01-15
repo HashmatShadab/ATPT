@@ -1066,6 +1066,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
         else:
             logger.info(f"Evaluating clean images without adversarial attack or counter-attack")
+            diff_ratio_counter_attack = 0.0
 
         diff_ratio_list_counter_attack.append(diff_ratio_counter_attack)
         # Process images based on their format
