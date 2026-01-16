@@ -202,7 +202,15 @@ def create_log_dir(args):
     if args.ensemble_type == "weighted_rtpt":
         ensemble_part = [f"Inference_Ensemble_{args.ensemble_type}_topk_{args.top_k}_softmaxtemp_{args.softmax_temp}"]
     elif args.ensemble_type == "all":
-        ensemble_part = [f"Inference_Ensemble_{args.ensemble_type}_weighted_rtpt_topk_{args.top_k}_softmaxtemp_{args.softmax_temp}"]
+        if args.augmentation_pool_ablation:
+            ensemble_part = [
+                f"Inference_Ensemble_{args.ensemble_type}_weighted_rtpt_topk_{args.top_k}_softmaxtemp_{args.softmax_temp}_augmentation_pool_{args.augmentation_pool}"]
+        else:
+            ensemble_part = [
+                f"Inference_Ensemble_{args.ensemble_type}_weighted_rtpt_topk_{args.top_k}_softmaxtemp_{args.softmax_temp}"]
+
+
+
     else:
         ensemble_part = [f"Inference_Ensemble_{args.ensemble_type}"]
 
@@ -858,6 +866,48 @@ def get_adversarial_image(image, target, attack, path, index, output_dir, logger
     return img_adv, diff_ratio
 
 
+def compute_diff_ration_tpt_noisy_anchors(images: "torch.Tensor", model) -> "torch.Tensor":
+    """
+    Compute feature-space drift using anchors already present in the batch.
+
+    Convention:
+      - images[0] is the *source* (clean/reference) image
+      - images[1:] are *anchor* images (no extra noise is added)
+
+    The function returns the L2 drift in *normalized feature space* between each
+    anchor and the source.
+
+    Args:
+        images (torch.Tensor): Input images of shape [B, C, H, W] in [0, 1],
+                               where B >= 2.
+
+    Returns:
+        diff_ratio (torch.Tensor): Tensor of shape [B-1], where diff_ratio[i]
+                                   is the drift between images[i+1] and images[0].
+    """
+    assert images.dim() == 4, "images must be [B, C, H, W]"
+    B = images.size(0)
+    assert B >= 2, "Need at least 2 images (1 source + anchors)"
+
+    # 1) Split source and anchors
+    source = images[:1]      # [1, C, H, W]
+    anchors = images[1:]     # [B-1, C, H, W]
+
+    # 2) Source features
+    orig_feat = model(source, get_image_features=True)  # [1, D]
+    orig_feat = orig_feat / orig_feat.norm(dim=-1, keepdim=True)
+
+    # 3) Anchor features
+    noisy_feat = model(anchors, get_image_features=True)  # [B-1, D]
+    noisy_feat = noisy_feat / noisy_feat.norm(dim=-1, keepdim=True)
+
+    # 4) Feature-space drift (same style as your snippet)
+    diff_ratio = (noisy_feat - orig_feat).norm(dim=-1) / orig_feat.norm(dim=-1)  # [B-1]
+    diff_ratio_mean = diff_ratio.mean(dim=0)
+
+    return diff_ratio_mean.item()
+
+
 def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state, scaler, args, data_transform, logger=None, template_text_embeddings=None, class_text_embeddings=None):
     """
     Evaluate model performance with test-time adaptation.
@@ -1015,6 +1065,8 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     avg_diff_ratio = torch.zeros(64)
     diff_ratio_list = []
     diff_ratio_list_counter_attack = []
+    images_diff_ratio_tpt_noisy_anchors_list = []
+    clean_images_diff_ratio_tpt_noisy_anchors_list = []
     # Iterate through validation data
     for i, data in enumerate(val_loader):
         # Handle different return formats (with or without path)
@@ -1101,6 +1153,11 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             clip_features, _, _ = model.forward_features(images)  # Features for all images
             clean_clip_output = model(clean_image)
             # clip_outputs = model(images)  # Outputs for all images
+
+        images_diff_ratio_tpt_noisy = compute_diff_ration_tpt_noisy_anchors(images, model)
+        clean_images_diff_ratio_tpt_noisy = compute_diff_ration_tpt_noisy_anchors(clean_images, model)
+        images_diff_ratio_tpt_noisy_anchors_list.append(images_diff_ratio_tpt_noisy)
+        clean_images_diff_ratio_tpt_noisy_anchors_list.append(clean_images_diff_ratio_tpt_noisy)
 
         # Perform test-time adaptation
         if args.tta_steps > 0:
@@ -1659,6 +1716,24 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     with open(results_path, 'w') as f:
         json.dump(save_dic, f, indent=4)
 
+    results_path = os.path.join(args.log_dir, f"results_images_diff_ratio_tpt_noisy_anchors.json")
+    results_path = handle_long_windows_path(results_path)
+    save_dic = {}
+    save_dic["diff_ratio"] = images_diff_ratio_tpt_noisy_anchors_list
+    save_dic["avergae_diff_ratio"] =  sum(images_diff_ratio_tpt_noisy_anchors_list)/len(images_diff_ratio_tpt_noisy_anchors_list)
+    logger.info(f"Average Counter Attack diff ratio: {save_dic['avergae_diff_ratio']:.2f}")
+    with open(results_path, 'w') as f:
+        json.dump(save_dic, f, indent=4)
+
+    results_path = os.path.join(args.log_dir, f"results_clean_images_diff_ratio_tpt_noisy_anchors.json")
+    results_path = handle_long_windows_path(results_path)
+    save_dic = {}
+    save_dic["diff_ratio"] = clean_images_diff_ratio_tpt_noisy_anchors_list
+    save_dic["avergae_diff_ratio"] =  sum(clean_images_diff_ratio_tpt_noisy_anchors_list)/len(clean_images_diff_ratio_tpt_noisy_anchors_list)
+    logger.info(f"Average Counter Attack diff ratio: {save_dic['avergae_diff_ratio']:.2f}")
+    with open(results_path, 'w') as f:
+        json.dump(save_dic, f, indent=4)
+
 
     # Return original and test-time adapted accuracies
     if args.ensemble_type != "all":
@@ -1799,7 +1874,11 @@ def main():
         ])
 
     # # Create data augmentation transformer
-    data_transform = AugMixAugmenter(base_transform, preprocess, n_views=args.batch_size-1,
+    if args.augmentation_pool_ablation:
+        data_transform = AugMixAugmenter(base_transform, preprocess, n_views=args.batch_size-1,
+                                    augmix=len(dset)>1, only_base_image=False, augmentation_pool=args.augmentation_pool)
+    else:
+        data_transform = AugMixAugmenter(base_transform, preprocess, n_views=args.batch_size-1,
                                     augmix=len(dset)>1, only_base_image=False)
 
     batchsize = 1 # Process images one at a time for test-time adaptation
@@ -1943,7 +2022,8 @@ if __name__ == '__main__':
     parser.add_argument('--max_tta_steps', default=0, type=int,
                         help='If greater than 0 and less than or equal to tta_steps, increase the loss (use negative loss) for the first max_tta_steps steps')
 
-
+    parser.add_argument('--augmentation_pool_ablation', default=False, type=lambda x: (str(x).lower() == 'true') )
+    parser.add_argument('--augmentation_pool', default='tpt', type=str, choices=['tpt', 'all', 'geometric_tpt', 'photometric_tpt','photometric'], )
     parser.add_argument('--ensemble_type', default='weighted_rtpt', type=str,
                         choices=['none', 'vanilla', 'weighted_rtpt', 'all'],
                         help='Type of ensembling to use (none, vanilla, weighted_rtpt, or all to report metrics for all types)')
