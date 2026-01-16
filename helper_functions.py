@@ -551,6 +551,53 @@ def plot_probability_bar(probs, correct_class, class_names=None, figsize=(10, 6)
 
     return fig
 
+import torch
+import matplotlib.pyplot as plt
+from torchvision.utils import make_grid
+
+def plot_tensor_grid(
+    images,
+    nrow=8,
+    padding=2,
+    normalize=False,
+    value_range=None,
+    title=None,
+    figsize=(24, 24),
+):
+    """
+    Plot a grid of tensor images.
+
+    Args:
+        images (Tensor or List[Tensor]): [N, C, H, W] or list of [C, H, W]
+        nrow (int): number of images per row
+        padding (int): padding between images
+        normalize (bool): normalize images to [0,1] for display
+        value_range (tuple): (min, max) range for normalization
+        title (str): optional title
+        figsize (tuple): figure size
+    """
+
+    if isinstance(images, list):
+        images = torch.stack(images, dim=0)
+
+    grid = make_grid(
+        images,
+        nrow=nrow,
+        padding=padding,
+        normalize=normalize,
+        value_range=value_range,
+    )
+
+    grid = grid.permute(1, 2, 0).cpu().numpy()
+
+    plt.figure(figsize=figsize)
+    plt.imshow(grid)
+    plt.axis("off")
+    if title:
+        plt.title(title)
+    plt.show()
+
+
 
 # Run the tests if this file is executed directly
 if __name__ == "__main__":
