@@ -230,12 +230,23 @@ def augmix(image, preprocess, aug_list, severity=1):
 
 class AugMixAugmenter(object):
     def __init__(self, base_transform, preprocess, n_views=2, augmix=False, 
-                    severity=1, only_base_image=False):
+                    severity=1, only_base_image=False, augmentation_pool="tpt"):
         self.base_transform = base_transform
         self.preprocess = preprocess
         self.n_views = n_views
         if augmix:
-            self.aug_list = augmentations.augmentations
+            if augmentation_pool == "tpt":
+                self.aug_list = augmentations.augmentations
+            elif augmentation_pool == "all":
+                self.aug_list = augmentations.augmentations_all
+            elif augmentation_pool == "geometric_tpt":
+                self.aug_list = augmentations.augmentations_geometric_tpt
+            elif augmentation_pool == "photometric_tpt":
+                self.aug_list = augmentations.augmentations_photometric_tpt
+            elif augmentation_pool == "photometric":
+                self.aug_list = augmentations.augmentations_photometric
+            else:
+                raise ValueError(f"Unsupported augmentation pool: {augmentation_pool}")
         else:
             self.aug_list = []
         self.severity = severity

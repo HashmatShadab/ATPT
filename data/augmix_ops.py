@@ -147,3 +147,16 @@ augmentations_all = [
     autocontrast, equalize, posterize, rotate, solarize, shear_x, shear_y,
     translate_x, translate_y, color, contrast, brightness, sharpness
 ]
+
+augmentations_geometric_tpt = [
+     rotate, shear_x, shear_y,
+    translate_x, translate_y
+]
+
+augmentations_photometric_tpt = [
+    autocontrast, equalize, posterize, solarize
+]
+
+augmentations_photometric = [
+    autocontrast, equalize, posterize, solarize, color, contrast, brightness, sharpness
+]
