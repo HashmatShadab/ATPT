@@ -138,115 +138,6 @@ def get_group_curves(ACC_RESULTS, method, case, model, dataset, param):
         }
     return curves
 
-def plot_group_lines(curves, *, title="", save_path=None):
-    """
-    curves = output of get_group_curves(...)
-    """
-    if not curves:
-        print("No curves to plot.")
-        return
-
-    # assume all share same baseline (they do for a fixed setting)
-    any_key = next(iter(curves))
-    baseline = curves[any_key]["baseline"]
-
-    # find global best across diff_key and thresholds
-    global_best = None  # (best_acc, diff_key, best_t)
-    for diff_key, c in curves.items():
-        if c["best_acc"] is None:
-            continue
-        cand = (c["best_acc"], diff_key, c["best_t"])
-        if global_best is None or cand[0] > global_best[0]:
-            global_best = cand
-
-    fig, ax = plt.subplots(figsize=(9, 5), dpi=150)
-
-    for diff_key, c in sorted(curves.items(), key=lambda x: x[0]):
-        ts = c["thresholds"]
-        ys = c["accs"]
-        if len(ts) == 0:
-            continue
-        ax.plot(ts, ys, marker="o", linewidth=1, label=f"diff={diff_key}")
-
-        # mark per-line best
-        ax.scatter([c["best_t"]], [c["best_acc"]], s=40)
-
-    # baseline
-    ax.axhline(baseline, linestyle="--", linewidth=1)
-    ax.text(0.01, baseline, f" baseline={baseline:.2f}", va="bottom")
-
-    # global best annotation
-    if global_best is not None:
-        best_acc, best_diff, best_t = global_best
-        ax.scatter([best_t], [best_acc], s=120, marker="*", zorder=5)
-        ax.set_title(f"{title}\nBEST: diff={best_diff}, t={best_t:.2f}, acc={best_acc:.2f}")
-    else:
-        ax.set_title(title)
-
-    ax.set_xlabel("Threshold")
-    ax.set_ylabel("Accuracy")
-    ax.grid(True, linestyle="--", alpha=0.4)
-    ax.legend(ncol=2, fontsize=8)
-    plt.tight_layout()
-    if save_path:
-        plt.savefig(save_path)
-    else:
-        plt.show()
-    plt.close()
-
-def plot_group_heatmap(curves, *, title="", save_path=None):
-    if not curves:
-        print("No curves to plot.")
-        return
-
-    # unify threshold axis (your dict uses same thresholds everywhere)
-    diff_keys = sorted(curves.keys(), key=lambda x: float(x) if x.replace('.','',1).isdigit() else x)
-    thresholds = curves[diff_keys[0]]["thresholds"]
-
-    mat = np.full((len(diff_keys), len(thresholds)), np.nan, dtype=float)
-
-    # fill
-    for i, diff_key in enumerate(diff_keys):
-        c = curves[diff_key]
-        for j, acc in enumerate(c["accs"]):
-            mat[i, j] = acc
-
-    # global best
-    best_idx = np.nanargmax(mat)
-    bi, bj = np.unravel_index(best_idx, mat.shape)
-    best_diff = diff_keys[bi]
-    best_t = thresholds[bj]
-    best_acc = mat[bi, bj]
-
-    fig, ax = plt.subplots(figsize=(1.2 * len(thresholds) + 3, 0.6 * len(diff_keys) + 2), dpi=150)
-    im = ax.imshow(mat, aspect="auto")
-
-    ax.set_xticks(np.arange(len(thresholds)))
-    ax.set_xticklabels([f"{t:.2f}" for t in thresholds], rotation=45, ha="right")
-    ax.set_yticks(np.arange(len(diff_keys)))
-    ax.set_yticklabels(diff_keys)
-
-    ax.set_xlabel("Threshold")
-    ax.set_ylabel("Diff-ratio source (diff_ratio_key)")
-    ax.set_title(f"{title}\nBEST: diff={best_diff}, t={best_t:.2f}, acc={best_acc:.2f}")
-
-    # annotate
-    for i in range(mat.shape[0]):
-        for j in range(mat.shape[1]):
-            if np.isfinite(mat[i, j]):
-                ax.text(j, i, f"{mat[i,j]:.2f}", ha="center", va="center", fontsize=7)
-
-    # mark best cell
-    ax.scatter([bj], [bi], s=120, marker="*", zorder=5)
-
-    plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04, label="Accuracy")
-    plt.tight_layout()
-    if save_path:
-        plt.savefig(save_path)
-    else:
-        plt.show()
-    plt.close()
-
 def get_avg_diff_ratio_per_param(
     ACC_RESULTS,
     *,
@@ -279,56 +170,150 @@ def get_avg_diff_ratio_per_param(
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_avg_diff_ratio_bar(
-    avg_diff_dict,
-    *,
-    title="",
-    ylabel="Average Diff Ratio",
-    save_path=None,
-):
+def plot_grid_bar(all_avg_diffs, *, title="", save_path=None):
     """
-    avg_diff_dict: dict[param] -> float
+    all_avg_diffs: list of (dataset_name, avg_diff_dict)
     """
-    if not avg_diff_dict:
-        print("No data to plot.")
+    n = len(all_avg_diffs)
+    if n == 0:
         return
-
-    # sort params numerically if possible
+    
+    cols = (n + 1) // 2
+    rows = 2
+    
+    fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 4 * rows), dpi=150, squeeze=False)
+    
     def _sort_key(x):
         try:
             return float(x)
         except Exception:
             return x
 
-    params = sorted(avg_diff_dict.keys(), key=_sort_key)
-    values = [avg_diff_dict[p] for p in params]
+    for i, (dataset, avg_diff_dict) in enumerate(all_avg_diffs):
+        r, c = divmod(i, cols)
+        ax = axes[r, c]
+        
+        params = sorted(avg_diff_dict.keys(), key=_sort_key)
+        values = [avg_diff_dict[p] for p in params]
+        x_pos = np.arange(len(params))
+        
+        bars = ax.bar(x_pos, values)
+        ax.set_xticks(x_pos)
+        ax.set_xticklabels(params)
+        ax.set_title(dataset)
+        ax.set_ylabel("Avg Diff Ratio")
+        
+        for b in bars:
+            h = b.get_height()
+            ax.text(b.get_x() + b.get_width() / 2, h, f"{h:.3f}", ha="center", va="bottom", fontsize=8)
+        ax.grid(True, axis="y", linestyle="--", alpha=0.4)
 
-    x = np.arange(len(params))
+    # hide unused axes
+    for i in range(n, rows * cols):
+        r, c = divmod(i, cols)
+        axes[r, c].axis("off")
 
-    fig, ax = plt.subplots(figsize=(6 + len(params), 4), dpi=150)
+    fig.suptitle(title, fontsize=16)
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    if save_path:
+        plt.savefig(save_path)
+    else:
+        plt.show()
+    plt.close()
 
-    bars = ax.bar(x, values)
-
-    ax.set_xticks(x)
-    ax.set_xticklabels(params)
-    ax.set_xlabel("Param (eps / sigma)")
-    ax.set_ylabel(ylabel)
-    ax.set_title(title)
-
-    # annotate values
-    for b in bars:
-        h = b.get_height()
-        ax.text(
-            b.get_x() + b.get_width() / 2,
-            h,
-            f"{h:.3f}",
-            ha="center",
-            va="bottom",
-            fontsize=9,
-        )
-
-    ax.grid(True, axis="y", linestyle="--", alpha=0.4)
-    plt.tight_layout()
+def plot_grid_lines(all_curves, *, title="", save_path=None):
+    """
+    all_curves: list of (dataset_name, param, curves_dict)
+    Ordered by dataset (rows) and then param (cols).
+    """
+    if not all_curves:
+        return
+    
+    datasets = []
+    params = []
+    for d, p, _ in all_curves:
+        if d not in datasets: datasets.append(d)
+        if p not in params: params.append(p)
+    
+    num_datasets = len(datasets)
+    num_params = len(params)
+    
+    # Each row will have plots for two datasets.
+    # Each dataset has 'num_params' plots.
+    # So total columns = 2 * num_params
+    # Total rows = ceil(num_datasets / 2)
+    
+    datasets_per_row = 2
+    rows = (num_datasets + datasets_per_row - 1) // datasets_per_row
+    cols = datasets_per_row * num_params
+    
+    fig, axes = plt.subplots(rows, cols, figsize=(4 * cols, 4 * rows), dpi=150, squeeze=False)
+    
+    for i, (dataset, param, curves) in enumerate(all_curves):
+        ds_idx = datasets.index(dataset)
+        p_idx = params.index(param)
+        
+        # Calculate grid position
+        # ds_row: which pair of datasets (row index)
+        # ds_col_offset: 0 for the first dataset in the pair, 1 for the second
+        ds_row, ds_col_offset = divmod(ds_idx, datasets_per_row)
+        
+        r = ds_row
+        c = ds_col_offset * num_params + p_idx
+        
+        ax = axes[r, c]
+        
+        if not curves:
+            ax.text(0.5, 0.5, "No Data", ha="center", va="center")
+            continue
+            
+        any_key = next(iter(curves))
+        baseline = curves[any_key]["baseline"]
+        
+        global_best = None
+        for diff_key, curve_data in curves.items():
+            if curve_data["best_acc"] is not None:
+                cand = (curve_data["best_acc"], diff_key, curve_data["best_t"])
+                if global_best is None or cand[0] > global_best[0]:
+                    global_best = cand
+        
+        for diff_key, curve_data in sorted(curves.items(), key=lambda x: x[0]):
+            ts = curve_data["thresholds"]
+            ys = curve_data["accs"]
+            if len(ts) == 0: continue
+            ax.plot(ts, ys, marker="o", linewidth=1, markersize=3, label=f"diff={diff_key}")
+            # ax.scatter([curve_data["best_t"]], [curve_data["best_acc"]], s=20) # replaced by star below
+            
+        row_title = f"{dataset} | param={param}"
+        if global_best:
+            best_acc, best_diff, best_t = global_best
+            ax.scatter([best_t], [best_acc], color="red", marker="*", s=100, zorder=5, label="Best")
+            ax.set_title(f"{row_title}\nBest: d={best_diff}, t={best_t:.2f}, acc={best_acc:.2f}", fontsize=9)
+        else:
+            ax.set_title(row_title, fontsize=9)
+            
+        ax.axhline(baseline, linestyle="--", linewidth=1, color="black", label="Baseline")
+        
+        # Add legend to the first plot of each dataset
+        if p_idx == 0:
+            ax.legend(fontsize=7, loc="lower right")
+            
+        ax.grid(True, linestyle="--", alpha=0.4)
+        if r == rows - 1: ax.set_xlabel("Threshold")
+        
+        # In a multi-dataset-per-row layout, we show ylabel for the first plot of each dataset's group
+        if p_idx == 0: ax.set_ylabel("Accuracy")
+        
+    # hide unused axes
+    for i in range(num_datasets, rows * datasets_per_row):
+        ds_row, ds_col_offset = divmod(i, datasets_per_row)
+        for p_idx in range(num_params):
+            r = ds_row
+            c = ds_col_offset * num_params + p_idx
+            axes[r, c].axis("off")
+            
+    fig.suptitle(title, fontsize=16)
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     if save_path:
         plt.savefig(save_path)
     else:
@@ -386,9 +371,9 @@ CASES = ["clean", "adversarial_eps4_steps100", "adversarial_eps4_steps100_image_
 
 METHODS = ["zero_shot_uniform_single", "zero_shot_uniform_anchors", "zero_shot_gaussian_anchors"]
 
-PARAMS = ["4", "8", "12"]
+PARAMS = ["03", "06", "12", "18"]
 
-method = METHODS[0]
+method = METHODS[2]
 
 for case in CASES:
     # Create directory for method/case
@@ -396,8 +381,11 @@ for case in CASES:
     os.makedirs(case_dir, exist_ok=True)
 
     for model in MODELS:
+        all_avg_diffs = []
+        all_curves_data = []
+
         for dataset in DATASETS:
-            # save bar plot once per dataset/case/model
+            # gather avg diff ratio for grid bar plot
             avg_diff = get_avg_diff_ratio_per_param(
                 ACC_RESULTS_LOADED,
                 method=method,
@@ -405,20 +393,18 @@ for case in CASES:
                 model=model,
                 dataset=dataset,
             )
-            bar_title = f"Avg Diff Ratio vs Param\n{method} | {case} | {model} | {dataset}"
-            bar_save_name = f"bar_{model}_{dataset}.png"
-            plot_avg_diff_ratio_bar(
-                avg_diff,
-                title=bar_title,
-                save_path=os.path.join(case_dir, bar_save_name)
-            )
+            all_avg_diffs.append((dataset, avg_diff))
 
             for param in PARAMS:
                 curves = get_group_curves(ACC_RESULTS_LOADED, method, case, model, dataset, param)
-                title = f"{method} | {case} | {model} | {dataset} | pred_param={param}"
-                
-                line_save_name = f"lines_{model}_{dataset}_param{param}.png"
-                plot_group_lines(curves, title=title, save_path=os.path.join(case_dir, line_save_name))
-                
-                # heatmap_save_name = f"heatmap_{model}_{dataset}_param{param}.png"
-                # plot_group_heatmap(curves, title=title, save_path=os.path.join(case_dir, heatmap_save_name))
+                all_curves_data.append((dataset, param, curves))
+
+        # 1. Grid of bar plots (2 rows)
+        bar_grid_title = f"Avg Diff Ratio Grid | {method} | {case} | {model}"
+        bar_grid_save = os.path.join(case_dir, f"grid_bar_{model}.png")
+        plot_grid_bar(all_avg_diffs, title=bar_grid_title, save_path=bar_grid_save)
+
+        # 2. Grid of line curves (8 rows)
+        line_grid_title = f"Accuracy Curves Grid | {method} | {case} | {model}"
+        line_grid_save = os.path.join(case_dir, f"grid_lines_{model}.png")
+        plot_grid_lines(all_curves_data, title=line_grid_title, save_path=line_grid_save)
