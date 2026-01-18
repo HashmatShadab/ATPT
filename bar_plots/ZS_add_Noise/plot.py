@@ -321,6 +321,60 @@ def plot_grid_lines(all_curves, *, title="", save_path=None):
     plt.close()
 
 
+def plot_grid_baseline(all_baselines, *, title="", save_path=None):
+    """
+    all_baselines: list of (dataset_name, baseline_dict)
+    baseline_dict: dict[param] -> baseline_acc
+    """
+    n = len(all_baselines)
+    if n == 0:
+        return
+
+    datasets_per_row = 2
+    rows = (n + datasets_per_row - 1) // datasets_per_row
+    cols = datasets_per_row
+
+    fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 4 * rows), dpi=150, squeeze=False)
+
+    def _sort_key(x):
+        try:
+            return float(x)
+        except Exception:
+            return x
+
+    for i, (dataset, baseline_dict) in enumerate(all_baselines):
+        r, c = divmod(i, cols)
+        ax = axes[r, c]
+
+        params = sorted(baseline_dict.keys(), key=_sort_key)
+        values = [baseline_dict[p] for p in params]
+        x_pos = np.arange(len(params))
+
+        ax.plot(x_pos, values, marker="o", linestyle="-", linewidth=2)
+        ax.set_xticks(x_pos)
+        ax.set_xticklabels(params)
+        ax.set_title(dataset)
+        ax.set_ylabel("Baseline Accuracy")
+        ax.set_xlabel("Param")
+
+        for x, y in zip(x_pos, values):
+            ax.text(x, y, f"{y:.2f}", ha="center", va="bottom", fontsize=8)
+        ax.grid(True, linestyle="--", alpha=0.4)
+
+    # hide unused axes
+    for i in range(n, rows * cols):
+        r, c = divmod(i, cols)
+        axes[r, c].axis("off")
+
+    fig.suptitle(title, fontsize=16)
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    if save_path:
+        plt.savefig(save_path)
+    else:
+        plt.show()
+    plt.close()
+
+
 def summarize_best(curves):
     """
     Returns a dict summary for the group.
@@ -383,6 +437,7 @@ for case in CASES:
     for model in MODELS:
         all_avg_diffs = []
         all_curves_data = []
+        all_baselines = []
 
         for dataset in DATASETS:
             # gather avg diff ratio for grid bar plot
@@ -395,9 +450,17 @@ for case in CASES:
             )
             all_avg_diffs.append((dataset, avg_diff))
 
+            dataset_baselines = {}
             for param in PARAMS:
                 curves = get_group_curves(ACC_RESULTS_LOADED, method, case, model, dataset, param)
                 all_curves_data.append((dataset, param, curves))
+
+                if curves:
+                    any_key = next(iter(curves))
+                    dataset_baselines[param] = curves[any_key]["baseline"]
+            
+            if dataset_baselines:
+                all_baselines.append((dataset, dataset_baselines))
 
         # 1. Grid of bar plots (2 rows)
         bar_grid_title = f"Avg Diff Ratio Grid | {method} | {case} | {model}"
@@ -408,3 +471,8 @@ for case in CASES:
         line_grid_title = f"Accuracy Curves Grid | {method} | {case} | {model}"
         line_grid_save = os.path.join(case_dir, f"grid_lines_{model}.png")
         plot_grid_lines(all_curves_data, title=line_grid_title, save_path=line_grid_save)
+
+        # 3. Grid of baseline accuracy
+        baseline_grid_title = f"Baseline Accuracy vs Param | {method} | {case} | {model}"
+        baseline_grid_save = os.path.join(case_dir, f"grid_baseline_{model}.png")
+        plot_grid_baseline(all_baselines, title=baseline_grid_title, save_path=baseline_grid_save)
