@@ -719,8 +719,8 @@ CASES = ["clean", "adversarial_eps4_steps100", "adversarial_eps4_steps100_image_
 
 METHODS = ["zero_shot_uniform_single", "zero_shot_uniform_anchors", "zero_shot_gaussian_anchors"]
 
-PARAMS = ["03", "06", "12", "18"]
-# PARAMS = ["4", "8", "12", "16"]
+PARAMS_1 = ["03", "06", "12", "18"]
+PARAMS_2 = ["4", "8", "12", "16"]
 
 method = METHODS[2]
 
@@ -753,6 +753,11 @@ for model in MODELS:
             dataset_best_param = None
             dataset_best_acc = -1
             dataset_best_curves = None
+
+            if method == "zeros_shot_gaussian_anchors":
+                PARAMS = PARAMS_2
+            else:
+                PARAMS = PARAMS_1
 
             for param in PARAMS:
                 curves = get_group_curves(ACC_RESULTS_LOADED, method, case, model, dataset, param)
