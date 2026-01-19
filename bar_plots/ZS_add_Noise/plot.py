@@ -375,6 +375,74 @@ def plot_grid_baseline(all_baselines, *, title="", save_path=None):
     plt.close()
 
 
+def plot_grid_best_param_lines(all_best_curves, *, title="", save_path=None):
+    """
+    all_best_curves: list of (dataset_name, best_param, curves_dict)
+    One plot per dataset.
+    """
+    n = len(all_best_curves)
+    if n == 0:
+        return
+
+    datasets_per_row = 4
+    rows = (n + datasets_per_row - 1) // datasets_per_row
+    cols = datasets_per_row
+
+    fig, axes = plt.subplots(rows, cols, figsize=(6 * cols, 5 * rows), dpi=150, squeeze=False)
+
+    for i, (dataset, best_param, curves) in enumerate(all_best_curves):
+        r, c = divmod(i, cols)
+        ax = axes[r, c]
+
+        if not curves:
+            ax.text(0.5, 0.5, "No Data", ha="center", va="center")
+            continue
+
+        any_key = next(iter(curves))
+        baseline = curves[any_key]["baseline"]
+
+        global_best = None
+        for diff_key, curve_data in curves.items():
+            if curve_data["best_acc"] is not None:
+                cand = (curve_data["best_acc"], diff_key, curve_data["best_t"])
+                if global_best is None or cand[0] > global_best[0]:
+                    global_best = cand
+
+        for diff_key, curve_data in sorted(curves.items(), key=lambda x: x[0]):
+            ts = curve_data["thresholds"]
+            ys = curve_data["accs"]
+            if len(ts) == 0: continue
+            ax.plot(ts, ys, marker="o", linewidth=1, markersize=3, label=f"diff={diff_key}")
+
+        ax.axhline(baseline, linestyle="--", linewidth=1, color="black", label="Baseline")
+
+        title_str = f"{dataset} (Best Param: {best_param})"
+        if global_best:
+            best_acc, best_diff, best_t = global_best
+            ax.scatter([best_t], [best_acc], color="red", marker="*", s=100, zorder=5, label="Best")
+            ax.set_title(f"{title_str}\nBest: d={best_diff}, t={best_t:.2f}, acc={best_acc:.2f}", fontsize=10)
+        else:
+            ax.set_title(title_str, fontsize=10)
+
+        ax.legend(fontsize=8, loc="lower right")
+        ax.grid(True, linestyle="--", alpha=0.4)
+        ax.set_xlabel("Threshold")
+        ax.set_ylabel("Accuracy")
+
+    # hide unused axes
+    for i in range(n, rows * cols):
+        r, c = divmod(i, cols)
+        axes[r, c].axis("off")
+
+    fig.suptitle(title, fontsize=16)
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    if save_path:
+        plt.savefig(save_path)
+    else:
+        plt.show()
+    plt.close()
+
+
 def summarize_best(curves):
     """
     Returns a dict summary for the group.
@@ -425,9 +493,10 @@ CASES = ["clean", "adversarial_eps4_steps100", "adversarial_eps4_steps100_image_
 
 METHODS = ["zero_shot_uniform_single", "zero_shot_uniform_anchors", "zero_shot_gaussian_anchors"]
 
-PARAMS = ["03", "06", "12", "18"]
+# PARAMS = ["03", "06", "12", "18"]
+PARAMS = ["4", "8", "12"]
 
-method = METHODS[2]
+method = METHODS[1]
 
 for case in CASES:
     # Create directory for method/case
@@ -438,6 +507,7 @@ for case in CASES:
         all_avg_diffs = []
         all_curves_data = []
         all_baselines = []
+        all_best_curves_data = []
 
         for dataset in DATASETS:
             # gather avg diff ratio for grid bar plot
@@ -451,6 +521,10 @@ for case in CASES:
             all_avg_diffs.append((dataset, avg_diff))
 
             dataset_baselines = {}
+            dataset_best_param = None
+            dataset_best_acc = -1
+            dataset_best_curves = None
+
             for param in PARAMS:
                 curves = get_group_curves(ACC_RESULTS_LOADED, method, case, model, dataset, param)
                 all_curves_data.append((dataset, param, curves))
@@ -458,16 +532,26 @@ for case in CASES:
                 if curves:
                     any_key = next(iter(curves))
                     dataset_baselines[param] = curves[any_key]["baseline"]
+                    
+                    # Find best param for this dataset
+                    summary = summarize_best(curves)
+                    if summary and summary["best_acc"] > dataset_best_acc:
+                        dataset_best_acc = summary["best_acc"]
+                        dataset_best_param = param
+                        dataset_best_curves = curves
             
             if dataset_baselines:
                 all_baselines.append((dataset, dataset_baselines))
+            
+            if dataset_best_param is not None:
+                all_best_curves_data.append((dataset, dataset_best_param, dataset_best_curves))
 
         # 1. Grid of bar plots (2 rows)
         bar_grid_title = f"Avg Diff Ratio Grid | {method} | {case} | {model}"
         bar_grid_save = os.path.join(case_dir, f"grid_bar_{model}.png")
         plot_grid_bar(all_avg_diffs, title=bar_grid_title, save_path=bar_grid_save)
 
-        # 2. Grid of line curves (8 rows)
+        # 2. Grid of line curves
         line_grid_title = f"Accuracy Curves Grid | {method} | {case} | {model}"
         line_grid_save = os.path.join(case_dir, f"grid_lines_{model}.png")
         plot_grid_lines(all_curves_data, title=line_grid_title, save_path=line_grid_save)
@@ -476,3 +560,8 @@ for case in CASES:
         baseline_grid_title = f"Baseline Accuracy vs Param | {method} | {case} | {model}"
         baseline_grid_save = os.path.join(case_dir, f"grid_baseline_{model}.png")
         plot_grid_baseline(all_baselines, title=baseline_grid_title, save_path=baseline_grid_save)
+
+        # 4. Grid of best param line curves
+        best_line_grid_title = f"Best Param Accuracy Curves Grid | {method} | {case} | {model}"
+        best_line_grid_save = os.path.join(case_dir, f"grid_best_param_lines_{model}.png")
+        plot_grid_best_param_lines(all_best_curves_data, title=best_line_grid_title, save_path=best_line_grid_save)

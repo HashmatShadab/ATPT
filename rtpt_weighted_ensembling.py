@@ -1721,7 +1721,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     save_dic = {}
     save_dic["diff_ratio"] = images_diff_ratio_tpt_noisy_anchors_list
     save_dic["avergae_diff_ratio"] =  sum(images_diff_ratio_tpt_noisy_anchors_list)/len(images_diff_ratio_tpt_noisy_anchors_list)
-    logger.info(f"Average Counter Attack diff ratio: {save_dic['avergae_diff_ratio']:.2f}")
+    logger.info(f"Average Counter Attack diff ratio (Images TPT Noisy Anchors): {save_dic['avergae_diff_ratio']:.2f}")
     with open(results_path, 'w') as f:
         json.dump(save_dic, f, indent=4)
 
@@ -1730,7 +1730,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     save_dic = {}
     save_dic["diff_ratio"] = clean_images_diff_ratio_tpt_noisy_anchors_list
     save_dic["avergae_diff_ratio"] =  sum(clean_images_diff_ratio_tpt_noisy_anchors_list)/len(clean_images_diff_ratio_tpt_noisy_anchors_list)
-    logger.info(f"Average Counter Attack diff ratio: {save_dic['avergae_diff_ratio']:.2f}")
+    logger.info(f"Average Counter Attack diff ratio (Clean Images TPT Noisy Anchors): {save_dic['avergae_diff_ratio']:.2f}")
     with open(results_path, 'w') as f:
         json.dump(save_dic, f, indent=4)
 
