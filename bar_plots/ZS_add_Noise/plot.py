@@ -221,6 +221,76 @@ def plot_grid_bar(all_avg_diffs, *, title="", save_path=None):
         plt.show()
     plt.close()
 
+def plot_grid_bar_comparison(all_avg_diffs_cases, cases, *, title="", save_path=None):
+    """
+    all_avg_diffs_cases: dict[case] -> list of (dataset_name, avg_diff_dict)
+    cases: list of case names to compare
+    """
+    # Assuming all cases have the same datasets
+    first_case = cases[0]
+    datasets_data = all_avg_diffs_cases[first_case]
+    n = len(datasets_data)
+    if n == 0:
+        return
+    
+    cols = (n + 1) // 2
+    rows = 2
+    
+    fig, axes = plt.subplots(rows, cols, figsize=(6 * cols, 4 * rows), dpi=150, squeeze=False)
+    
+    def _sort_key(x):
+        try:
+            return float(x)
+        except Exception:
+            return x
+
+    for i, (dataset, _) in enumerate(datasets_data):
+        r, c = divmod(i, cols)
+        ax = axes[r, c]
+        
+        # Collect params from all cases to be safe, though they should be same
+        all_params = set()
+        for case in cases:
+            avg_diff_dict = dict(all_avg_diffs_cases[case])[dataset]
+            all_params.update(avg_diff_dict.keys())
+        
+        params = sorted(list(all_params), key=_sort_key)
+        x_pos = np.arange(len(params))
+        width = 0.8 / len(cases)
+        
+        for j, case in enumerate(cases):
+            avg_diff_dict = dict(all_avg_diffs_cases[case])[dataset]
+            values = [avg_diff_dict.get(p, 0.0) for p in params]
+            offset = (j - (len(cases) - 1) / 2) * width
+            bars = ax.bar(x_pos + offset, values, width, label=case)
+            
+            for b in bars:
+                h = b.get_height()
+                if h > 0:
+                    ax.text(b.get_x() + b.get_width() / 2, h, f"{h:.3f}", ha="center", va="bottom", fontsize=6)
+        
+        ax.set_xticks(x_pos)
+        ax.set_xticklabels(params)
+        ax.set_title(dataset)
+        ax.set_ylabel("Avg Diff Ratio")
+        ax.set_xlabel("Diff Ratio Param")
+        if i == 0:
+            ax.legend(fontsize=7)
+        ax.grid(True, axis="y", linestyle="--", alpha=0.4)
+
+    # hide unused axes
+    for i in range(n, rows * cols):
+        r, c = divmod(i, cols)
+        axes[r, c].axis("off")
+
+    fig.suptitle(title, fontsize=16)
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    if save_path:
+        plt.savefig(save_path)
+    else:
+        plt.show()
+    plt.close()
+
 def plot_grid_lines(all_curves, *, title="", save_path=None):
     """
     all_curves: list of (dataset_name, param, curves_dict)
@@ -493,17 +563,19 @@ CASES = ["clean", "adversarial_eps4_steps100", "adversarial_eps4_steps100_image_
 
 METHODS = ["zero_shot_uniform_single", "zero_shot_uniform_anchors", "zero_shot_gaussian_anchors"]
 
-# PARAMS = ["03", "06", "12", "18"]
-PARAMS = ["4", "8", "12", "16"]
+PARAMS = ["03", "06", "12", "18"]
+# PARAMS = ["4", "8", "12", "16"]
 
-method = METHODS[0]
+method = METHODS[2]
 
-for case in CASES:
-    # Create directory for method/case
-    case_dir = os.path.join(OUTPUT_DIR, method, case)
-    os.makedirs(case_dir, exist_ok=True)
+for model in MODELS:
+    all_avg_diffs_cases = {}
+    
+    for case in CASES:
+        # Create directory for method/case
+        case_dir = os.path.join(OUTPUT_DIR, method, case)
+        os.makedirs(case_dir, exist_ok=True)
 
-    for model in MODELS:
         all_avg_diffs = []
         all_curves_data = []
         all_baselines = []
@@ -546,6 +618,8 @@ for case in CASES:
             if dataset_best_param is not None:
                 all_best_curves_data.append((dataset, dataset_best_param, dataset_best_curves))
 
+        all_avg_diffs_cases[case] = all_avg_diffs
+
         # 1. Grid of bar plots (2 rows)
         bar_grid_title = f"Avg Diff Ratio Grid | {method} | {case} | {model}"
         bar_grid_save = os.path.join(case_dir, f"grid_bar_{model}.png")
@@ -565,3 +639,10 @@ for case in CASES:
         best_line_grid_title = f"Best Param Accuracy Curves Grid | {method} | {case} | {model}"
         best_line_grid_save = os.path.join(case_dir, f"grid_best_param_lines_{model}.png")
         plot_grid_best_param_lines(all_best_curves_data, title=best_line_grid_title, save_path=best_line_grid_save)
+
+    # After all cases, plot the comparison bar grid
+    comparison_dir = os.path.join(OUTPUT_DIR, method, "comparison")
+    os.makedirs(comparison_dir, exist_ok=True)
+    comp_bar_grid_title = f"Avg Diff Ratio Comparison Grid | {method} | {model}"
+    comp_bar_grid_save = os.path.join(comparison_dir, f"grid_bar_comparison_{model}.png")
+    plot_grid_bar_comparison(all_avg_diffs_cases, CASES, title=comp_bar_grid_title, save_path=comp_bar_grid_save)
