@@ -553,7 +553,7 @@ def build_all_data(
     models: list,
     datasets: list,
     *,
-    uniform_eps_list=('4', '8', '12'),
+    uniform_eps_list=('4', '8', '12', '16'),
     gaussian_sigma_list=('03', '06', '12', '18'),
 ) -> dict:
     """

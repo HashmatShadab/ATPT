@@ -494,9 +494,9 @@ CASES = ["clean", "adversarial_eps4_steps100", "adversarial_eps4_steps100_image_
 METHODS = ["zero_shot_uniform_single", "zero_shot_uniform_anchors", "zero_shot_gaussian_anchors"]
 
 # PARAMS = ["03", "06", "12", "18"]
-PARAMS = ["4", "8", "12"]
+PARAMS = ["4", "8", "12", "16"]
 
-method = METHODS[1]
+method = METHODS[0]
 
 for case in CASES:
     # Create directory for method/case
