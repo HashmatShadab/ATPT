@@ -513,6 +513,162 @@ def plot_grid_best_param_lines(all_best_curves, *, title="", save_path=None):
     plt.close()
 
 
+def plot_single_bar(avg_diff_dict, *, title="", save_path=None):
+    """
+    avg_diff_dict: dict[param] -> value
+    """
+    plt.figure(figsize=(8, 6), dpi=150)
+    
+    def _sort_key(x):
+        try:
+            return float(x)
+        except Exception:
+            return x
+
+    params = sorted(avg_diff_dict.keys(), key=_sort_key)
+    values = [avg_diff_dict[p] for p in params]
+    x_pos = np.arange(len(params))
+    
+    bars = plt.bar(x_pos, values)
+    plt.xticks(x_pos, params)
+    plt.title(title)
+    plt.ylabel("Avg Diff Ratio")
+    plt.xlabel("Param")
+    
+    for b in bars:
+        h = b.get_height()
+        plt.text(b.get_x() + b.get_width() / 2, h, f"{h:.3f}", ha="center", va="bottom", fontsize=10)
+    plt.grid(True, axis="y", linestyle="--", alpha=0.4)
+    plt.tight_layout()
+    if save_path:
+        plt.savefig(save_path)
+    else:
+        plt.show()
+    plt.close()
+
+def plot_single_baseline(baseline_dict, *, title="", save_path=None):
+    """
+    baseline_dict: dict[param] -> baseline_acc
+    """
+    plt.figure(figsize=(8, 6), dpi=150)
+    
+    def _sort_key(x):
+        try:
+            return float(x)
+        except Exception:
+            return x
+
+    params = sorted(baseline_dict.keys(), key=_sort_key)
+    values = [baseline_dict[p] for p in params]
+    x_pos = np.arange(len(params))
+    
+    plt.plot(x_pos, values, marker="o", linestyle="-", linewidth=2)
+    plt.xticks(x_pos, params)
+    plt.title(title)
+    plt.ylabel("Baseline Accuracy")
+    plt.xlabel("Param")
+    
+    for x, y in zip(x_pos, values):
+        plt.text(x, y, f"{y:.2f}", ha="center", va="bottom", fontsize=10)
+    plt.grid(True, linestyle="--", alpha=0.4)
+    plt.tight_layout()
+    if save_path:
+        plt.savefig(save_path)
+    else:
+        plt.show()
+    plt.close()
+
+def plot_single_curves(curves, *, title="", save_path=None):
+    """
+    curves: curves_dict for one group
+    """
+    plt.figure(figsize=(8, 6), dpi=150)
+    
+    if not curves:
+        plt.text(0.5, 0.5, "No Data", ha="center", va="center")
+    else:
+        any_key = next(iter(curves))
+        baseline = curves[any_key]["baseline"]
+        
+        global_best = None
+        for diff_key, curve_data in curves.items():
+            if curve_data["best_acc"] is not None:
+                cand = (curve_data["best_acc"], diff_key, curve_data["best_t"])
+                if global_best is None or cand[0] > global_best[0]:
+                    global_best = cand
+        
+        for diff_key, curve_data in sorted(curves.items(), key=lambda x: x[0]):
+            ts = curve_data["thresholds"]
+            ys = curve_data["accs"]
+            if len(ts) == 0: continue
+            plt.plot(ts, ys, marker="o", linewidth=1, markersize=4, label=f"diff={diff_key}")
+            
+        if global_best:
+            best_acc, best_diff, best_t = global_best
+            plt.scatter([best_t], [best_acc], color="red", marker="*", s=150, zorder=5, label="Best")
+            plt.title(f"{title}\nBest: d={best_diff}, t={best_t:.2f}, acc={best_acc:.2f}")
+        else:
+            plt.title(title)
+            
+        plt.axhline(baseline, linestyle="--", linewidth=1, color="black", label="Baseline")
+        plt.legend(fontsize=9, loc="lower right")
+        plt.grid(True, linestyle="--", alpha=0.4)
+        plt.xlabel("Threshold")
+        plt.ylabel("Accuracy")
+
+    plt.tight_layout()
+    if save_path:
+        plt.savefig(save_path)
+    else:
+        plt.show()
+    plt.close()
+
+def plot_single_bar_comparison(all_avg_diffs_cases, cases, *, title="", save_path=None):
+    """
+    all_avg_diffs_cases: dict[case] -> avg_diff_dict {param: value}
+    cases: list of case names to compare
+    """
+    plt.figure(figsize=(10, 6), dpi=150)
+    
+    def _sort_key(x):
+        try:
+            return float(x)
+        except Exception:
+            return x
+
+    # Collect all params
+    all_params = set()
+    for case in cases:
+        all_params.update(all_avg_diffs_cases[case].keys())
+    
+    params = sorted(list(all_params), key=_sort_key)
+    x_pos = np.arange(len(params))
+    width = 0.8 / len(cases)
+    
+    for j, case in enumerate(cases):
+        avg_diff_dict = all_avg_diffs_cases[case]
+        values = [avg_diff_dict.get(p, 0.0) for p in params]
+        offset = (j - (len(cases) - 1) / 2) * width
+        bars = plt.bar(x_pos + offset, values, width, label=case)
+        
+        for b in bars:
+            h = b.get_height()
+            if h > 0:
+                plt.text(b.get_x() + b.get_width() / 2, h, f"{h:.3f}", ha="center", va="bottom", fontsize=8)
+    
+    plt.xticks(x_pos, params)
+    plt.title(title)
+    plt.ylabel("Avg Diff Ratio")
+    plt.xlabel("Diff Ratio Param")
+    plt.legend(fontsize=9)
+    plt.grid(True, axis="y", linestyle="--", alpha=0.4)
+    plt.tight_layout()
+    if save_path:
+        plt.savefig(save_path)
+    else:
+        plt.show()
+    plt.close()
+
 def summarize_best(curves):
     """
     Returns a dict summary for the group.
@@ -570,7 +726,8 @@ method = METHODS[2]
 
 for model in MODELS:
     all_avg_diffs_cases = {}
-    
+    global_avg_diffs_cases = {}
+
     for case in CASES:
         # Create directory for method/case
         case_dir = os.path.join(OUTPUT_DIR, method, case)
@@ -620,6 +777,83 @@ for model in MODELS:
 
         all_avg_diffs_cases[case] = all_avg_diffs
 
+        # --- Aggregate across datasets ---
+        # 1. Global Avg Diff Ratio
+        global_avg_diff = {}
+        param_counts = {}
+        for _, ds_diffs in all_avg_diffs:
+            for p, val in ds_diffs.items():
+                global_avg_diff[p] = global_avg_diff.get(p, 0.0) + val
+                param_counts[p] = param_counts.get(p, 0) + 1
+        for p in global_avg_diff:
+            global_avg_diff[p] /= param_counts[p]
+        
+        global_avg_diffs_cases[case] = global_avg_diff
+
+        # 2. Global Baseline Accuracy
+        global_baselines = {}
+        baseline_counts = {}
+        for _, ds_baselines in all_baselines:
+            for p, val in ds_baselines.items():
+                global_baselines[p] = global_baselines.get(p, 0.0) + val
+                baseline_counts[p] = baseline_counts.get(p, 0) + 1
+        for p in global_baselines:
+            global_baselines[p] /= baseline_counts[p]
+
+        # 3. Global Curves per Param
+        global_curves_all_params = {}
+        for param in PARAMS:
+            # Collect all curves for this param across datasets
+            param_curves = [c for ds, p, c in all_curves_data if p == param]
+            if not param_curves: continue
+            
+            # curves is dict[diff_src] -> {baseline, thresholds, accs, ...}
+            aggregated_curves = {}
+            diff_srcs = set()
+            for curves in param_curves:
+                diff_srcs.update(curves.keys())
+            
+            for dsrc in diff_srcs:
+                # Find all curves for this dsrc
+                dsrc_curves = [c[dsrc] for c in param_curves if dsrc in c]
+                if not dsrc_curves: continue
+                
+                # Assume all have same thresholds for simplicity (usually true)
+                thresholds = dsrc_curves[0]["thresholds"]
+                
+                avg_accs = []
+                for i in range(len(thresholds)):
+                    acc_sum = sum(c["accs"][i] for c in dsrc_curves)
+                    avg_accs.append(acc_sum / len(dsrc_curves))
+                
+                avg_baseline = sum(c["baseline"] for c in dsrc_curves) / len(dsrc_curves)
+                
+                best_idx = int(np.argmax(avg_accs))
+                aggregated_curves[dsrc] = {
+                    "baseline": avg_baseline,
+                    "thresholds": thresholds,
+                    "accs": avg_accs,
+                    "best_t": thresholds[best_idx],
+                    "best_acc": avg_accs[best_idx],
+                }
+            global_curves_all_params[param] = aggregated_curves
+
+        # --- Plot Global Averages ---
+        global_dir = os.path.join(case_dir, "global_average")
+        os.makedirs(global_dir, exist_ok=True)
+
+        if global_avg_diff:
+            plot_single_bar(global_avg_diff, title=f"Global Avg Diff Ratio | {method} | {case}", 
+                            save_path=os.path.join(global_dir, "global_avg_diff.png"))
+        
+        if global_baselines:
+            plot_single_baseline(global_baselines, title=f"Global Baseline Accuracy | {method} | {case}",
+                                 save_path=os.path.join(global_dir, "global_baseline.png"))
+        
+        for param, curves in global_curves_all_params.items():
+            plot_single_curves(curves, title=f"Global Avg Accuracy Curves | {method} | {case} | param={param}",
+                               save_path=os.path.join(global_dir, f"global_curves_param_{param}.png"))
+
         # 1. Grid of bar plots (2 rows)
         bar_grid_title = f"Avg Diff Ratio Grid | {method} | {case} | {model}"
         bar_grid_save = os.path.join(case_dir, f"grid_bar_{model}.png")
@@ -641,8 +875,15 @@ for model in MODELS:
         plot_grid_best_param_lines(all_best_curves_data, title=best_line_grid_title, save_path=best_line_grid_save)
 
     # After all cases, plot the comparison bar grid
-    comparison_dir = os.path.join(OUTPUT_DIR, method, "comparison")
+    comparison_dir = os.path.join(OUTPUT_DIR, method, "diff_ratio_comparison")
     os.makedirs(comparison_dir, exist_ok=True)
     comp_bar_grid_title = f"Avg Diff Ratio Comparison Grid | {method} | {model}"
     comp_bar_grid_save = os.path.join(comparison_dir, f"grid_bar_comparison_{model}.png")
     plot_grid_bar_comparison(all_avg_diffs_cases, CASES, title=comp_bar_grid_title, save_path=comp_bar_grid_save)
+
+    # Plot global average comparison
+    global_comp_dir = os.path.join(OUTPUT_DIR, method, "diff_ratio_global_average_comparison")
+    os.makedirs(global_comp_dir, exist_ok=True)
+    global_comp_title = f"Global Avg Diff Ratio Comparison | {method} | {model}"
+    global_comp_save = os.path.join(global_comp_dir, f"global_bar_comparison_{model}.png")
+    plot_single_bar_comparison(global_avg_diffs_cases, CASES, title=global_comp_title, save_path=global_comp_save)
