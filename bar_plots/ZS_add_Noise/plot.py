@@ -292,6 +292,63 @@ def plot_grid_bar_comparison(all_avg_diffs_cases, cases, *, title="", save_path=
         plt.show()
     plt.close()
 
+def plot_overall_bar_comparison(all_avg_diffs_cases, cases, *, title="", save_path=None, param_name="Param"):
+    """
+    all_avg_diffs_cases: dict[case] -> list of (dataset_name, avg_diff_dict)
+    cases: list of case names to compare
+    """
+    fig, ax = plt.subplots(figsize=(10, 6), dpi=150)
+
+    def _sort_key(x):
+        try:
+            return float(x)
+        except Exception:
+            return x
+
+    # Assuming all cases/datasets have the same params
+    first_case = cases[0]
+    first_dataset_data = all_avg_diffs_cases[first_case][0][1]
+    params = sorted(first_dataset_data.keys(), key=_sort_key)
+    
+    x_pos = np.arange(len(params))
+    width = 0.8 / len(cases)
+
+    for j, case in enumerate(cases):
+        # Aggregate across all datasets for this case
+        dataset_list = all_avg_diffs_cases[case]
+        param_sums = {p: 0.0 for p in params}
+        param_counts = {p: 0 for p in params}
+
+        for dataset_name, avg_diff_dict in dataset_list:
+            for p in params:
+                if p in avg_diff_dict:
+                    param_sums[p] += avg_diff_dict[p]
+                    param_counts[p] += 1
+        
+        values = [param_sums[p] / param_counts[p] if param_counts[p] > 0 else 0.0 for p in params]
+        offset = (j - (len(cases) - 1) / 2) * width
+        bars = ax.bar(x_pos + offset, values, width, label=case)
+
+        for b in bars:
+            h = b.get_height()
+            if h > 0:
+                ax.text(b.get_x() + b.get_width() / 2, h, f"{h:.3f}", ha="center", va="bottom", fontsize=8)
+
+    ax.set_xticks(x_pos)
+    ax.set_xticklabels(params)
+    ax.set_title(title, fontsize=14)
+    ax.set_ylabel("Overall Avg Diff Ratio")
+    ax.set_xlabel(param_name)
+    ax.legend(fontsize=10)
+    ax.grid(True, axis="y", linestyle="--", alpha=0.4)
+
+    plt.tight_layout()
+    if save_path:
+        plt.savefig(save_path)
+    else:
+        plt.show()
+    plt.close()
+
 def plot_grid_lines(all_curves, *, title="", save_path=None, param_name="Param"):
     """
     all_curves: list of (dataset_name, param, curves_dict)
@@ -567,7 +624,7 @@ METHODS = ["zero_shot_uniform_single", "zero_shot_uniform_anchors", "zero_shot_g
 PARAMS_1 = ["03", "06", "12", "18"]
 PARAMS_2 = ["4", "8", "12", "16"]
 
-method = METHODS[1]
+method = METHODS[0]
 
 for model in MODELS:
     all_avg_diffs_cases = {}
@@ -750,3 +807,8 @@ for model in MODELS:
     # comp_bar_grid_title = f"Avg Diff Ratio Comparison Grid | {method} | {model}"
     comp_bar_grid_save = os.path.join(comparison_dir, f"grid_bar_comparison_{model}.png")
     plot_grid_bar_comparison(all_avg_diffs_cases, CASES, title=comp_bar_grid_title, save_path=comp_bar_grid_save, param_name=PARAM_NAME)
+
+    # 6. Overall Avg Diff Ratio Comparison (Average across all datasets)
+    overall_comp_title = f"Overall Average Diff Ratio Across All Datasets\n{method} | {model}"
+    overall_comp_save = os.path.join(comparison_dir, f"overall_bar_comparison_{model}.png")
+    plot_overall_bar_comparison(all_avg_diffs_cases, CASES, title=overall_comp_title, save_path=overall_comp_save, param_name=PARAM_NAME)
