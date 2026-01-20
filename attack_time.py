@@ -21,7 +21,7 @@ imagenet_datasets = {
 
 # DTD timing info
 dtd_images = fine_grained_datasets["DTD"]
-dtd_time_minutes = 25
+dtd_time_minutes = 120
 
 # Time per image
 time_per_image = dtd_time_minutes / dtd_images

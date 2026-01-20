@@ -99,7 +99,7 @@ echo "Generating Adv Examples  on Fine-grained datasets..."
 
 
 
-if [ "$DATASET_ID" = "all"   ]; then
+if [ "$DATASET_ID" = "all_1"   ]; then
   echo "Running tests on Fine-grained datasets..."
 
   echo "  [1/8] Adv Examples  DTD dataset..."
@@ -118,6 +118,13 @@ if [ "$DATASET_ID" = "all"   ]; then
   python rtpt_adv_generation.py $DATA_ROOT --test_sets Aircraft $MODEL $COMMON_PARAMS
   echo "  ✓ Aircraft dataset Adv Examples  complete"
 
+
+
+  echo "Fine-grained datasets part 1 Adv Examples  complete"
+
+elif [ "$DATASET_ID" = "all_2"   ]; then
+  echo "Running tests on Fine-grained datasets..."
+
   echo "  [5/8] Adv Examples  Pets dataset..."
   python rtpt_adv_generation.py $DATA_ROOT --test_sets Pets $MODEL $COMMON_PARAMS
   echo "  ✓ Pets dataset Adv Examples  complete"
@@ -134,7 +141,7 @@ if [ "$DATASET_ID" = "all"   ]; then
   python rtpt_adv_generation.py $DATA_ROOT --test_sets eurosat $MODEL $COMMON_PARAMS
   echo "  ✓ eurosat dataset Adv Examples  complete"
 
-  echo "Fine-grained datasets Adv Examples  complete"
+  echo "Fine-grained datasets part 2 Adv Examples  complete"
 
 elif [ "$DATASET_ID" = "dtd"   ]; then
   echo "  [1/8] Adv Examples  DTD dataset..."
