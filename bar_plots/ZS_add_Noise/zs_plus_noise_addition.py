@@ -406,43 +406,43 @@ RESULT_PATHS = {
     # Zero-shot + Uniform Noise (Single noisy image for diff ratio)
     # EPS: 4/8/12/16  -> use {eps} in the path
     # -------------------------
-    "zero_shot_uniform_single": {
-        "clean": {
-            "base_path": (
-                "../../Final_Results_corrected_ca_tau/"
-                "{model}/{dataset}/"
-                "Clean/Counter_Attack/"
-                "Eps_{eps}_0_Steps_0_Alpha_1_0/"
-                "tau_0_2_beta_2_0_weighted_pertrubation_True/"
-                "No_TPT/"
-                "Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01"
-            ),
-        },
-        "adversarial_eps4_steps100": {
-            "base_path": (
-                "../../Final_Results_corrected_ca_tau/"
-                "{model}/{dataset}/"
-                "Adversarial_Eps_4_0_Steps_100/"
-                "Counter_Attack/"
-                "Eps_{eps}_0_Steps_0_Alpha_1_0/"
-                "tau_0_2_beta_2_0_weighted_pertrubation_True/"
-                "No_TPT/"
-                "Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01"
-            ),
-        },
-        "adversarial_eps4_steps100_image_only": {
-            "base_path": (
-                "../../Final_Results_corrected_ca_tau/"
-                "{model}/{dataset}/"
-                "Adversarial_Eps_4_0_Steps_100_image_only_attack_prm/"
-                "Counter_Attack/"
-                "Eps_{eps}_0_Steps_0_Alpha_1_0/"
-                "tau_0_2_beta_2_0_weighted_pertrubation_True/"
-                "No_TPT/"
-                "Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01"
-            ),
-        },
-    },
+    # "zero_shot_uniform_single": {
+    #     "clean": {
+    #         "base_path": (
+    #             "../../Final_Results_corrected_ca_tau/"
+    #             "{model}/{dataset}/"
+    #             "Clean/Counter_Attack/"
+    #             "Eps_{eps}_0_Steps_0_Alpha_1_0/"
+    #             "tau_0_2_beta_2_0_weighted_pertrubation_True/"
+    #             "No_TPT/"
+    #             "Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01"
+    #         ),
+    #     },
+    #     "adversarial_eps4_steps100": {
+    #         "base_path": (
+    #             "../../Final_Results_corrected_ca_tau/"
+    #             "{model}/{dataset}/"
+    #             "Adversarial_Eps_4_0_Steps_100/"
+    #             "Counter_Attack/"
+    #             "Eps_{eps}_0_Steps_0_Alpha_1_0/"
+    #             "tau_0_2_beta_2_0_weighted_pertrubation_True/"
+    #             "No_TPT/"
+    #             "Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01"
+    #         ),
+    #     },
+    #     "adversarial_eps4_steps100_image_only": {
+    #         "base_path": (
+    #             "../../Final_Results_corrected_ca_tau/"
+    #             "{model}/{dataset}/"
+    #             "Adversarial_Eps_4_0_Steps_100_image_only_attack_prm/"
+    #             "Counter_Attack/"
+    #             "Eps_{eps}_0_Steps_0_Alpha_1_0/"
+    #             "tau_0_2_beta_2_0_weighted_pertrubation_True/"
+    #             "No_TPT/"
+    #             "Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01"
+    #         ),
+    #     },
+    # },
 
     # -------------------------
     # Zero-shot + Uniform Noise (Normal anchors for diff ratio)
@@ -553,7 +553,7 @@ def build_all_data(
     models: list,
     datasets: list,
     *,
-    uniform_eps_list=('4', '8', '12', '16'),
+    uniform_eps_list=('4', '8', '12', '16', '24', '32'),
     gaussian_sigma_list=('03', '06', '12', '18'),
 ) -> dict:
     """

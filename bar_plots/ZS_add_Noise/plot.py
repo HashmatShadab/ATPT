@@ -622,9 +622,9 @@ CASES = ["clean", "adversarial_eps4_steps100", "adversarial_eps4_steps100_image_
 METHODS = ["zero_shot_uniform_single", "zero_shot_uniform_anchors", "zero_shot_gaussian_anchors"]
 
 PARAMS_1 = ["03", "06", "12", "18"]
-PARAMS_2 = ["4", "8", "12", "16"]
+PARAMS_2 = ["4", "8", "12", "16", "24", "32"]
 
-method = METHODS[0]
+method = METHODS[1]
 
 for model in MODELS:
     all_avg_diffs_cases = {}
