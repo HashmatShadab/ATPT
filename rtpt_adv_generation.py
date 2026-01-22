@@ -114,15 +114,14 @@ def main():
     set_random_seed(args.seed)
 
     # Calculate alpha from epsilon if not provided
-    args.alpha = args.eps / args.alpha_eps_ratio
-
-
+    if args.eps > 0.0:
+        args.alpha = args.eps / args.alpha_eps_ratio
 
     # Set up logging
+    log_name = f"ADV_Generation_eps_{args.eps}_steps_{args.steps}"
 
     # Create a log name that includes TTA variations
     # Format floating point values and ensure filename is valid
-    log_name = f"ADV_Generation_eps_{args.eps}_steps_{args.steps}"
     if args.transferability:
         log_name = f"ADV_Generation_source_model_{args.source_model}_eps_{args.eps}_steps_{args.steps}"
     else:
@@ -596,8 +595,11 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
 
         # Get adversarial image (either generate or load from cache)
-        adv_images = get_adversarial_images(
-            images, target, atk, path, i, adv_images_dir, logger=logger)
+        if args.eps > 0.0:
+            adv_images = get_adversarial_images(
+                images, target, atk, path, i, adv_images_dir, logger=logger)
+        else:
+            adv_images = images.clone()
 
         if args.counter_attack:
             # If using counter-attack, apply it to the generated image
