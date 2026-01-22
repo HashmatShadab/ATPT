@@ -38,6 +38,13 @@ DIFF_THRESHOLD=${18:-0.0}
 IMAGE_ONLY_ATTACK=${19:-"false"}
 IMAGE_ONLY_ATTACK_TYPE=${20:-"prm"}
 DATASET_ID=${21:-"all"}
+COUNTER_ATTACK=${22:-"false"}
+COUNTER_ATTACK_STEPS=${23:-0}
+COUNTER_ATTACK_INIT_NOISE=${24:-"uniform"}
+COUNTER_ATTACK_EPS=${25:-4.0}
+COUNTER_ATTACK_GAUSSIAN_SIGMA=${26:-0.03}
+COUNTER_ATTACK_TAU=${27:-"normal"}
+
 
 # bash gen_adv.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 "F:\Code\datasets\atpt_results"
 
@@ -59,13 +66,13 @@ DATASET_ID=${21:-"all"}
 
 # Common parameters for all runs
 COMMON_PARAMS="--gpu 0 --ctx_init a_photo_of_a --output_dir $OUTPUT_DIR --log_output_dir $LOG_OUTPUT_DIR --workers $NUM_WORKERS"
-COMMON_PARAMS+=" --eps $EPSILON --steps $ATTACK_STEPS --tta_steps $TTA_STEPS --image_only_attack $IMAGE_ONLY_ATTACK --image_only_attack_type $IMAGE_ONLY_ATTACK_TYPE"
+COMMON_PARAMS+=" --eps $EPSILON --steps $ATTACK_STEPS --tta_steps $TTA_STEPS --image_only_attack $IMAGE_ONLY_ATTACK --image_only_attack_type $IMAGE_ONLY_ATTACK_TYPE --counter_attack $COUNTER_ATTACK --counter_attack_steps $COUNTER_ATTACK_STEPS --counter_attack_init_noise $COUNTER_ATTACK_INIT_NOISE --counter_attack_eps $COUNTER_ATTACK_EPS  --counter_attack_gaussian_sigma $COUNTER_ATTACK_GAUSSIAN_SIGMA --counter_attack_tau $COUNTER_ATTACK_TAU"
 COMMON_PARAMS+=" --selection_p $FRACTION_CONFIDENT_SAMPLES"
 COMMON_PARAMS+=" --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX"
 COMMON_PARAMS+=" --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING --print-freq 20 --image_feature_purify $IMAGE_PURIFY --image_feature_purify_type $PURIFY_TYPE --image_feature_purify_noisy_anchors $NOISY_ANCHORS --image_feature_purify_anchors_alpha $ANCHORS_ALPHA --image_feature_purify_noisy_sigma $NOISY_SIGMA --image_feature_purify_diff_threshold $DIFF_THRESHOLD"
 
 # Model parameters
-MODEL="-a $MODEL_NAME -b 8 --adv_bs 8"
+MODEL="-a $MODEL_NAME -b 1 --adv_bs 1"
 
 # Display configuration
 echo "=== Configuration ==="
@@ -98,8 +105,44 @@ echo "========================"
 echo "Generating Adv Examples  on Fine-grained datasets..."
 
 
+if [ "$DATASET_ID" = "all"   ]; then
+  echo "Running tests on Fine-grained datasets..."
 
-if [ "$DATASET_ID" = "all_1"   ]; then
+  echo "  [1/8] Adv Examples  DTD dataset..."
+  python rtpt_adv_generation.py $DATA_ROOT --test_sets DTD $MODEL $COMMON_PARAMS
+  echo "  ✓ DTD dataset Adv Examples  complete"
+
+  echo "  [2/8] Adv Examples  Flower102 dataset..."
+  python rtpt_adv_generation.py $DATA_ROOT --test_sets Flower102 $MODEL $COMMON_PARAMS
+  echo "  ✓ Flower102 dataset Adv Examples  complete"
+
+  echo "  [3/8] Adv Examples  Cars dataset..."
+  python rtpt_adv_generation.py $DATA_ROOT --test_sets Cars $MODEL $COMMON_PARAMS
+  echo "  ✓ Cars dataset Adv Examples  complete"
+
+  echo "  [4/8] Adv Examples  Aircraft dataset..."
+  python rtpt_adv_generation.py $DATA_ROOT --test_sets Aircraft $MODEL $COMMON_PARAMS
+  echo "  ✓ Aircraft dataset Adv Examples  complete"
+
+  echo "  [5/8] Adv Examples  Pets dataset..."
+  python rtpt_adv_generation.py $DATA_ROOT --test_sets Pets $MODEL $COMMON_PARAMS
+  echo "  ✓ Pets dataset Adv Examples  complete"
+
+  echo "  [6/8] Adv Examples  Caltech101 dataset..."
+  python rtpt_adv_generation.py $DATA_ROOT --test_sets Caltech101 $MODEL $COMMON_PARAMS
+  echo "  ✓ Caltech101 dataset Adv Examples  complete"
+
+  echo "  [7/8] Adv Examples  UCF101 dataset..."
+  python rtpt_adv_generation.py $DATA_ROOT --test_sets UCF101 $MODEL $COMMON_PARAMS
+  echo "  ✓ UCF101 dataset Adv Examples  complete"
+
+  echo "  [8/8] Adv Examples  eurosat dataset..."
+  python rtpt_adv_generation.py $DATA_ROOT --test_sets eurosat $MODEL $COMMON_PARAMS
+  echo "  ✓ eurosat dataset Adv Examples  complete"
+
+  echo "Fine-grained datasets Adv Examples  complete"
+
+elif [ "$DATASET_ID" = "all_1"   ]; then
   echo "Running tests on Fine-grained datasets..."
 
   echo "  [1/8] Adv Examples  DTD dataset..."

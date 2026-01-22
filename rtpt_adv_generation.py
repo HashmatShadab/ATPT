@@ -116,13 +116,7 @@ def main():
     # Calculate alpha from epsilon if not provided
     args.alpha = args.eps / args.alpha_eps_ratio
 
-    # Create output directory path with experiment parameters
-    args.output_dir = os.path.join(args.output_dir, args.arch, args.test_sets)
-    args.log_output_dir = os.path.join(args.log_output_dir, args.arch, args.test_sets)
 
-    # Create output directory if it doesn't exist
-    os.makedirs(args.output_dir, exist_ok=True)
-    os.makedirs(args.log_output_dir, exist_ok=True)
 
     # Set up logging
 
@@ -148,7 +142,24 @@ def main():
 
     # Update log name if counter_attack is True
     if args.counter_attack:
-        log_name = f"{log_name}_counter_attack_eps_{args.counter_attack_eps}_steps_{args.counter_attack_steps}_alpha_{args.counter_attack_alpha}_tau_thres_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_perturbations_{args.counter_attack_weighted_perturbations}"
+        if args.counter_attack_steps:
+            log_name = f"{log_name}_counter_attack_eps_{args.counter_attack_eps}_steps_{args.counter_attack_steps}_alpha_{args.counter_attack_alpha}_tau_thres_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_perturbations_{args.counter_attack_weighted_perturbations}"
+        else:
+            log_name = f"{log_name}_Added_Noise_{args.counter_attack_init_noise}"
+            if args.counter_attack_init_noise == "uniform":
+                log_name = f"{log_name}_Eps_{args.counter_attack_eps}_Tau_Type_{args.counter_attack_tau}"
+            elif args.counter_attack_init_noise == "gaussian":
+                log_name = f"{log_name}_Sigma_{args.counter_attack_gaussian_sigma}_Tau_Type_{args.counter_attack_tau}"
+            else:
+               raise ValueError("Unknown init noise type")
+
+        # Create output directory path with experiment parameters
+    args.output_dir = os.path.join(args.output_dir, args.arch, args.test_sets)
+    args.log_output_dir = os.path.join(args.log_output_dir, args.arch, args.test_sets, log_name)
+
+    # Create output directory if it doesn't exist
+    os.makedirs(args.output_dir, exist_ok=True)
+    os.makedirs(args.log_output_dir, exist_ok=True)
 
     logger, log_file = setup_logger(log_name, args.log_output_dir, level=logging.INFO)
     logger.info(print_args(args))
@@ -496,7 +507,12 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                                                   steps=args.counter_attack_steps,
                                                   tau_thres=args.counter_attack_tau_thres,
                                                   beta=args.counter_attack_beta,
-                                                  weighted_perturbation=args.counter_attack_weighted_perturbations)
+                                                  weighted_perturbation=args.counter_attack_weighted_perturbations,
+                                                  init_noise=args.counter_attack_init_noise,
+                                                  gaussian_sigma=args.counter_attack_gaussian_sigma,
+                                                  tau_type=args.counter_attack_tau,
+                                                  num_anchors=args.counter_attack_noisy_tau_num_anchors,
+                                                  )
         elif args.counter_attack_type == "pgd_clip_pure_i":
             if args.pgd_clip_pure_i_text_embeddings == "null":
                 embeddings = template_text_embeddings
@@ -521,7 +537,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                                                                text_embeddings=embeddings,
                                                                tau_thres=args.counter_attack_tau_thres,
                                                                beta=args.counter_attack_beta,
-                                                               weighted_perturbation=args.counter_attack_weighted_perturbations,
+
                                                                loss_lamda=args.pgd_counter_and_clipure_i_lamda)
         if logger:
             logger.info(f"Using counter-attack with epsilon: {args.counter_attack_eps:.6f}, alpha: {args.counter_attack_alpha:.6f}, steps: {args.counter_attack_steps}")
@@ -563,6 +579,8 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     diff_ratio_clean = 0
     diff_ratio_adv = 0
+
+    diff_ratio_after_counter_attack = []
     # Iterate through validation data
     for i, data in enumerate(val_loader):
         # Handle different return formats (with or without path)
@@ -583,8 +601,9 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
         if args.counter_attack:
             # If using counter-attack, apply it to the generated image
-            adv_images_counter = counter_atk(adv_images, target)
+            adv_images_counter, diff_ratio = counter_atk(adv_images, target)
             adv_images_counter = adv_images_counter.cuda(args.gpu, non_blocking=True)
+            diff_ratio_after_counter_attack.append(diff_ratio)
 
 
 
@@ -908,6 +927,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     adv_accuracy_orig = adv_correct_orig / total
     diff_ratio_clean = diff_ratio_clean / len(val_loader)
     diff_ratio_adv = diff_ratio_adv / len(val_loader)
+    avg_diff_ratio_after_counter_attack = sum(diff_ratio_after_counter_attack) / len(diff_ratio_after_counter_attack) if len(diff_ratio_after_counter_attack) > 0 else 0
 
     # Calculate accuracy on correctly/incorrectly classified clean samples
     adv_accuracy_purify_clean_correct = adv_correct_purify_clean_correct / total_clean_correct if total_clean_correct > 0 else 0
@@ -957,6 +977,17 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                 print(f"Original accuracy: {original_accuracy_orig:.4f}")
                 print(f"Adversarial accuracy: {adv_accuracy_orig:.4f}")
 
+    # save the diff_ratio_after_counter_attack and avg_diff_ratio_after_counter_attack as a json in log directory
+    info = {
+        'diff_ratio_after_counter_attack': diff_ratio_after_counter_attack,
+        'avg_diff_ratio_after_counter_attack': avg_diff_ratio_after_counter_attack,
+        'original_clean_accuracy': original_accuracy_orig,
+        'adversarial_accuracy': adv_accuracy_orig,
+        "counter_attack_accuracy": adv_accuracy_counter if args.counter_attack else None,
+    }
+    with open(os.path.join(args.log_output_dir, f'diff_ratio_after_counter_attack.json'), 'w') as f:
+        json.dump(info, f, indent=4)
+
 
 
 
@@ -994,9 +1025,9 @@ if __name__ == '__main__':
     # pin memory, default is True
     parser.add_argument('--no_pin_memory', action='store_true',
                         help='Pin memory for data loading')
-    parser.add_argument('-b', '--batch-size', default=16, type=int, metavar='N',
+    parser.add_argument('-b', '--batch-size', default=1, type=int, metavar='N',
                         help='Mini-batch size for augmentation')
-    parser.add_argument('--adv_bs', default=16, type=int, metavar='N',
+    parser.add_argument('--adv_bs', default=1, type=int, metavar='N',
                         help='Mini-batch size for augmentation')
     parser.add_argument('-p', '--print-freq', default=200, type=int, metavar='N',
                         help='Print frequency (default: 200)')
@@ -1041,6 +1072,12 @@ if __name__ == '__main__':
     parser.add_argument('--counter_attack_tau_thres', default=0.2, type=float)
     parser.add_argument('--counter_attack_beta', default=2.0, type=float)
     parser.add_argument('--counter_attack_weighted_perturbations', default=True, type=lambda x: (str(x).lower() == 'true') )
+    parser.add_argument('--counter_attack_init_noise', default='uniform', choices=["uniform", "gaussian"], type=str)
+    parser.add_argument('--counter_attack_gaussian_sigma', default=0.18, type=float)
+    parser.add_argument('--counter_attack_noisy_tau_num_anchors', default=10, type=int)
+    parser.add_argument('--counter_attack_tau', default='normal', choices=["normal", "noisy", "normal_anchors"], type=str)
+
+
 
     parser.add_argument('--pgd_clip_pure_i_text_embeddings', default='null', choices=["null", "class"], type=str)
     parser.add_argument('--pgd_counter_and_clipure_i_lamda', default=1.0, type=float)
