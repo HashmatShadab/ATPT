@@ -228,6 +228,27 @@ def main():
     generate_plots(aggregated, root)
 
 
+def get_attack_sort_key(atk_name):
+    """
+    Custom sort key for adversarial attacks.
+    Order: eps_0.0_steps_0 first, then by eps value, then by steps, then by image_only flag.
+    Example: 'eps_1.0_steps_10', 'eps_1.0_steps_100', 'eps_1.0_steps_10_image_only_attack_prm', 'eps_1.0_steps_100_image_only_attack_prm'
+    """
+    if atk_name == "eps_0.0_steps_0":
+        return (0.0, 0, False)
+    
+    # eps_1.0_steps_10
+    # eps_1.0_steps_10_image_only_attack_prm
+    m = re.search(r"eps_([\d.]+)_steps_(\d+)", atk_name)
+    if not m:
+        return (999.0, 999, False) # Should not happen with current naming
+    
+    eps = float(m.group(1))
+    steps = int(m.group(2))
+    is_image_only = "image_only" in atk_name
+    
+    return (eps, is_image_only, steps)
+
 def generate_plots(aggregated: Dict[str, Any], root: str):
     results = aggregated["results"]
     if not results:
@@ -275,7 +296,7 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
     Creates a grid of plots, one for each adversarial attack, averaged across all datasets.
     Each subplot compares 'Clean' vs 'one adversarial variant'.
     """
-    present_attacks = sorted([atk for atk in all_attacks])
+    present_attacks = sorted([atk for atk in all_attacks], key=get_attack_sort_key)
     if not present_attacks:
         return
 
@@ -350,7 +371,8 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
         ax.set_ylabel(clean_metric_name)
         ax.set_xticks(x_indices)
         ax.set_xticklabels([str(v) for v in unique_noise_vals])
-        ax.legend(fontsize=12, loc='upper left')
+        if i == 0:
+            ax.legend(fontsize=14, loc='upper left', ncol=2)
         ax.grid(True, axis='y', linestyle='--', alpha=0.7)
         
         current_ylim = ax.get_ylim()
@@ -378,7 +400,7 @@ def plot_noise_summary(datasets: Dict[str, Any], model_name: str, clean_attack: 
     summary_data = {}
     
     # List of all attacks to include: Clean + all others
-    ordered_attacks = [clean_attack] + sorted(list(all_attacks))
+    ordered_attacks = [clean_attack] + sorted(list(all_attacks), key=get_attack_sort_key)
     
     for dataset, attacks in datasets.items():
         for atk_name in ordered_attacks:
