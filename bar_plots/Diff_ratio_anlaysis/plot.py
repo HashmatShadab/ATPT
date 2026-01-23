@@ -219,29 +219,31 @@ def generate_plots(aggregated: Dict[str, Any], root: str):
     os.makedirs(plots_dir, exist_ok=True)
     print(f"Saving plots to: {plots_dir}")
 
+    CLEAN_ATTACK = "eps_0.0_steps_0"
+
     # results structure: model -> dataset -> attack -> noise_type -> noise_param -> tau_type
     for model_name, datasets in results.items():
-        # We want to group by (attack, noise_type)
-        # and then by dataset
-        
         # First, find all unique attacks and noise_types
-        attacks_noise = set()
+        all_attacks = set()
+        all_noise_types = set()
         all_datasets = sorted(datasets.keys())
         
         for dataset, attacks in datasets.items():
             for attack, noise_types in attacks.items():
+                if attack != CLEAN_ATTACK:
+                    all_attacks.add(attack)
                 for noise_type in noise_types.keys():
-                    attacks_noise.add((attack, noise_type))
+                    all_noise_types.add(noise_type)
         
-        for attack, noise_type in sorted(list(attacks_noise)):
-            print(f"Plotting for Attack: {attack}, Noise Type: {noise_type}")
-            
-            # For each dataset, gather noise_values and corresponding metrics
-            # metric_types: ('avg_diff_ratio_after_counter_attack', 'counter_attack_accuracy')
-            for metric_name in ["avg_diff_ratio_after_counter_attack", "counter_attack_accuracy"]:
-                plot_grid(datasets, model_name, attack, noise_type, metric_name, all_datasets, plots_dir)
+        for attack in sorted(list(all_attacks)):
+            for noise_type in sorted(list(all_noise_types)):
+                print(f"Plotting for Adversarial Attack: {attack}, vs Clean, Noise Type: {noise_type}")
+                
+                # For each dataset, gather noise_values and corresponding metrics
+                for metric_name in ["avg_diff_ratio_after_counter_attack", "counter_attack_accuracy"]:
+                    plot_grid(datasets, model_name, attack, CLEAN_ATTACK, noise_type, metric_name, all_datasets, plots_dir)
 
-def plot_grid(datasets: Dict[str, Any], model_name: str, attack: str, noise_type: str, metric_key: str, all_datasets: List[str], plots_dir: str):
+def plot_grid(datasets: Dict[str, Any], model_name: str, adv_attack: str, clean_attack: str, noise_type: str, metric_key: str, all_datasets: List[str], plots_dir: str):
     num_datasets = len(all_datasets)
     if num_datasets == 0:
         return
@@ -255,76 +257,81 @@ def plot_grid(datasets: Dict[str, Any], model_name: str, attack: str, noise_type
     
     # Clean up names for title
     clean_metric_name = metric_key.replace('_', ' ').title()
-    fig.suptitle(f"{model_name} evaluated on adversarial attack: {attack}\nNoise added: {noise_type} | Metric: {clean_metric_name}", fontsize=20)
+    fig.suptitle(f"{model_name} | Adv: {adv_attack} vs Clean\nNoise: {noise_type} | Metric: {clean_metric_name}", fontsize=20)
 
-    # Data structure to accumulate values for averaging: (noise_val, tau_type) -> [list of values]
+    # Data structure to accumulate values for averaging: 
+    # (noise_val, 'clean'|'adv') -> [list of values]
     overall_averages = {}
 
     for i in range(total_plots):
         ax = axes[i // cols, i % cols]
         
-        noise_data = [] # List of (noise_value, tau_type, metric_value)
+        # List of (noise_value, type('clean'|'adv'), metric_value)
+        plot_data = [] 
         
         if i < num_datasets:
             dataset = all_datasets[i]
             title = dataset
-            if dataset in datasets and attack in datasets[dataset] and noise_type in datasets[dataset][attack]:
-                noise_params = datasets[dataset][attack][noise_type]
-                for noise_param_str, tau_types in noise_params.items():
-                    # Extract numerical value from Sigma_0.03 or Eps_16.0
-                    try:
-                        noise_val = float(noise_param_str.split("_")[1])
-                    except (IndexError, ValueError):
-                        continue
-                    
-                    for tau_type, metrics in tau_types.items():
-                        val = metrics.get(metric_key)
-                        if val is not None:
-                            noise_data.append((noise_val, tau_type, val))
+            
+            # Helper to extract data for a given attack
+            def get_attack_data(atk_name, label):
+                if dataset in datasets and atk_name in datasets[dataset] and noise_type in datasets[dataset][atk_name]:
+                    noise_params = datasets[dataset][atk_name][noise_type]
+                    for noise_param_str, tau_types in noise_params.items():
+                        try:
+                            noise_val = float(noise_param_str.split("_")[1])
+                        except (IndexError, ValueError):
+                            continue
+                        
+                        # Average over tau_types since "tau type is not needed"
+                        vals = [m.get(metric_key) for m in tau_types.values() if m.get(metric_key) is not None]
+                        if vals:
+                            avg_val = np.mean(vals)
+                            plot_data.append((noise_val, label, avg_val))
+                            
                             # Accumulate for overall average
-                            key = (noise_val, tau_type)
+                            key = (noise_val, label)
                             if key not in overall_averages:
                                 overall_averages[key] = []
-                            overall_averages[key].append(val)
+                            overall_averages[key].append(avg_val)
+
+            get_attack_data(clean_attack, "Clean")
+            get_attack_data(adv_attack, "Adversarial")
         else:
             # This is the "Average" plot
             title = "AVERAGE ACROSS DATASETS"
-            for (noise_val, tau_type), vals in overall_averages.items():
+            for (noise_val, label), vals in overall_averages.items():
                 if vals:
-                    noise_data.append((noise_val, tau_type, np.mean(vals)))
+                    plot_data.append((noise_val, label, np.mean(vals)))
         
-        if not noise_data:
+        if not plot_data:
             ax.text(0.5, 0.5, "No Data", ha='center', va='center')
             ax.set_title(title)
             continue
             
-        # Group by noise_val and tau_type for bar plotting
-        unique_noise_vals = sorted(list(set(nv for nv, tt, m in noise_data)))
-        unique_tau_types = sorted(list(set(tt for nv, tt, m in noise_data)))
+        # Group by noise_val and type for bar plotting
+        unique_noise_vals = sorted(list(set(nv for nv, label, m in plot_data)))
+        labels = ["Clean", "Adversarial"]
         
         # Mapping noise_val to index
         noise_val_to_idx = {val: i for i, val in enumerate(unique_noise_vals)}
         
-        # Create a structure for bar positions
-        # x_positions: list of indices [0, 1, 2, ...]
         x_indices = np.arange(len(unique_noise_vals))
-        width = 0.8 / len(unique_tau_types) if unique_tau_types else 0.8
+        width = 0.35 # Fixed width for two bars
         
-        for j, tt in enumerate(unique_tau_types):
-            # Find values for this tau_type at each unique_noise_val
+        for j, label in enumerate(labels):
             y_vals = []
-            tt_noise_vals = []
+            idx_list = []
             for nv in unique_noise_vals:
-                # Find the metric for (nv, tt)
-                match = [m for nv_item, tt_item, m in noise_data if nv_item == nv and tt_item == tt]
+                match = [m for nv_item, lbl_item, m in plot_data if nv_item == nv and lbl_item == label]
                 if match:
                     y_vals.append(match[0])
-                    tt_noise_vals.append(noise_val_to_idx[nv])
+                    idx_list.append(noise_val_to_idx[nv])
             
             if y_vals:
-                # Offset for each tau_type
-                offset = (j - (len(unique_tau_types) - 1) / 2) * width
-                rects = ax.bar(np.array(tt_noise_vals) + offset, y_vals, width, label=tt)
+                offset = (j - 0.5) * width # -0.5*width for Clean, +0.5*width for Adversarial
+                rects = ax.bar(np.array(idx_list) + offset, y_vals, width, label=label, 
+                               color='skyblue' if label == "Clean" else 'salmon')
                 ax.bar_label(rects, padding=3, fmt='%.3f', fontsize=8)
             
         ax.set_title(title, fontweight='bold' if i == num_datasets else 'normal')
@@ -337,7 +344,7 @@ def plot_grid(datasets: Dict[str, Any], model_name: str, attack: str, noise_type
 
         # Increase y-limit to avoid labels hitting the top border
         current_ylim = ax.get_ylim()
-        ax.set_ylim(current_ylim[0], current_ylim[1] * 1.15)
+        ax.set_ylim(current_ylim[0], max(current_ylim[1] * 1.15, 0.1))
 
     # Hide unused subplots
     for i in range(total_plots, rows * cols):
@@ -345,7 +352,7 @@ def plot_grid(datasets: Dict[str, Any], model_name: str, attack: str, noise_type
 
     plt.tight_layout(rect=[0, 0.03, 1, 0.92])
     
-    filename = f"{model_name}_{attack}_{noise_type}_{metric_key}.png"
+    filename = f"{model_name}_{adv_attack}_{noise_type}_{metric_key}_vs_clean.png"
     save_path = os.path.join(plots_dir, filename)
     plt.savefig(save_path)
     plt.close(fig)
