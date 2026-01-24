@@ -237,6 +237,15 @@ class PGDCounter(Attack):
         if self.steps == 0:
             return adv_images, diff_ratio.item()
 
+        # ---- Algorithm 1 early exit (only when batch size == 1) ----
+        if (
+                self.tau_thres is not None
+                and images.size(0) == 1
+                and diff_ratio.item() >= self.tau_thres
+        ):
+            # Return delta^0 only (random start), no counterattack
+            return adv_images, diff_ratio.item()
+
         for _ in range(self.steps):
             # Create a fresh copy for gradient computation
             adv_images_for_grad = adv_images.clone().detach().requires_grad_(True)
