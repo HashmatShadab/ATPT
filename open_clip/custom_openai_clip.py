@@ -443,8 +443,20 @@ class ClipTestTimeTuning(nn.Module):
         batch_size = image.size(0)
         # Create a batch of noisy images [n_anchors*batch_size, C, H, W]
         # number of noisy augmentations for each sample in the batch is equal to n_anchors
-        noise_batch = sigma * torch.randn(n_anchors, batch_size, *image.shape[1:], device=image.device)
+        if noise_type.lower() == "gaussian":
+            noise_batch = sigma * torch.randn(n_anchors, batch_size, *image.shape[1:], device=image.device)
+        elif noise_type.lower() == "uniform":
+            # noise_batch = uniform_noise_eps * torch.rand(n_anchors, batch_size, *image.shape[1:], device=image.device) - uniform_noise_eps / 2
+            eps = float(uniform_noise_eps/255.0)
+            noise_batch = torch.empty(
+                n_anchors, batch_size, *image.shape[1:], device=image.device
+            ).uniform_(-eps, eps)
+        else:
+            raise ValueError("Noise type not supported: {}".format(noise_type))
+
         noisy_images = image.unsqueeze(0) + noise_batch  # [n_anchors, batch_size, C, H, W]
+        # (Optional but often helpful) keep valid pixel range
+        noisy_images = noisy_images.clamp(0.0, 1.0)
 
         # Reshape to [n_anchors*batch_size, C, H, W] in order to pass through the network in a single batch
         noisy_images = noisy_images.view(n_anchors * batch_size, *image.shape[1:])  # [n_anchors*batch_size, C, H, W]
@@ -471,7 +483,11 @@ class ClipTestTimeTuning(nn.Module):
         f_anchor_normalized = f_anchor / f_anchor_norm
 
         # Step 3: One-step linear interpolation
-        f_moved = (1 - alpha_vector.unsqueeze(1)) * f_source_normalized + alpha_vector.unsqueeze(1) * f_anchor_normalized
+        if normalize_embeddings:
+            f_moved = (1 - alpha_vector.unsqueeze(1)) * f_source_normalized + alpha_vector.unsqueeze(1) * f_anchor_normalized
+        else:
+            f_moved = (1 - alpha_vector.unsqueeze(1)) * f_source + alpha_vector.unsqueeze(1) * f_anchor
+
         f_moved_norm = f_moved.norm(dim=-1, keepdim=True)
         f_moved = f_moved / f_moved_norm  # Final normalization
 
