@@ -189,7 +189,11 @@ def create_log_dir(args):
     if args.image_feature_purify:
         if args.image_feature_purify_type == "noisy_anchor":
             image_feature_purify_part = [f"Image_Feature_Purify",
-                                        f"Type_{args.image_feature_purify_type}_Anchors_{args.image_feature_purify_noisy_anchors}_Alpha_{args.image_feature_purify_anchors_alpha}_Sigma_{args.image_feature_purify_noisy_sigma}_threshold_{args.image_feature_purify_diff_threshold}"]
+                                        f"Type_{args.image_feature_purify_type}_Anchors_{args.image_feature_purify_noisy_anchors}_Alpha_{args.image_feature_purify_anchors_alpha}_Sigma_{args.image_feature_purify_noisy_sigma}_threshold_{args.image_feature_purify_diff_threshold}_normalize_embeddings_{args.image_feature_purify_normalize_embeddings}"]
+        elif args.image_feature_purify_type == "uniform_anchor":
+            image_feature_purify_part = [f"Image_Feature_Purify",
+                                         f"Type_{args.image_feature_purify_type}_Anchors_{args.image_feature_purify_noisy_anchors}_Alpha_{args.image_feature_purify_anchors_alpha}_Eps_{args.image_feature_purify_uniform_noise_eps}_threshold_{args.image_feature_purify_diff_threshold}_normalize_embeddings_{args.image_feature_purify_normalize_embeddings}"]
+
         elif args.image_feature_purify_type == 'clip_pure':
             image_feature_purify_part = [f"Image_Feature_Purify",
                                          f"Type_{args.image_feature_purify_type}_steps_{args.image_feature_clipure_steps}_step_size_{args.image_feature_clipure_step_size}"]
@@ -1190,10 +1194,33 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                     # Create a dictionary of image feature purification parameters
                     if args.image_feature_purify_type == "noisy_anchor":
                         purify_params = {
+                            'noise_type': "gaussian",
                             'sigma': args.image_feature_purify_noisy_sigma,
                             'n_anchors': args.image_feature_purify_noisy_anchors,
                             'alpha': args.image_feature_purify_anchors_alpha,
                             'diff_threshold': args.image_feature_purify_diff_threshold,
+                            "normalize_embeddings": args.image_feature_purify_normalize_embeddings,
+                            "uniform_noise_eps": args.image_feature_purify_uniform_noise_eps,
+                        }
+                        # Compute adversarial accuracy with purification
+                        tuned_outputs_first, diff_ratio = model(images[0].unsqueeze(0), move_image_features_noisy_anchor=True,
+                                                              purify_params=purify_params)
+                        tuned_outputs_remaining = model(images[1:])
+                        #tuned_outputs is tuned_outputs_first + tuned_outputs_remaining
+                        tuned_outputs = torch.cat([tuned_outputs_first, tuned_outputs_remaining], dim=0)
+
+                        avg_diff_ratio += diff_ratio.cpu()
+                        diff_ratio_list.append(diff_ratio.cpu())
+                        del tuned_outputs_first, tuned_outputs_remaining
+                    elif args.image_feature_purify_type == "uniform_anchor":
+                        purify_params = {
+                            'noise_type': "uniform",
+                            'sigma': args.image_feature_purify_noisy_sigma,
+                            'n_anchors': args.image_feature_purify_noisy_anchors,
+                            'alpha': args.image_feature_purify_anchors_alpha,
+                            'diff_threshold': args.image_feature_purify_diff_threshold,
+                            "normalize_embeddings": args.image_feature_purify_normalize_embeddings,
+                            "uniform_noise_eps": args.image_feature_purify_uniform_noise_eps,
                         }
                         # Compute adversarial accuracy with purification
                         tuned_outputs_first, diff_ratio = model(images[0].unsqueeze(0), move_image_features_noisy_anchor=True,
@@ -2058,11 +2085,14 @@ if __name__ == '__main__':
 
     # Image feature Purification
     parser.add_argument('--image_feature_purify', default=False, type=lambda x: (str(x).lower() == 'true'))
-    parser.add_argument('--image_feature_purify_type', default='noisy_anchor', choices=["noisy_anchor", "clip_pure"], type=str)
+    parser.add_argument('--image_feature_purify_type', default='noisy_anchor', choices=["noisy_anchor", "clip_pure", "uniform_anchor"], type=str)
     parser.add_argument('--image_feature_purify_noisy_anchors', default=10, type=int)
     parser.add_argument('--image_feature_purify_anchors_alpha', default=1.2, type=float)
     parser.add_argument('--image_feature_purify_noisy_sigma', default=0.18, type=float)
     parser.add_argument('--image_feature_purify_diff_threshold', default=0.0, type=float)
+    parser.add_argument('--image_feature_purify_normalize_embeddings', default=True, type=lambda x: (str(x).lower() == 'true'))
+    parser.add_argument('--image_feature_purify_uniform_noise_eps', default=4.0, type=float)
+
 
     parser.add_argument('--image_feature_clipure_steps', default=10, type=int)
     parser.add_argument('--image_feature_clipure_step_size', default=10.0, type=float)

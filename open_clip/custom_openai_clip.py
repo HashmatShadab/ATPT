@@ -424,7 +424,8 @@ class ClipTestTimeTuning(nn.Module):
 
         return logits
 
-    def inference_move_image_features_noisy_anchor(self, image, sigma=0.18, n_anchors=10, alpha=1.0, diff_threshold=0.85):
+    def inference_move_image_features_noisy_anchor(self, image, sigma=0.18, n_anchors=10, alpha=1.0, diff_threshold=0.85,
+                                                   noise_type='gaussian', normalize_embeddings=True, uniform_noise_eps=4.0):
         """
         image: Tensor of shape [B, C, H, W]
         sigma: standard deviation for Gaussian noise
@@ -567,8 +568,13 @@ class ClipTestTimeTuning(nn.Module):
                 n_anchors = purify_params.get('n_anchors', 10)
                 alpha = purify_params.get('alpha', 1.2)
                 diff_threshold = purify_params.get('diff_threshold', 0.85)
+                noise_type = purify_params.get('noise_type', 'gaussian')
+                normalize_embeddings = purify_params.get('normalize_embeddings', False)
+                uniform_noise_eps = purify_params.get('uniform_noise_eps', 4.0)
 
-                logits, diff_ratio = self.inference_move_image_features_noisy_anchor(input, sigma=sigma, n_anchors=n_anchors, alpha=alpha, diff_threshold=diff_threshold)
+                logits, diff_ratio = self.inference_move_image_features_noisy_anchor(input, sigma=sigma, n_anchors=n_anchors,
+                                                                                     alpha=alpha, diff_threshold=diff_threshold,
+                                                                                     noise_type=noise_type, normalize_embeddings=normalize_embeddings, uniform_noise_eps=uniform_noise_eps)
                 return logits, diff_ratio
             elif move_image_features_text_anchor:
                 # Set default values if purify_params is not provided
