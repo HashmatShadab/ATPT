@@ -1053,15 +1053,22 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     result_dict_original_clean = {'max_confidence': [], 'prediction': [], 'label': []}
     if len(args.image_feature_purify_anchors_alpha) == 1:
         result_dict_single = {'max_confidence': [], 'prediction': [], 'label': []}
+        result_dict_vanilla = {'max_confidence': [], 'prediction': [], 'label': []}
+        result_dict_vanilla_topk = {'max_confidence': [], 'prediction': [], 'label': []}
+        result_dict_weighted = {'max_confidence': [], 'prediction': [], 'label': []}
     else:
         result_dict_single = {}
+        result_dict_vanilla = {}
+        result_dict_vanilla_topk = {}
+        result_dict_weighted = {}
         for value in args.image_feature_purify_anchors_alpha:
             result_dict_single[value] = {'max_confidence': [], 'prediction': [], 'label': []}
+            result_dict_vanilla[value] = {'max_confidence': [], 'prediction': [], 'label': []}
+            result_dict_vanilla_topk[value] = {'max_confidence': [], 'prediction': [], 'label': []}
+            result_dict_weighted[value] = {'max_confidence': [], 'prediction': [], 'label': []}
 
 
-    result_dict_vanilla = {'max_confidence': [], 'prediction': [], 'label': []}
-    result_dict_vanilla_topk = {'max_confidence': [], 'prediction': [], 'label': []}
-    result_dict_weighted = {'max_confidence': [], 'prediction': [], 'label': []}
+
 
     # define a softmax layer
     softmax_ece = torch.nn.Softmax(dim=1)
@@ -1282,18 +1289,29 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
             # 2. 'vanilla' - Use the average of all outputs
             if isinstance(tuned_outputs, dict):
-                for k,v in tuned_outputs.items():
-                    key  = k
-                tuned_outputs = tuned_outputs[key]
-
-            tta_output_vanilla = torch.mean(tuned_outputs, dim=0).unsqueeze(0)
+                # for k,v in tuned_outputs.items():
+                #     key  = k
+                # tuned_outputs = tuned_outputs[key]
+                tta_output_vanilla = {
+                    k: torch.mean(v, dim=0).unsqueeze(0)
+                    for k, v in tuned_outputs.items()
+                }
+            else:
+                tta_output_vanilla = torch.mean(tuned_outputs, dim=0).unsqueeze(0)
 
             # 3. 'vanilla_topk' - Use the average of top-k outputs
             if args.tta_steps > 0:
-                tta_output_topk = tuned_outputs[[selected_ids[-1]]]
+                topk_ids = selected_ids[-1]  # this is a list of view indices (e.g., [0, 3, 7, ...])
+                if isinstance(tuned_outputs, dict):
+                    tta_output_topk = {k: v[[topk_ids]] for k, v in tuned_outputs.items()}
+                else:
+                    tta_output_topk = tuned_outputs[[selected_ids[-1]]]
             else:
                 tta_output_topk = tuned_outputs
-            tta_output_vanilla_topk = torch.mean(tta_output_topk, dim=0).unsqueeze(0)
+            if isinstance(tta_output_topk, dict):
+                tta_output_vanilla_topk = {k: torch.mean(v, dim=0).unsqueeze(0) for k, v in tta_output_topk.items()}
+            else:
+                tta_output_vanilla_topk = torch.mean(tta_output_topk, dim=0).unsqueeze(0)
 
             # 4. 'weighted_rtpt' - Use weighted average based on similarity scores
             # Calculate similarity matrix between features
@@ -1305,7 +1323,10 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             # Store weights in the weighted_scores dictionary as a list for each sample
             weighted_scores[i] = weight.detach().cpu().tolist()
             # Weighted average of tuned outputs
-            tta_output_weighted = torch.bmm(weight.unsqueeze(-1).transpose(1, 2), tuned_outputs.unsqueeze(0)).squeeze(1)
+            if isinstance(tuned_outputs, dict):
+                tta_output_weighted = {k: torch.bmm(weight.unsqueeze(-1).transpose(1, 2), v.unsqueeze(0)).squeeze(1) for k, v in tuned_outputs.items()}
+            else:
+                tta_output_weighted = torch.bmm(weight.unsqueeze(-1).transpose(1, 2), tuned_outputs.unsqueeze(0)).squeeze(1)
 
         else:
             raise ValueError(f"Unknown ensemble type: {args.ensemble_type}")
@@ -1391,37 +1412,77 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             tpt5_single.update(tpt_acc5_single[0], images.size(0))
 
             # 2. 'vanilla' ensemble type
-            tpt_acc1_vanilla, tpt_acc5_vanilla = accuracy(tta_output_vanilla, target, topk=(1, 5))
-            # Calculate the ECE for the vanilla ensemble type
-            softmax_tta_output_vanilla = softmax_ece(tta_output_vanilla)
-            max_conf_tta_output_vanilla, max_index_tta_output_vanilla = torch.max(softmax_tta_output_vanilla, dim=1)
-            result_dict_vanilla['max_confidence'].append(max_conf_tta_output_vanilla.item())
-            result_dict_vanilla['prediction'].append(max_index_tta_output_vanilla.item())
-            result_dict_vanilla['label'].append(target.item())
+            if isinstance(tta_output_vanilla, dict):
+                for k, v in tta_output_vanilla.items():
+                    tpt_acc1_vanilla, tpt_acc5_vanilla = accuracy(v, target, topk=(1, 5))
+                    # Calculate the ECE for the single ensemble type
+                    softmax_tta_output_vanilla = softmax_ece(v)
+                    max_conf_tta_output_vanilla, max_index_tta_output_vanilla = torch.max(softmax_tta_output_vanilla, dim=1)
+
+                    result_dict_vanilla[k]['max_confidence'].append(max_conf_tta_output_vanilla.item())
+                    result_dict_vanilla[k]['prediction'].append(max_index_tta_output_vanilla.item())
+                    result_dict_vanilla[k]['label'].append(target.item())
+
+            else:
+                tpt_acc1_vanilla, tpt_acc5_vanilla = accuracy(tta_output_vanilla, target, topk=(1, 5))
+                # Calculate the ECE for the vanilla ensemble type
+                softmax_tta_output_vanilla = softmax_ece(tta_output_vanilla)
+                max_conf_tta_output_vanilla, max_index_tta_output_vanilla = torch.max(softmax_tta_output_vanilla, dim=1)
+                result_dict_vanilla['max_confidence'].append(max_conf_tta_output_vanilla.item())
+                result_dict_vanilla['prediction'].append(max_index_tta_output_vanilla.item())
+                result_dict_vanilla['label'].append(target.item())
 
             tpt1_vanilla.update(tpt_acc1_vanilla[0], images.size(0))
             tpt5_vanilla.update(tpt_acc5_vanilla[0], images.size(0))
 
             # 3. 'vanilla_topk' ensemble type
-            tpt_acc1_vanilla_topk, tpt_acc5_vanilla_topk = accuracy(tta_output_vanilla_topk, target, topk=(1, 5))
-            # Calculate the ECE for the vanilla topk ensemble type
-            softmax_tta_output_vanilla_topk = softmax_ece(tta_output_vanilla_topk)
-            max_conf_tta_output_vanilla_topk, max_index_tta_output_vanilla_topk = torch.max(softmax_tta_output_vanilla_topk, dim=1)
-            result_dict_vanilla_topk['max_confidence'].append(max_conf_tta_output_vanilla_topk.item())
-            result_dict_vanilla_topk['prediction'].append(max_index_tta_output_vanilla_topk.item())
-            result_dict_vanilla_topk['label'].append(target.item())
+            if isinstance(tta_output_vanilla_topk, dict):
+                for k, v in tta_output_vanilla_topk.items():
+                    tpt_acc1_vanilla_topk, tpt_acc5_vanilla_topk = accuracy(v, target, topk=(1, 5))
+                    # Calculate the ECE for the vanilla_topk ensemble type
+                    softmax_tta_output_vanilla_topk = softmax_ece(v)
+                    max_conf_tta_output_vanilla_topk, max_index_tta_output_vanilla_topk = torch.max(softmax_tta_output_vanilla_topk, dim=1)
+
+                    result_dict_vanilla_topk[k]['max_confidence'].append(max_conf_tta_output_vanilla_topk.item())
+                    result_dict_vanilla_topk[k]['prediction'].append(max_index_tta_output_vanilla_topk.item())
+                    result_dict_vanilla_topk[k]['label'].append(target.item())
+
+            else:
+                tpt_acc1_vanilla_topk, tpt_acc5_vanilla_topk = accuracy(tta_output_vanilla_topk, target, topk=(1, 5))
+                # Calculate the ECE for the vanilla topk ensemble type
+                softmax_tta_output_vanilla_topk = softmax_ece(tta_output_vanilla_topk)
+                max_conf_tta_output_vanilla_topk, max_index_tta_output_vanilla_topk = torch.max(softmax_tta_output_vanilla_topk, dim=1)
+
+                result_dict_vanilla_topk['max_confidence'].append(max_conf_tta_output_vanilla_topk.item())
+                result_dict_vanilla_topk['prediction'].append(max_index_tta_output_vanilla_topk.item())
+                result_dict_vanilla_topk['label'].append(target.item())
+
+
             tpt1_vanilla_topk.update(tpt_acc1_vanilla_topk[0], images.size(0))
             tpt5_vanilla_topk.update(tpt_acc5_vanilla_topk[0], images.size(0))
 
 
             # 4. 'weighted_rtpt' ensemble type
-            tpt_acc1_weighted, tpt_acc5_weighted = accuracy(tta_output_weighted, target, topk=(1, 5))
-            # Calculate the ECE for the weighted ensemble type
-            softmax_tta_output_weighted = softmax_ece(tta_output_weighted)
-            max_conf_tta_output_weighted, max_index_tta_output_weighted = torch.max(softmax_tta_output_weighted, dim=1)
-            result_dict_weighted['max_confidence'].append(max_conf_tta_output_weighted.item())
-            result_dict_weighted['prediction'].append(max_index_tta_output_weighted.item())
-            result_dict_weighted['label'].append(target.item())
+            if isinstance(tta_output_weighted, dict):
+                for k, v in tta_output_weighted.items():
+                    tpt_acc1_weighted, tpt_acc5_weighted = accuracy(v, target, topk=(1, 5))
+                    # Calculate the ECE for the weighted_rtpt ensemble type
+                    softmax_tta_output_weighted = softmax_ece(v)
+                    max_conf_tta_output_weighted, max_index_tta_output_weighted = torch.max(softmax_tta_output_weighted, dim=1)
+
+                    result_dict_weighted[k]['max_confidence'].append(max_conf_tta_output_weighted.item())
+                    result_dict_weighted[k]['prediction'].append(max_index_tta_output_weighted.item())
+                    result_dict_weighted[k]['label'].append(target.item())
+
+            else:
+                tpt_acc1_weighted, tpt_acc5_weighted = accuracy(tta_output_weighted, target, topk=(1, 5))
+                # Calculate the ECE for the weighted ensemble type
+                softmax_tta_output_weighted = softmax_ece(tta_output_weighted)
+                max_conf_tta_output_weighted, max_index_tta_output_weighted = torch.max(softmax_tta_output_weighted, dim=1)
+
+                result_dict_weighted['max_confidence'].append(max_conf_tta_output_weighted.item())
+                result_dict_weighted['prediction'].append(max_index_tta_output_weighted.item())
+                result_dict_weighted['label'].append(target.item())
 
             tpt1_weighted.update(tpt_acc1_weighted[0], images.size(0))
             tpt5_weighted.update(tpt_acc5_weighted[0], images.size(0))
@@ -1731,35 +1792,94 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             json.dump(result_dict_single, f, indent=4)
 
 
-    if result_dict_vanilla  and len(result_dict_vanilla['max_confidence']) > 0:
+    if (
+            result_dict_vanilla
+            and (
+            len(args.image_feature_purify_anchors_alpha) > 1
+            or (
+                    len(args.image_feature_purify_anchors_alpha) == 1
+                    and 'max_confidence' in result_dict_vanilla
+                    and len(result_dict_vanilla['max_confidence']) > 0
+            )
+    )
+    ):
         results_path = os.path.join(args.log_dir, f"results_vanilla.json")
 
         logger.info(f"Results saved to {results_path}")
-        acc, ece, bin_acc, bin_confidences = Calculator(result_dict_vanilla, logger)
-        logger.info(f"ECE results - Vanilla Acc: {acc:.2f},  ECE: {ece:.2f}")
 
-        predictions_vanilla = result_dict_vanilla['prediction']
-        number_of_correct_predictions_from_correct_clean_indices_vanilla = [predictions_vanilla[i] == labels_clean[i] for
-                                                                           i in correct_clean_indices]
-        number_of_incorrect_predictions_from_correct_clean_indices_vanilla = [predictions_vanilla[i] == labels_clean[i]
-                                                                             for i in incorrect_clean_indices]
-        correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla = [
-            idx for idx, ok in
-            zip(incorrect_clean_indices,number_of_incorrect_predictions_from_correct_clean_indices_vanilla) if ok
-        ]
+        if len(args.image_feature_purify_anchors_alpha) > 1:
+            for alpha_key, value in result_dict_vanilla.items():
+                acc, ece, bin_acc, incorrect_confidences = Calculator(value, logger)
+                logger.info(f"ECE results Alpha {alpha_key} - Vanilla Acc: {acc:.2f},  ECE: {ece:.2f}")
+                predictions_vanilla = value['prediction']
 
-        logger.info(
-            f"Number of correct predictions from correct clean indices: {sum(number_of_correct_predictions_from_correct_clean_indices_vanilla)} out of {len(correct_clean_indices)}")
-        logger.info(
-            f"Number of correct predictions from incorrect clean indices: {sum(number_of_incorrect_predictions_from_correct_clean_indices_vanilla)} out of {len(incorrect_clean_indices)}")
-        logger.info(f"The sample indices which are correctly classified from incorrect clean predictions are: {correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla}")
+                # For samples that were correctly classified on CLEAN images,
+                # check whether they are STILL correctly classified under the current setting
+                number_of_correct_predictions_from_correct_clean_indices_vanilla = [
+                    predictions_vanilla[i] == labels_clean[i] for i in correct_clean_indices]
 
-        result_dict_vanilla[
-            "number_of_correct_predictions_from_correct_clean_indices"] = f"{sum(number_of_correct_predictions_from_correct_clean_indices_vanilla)} out of {len(correct_clean_indices)}"
-        result_dict_vanilla[
-            "number_of_incorrect_predictions_from_correct_clean_indices"] = f" {sum(number_of_incorrect_predictions_from_correct_clean_indices_vanilla)} out of {len(incorrect_clean_indices)}"
-        result_dict_vanilla[
-            "sample_indices_correct_classified_from_incorrect_clean_predictions"] = correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla
+                # For samples that were INCORRECTLY classified on CLEAN images,
+                # check whether they are NOW correctly classified under the current setting
+                number_of_incorrect_predictions_from_correct_clean_indices_vanilla = [
+                    predictions_vanilla[i] == labels_clean[i] for i in incorrect_clean_indices]
+
+                # Collect the ACTUAL DATASET INDICES of samples that were
+                # incorrect on clean images but are now correctly classified
+                correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla =  [
+                idx for idx, ok in
+                zip(incorrect_clean_indices,number_of_incorrect_predictions_from_correct_clean_indices_vanilla) if ok
+            ]
+                conservative_accuracy_vanilla = (sum(number_of_correct_predictions_from_correct_clean_indices_vanilla)/len(labels_clean))
+
+                logger.info(f"Alpha {alpha_key} Number of correct predictions from correct clean indices: {sum(number_of_correct_predictions_from_correct_clean_indices_vanilla)} out of {len(correct_clean_indices)}")
+                logger.info(f"Alpha {alpha_key} Number of correct predictions from incorrect clean indices: {sum(number_of_incorrect_predictions_from_correct_clean_indices_vanilla)} out of {len(incorrect_clean_indices)}")
+                logger.info(f"Alpha {alpha_key} The sample indices which are correctly classified from incorrect clean predictions are: {correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla}")
+                logger.info(f"Alpha {alpha_key} Conservative accuracy (assuming clean-incorrect remain incorrect): {conservative_accuracy_vanilla:.4f} ({sum(number_of_correct_predictions_from_correct_clean_indices_vanilla)}/{len(labels_clean)})")
+
+                result_dict_vanilla[alpha_key][
+                    "number_of_correct_predictions_from_correct_clean_indices"] = f"{sum(number_of_correct_predictions_from_correct_clean_indices_vanilla)} out of {len(correct_clean_indices)}"
+                result_dict_vanilla[alpha_key][
+                    "number_of_incorrect_predictions_from_correct_clean_indices"] = f" {sum(number_of_incorrect_predictions_from_correct_clean_indices_vanilla)} out of {len(incorrect_clean_indices)}"
+                result_dict_vanilla[alpha_key][
+                    "sample_indices_correct_classified_from_incorrect_clean_predictions"] = correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla
+                result_dict_vanilla[alpha_key][
+                    "conservative_accuracy_assuming_clean_incorrect_remain_incorrect"
+                ] = conservative_accuracy_vanilla
+
+
+        else:
+
+            acc, ece, bin_acc, bin_confidences = Calculator(result_dict_vanilla, logger)
+            logger.info(f"ECE results - Vanilla Acc: {acc:.2f},  ECE: {ece:.2f}")
+
+            predictions_vanilla = result_dict_vanilla['prediction']
+            number_of_correct_predictions_from_correct_clean_indices_vanilla = [predictions_vanilla[i] == labels_clean[i] for
+                                                                               i in correct_clean_indices]
+            number_of_incorrect_predictions_from_correct_clean_indices_vanilla = [predictions_vanilla[i] == labels_clean[i]
+                                                                                 for i in incorrect_clean_indices]
+            correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla = [
+                idx for idx, ok in
+                zip(incorrect_clean_indices,number_of_incorrect_predictions_from_correct_clean_indices_vanilla) if ok
+            ]
+            conservative_accuracy_vanilla = (sum(number_of_correct_predictions_from_correct_clean_indices_vanilla)/len(labels_clean))
+
+            logger.info(
+                f"Number of correct predictions from correct clean indices: {sum(number_of_correct_predictions_from_correct_clean_indices_vanilla)} out of {len(correct_clean_indices)}")
+            logger.info(
+                f"Number of correct predictions from incorrect clean indices: {sum(number_of_incorrect_predictions_from_correct_clean_indices_vanilla)} out of {len(incorrect_clean_indices)}")
+            logger.info(f"The sample indices which are correctly classified from incorrect clean predictions are: {correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla}")
+            logger.info(
+                f"Conservative accuracy (assuming clean-incorrect remain incorrect): {conservative_accuracy_vanilla:.4f} ({sum(number_of_correct_predictions_from_correct_clean_indices_vanilla)}/{len(labels_clean)})")
+
+            result_dict_vanilla[
+                "number_of_correct_predictions_from_correct_clean_indices"] = f"{sum(number_of_correct_predictions_from_correct_clean_indices_vanilla)} out of {len(correct_clean_indices)}"
+            result_dict_vanilla[
+                "number_of_incorrect_predictions_from_correct_clean_indices"] = f" {sum(number_of_incorrect_predictions_from_correct_clean_indices_vanilla)} out of {len(incorrect_clean_indices)}"
+            result_dict_vanilla[
+                "sample_indices_correct_classified_from_incorrect_clean_predictions"] = correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla
+            result_dict_vanilla[
+                "conservative_accuracy_assuming_clean_incorrect_remain_incorrect"
+            ] = conservative_accuracy_vanilla
 
         # Handle long paths on Windows
         results_path = handle_long_windows_path(results_path)
@@ -1767,29 +1887,85 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             json.dump(result_dict_vanilla, f, indent=4)
 
 
-    if result_dict_vanilla_topk  and len(result_dict_vanilla_topk['max_confidence']) > 0:
+    if (
+            result_dict_vanilla_topk
+            and (
+            len(args.image_feature_purify_anchors_alpha) > 1
+            or (
+                    len(args.image_feature_purify_anchors_alpha) == 1
+                    and 'max_confidence' in result_dict_vanilla_topk
+                    and len(result_dict_vanilla_topk['max_confidence']) > 0
+            )
+    )
+    ):
         results_path = os.path.join(args.log_dir, f"results_vanilla_topk.json")
 
         logger.info(f"Results saved to {results_path}")
-        acc, ece, bin_acc, bin_confidences = Calculator(result_dict_vanilla_topk, logger)
-        logger.info(f"ECE results - Vanilla Topk Acc: {acc:.2f},  ECE: {ece:.2f}")
+        if len(args.image_feature_purify_anchors_alpha) > 1:
+            for alpha_key, value in result_dict_vanilla_topk.items():
+                acc, ece, bin_acc, bin_confidences = Calculator(value, logger)
+                logger.info(f"ECE results Alpha {alpha_key} - Vanilla Topk Acc: {acc:.2f},  ECE: {ece:.2f}")
+                predictions_vanilla_topk = value['prediction']
 
-        predictions_vanilla_topk = result_dict_vanilla_topk['prediction']
-        number_of_correct_predictions_from_correct_clean_indices_vanilla_topk = [predictions_vanilla_topk[i] == labels_clean[i]
-                                                                            for
-                                                                            i in correct_clean_indices]
-        number_of_incorrect_predictions_from_correct_clean_indices_vanilla_topk = [predictions_vanilla_topk[i] == labels_clean[i]
-                                                                              for i in incorrect_clean_indices]
-        correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla_topk = [
-            idx for idx, ok in
-            zip(incorrect_clean_indices, number_of_incorrect_predictions_from_correct_clean_indices_vanilla_topk) if ok
-        ]
+                number_of_correct_predictions_from_correct_clean_indices_vanilla_topk = [
+                    predictions_vanilla_topk[i] == labels_clean[i] for i in correct_clean_indices]
+                number_of_incorrect_predictions_from_correct_clean_indices_vanilla_topk = [
+                    predictions_vanilla_topk[i] == labels_clean[i] for i in incorrect_clean_indices]
+                correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla_topk = [
+                    idx for idx, ok in
+                    zip(incorrect_clean_indices,
+                        number_of_incorrect_predictions_from_correct_clean_indices_vanilla_topk) if ok
+                ]
 
-        logger.info(
-            f"Number of correct predictions from correct clean indices: {sum(number_of_correct_predictions_from_correct_clean_indices_vanilla_topk)} out of {len(correct_clean_indices)}")
-        logger.info(
-            f"Number of correct predictions from incorrect clean indices: {sum(number_of_incorrect_predictions_from_correct_clean_indices_vanilla_topk)} out of {len(incorrect_clean_indices)}")
-        logger.info(f"The sample indices which are correctly classified from incorrect clean predictions are: {correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla_topk}")
+                conservative_accuracy_vanilla_topk = (sum(number_of_correct_predictions_from_correct_clean_indices_vanilla_topk)/len(labels_clean))
+
+                logger.info(f"Alpha {alpha_key} Number of correct predictions from correct clean indices: {sum(number_of_correct_predictions_from_correct_clean_indices_vanilla_topk)} out of {len(correct_clean_indices)}")
+                logger.info(f"Alpha {alpha_key} Number of correct predictions from incorrect clean indices: {sum(number_of_incorrect_predictions_from_correct_clean_indices_vanilla_topk)} out of {len(incorrect_clean_indices)}")
+                logger.info(f"Alpha {alpha_key} The sample indices which are correctly classified from incorrect clean predictions are: {correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla_topk}")
+                logger.info(f"Alpha {alpha_key} Conservative accuracy (assuming clean-incorrect remain incorrect): {conservative_accuracy_vanilla_topk:.4f} ({sum(number_of_correct_predictions_from_correct_clean_indices_vanilla_topk)}/{len(labels_clean)})")
+
+                result_dict_vanilla_topk[alpha_key][
+                    "number_of_correct_predictions_from_correct_clean_indices"] = f"{sum(number_of_correct_predictions_from_correct_clean_indices_vanilla_topk)} out of {len(correct_clean_indices)}"
+                result_dict_vanilla_topk[alpha_key][
+                    "number_of_incorrect_predictions_from_correct_clean_indices"] = f" {sum(number_of_incorrect_predictions_from_correct_clean_indices_vanilla_topk)} out of {len(incorrect_clean_indices)}"
+                result_dict_vanilla_topk[alpha_key][
+                    "sample_indices_correct_classified_from_incorrect_clean_predictions"] = correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla_topk
+                result_dict_vanilla_topk[alpha_key][
+                    "conservative_accuracy_assuming_clean_incorrect_remain_incorrect"
+                ] = conservative_accuracy_vanilla_topk
+        else:
+            acc, ece, bin_acc, bin_confidences = Calculator(result_dict_vanilla_topk, logger)
+            logger.info(f"ECE results - Vanilla Topk Acc: {acc:.2f},  ECE: {ece:.2f}")
+
+            predictions_vanilla_topk = result_dict_vanilla_topk['prediction']
+            number_of_correct_predictions_from_correct_clean_indices_vanilla_topk = [predictions_vanilla_topk[i] == labels_clean[i]
+                                                                                for
+                                                                                i in correct_clean_indices]
+            number_of_incorrect_predictions_from_correct_clean_indices_vanilla_topk = [predictions_vanilla_topk[i] == labels_clean[i]
+                                                                                  for i in incorrect_clean_indices]
+            correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla_topk = [
+                idx for idx, ok in
+                zip(incorrect_clean_indices, number_of_incorrect_predictions_from_correct_clean_indices_vanilla_topk) if ok
+            ]
+
+            conservative_accuracy_vanilla_topk = (sum(number_of_correct_predictions_from_correct_clean_indices_vanilla_topk)/len(labels_clean))
+
+            logger.info(
+                f"Number of correct predictions from correct clean indices: {sum(number_of_correct_predictions_from_correct_clean_indices_vanilla_topk)} out of {len(correct_clean_indices)}")
+            logger.info(
+                f"Number of correct predictions from incorrect clean indices: {sum(number_of_incorrect_predictions_from_correct_clean_indices_vanilla_topk)} out of {len(incorrect_clean_indices)}")
+            logger.info(f"The sample indices which are correctly classified from incorrect clean predictions are: {correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla_topk}")
+            logger.info(
+                f"Conservative accuracy (assuming clean-incorrect remain incorrect): {conservative_accuracy_vanilla_topk:.4f} ({sum(number_of_correct_predictions_from_correct_clean_indices_vanilla_topk)}/{len(labels_clean)})")
+
+            result_dict_vanilla_topk[
+                "number_of_correct_predictions_from_correct_clean_indices"] = f"{sum(number_of_correct_predictions_from_correct_clean_indices_vanilla_topk)} out of {len(correct_clean_indices)}"
+            result_dict_vanilla_topk[
+                "number_of_incorrect_predictions_from_correct_clean_indices"] = f" {sum(number_of_incorrect_predictions_from_correct_clean_indices_vanilla_topk)} out of {len(incorrect_clean_indices)}"
+            result_dict_vanilla_topk[
+                "sample_indices_correct_classified_from_incorrect_clean_predictions"] = correct_idx_incorrect_predictions_from_correct_clean_indices_vanilla_topk
+            result_dict_vanilla_topk[
+                "conservative_accuracy_assuming_clean_incorrect_remain_incorrect"] = conservative_accuracy_vanilla_topk
 
 
 
@@ -1799,36 +1975,84 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             json.dump(result_dict_vanilla_topk, f, indent=4)
 
 
+    if (
+            result_dict_weighted
+            and (
+            len(args.image_feature_purify_anchors_alpha) > 1
+            or (
+                    len(args.image_feature_purify_anchors_alpha) == 1
+                    and 'max_confidence' in result_dict_weighted
+                    and len(result_dict_weighted['max_confidence']) > 0
+            )
+    )
+    ):
 
-    if result_dict_weighted  and len(result_dict_weighted['max_confidence']) > 0:
         results_path = os.path.join(args.log_dir, f"results_weighted.json")
 
         logger.info(f"Results saved to {results_path}")
-        acc, ece, bin_acc, bin_confidences = Calculator(result_dict_weighted, logger)
-        logger.info(f"ECE results - Weighted Acc: {acc:.2f},  ECE: {ece:.2f}")
 
-        predictions_weighted = result_dict_weighted['prediction']
-        number_of_correct_predictions_from_correct_clean_indices_weighted = [predictions_weighted[i] == labels_clean[i]
-                                                                            for
-                                                                            i in correct_clean_indices]
-        number_of_incorrect_predictions_from_correct_clean_indices_weighted = [predictions_weighted[i] == labels_clean[i]
-                                                                              for i in incorrect_clean_indices]
-        correct_idx_incorrect_predictions_from_correct_clean_indices_weighted = [
-            idx for idx, ok in
-            zip(incorrect_clean_indices, number_of_incorrect_predictions_from_correct_clean_indices_weighted) if ok
-        ]
-        logger.info(
-            f"Number of correct predictions from correct clean indices: {sum(number_of_correct_predictions_from_correct_clean_indices_weighted)} out of {len(correct_clean_indices)}")
-        logger.info(
-            f"Number of correct predictions from incorrect clean indices: {sum(number_of_incorrect_predictions_from_correct_clean_indices_weighted)} out of {len(incorrect_clean_indices)}")
-        logger.info(f"The sample indices which are correctly classified from incorrect clean predictions are: {correct_idx_incorrect_predictions_from_correct_clean_indices_weighted}")
+        if len(args.image_feature_purify_anchors_alpha) > 1:
+            for alpha_key, value in result_dict_weighted.items():
+                acc, ece, bin_acc, incorrect_confidences = Calculator(value, logger)
+                logger.info(f"ECE results Alpha {alpha_key} - Weighted Acc: {acc:.2f},  ECE: {ece:.2f}")
+                predictions_weighted = value['prediction']
 
-        result_dict_weighted[
-            "number_of_correct_predictions_from_correct_clean_indices"] = f"{sum(number_of_correct_predictions_from_correct_clean_indices_weighted)} out of {len(correct_clean_indices)}"
-        result_dict_weighted[
-            "number_of_incorrect_predictions_from_correct_clean_indices"] = f" {sum(number_of_incorrect_predictions_from_correct_clean_indices_weighted)} out of {len(incorrect_clean_indices)}"
-        result_dict_weighted[
-            "sample_indices_correct_classified_from_incorrect_clean_predictions"] = correct_idx_incorrect_predictions_from_correct_clean_indices_weighted
+                number_of_correct_predictions_from_correct_clean_indices_weighted = [
+                    predictions_weighted[i] == labels_clean[i]
+                    for
+                    i in correct_clean_indices]
+                number_of_incorrect_predictions_from_correct_clean_indices_weighted = [
+                    predictions_weighted[i] == labels_clean[i]
+                    for i in incorrect_clean_indices]
+                correct_idx_incorrect_predictions_from_correct_clean_indices_weighted = [
+                    idx for idx, ok in
+                    zip(incorrect_clean_indices, number_of_incorrect_predictions_from_correct_clean_indices_weighted) if
+                    ok
+                ]
+                conservative_accuracy_weighted = (sum(number_of_correct_predictions_from_correct_clean_indices_weighted)/len(labels_clean))
+
+                logger.info(f"Alpha {alpha_key} Number of correct predictions from correct clean indices: {sum(number_of_correct_predictions_from_correct_clean_indices_weighted)} out of {len(correct_clean_indices)}")
+                logger.info(f"Alpha {alpha_key} Number of correct predictions from incorrect clean indices: {sum(number_of_incorrect_predictions_from_correct_clean_indices_weighted)} out of {len(incorrect_clean_indices)}")
+                logger.info(f"Alpha {alpha_key} The sample indices which are correctly classified from incorrect clean predictions are: {correct_idx_incorrect_predictions_from_correct_clean_indices_weighted}")
+                logger.info(f"Alpha {alpha_key} Conservative accuracy (assuming clean-incorrect remain incorrect): {conservative_accuracy_weighted:.4f} ({sum(number_of_correct_predictions_from_correct_clean_indices_weighted)}/{len(labels_clean)})")
+
+                result_dict_weighted[alpha_key]["number_of_correct_predictions_from_correct_clean_indices"] = f"{sum(number_of_correct_predictions_from_correct_clean_indices_weighted)} out of {len(correct_clean_indices)}"
+                result_dict_weighted[alpha_key]["number_of_incorrect_predictions_from_correct_clean_indices"] = f" {sum(number_of_incorrect_predictions_from_correct_clean_indices_weighted)} out of {len(incorrect_clean_indices)}"
+                result_dict_weighted[alpha_key]["sample_indices_correct_classified_from_incorrect_clean_predictions"] = correct_idx_incorrect_predictions_from_correct_clean_indices_weighted
+                result_dict_weighted[alpha_key]["conservative_accuracy_assuming_clean_incorrect_remain_incorrect"] = conservative_accuracy_weighted
+        else:
+
+            acc, ece, bin_acc, bin_confidences = Calculator(result_dict_weighted, logger)
+            logger.info(f"ECE results - Weighted Acc: {acc:.2f},  ECE: {ece:.2f}")
+
+            predictions_weighted = result_dict_weighted['prediction']
+            number_of_correct_predictions_from_correct_clean_indices_weighted = [predictions_weighted[i] == labels_clean[i]
+                                                                                for
+                                                                                i in correct_clean_indices]
+            number_of_incorrect_predictions_from_correct_clean_indices_weighted = [predictions_weighted[i] == labels_clean[i]
+                                                                                  for i in incorrect_clean_indices]
+            correct_idx_incorrect_predictions_from_correct_clean_indices_weighted = [
+                idx for idx, ok in
+                zip(incorrect_clean_indices, number_of_incorrect_predictions_from_correct_clean_indices_weighted) if ok
+            ]
+            conservative_accuracy_weighted = (sum(number_of_correct_predictions_from_correct_clean_indices_weighted)/len(labels_clean))
+
+            logger.info(
+                f"Number of correct predictions from correct clean indices: {sum(number_of_correct_predictions_from_correct_clean_indices_weighted)} out of {len(correct_clean_indices)}")
+            logger.info(
+                f"Number of correct predictions from incorrect clean indices: {sum(number_of_incorrect_predictions_from_correct_clean_indices_weighted)} out of {len(incorrect_clean_indices)}")
+            logger.info(f"The sample indices which are correctly classified from incorrect clean predictions are: {correct_idx_incorrect_predictions_from_correct_clean_indices_weighted}")
+            logger.info(
+                f"Conservative accuracy (assuming clean-incorrect remain incorrect): {conservative_accuracy_weighted:.4f} ({sum(number_of_correct_predictions_from_correct_clean_indices_weighted)}/{len(labels_clean)})")
+
+            result_dict_weighted[
+                "number_of_correct_predictions_from_correct_clean_indices"] = f"{sum(number_of_correct_predictions_from_correct_clean_indices_weighted)} out of {len(correct_clean_indices)}"
+            result_dict_weighted[
+                "number_of_incorrect_predictions_from_correct_clean_indices"] = f" {sum(number_of_incorrect_predictions_from_correct_clean_indices_weighted)} out of {len(incorrect_clean_indices)}"
+            result_dict_weighted[
+                "sample_indices_correct_classified_from_incorrect_clean_predictions"] = correct_idx_incorrect_predictions_from_correct_clean_indices_weighted
+            result_dict_weighted[
+                "conservative_accuracy_assuming_clean_incorrect_remain_incorrect"] = conservative_accuracy_weighted
 
         # Handle long paths on Windows
         results_path = handle_long_windows_path(results_path)
