@@ -189,10 +189,10 @@ def create_log_dir(args):
     if args.image_feature_purify:
         if args.image_feature_purify_type == "noisy_anchor":
             image_feature_purify_part = [f"Image_Feature_Purify",
-                                        f"Type_{args.image_feature_purify_type}_Anchors_{args.image_feature_purify_noisy_anchors}_Alpha_{args.image_feature_purify_anchors_alpha}_Sigma_{args.image_feature_purify_noisy_sigma}_threshold_{args.image_feature_purify_diff_threshold}_normalize_embeddings_{args.image_feature_purify_normalize_embeddings}"]
+                                        f"Type_{args.image_feature_purify_type}_Anchors_{args.image_feature_purify_noisy_anchors}_Alpha_{args.image_feature_purify_anchors_alpha[0] if len(args.image_feature_purify_anchors_alpha)==1 else 'ablation'}_Sigma_{args.image_feature_purify_noisy_sigma}_threshold_{args.image_feature_purify_diff_threshold}_normalize_embeddings_{args.image_feature_purify_normalize_embeddings}"]
         elif args.image_feature_purify_type == "uniform_anchor":
             image_feature_purify_part = [f"Image_Feature_Purify",
-                                         f"Type_{args.image_feature_purify_type}_Anchors_{args.image_feature_purify_noisy_anchors}_Alpha_{args.image_feature_purify_anchors_alpha}_Eps_{args.image_feature_purify_uniform_noise_eps}_threshold_{args.image_feature_purify_diff_threshold}_normalize_embeddings_{args.image_feature_purify_normalize_embeddings}"]
+                                         f"Type_{args.image_feature_purify_type}_Anchors_{args.image_feature_purify_noisy_anchors}_Alpha_{args.image_feature_purify_anchors_alpha[0] if len(args.image_feature_purify_anchors_alpha)==1 else 'ablation'}_Eps_{args.image_feature_purify_uniform_noise_eps}_threshold_{args.image_feature_purify_diff_threshold}_normalize_embeddings_{args.image_feature_purify_normalize_embeddings}"]
 
         elif args.image_feature_purify_type == 'clip_pure':
             image_feature_purify_part = [f"Image_Feature_Purify",
@@ -1051,7 +1051,14 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     result_dict_original = {'max_confidence': [], 'prediction': [], 'label': []}
     result_dict_original_clean = {'max_confidence': [], 'prediction': [], 'label': []}
-    result_dict_single = {'max_confidence': [], 'prediction': [], 'label': []}
+    if len(args.image_feature_purify_anchors_alpha) == 1:
+        result_dict_single = {'max_confidence': [], 'prediction': [], 'label': []}
+    else:
+        result_dict_single = {}
+        for value in args.image_feature_purify_anchors_alpha:
+            result_dict_single[value] = {'max_confidence': [], 'prediction': [], 'label': []}
+
+
     result_dict_vanilla = {'max_confidence': [], 'prediction': [], 'label': []}
     result_dict_vanilla_topk = {'max_confidence': [], 'prediction': [], 'label': []}
     result_dict_weighted = {'max_confidence': [], 'prediction': [], 'label': []}
@@ -1066,8 +1073,8 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         expanded_anchors = convert(original_text_features.double(), None, original_text_features.size(1),
                                    logger).float()
 
-    avg_diff_ratio = torch.zeros(64)
-    diff_ratio_list = []
+    avg_diff_ratio_aom = torch.zeros(64)
+    diff_ratio_list_aom = []
     diff_ratio_list_counter_attack = []
     images_diff_ratio_tpt_noisy_anchors_list = []
     clean_images_diff_ratio_tpt_noisy_anchors_list = []
@@ -1197,7 +1204,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                             'noise_type': "gaussian",
                             'sigma': args.image_feature_purify_noisy_sigma,
                             'n_anchors': args.image_feature_purify_noisy_anchors,
-                            'alpha': args.image_feature_purify_anchors_alpha,
+                            'alpha': args.image_feature_purify_anchors_alpha[0] if len(args.image_feature_purify_anchors_alpha)==1 else args.image_feature_purify_anchors_alpha,
                             'diff_threshold': args.image_feature_purify_diff_threshold,
                             "normalize_embeddings": args.image_feature_purify_normalize_embeddings,
                             "uniform_noise_eps": args.image_feature_purify_uniform_noise_eps,
@@ -1206,18 +1213,21 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                         tuned_outputs_first, diff_ratio = model(images[0].unsqueeze(0), move_image_features_noisy_anchor=True,
                                                               purify_params=purify_params)
                         tuned_outputs_remaining = model(images[1:])
-                        #tuned_outputs is tuned_outputs_first + tuned_outputs_remaining
-                        tuned_outputs = torch.cat([tuned_outputs_first, tuned_outputs_remaining], dim=0)
+                        #tuned_outputs is tuned_outputs_first +
+                        if isinstance(tuned_outputs_first, dict):
+                            tuned_outputs = {k: torch.cat([tuned_outputs_first[k], tuned_outputs_remaining], dim=0) for k in tuned_outputs_first.keys()}
+                        else:
+                            tuned_outputs = torch.cat([tuned_outputs_first, tuned_outputs_remaining], dim=0)
 
-                        avg_diff_ratio += diff_ratio.cpu()
-                        diff_ratio_list.append(diff_ratio.cpu())
+                        avg_diff_ratio_aom += diff_ratio.cpu()
+                        diff_ratio_list_aom.append(diff_ratio.cpu())
                         del tuned_outputs_first, tuned_outputs_remaining
                     elif args.image_feature_purify_type == "uniform_anchor":
                         purify_params = {
                             'noise_type': "uniform",
                             'sigma': args.image_feature_purify_noisy_sigma,
                             'n_anchors': args.image_feature_purify_noisy_anchors,
-                            'alpha': args.image_feature_purify_anchors_alpha,
+                            'alpha': args.image_feature_purify_anchors_alpha[0] if len(args.image_feature_purify_anchors_alpha)==1 else args.image_feature_purify_anchors_alpha,
                             'diff_threshold': args.image_feature_purify_diff_threshold,
                             "normalize_embeddings": args.image_feature_purify_normalize_embeddings,
                             "uniform_noise_eps": args.image_feature_purify_uniform_noise_eps,
@@ -1227,10 +1237,16 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                                                               purify_params=purify_params)
                         tuned_outputs_remaining = model(images[1:])
                         #tuned_outputs is tuned_outputs_first + tuned_outputs_remaining
-                        tuned_outputs = torch.cat([tuned_outputs_first, tuned_outputs_remaining], dim=0)
+                        # tuned_outputs is tuned_outputs_first +
+                        if isinstance(tuned_outputs_first, dict):
+                            tuned_outputs = {k: torch.cat([tuned_outputs_first[k], tuned_outputs_remaining], dim=0) for
+                                             k in tuned_outputs_first.keys()}
+                        else:
+                            tuned_outputs = torch.cat([tuned_outputs_first, tuned_outputs_remaining], dim=0)
+                        # tuned_outputs = torch.cat([tuned_outputs_first, tuned_outputs_remaining], dim=0)
 
-                        avg_diff_ratio += diff_ratio.cpu()
-                        diff_ratio_list.append(diff_ratio.cpu())
+                        avg_diff_ratio_aom += diff_ratio.cpu()
+                        diff_ratio_list_aom.append(diff_ratio.cpu())
                         del tuned_outputs_first, tuned_outputs_remaining
                 else:
                     tuned_outputs = model(images)
@@ -1258,9 +1274,17 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             # Calculate outputs for all three ensemble types
 
             # 1. 'none' - Use only the first output (no ensembling)
-            tta_output_single = tuned_outputs[0].unsqueeze(0)
+            if isinstance(tuned_outputs, dict):
+                tta_output_single = {k: v[0].unsqueeze(0) for k, v in tuned_outputs.items()}
+            else:
+                tta_output_single = tuned_outputs[0].unsqueeze(0)
 
             # 2. 'vanilla' - Use the average of all outputs
+            if isinstance(tuned_outputs, dict):
+                for k,v in tuned_outputs.items():
+                    key  = k
+                tuned_outputs = tuned_outputs[key]
+
             tta_output_vanilla = torch.mean(tuned_outputs, dim=0).unsqueeze(0)
 
             # 3. 'vanilla_topk' - Use the average of top-k outputs
@@ -1340,13 +1364,27 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         else:
             # For "all" ensemble type, calculate and update metrics for all three types
             # 1. 'none' ensemble type
-            tpt_acc1_single, tpt_acc5_single = accuracy(tta_output_single, target, topk=(1, 5))
-            # Calculate the ECE for the single ensemble type
-            softmax_tta_output_single = softmax_ece(tta_output_single)
-            max_conf_tta_output_single, max_index_tta_output_single = torch.max(softmax_tta_output_single, dim=1)
-            result_dict_single['max_confidence'].append(max_conf_tta_output_single.item())
-            result_dict_single['prediction'].append(max_index_tta_output_single.item())
-            result_dict_single['label'].append(target.item())
+            if isinstance(tta_output_single, dict):
+                for k,v in tta_output_single.items():
+                    tpt_acc1_single, tpt_acc5_single = accuracy(v, target, topk=(1, 5))
+                    # Calculate the ECE for the single ensemble type
+                    softmax_tta_output_single = softmax_ece(v)
+                    max_conf_tta_output_single, max_index_tta_output_single = torch.max(softmax_tta_output_single, dim=1)
+
+                    result_dict_single[k]['max_confidence'].append(max_conf_tta_output_single.item())
+                    result_dict_single[k]['prediction'].append(max_index_tta_output_single.item())
+                    result_dict_single[k]['label'].append(target.item())
+
+            else:
+                tpt_acc1_single, tpt_acc5_single = accuracy(tta_output_single, target, topk=(1, 5))
+                # Calculate the ECE for the single ensemble type
+                softmax_tta_output_single = softmax_ece(tta_output_single)
+                max_conf_tta_output_single, max_index_tta_output_single = torch.max(softmax_tta_output_single, dim=1)
+
+
+                result_dict_single['max_confidence'].append(max_conf_tta_output_single.item())
+                result_dict_single['prediction'].append(max_index_tta_output_single.item())
+                result_dict_single['label'].append(target.item())
 
             tpt1_single.update(tpt_acc1_single[0], images.size(0))
             tpt5_single.update(tpt_acc5_single[0], images.size(0))
@@ -1588,29 +1626,103 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         with open(results_path, 'w') as f:
             json.dump(result_dict_original, f, indent=4)
 
+    if (
+            result_dict_single
+            and (
+            len(args.image_feature_purify_anchors_alpha) > 1
+            or (
+                    len(args.image_feature_purify_anchors_alpha) == 1
+                    and 'max_confidence' in result_dict_single
+                    and len(result_dict_single['max_confidence']) > 0
+            )
+    )
+    ):
 
-    if result_dict_single  and len(result_dict_single['max_confidence']) > 0:
         results_path = os.path.join(args.log_dir, f"results_single.json")
         logger.info(f"Results saved to {results_path}")
-        acc, ece, bin_acc, incorrect_confidences = Calculator(result_dict_single, logger)
-        logger.info(f"ECE results - Single Acc: {acc:.2f},  ECE: {ece:.2f}")
-        predictions_single = result_dict_single['prediction']
-        number_of_correct_predictions_from_correct_clean_indices_single = [predictions_single[i]==labels_clean[i] for i in correct_clean_indices]
-        number_of_incorrect_predictions_from_correct_clean_indices_single = [predictions_single[i]==labels_clean[i] for i in incorrect_clean_indices]
-        correct_idx_incorrect_predictions_from_correct_clean_indices_single = [
+        if len(args.image_feature_purify_anchors_alpha) > 1:
+            for alpha_key, value in result_dict_single.items():
+                acc, ece, bin_acc, incorrect_confidences = Calculator(value, logger)
+                logger.info(f"ECE results Alpha {alpha_key} - Single  Acc: {acc:.2f},  ECE: {ece:.2f}")
+                predictions_single = value['prediction']
+
+                # For samples that were correctly classified on CLEAN images,
+                # check whether they are STILL correctly classified under the current setting
+                number_of_correct_predictions_from_correct_clean_indices_single = [
+                    predictions_single[i] == labels_clean[i] for i in correct_clean_indices]
+
+                # For samples that were INCORRECTLY classified on CLEAN images,
+                # check whether they are NOW correctly classified under the current setting
+                number_of_incorrect_predictions_from_correct_clean_indices_single = [
+                    predictions_single[i] == labels_clean[i] for i in incorrect_clean_indices]
+
+                # Collect the ACTUAL DATASET INDICES of samples that were
+                # incorrect on clean images but are now correctly classified
+                correct_idx_incorrect_predictions_from_correct_clean_indices_single = [
+                    idx for idx, ok in
+                    zip(incorrect_clean_indices, number_of_incorrect_predictions_from_correct_clean_indices_single) if
+                    ok
+                ]
+
+                conservative_accuracy_single = (
+                        sum(number_of_correct_predictions_from_correct_clean_indices_single)
+                        / len(labels_clean)
+                )
+
+                logger.info(
+                    f"Alpha {alpha_key} Number of correct predictions from correct clean indices: {sum(number_of_correct_predictions_from_correct_clean_indices_single)} out of {len(correct_clean_indices)}")
+                logger.info(
+                    f"Alpha {alpha_key} Number of correct predictions from incorrect clean indices: {sum(number_of_incorrect_predictions_from_correct_clean_indices_single)} out of {len(incorrect_clean_indices)}")
+                logger.info(
+                    f"Alpha {alpha_key} The sample indices which are correctly classified from incorrect clean predictions are: {correct_idx_incorrect_predictions_from_correct_clean_indices_single}")
+                logger.info(
+                    f"Alpha {alpha_key} Conservative accuracy "
+                    f"(assuming clean-incorrect remain incorrect): "
+                    f"{conservative_accuracy_single:.4f} "
+                    f"({sum(number_of_correct_predictions_from_correct_clean_indices_single)}/{len(labels_clean)})"
+                )
+
+                result_dict_single[alpha_key][
+                    "number_of_correct_predictions_from_correct_clean_indices"] = f"{sum(number_of_correct_predictions_from_correct_clean_indices_single)} out of {len(correct_clean_indices)}"
+                result_dict_single[alpha_key][
+                    "number_of_incorrect_predictions_from_correct_clean_indices"] = f" {sum(number_of_incorrect_predictions_from_correct_clean_indices_single)} out of {len(incorrect_clean_indices)}"
+                result_dict_single[alpha_key][
+                    "sample_indices_correct_classified_from_incorrect_clean_predictions"] = correct_idx_incorrect_predictions_from_correct_clean_indices_single
+                result_dict_single[alpha_key][
+                    "conservative_accuracy_assuming_clean_incorrect_remain_incorrect"
+                ] = conservative_accuracy_single
+
+
+
+        else:
+            acc, ece, bin_acc, incorrect_confidences = Calculator(result_dict_single, logger)
+            logger.info(f"ECE results - Single Acc: {acc:.2f},  ECE: {ece:.2f}")
+
+            predictions_single = result_dict_single['prediction']
+            number_of_correct_predictions_from_correct_clean_indices_single = [predictions_single[i]==labels_clean[i] for i in correct_clean_indices]
+            number_of_incorrect_predictions_from_correct_clean_indices_single = [predictions_single[i]==labels_clean[i] for i in incorrect_clean_indices]
+            correct_idx_incorrect_predictions_from_correct_clean_indices_single = [
             idx for idx, ok in
             zip(incorrect_clean_indices, number_of_incorrect_predictions_from_correct_clean_indices_single) if ok
-        ]
-        logger.info(f"Number of correct predictions from correct clean indices: {sum(number_of_correct_predictions_from_correct_clean_indices_single)} out of {len(correct_clean_indices)}")
-        logger.info(f"Number of correct predictions from incorrect clean indices: {sum(number_of_incorrect_predictions_from_correct_clean_indices_single)} out of {len(incorrect_clean_indices)}")
-        logger.info(f"The sample indices which are correctly classified from incorrect clean predictions are: {correct_idx_incorrect_predictions_from_correct_clean_indices_single}")
+            ]
 
-        result_dict_single[
-            "number_of_correct_predictions_from_correct_clean_indices"] = f"{sum(number_of_correct_predictions_from_correct_clean_indices_single)} out of {len(correct_clean_indices)}"
-        result_dict_single[
-            "number_of_incorrect_predictions_from_correct_clean_indices"] = f" {sum(number_of_incorrect_predictions_from_correct_clean_indices_single)} out of {len(incorrect_clean_indices)}"
-        result_dict_single[
-            "sample_indices_correct_classified_from_incorrect_clean_predictions"] = correct_idx_incorrect_predictions_from_correct_clean_indices_single
+            conservative_accuracy_single = (sum(number_of_correct_predictions_from_correct_clean_indices_single)/len(labels_clean))
+            logger.info(f"Number of correct predictions from correct clean indices: {sum(number_of_correct_predictions_from_correct_clean_indices_single)} out of {len(correct_clean_indices)}")
+            logger.info(f"Number of correct predictions from incorrect clean indices: {sum(number_of_incorrect_predictions_from_correct_clean_indices_single)} out of {len(incorrect_clean_indices)}")
+            logger.info(f"The sample indices which are correctly classified from incorrect clean predictions are: {correct_idx_incorrect_predictions_from_correct_clean_indices_single}")
+            logger.info(
+                f"Conservative accuracy (assuming clean-incorrect remain incorrect): {conservative_accuracy_single:.4f} ({sum(number_of_correct_predictions_from_correct_clean_indices_single)}/{len(labels_clean)})"
+            )
+
+            result_dict_single[
+                "number_of_correct_predictions_from_correct_clean_indices"] = f"{sum(number_of_correct_predictions_from_correct_clean_indices_single)} out of {len(correct_clean_indices)}"
+            result_dict_single[
+                "number_of_incorrect_predictions_from_correct_clean_indices"] = f" {sum(number_of_incorrect_predictions_from_correct_clean_indices_single)} out of {len(incorrect_clean_indices)}"
+            result_dict_single[
+                "sample_indices_correct_classified_from_incorrect_clean_predictions"] = correct_idx_incorrect_predictions_from_correct_clean_indices_single
+            result_dict_single[
+                "conservative_accuracy_assuming_clean_incorrect_remain_incorrect"
+            ] = conservative_accuracy_single
 
         # Handle long paths on Windows
         results_path = handle_long_windows_path(results_path)
@@ -1723,18 +1835,17 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             json.dump(result_dict_weighted, f, indent=4)
 
     if args.image_feature_purify:
-        if args.image_feature_purify_type == "noisy_anchor":
-            results_path = os.path.join(args.log_dir, f"results_purify_noisy_anchor_diff_ratio.json")
-            save_dic = {}
-            save_dic["diff_ratio"] = diff_ratio_list
-            save_dic["avergae_diff_ratio"] =  avg_diff_ratio/len(val_loader)
-            avg_diff_ratio = avg_diff_ratio/len(val_loader)
-            logger.info(f"Average diff ratio: {avg_diff_ratio:.2f}")
+        results_path = os.path.join(args.log_dir, f"results_purify_AOM_{args.image_feature_purify_type}_diff_ratio.json")
+        save_dic = {}
+        save_dic["diff_ratio"] = diff_ratio_list_aom
+        save_dic["average_diff_ratio"] =  avg_diff_ratio_aom/len(val_loader)
+        avg_diff_ratio_aom = avg_diff_ratio_aom/len(val_loader)
+        logger.info(f"Average diff ratio: {avg_diff_ratio_aom:.2f}")
 
-            # Handle long paths on Windows
-            results_path = handle_long_windows_path(results_path)
-            with open(results_path, 'w') as f:
-                json.dump(save_dic, f, indent=4)
+        # Handle long paths on Windows
+        results_path = handle_long_windows_path(results_path)
+        with open(results_path, 'w') as f:
+            json.dump(save_dic, f, indent=4)
 
     results_path = os.path.join(args.log_dir, f"results_counter_attack_diff_ratio.json")
     results_path = handle_long_windows_path(results_path)
@@ -2087,7 +2198,14 @@ if __name__ == '__main__':
     parser.add_argument('--image_feature_purify', default=False, type=lambda x: (str(x).lower() == 'true'))
     parser.add_argument('--image_feature_purify_type', default='noisy_anchor', choices=["noisy_anchor", "clip_pure", "uniform_anchor"], type=str)
     parser.add_argument('--image_feature_purify_noisy_anchors', default=10, type=int)
-    parser.add_argument('--image_feature_purify_anchors_alpha', default=1.2, type=float)
+    # parser.add_argument('--image_feature_purify_anchors_alpha', default=1.2, type=float)
+    parser.add_argument(
+        '--image_feature_purify_anchors_alpha',
+        type=float,
+        nargs='+',
+        default=[1.2],
+        help='Alpha values for anchor interpolation, e.g. --image_feature_purify_anchors_alpha 1.0 1.2'
+    )
     parser.add_argument('--image_feature_purify_noisy_sigma', default=0.18, type=float)
     parser.add_argument('--image_feature_purify_diff_threshold', default=0.0, type=float)
     parser.add_argument('--image_feature_purify_normalize_embeddings', default=True, type=lambda x: (str(x).lower() == 'true'))
