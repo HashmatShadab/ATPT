@@ -1110,7 +1110,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             images = data_transform(img_adv)
             images = [_.unsqueeze(0) for _ in images]
 
-            if logger:
+            if logger and i == 0:
                 logger.debug(f"Created {len(images)} augmented views of the adversarial image (the adversarial image will be passed through  Attack or Attack + Counter Attack)")
 
         elif args.counter_attack:
@@ -1124,11 +1124,12 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             # Apply data transformations to adversarial image
             images = data_transform(img_adv)
             images = [_.unsqueeze(0) for _ in images]
-            if logger:
+            if logger and i == 0:
                 logger.debug(f"Created {len(images)} augmented views of the Clean image after Counter Attack")
 
         else:
-            logger.info(f"Evaluating clean images without adversarial attack or counter-attack")
+            if logger and i == 0:
+                logger.info(f"Evaluating clean images without adversarial attack or counter-attack")
             diff_ratio_counter_attack = 0.0
 
         diff_ratio_list_counter_attack.append(diff_ratio_counter_attack)
@@ -1165,7 +1166,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             clean_clip_output = model(clean_image)
             # clip_outputs = model(images)  # Outputs for all images
 
-        if i == 0:
+        if logger and i == 0:
             logger.info(f"Computing Diff Ratio TPT Noisy Anchors for Clean Image as well as Adversarial/Clean image")
         images_diff_ratio_tpt_noisy = compute_diff_ration_tpt_noisy_anchors(images, model)
         clean_images_diff_ratio_tpt_noisy = compute_diff_ration_tpt_noisy_anchors(clean_images, model)
