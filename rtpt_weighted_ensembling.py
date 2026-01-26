@@ -1646,7 +1646,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     # Save the results dictionary if not empty
     if result_dict_original_clean  and len(result_dict_original_clean['max_confidence']) > 0:
         acc, ece, bin_acc, incorrect_confidences = Calculator(result_dict_original_clean, logger)
-        logger.info(f"ECE results - Original Acc: {acc:.2f},  ECE: {ece:.2f}")
+        logger.info(f"ECE results - Original Clean Acc: {acc:.2f},  ECE: {ece:.2f}")
         # the dictionary has three keys "max_confidence", "prediction" and "label". Each key is associated with a list of values for each sample, get the indices of correctly classisifed as well as incorrectly classified samples
         predictions_clean = result_dict_original_clean['prediction']
         labels_clean = result_dict_original_clean['label']
