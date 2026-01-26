@@ -430,7 +430,7 @@ class ClipTestTimeTuning(nn.Module):
         image: Tensor of shape [B, C, H, W]
         sigma: standard deviation for Gaussian noise
         n_anchors: number of noisy samples to average for anchor
-        alpha: interpolation factor
+        alpha: interpolation factor or list of interpolation factors
         """
         # Step 1: Encode source feature (adversarial or clean)
         image_input = self.normalize(image.type(self.dtype))
@@ -471,10 +471,6 @@ class ClipTestTimeTuning(nn.Module):
         f_noisy_normalized = f_noisy_all / f_noisy_all.norm(dim=-1, keepdim=True)  # [n_anchors, batch_size, feature_dim]
         diff_ratio = (f_noisy_normalized - f_source_normalized.unsqueeze(0)).norm(dim=-1) / f_source_normalized.norm(dim=-1).unsqueeze(0)  # [n_anchors, batch_size]
         diff_ratio_mean = diff_ratio.mean(dim=0)
-        # Initialize alpha as a vector (length = batch_size) with the same initial value
-        alpha_vector = torch.full_like(diff_ratio_mean, fill_value=alpha)
-        # Set alpha values to 0.0 where diff_ratio_mean < diff_threshold
-        alpha_vector[diff_ratio_mean < diff_threshold] = 0.0
 
         f_anchor_sum = f_noisy_all.sum(dim=0)  # [batch_size, feature_dim]
 
@@ -483,23 +479,49 @@ class ClipTestTimeTuning(nn.Module):
         f_anchor_normalized = f_anchor / f_anchor_norm
 
         # Step 3: One-step linear interpolation
-        if normalize_embeddings:
-            f_moved = (1 - alpha_vector.unsqueeze(1)) * f_source_normalized + alpha_vector.unsqueeze(1) * f_anchor_normalized
+        if not isinstance(alpha, (list, tuple)):
+            alpha_list = [alpha]
+            is_list_alpha = False
         else:
-            f_moved = (1 - alpha_vector.unsqueeze(1)) * f_source + alpha_vector.unsqueeze(1) * f_anchor
+            alpha_list = alpha
+            is_list_alpha = True
 
-        f_moved_norm = f_moved.norm(dim=-1, keepdim=True)
-        f_moved = f_moved / f_moved_norm  # Final normalization
+        if is_list_alpha:
+            all_logits = {}
+        else:
+            all_logits = []
 
-        # Step 4: Get text features and normalize
-        text_features = self.get_text_features()
-        text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+        for a in alpha_list:
+            # Initialize alpha as a vector (length = batch_size) with the same initial value
+            alpha_vector = torch.full_like(diff_ratio_mean, fill_value=a)
+            # Set alpha values to 0.0 where diff_ratio_mean < diff_threshold
+            alpha_vector[diff_ratio_mean < diff_threshold] = 0.0
 
-        # Step 5: Compute logits
-        logit_scale = self.logit_scale.exp()
-        logits = logit_scale * f_moved @ text_features.t()
+            if normalize_embeddings:
+                f_moved = (1 - alpha_vector.unsqueeze(1)) * f_source_normalized + alpha_vector.unsqueeze(1) * f_anchor_normalized
+            else:
+                f_moved = (1 - alpha_vector.unsqueeze(1)) * f_source + alpha_vector.unsqueeze(1) * f_anchor
 
-        return logits, diff_ratio_mean
+            f_moved_norm = f_moved.norm(dim=-1, keepdim=True)
+            f_moved = f_moved / f_moved_norm  # Final normalization
+
+            # Step 4: Get text features and normalize
+            text_features = self.get_text_features()
+            text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+
+            # Step 5: Compute logits
+            logit_scale = self.logit_scale.exp()
+            logits = logit_scale * f_moved @ text_features.t()
+            
+            if is_list_alpha:
+                all_logits[a] = logits
+            else:
+                all_logits.append(logits)
+
+        if is_list_alpha:
+            return all_logits, diff_ratio_mean
+        else:
+            return all_logits[0], diff_ratio_mean
 
     def inference_move_image_features_text_anchor(self, image, steps=10, step_size=10.0, null_text_features=None):
         """
