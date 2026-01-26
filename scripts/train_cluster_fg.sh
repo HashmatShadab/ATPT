@@ -61,6 +61,14 @@ COUNTER_ATTACK_TAU=${37:-"normal"}
 COUNTER_ATTACK_NOISY_TAU_NUM_ANCHORS=${38:-10}
 AUGMENTATION_POOL_ABLATION=${39:-"false"}
 AUGMENTATION_POOL=${40:-"tpt"}
+IMAGE_FEATURE_PURIFY_NORMALIZE_EMBEDDINGS=${41:-"false"} #
+IMAGE_FEATURE_PURIFY_UNIFORM_NOISE_EPS=${42:-4.0} #
+
+if [[ "$IMAGE_FEATURE_PURIFY_ANCHORS_ALPHA" == "all" ]]; then
+    IMAGE_FEATURE_PURIFY_ANCHORS_ALPHA_VALUES="0.0 0.5 1.0 1.2 1.4"
+else
+    IMAGE_FEATURE_PURIFY_ANCHORS_ALPHA_VALUES="$IMAGE_FEATURE_PURIFY_ANCHORS_ALPHA"
+fi
 
 
 # Common parameters for all runs
@@ -70,7 +78,7 @@ COMMON_PARAMS+=" --selection_p $FRACTION_CONFIDENT_SAMPLES --tta_steps $TTA_STEP
 COMMON_PARAMS+=" --ensemble_type $ENSEMBLE_TYPE --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING"
 COMMON_PARAMS+=" --diffpure $DIFFPURE --counter_attack $COUNTER_ATTACK --counter_attack_type $COUNTER_ATTACK_TYPE --counter_attack_tau $COUNTER_ATTACK_TAU --counter_attack_noisy_tau_num_anchors $COUNTER_ATTACK_NOISY_TAU_NUM_ANCHORS --counter_attack_init_noise $COUNTER_ATTACK_INIT_NOISE --counter_attack_gaussian_sigma $COUNTER_ATTACK_GAUSSIAN_SIGMA --counter_attack_steps $COUNTER_ATTACK_STEPS --counter_attack_eps $COUNTER_ATTACK_EPSILON"
 COMMON_PARAMS+=" --counter_attack_alpha $COUNTER_ATTACK_ALPHA --counter_attack_tau_thres $COUNTER_ATTACK_TAU_THRES --counter_attack_beta $COUNTER_ATTACK_BETA --counter_attack_weighted_perturbations $COUNTER_ATTACK_W_PERTURBATION"
-COMMON_PARAMS+=" --image_feature_purify $IMAGE_FEATURE_PURIFY --image_feature_purify_type $IMAGE_FEATURE_PURIFY_TYPE --image_feature_purify_noisy_anchors $IMAGE_FEATURE_PURIFY_NOISY_ANCHORS --image_feature_purify_anchors_alpha $IMAGE_FEATURE_PURIFY_ANCHORS_ALPHA --image_feature_purify_noisy_sigma $IMAGE_FEATURE_PURIFY_NOISY_SIGMA --image_feature_purify_diff_threshold $IMAGE_FEATURE_PURIFY_DIFF_THRESHOLD"
+COMMON_PARAMS+=" --image_feature_purify $IMAGE_FEATURE_PURIFY --image_feature_purify_type $IMAGE_FEATURE_PURIFY_TYPE --image_feature_purify_noisy_anchors $IMAGE_FEATURE_PURIFY_NOISY_ANCHORS --image_feature_purify_anchors_alpha $IMAGE_FEATURE_PURIFY_ANCHORS_ALPHA_VALUES --image_feature_purify_noisy_sigma $IMAGE_FEATURE_PURIFY_NOISY_SIGMA --image_feature_purify_diff_threshold $IMAGE_FEATURE_PURIFY_DIFF_THRESHOLD --image_feature_purify_normalize_embeddings $IMAGE_FEATURE_PURIFY_NORMALIZE_EMBEDDINGS --image_feature_purify_uniform_noise_eps $IMAGE_FEATURE_PURIFY_UNIFORM_NOISE_EPS"
 
 # Model parameters
 MODEL="-a $MODEL_NAME -b 64 --workers $NUM_WORKERS --print-freq 20"
