@@ -1080,7 +1080,6 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         expanded_anchors = convert(original_text_features.double(), None, original_text_features.size(1),
                                    logger).float()
 
-    avg_diff_ratio_aom = torch.zeros(64)
     diff_ratio_list_aom = []
     diff_ratio_list_counter_attack = []
     images_diff_ratio_tpt_noisy_anchors_list = []
@@ -1227,8 +1226,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                         else:
                             tuned_outputs = torch.cat([tuned_outputs_first, tuned_outputs_remaining], dim=0)
 
-                        avg_diff_ratio_aom += diff_ratio.cpu()
-                        diff_ratio_list_aom.append(diff_ratio.cpu())
+                        diff_ratio_list_aom.append(diff_ratio)
                         del tuned_outputs_first, tuned_outputs_remaining
                     elif args.image_feature_purify_type == "uniform_anchor":
                         purify_params = {
@@ -1253,8 +1251,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                             tuned_outputs = torch.cat([tuned_outputs_first, tuned_outputs_remaining], dim=0)
                         # tuned_outputs = torch.cat([tuned_outputs_first, tuned_outputs_remaining], dim=0)
 
-                        avg_diff_ratio_aom += diff_ratio.cpu()
-                        diff_ratio_list_aom.append(diff_ratio.cpu())
+                        diff_ratio_list_aom.append(diff_ratio)
                         del tuned_outputs_first, tuned_outputs_remaining
                 else:
                     tuned_outputs = model(images)
@@ -2063,8 +2060,8 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         results_path = os.path.join(args.log_dir, f"results_purify_AOM_{args.image_feature_purify_type}_diff_ratio.json")
         save_dic = {}
         save_dic["diff_ratio"] = diff_ratio_list_aom
-        save_dic["average_diff_ratio"] =  avg_diff_ratio_aom/len(val_loader)
-        avg_diff_ratio_aom = avg_diff_ratio_aom/len(val_loader)
+        save_dic["average_diff_ratio"] = sum(diff_ratio_list_aom)/len(diff_ratio_list_aom)
+        avg_diff_ratio_aom = sum(diff_ratio_list_aom)/len(diff_ratio_list_aom)
         logger.info(f"Average diff ratio: {avg_diff_ratio_aom:.2f}")
 
         # Handle long paths on Windows

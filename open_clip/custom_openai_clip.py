@@ -519,9 +519,9 @@ class ClipTestTimeTuning(nn.Module):
                 all_logits.append(logits)
 
         if is_list_alpha:
-            return all_logits, diff_ratio_mean
+            return all_logits, diff_ratio_mean.item()
         else:
-            return all_logits[0], diff_ratio_mean
+            return all_logits[0], diff_ratio_mean.item()
 
     def inference_move_image_features_text_anchor(self, image, steps=10, step_size=10.0, null_text_features=None):
         """
