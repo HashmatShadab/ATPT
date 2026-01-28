@@ -1,0 +1,1754 @@
+2026-01-27 19:17:43,048 - log - INFO - ==========================================
+data:/leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets
+test_sets:Pets
+dataset_mode:test
+arch:delta_clip_l14_224
+resolution:224
+transferability:False
+source_model:delta_clip_l14_224
+workers:4
+no_pin_memory:False
+batch_size:64
+print_freq:20
+gpu:0
+no_cudnn_benchmark:False
+n_ctx:4
+ctx_init:a_photo_of_a
+tpt_loss:tpt
+otpt_lambda_term:18.0
+anchor_lambda_term:18.0
+seed:0
+output_dir:/leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/delta_clip_l14_224/Pets
+log_output_dir:/leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results_corrected_ca_tau_AOM/delta_clip_l14_224/Pets
+image_only_attack:False
+image_only_attack_type:prm
+image_predicted_label_attack:False
+eps:0.0
+alpha:0.0
+alpha_eps_ratio:4.0
+steps:100
+lr:0.005
+lr_reduction_factor:50.0
+selection_p:0.1
+tta_steps:0
+max_tta_steps:0
+augmentation_pool_ablation:False
+augmentation_pool:tpt
+ensemble_type:all
+top_k:20
+softmax_temp:0.01
+diffpure:False
+counter_attack:False
+counter_attack_type:pgd
+counter_attack_steps:0
+counter_attack_eps:12.0
+counter_attack_alpha:1.0
+counter_attack_tau:normal_anchors
+counter_attack_noisy_tau_num_anchors:10
+counter_attack_tau_thres:0.2
+counter_attack_beta:2.0
+counter_attack_weighted_perturbations:True
+counter_attack_init_noise:uniform
+counter_attack_gaussian_sigma:0.12
+pgd_clip_pure_i_text_embeddings:null
+pgd_counter_and_clipure_i_lamda:1.0
+image_feature_purify:True
+image_feature_purify_type:noisy_anchor
+image_feature_purify_noisy_anchors:10
+image_feature_purify_anchors_alpha:[0.0, 0.5, 1.0, 1.2, 1.4]
+image_feature_purify_noisy_sigma:0.18
+image_feature_purify_diff_threshold:0.0
+image_feature_purify_normalize_embeddings:False
+image_feature_purify_uniform_noise_eps:4.0
+image_feature_clipure_steps:10
+image_feature_clipure_step_size:10.0
+selected_id_name:selected_topk.json
+weighted_score_name:weighted_scores.json
+batch_entropy_name:entropies.json
+use_class_text_embeddings:False
+zs_template_path:zeroshot-templates.json
+log_dir:/leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results_corrected_ca_tau_AOM/delta_clip_l14_224/Pets/Clean/No_Counter_Attack/No_TPT/Image_Feature_Purify/Type_noisy_anchor_Anchors_10_Alpha_ablation_Sigma_0_18_threshold_0_0_normalize_embeddings_False/Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01
+
+2026-01-27 19:17:43,049 - log - INFO - Use GPU: 0 for training
+2026-01-27 19:18:46,630 - log - INFO - Freezing all parameters except prompt learner
+2026-01-27 19:18:46,631 - log - INFO - => Model created: visual backbone delta_clip_l14_224
+2026-01-27 19:18:46,653 - log - INFO - Number of test samples: 3669
+2026-01-27 19:18:46,653 - log - INFO - Evaluating dataset: Pets
+2026-01-27 19:18:46,654 - log - INFO - Starting evaluation with batch size: 64, selection percentage: 0.1
+2026-01-27 19:18:46,654 - log - INFO - Test-time adaptation steps: 0, learning rate: 0.005
+2026-01-27 19:18:48,209 - log - INFO - Evaluating clean images without adversarial attack or counter-attack
+2026-01-27 19:18:59,203 - log - INFO - Computing Diff Ratio TPT Noisy Anchors for Clean Image as well as Adversarial/Clean image
+2026-01-27 19:19:50,845 - log - INFO - iter:20/3669, clip_clean_acc1=50.0
+2026-01-27 19:19:50,845 - log - INFO - iter:20/3669, clip_acc1=50.0
+2026-01-27 19:19:50,845 - log - INFO - iter:20/3669, Original Clean Acc@1: 50.00, Acc@5: 90.00
+2026-01-27 19:19:50,845 - log - INFO - iter:20/3669, Original Acc@1: 50.00, Acc@5: 90.00
+2026-01-27 19:19:50,845 - log - INFO - iter:20/3669, Single TTA Acc@1: 5.00, Acc@5: 75.00
+2026-01-27 19:19:50,845 - log - INFO - iter:20/3669, Vanilla TTA Acc@1: 60.00, Acc@5: 80.00
+2026-01-27 19:19:50,846 - log - INFO - iter:20/3669, Vanilla Topk TTA Acc@1: 60.00, Acc@5: 80.00
+2026-01-27 19:19:50,846 - log - INFO - iter:20/3669, Weighted TTA Acc@1: 55.00, Acc@5: 90.00
+2026-01-27 19:20:41,858 - log - INFO - iter:40/3669, clip_clean_acc1=47.5
+2026-01-27 19:20:41,858 - log - INFO - iter:40/3669, clip_acc1=47.5
+2026-01-27 19:20:41,858 - log - INFO - iter:40/3669, Original Clean Acc@1: 47.50, Acc@5: 95.00
+2026-01-27 19:20:41,858 - log - INFO - iter:40/3669, Original Acc@1: 47.50, Acc@5: 95.00
+2026-01-27 19:20:41,859 - log - INFO - iter:40/3669, Single TTA Acc@1: 7.50, Acc@5: 80.00
+2026-01-27 19:20:41,859 - log - INFO - iter:40/3669, Vanilla TTA Acc@1: 57.50, Acc@5: 85.00
+2026-01-27 19:20:41,859 - log - INFO - iter:40/3669, Vanilla Topk TTA Acc@1: 57.50, Acc@5: 85.00
+2026-01-27 19:20:41,859 - log - INFO - iter:40/3669, Weighted TTA Acc@1: 55.00, Acc@5: 95.00
+2026-01-27 19:21:32,960 - log - INFO - iter:60/3669, clip_clean_acc1=53.333335876464844
+2026-01-27 19:21:32,960 - log - INFO - iter:60/3669, clip_acc1=53.333335876464844
+2026-01-27 19:21:32,960 - log - INFO - iter:60/3669, Original Clean Acc@1: 53.33, Acc@5: 96.67
+2026-01-27 19:21:32,960 - log - INFO - iter:60/3669, Original Acc@1: 53.33, Acc@5: 96.67
+2026-01-27 19:21:32,960 - log - INFO - iter:60/3669, Single TTA Acc@1: 6.67, Acc@5: 80.00
+2026-01-27 19:21:32,960 - log - INFO - iter:60/3669, Vanilla TTA Acc@1: 58.33, Acc@5: 88.33
+2026-01-27 19:21:32,960 - log - INFO - iter:60/3669, Vanilla Topk TTA Acc@1: 58.33, Acc@5: 88.33
+2026-01-27 19:21:32,961 - log - INFO - iter:60/3669, Weighted TTA Acc@1: 56.67, Acc@5: 96.67
+2026-01-27 19:22:22,816 - log - INFO - iter:80/3669, clip_clean_acc1=53.75
+2026-01-27 19:22:22,816 - log - INFO - iter:80/3669, clip_acc1=53.75
+2026-01-27 19:22:22,816 - log - INFO - iter:80/3669, Original Clean Acc@1: 53.75, Acc@5: 97.50
+2026-01-27 19:22:22,816 - log - INFO - iter:80/3669, Original Acc@1: 53.75, Acc@5: 97.50
+2026-01-27 19:22:22,816 - log - INFO - iter:80/3669, Single TTA Acc@1: 5.00, Acc@5: 82.50
+2026-01-27 19:22:22,816 - log - INFO - iter:80/3669, Vanilla TTA Acc@1: 58.75, Acc@5: 90.00
+2026-01-27 19:22:22,816 - log - INFO - iter:80/3669, Vanilla Topk TTA Acc@1: 58.75, Acc@5: 90.00
+2026-01-27 19:22:22,816 - log - INFO - iter:80/3669, Weighted TTA Acc@1: 57.50, Acc@5: 96.25
+2026-01-27 19:23:12,832 - log - INFO - iter:100/3669, clip_clean_acc1=55.0
+2026-01-27 19:23:12,832 - log - INFO - iter:100/3669, clip_acc1=55.0
+2026-01-27 19:23:12,832 - log - INFO - iter:100/3669, Original Clean Acc@1: 55.00, Acc@5: 98.00
+2026-01-27 19:23:12,832 - log - INFO - iter:100/3669, Original Acc@1: 55.00, Acc@5: 98.00
+2026-01-27 19:23:12,833 - log - INFO - iter:100/3669, Single TTA Acc@1: 4.00, Acc@5: 85.00
+2026-01-27 19:23:12,833 - log - INFO - iter:100/3669, Vanilla TTA Acc@1: 60.00, Acc@5: 92.00
+2026-01-27 19:23:12,833 - log - INFO - iter:100/3669, Vanilla Topk TTA Acc@1: 60.00, Acc@5: 92.00
+2026-01-27 19:23:12,833 - log - INFO - iter:100/3669, Weighted TTA Acc@1: 57.00, Acc@5: 97.00
+2026-01-27 19:24:03,012 - log - INFO - iter:120/3669, clip_clean_acc1=60.833335876464844
+2026-01-27 19:24:03,012 - log - INFO - iter:120/3669, clip_acc1=60.833335876464844
+2026-01-27 19:24:03,012 - log - INFO - iter:120/3669, Original Clean Acc@1: 60.83, Acc@5: 98.33
+2026-01-27 19:24:03,013 - log - INFO - iter:120/3669, Original Acc@1: 60.83, Acc@5: 98.33
+2026-01-27 19:24:03,013 - log - INFO - iter:120/3669, Single TTA Acc@1: 8.33, Acc@5: 85.83
+2026-01-27 19:24:03,013 - log - INFO - iter:120/3669, Vanilla TTA Acc@1: 65.00, Acc@5: 93.33
+2026-01-27 19:24:03,013 - log - INFO - iter:120/3669, Vanilla Topk TTA Acc@1: 65.00, Acc@5: 93.33
+2026-01-27 19:24:03,013 - log - INFO - iter:120/3669, Weighted TTA Acc@1: 62.50, Acc@5: 97.50
+2026-01-27 19:24:53,744 - log - INFO - iter:140/3669, clip_clean_acc1=63.57143020629883
+2026-01-27 19:24:53,744 - log - INFO - iter:140/3669, clip_acc1=63.57143020629883
+2026-01-27 19:24:53,744 - log - INFO - iter:140/3669, Original Clean Acc@1: 63.57, Acc@5: 98.57
+2026-01-27 19:24:53,744 - log - INFO - iter:140/3669, Original Acc@1: 63.57, Acc@5: 98.57
+2026-01-27 19:24:53,744 - log - INFO - iter:140/3669, Single TTA Acc@1: 15.71, Acc@5: 86.43
+2026-01-27 19:24:53,744 - log - INFO - iter:140/3669, Vanilla TTA Acc@1: 67.14, Acc@5: 94.29
+2026-01-27 19:24:53,744 - log - INFO - iter:140/3669, Vanilla Topk TTA Acc@1: 67.14, Acc@5: 94.29
+2026-01-27 19:24:53,744 - log - INFO - iter:140/3669, Weighted TTA Acc@1: 65.71, Acc@5: 97.86
+2026-01-27 19:25:44,570 - log - INFO - iter:160/3669, clip_clean_acc1=66.25
+2026-01-27 19:25:44,570 - log - INFO - iter:160/3669, clip_acc1=66.25
+2026-01-27 19:25:44,570 - log - INFO - iter:160/3669, Original Clean Acc@1: 66.25, Acc@5: 98.75
+2026-01-27 19:25:44,570 - log - INFO - iter:160/3669, Original Acc@1: 66.25, Acc@5: 98.75
+2026-01-27 19:25:44,570 - log - INFO - iter:160/3669, Single TTA Acc@1: 21.25, Acc@5: 86.25
+2026-01-27 19:25:44,570 - log - INFO - iter:160/3669, Vanilla TTA Acc@1: 69.38, Acc@5: 95.00
+2026-01-27 19:25:44,570 - log - INFO - iter:160/3669, Vanilla Topk TTA Acc@1: 69.38, Acc@5: 95.00
+2026-01-27 19:25:44,571 - log - INFO - iter:160/3669, Weighted TTA Acc@1: 68.12, Acc@5: 98.12
+2026-01-27 19:26:35,425 - log - INFO - iter:180/3669, clip_clean_acc1=68.33333587646484
+2026-01-27 19:26:35,425 - log - INFO - iter:180/3669, clip_acc1=68.33333587646484
+2026-01-27 19:26:35,425 - log - INFO - iter:180/3669, Original Clean Acc@1: 68.33, Acc@5: 98.89
+2026-01-27 19:26:35,425 - log - INFO - iter:180/3669, Original Acc@1: 68.33, Acc@5: 98.89
+2026-01-27 19:26:35,425 - log - INFO - iter:180/3669, Single TTA Acc@1: 25.00, Acc@5: 86.67
+2026-01-27 19:26:35,426 - log - INFO - iter:180/3669, Vanilla TTA Acc@1: 71.11, Acc@5: 95.56
+2026-01-27 19:26:35,426 - log - INFO - iter:180/3669, Vanilla Topk TTA Acc@1: 71.11, Acc@5: 95.56
+2026-01-27 19:26:35,426 - log - INFO - iter:180/3669, Weighted TTA Acc@1: 70.00, Acc@5: 98.33
+2026-01-27 19:27:27,096 - log - INFO - iter:200/3669, clip_clean_acc1=70.0
+2026-01-27 19:27:27,096 - log - INFO - iter:200/3669, clip_acc1=70.0
+2026-01-27 19:27:27,096 - log - INFO - iter:200/3669, Original Clean Acc@1: 70.00, Acc@5: 98.50
+2026-01-27 19:27:27,096 - log - INFO - iter:200/3669, Original Acc@1: 70.00, Acc@5: 98.50
+2026-01-27 19:27:27,096 - log - INFO - iter:200/3669, Single TTA Acc@1: 28.00, Acc@5: 87.50
+2026-01-27 19:27:27,096 - log - INFO - iter:200/3669, Vanilla TTA Acc@1: 71.50, Acc@5: 95.50
+2026-01-27 19:27:27,096 - log - INFO - iter:200/3669, Vanilla Topk TTA Acc@1: 71.50, Acc@5: 95.50
+2026-01-27 19:27:27,096 - log - INFO - iter:200/3669, Weighted TTA Acc@1: 70.50, Acc@5: 98.00
+2026-01-27 19:28:17,442 - log - INFO - iter:220/3669, clip_clean_acc1=72.2727279663086
+2026-01-27 19:28:17,442 - log - INFO - iter:220/3669, clip_acc1=72.2727279663086
+2026-01-27 19:28:17,442 - log - INFO - iter:220/3669, Original Clean Acc@1: 72.27, Acc@5: 98.64
+2026-01-27 19:28:17,442 - log - INFO - iter:220/3669, Original Acc@1: 72.27, Acc@5: 98.64
+2026-01-27 19:28:17,442 - log - INFO - iter:220/3669, Single TTA Acc@1: 31.36, Acc@5: 87.73
+2026-01-27 19:28:17,442 - log - INFO - iter:220/3669, Vanilla TTA Acc@1: 71.82, Acc@5: 95.91
+2026-01-27 19:28:17,442 - log - INFO - iter:220/3669, Vanilla Topk TTA Acc@1: 71.82, Acc@5: 95.91
+2026-01-27 19:28:17,442 - log - INFO - iter:220/3669, Weighted TTA Acc@1: 71.82, Acc@5: 98.18
+2026-01-27 19:29:07,616 - log - INFO - iter:240/3669, clip_clean_acc1=71.66667175292969
+2026-01-27 19:29:07,616 - log - INFO - iter:240/3669, clip_acc1=71.66667175292969
+2026-01-27 19:29:07,616 - log - INFO - iter:240/3669, Original Clean Acc@1: 71.67, Acc@5: 98.75
+2026-01-27 19:29:07,616 - log - INFO - iter:240/3669, Original Acc@1: 71.67, Acc@5: 98.75
+2026-01-27 19:29:07,616 - log - INFO - iter:240/3669, Single TTA Acc@1: 34.58, Acc@5: 87.92
+2026-01-27 19:29:07,616 - log - INFO - iter:240/3669, Vanilla TTA Acc@1: 69.58, Acc@5: 96.25
+2026-01-27 19:29:07,617 - log - INFO - iter:240/3669, Vanilla Topk TTA Acc@1: 69.58, Acc@5: 96.25
+2026-01-27 19:29:07,617 - log - INFO - iter:240/3669, Weighted TTA Acc@1: 70.42, Acc@5: 97.92
+2026-01-27 19:29:58,440 - log - INFO - iter:260/3669, clip_clean_acc1=71.53845977783203
+2026-01-27 19:29:58,440 - log - INFO - iter:260/3669, clip_acc1=71.53845977783203
+2026-01-27 19:29:58,440 - log - INFO - iter:260/3669, Original Clean Acc@1: 71.54, Acc@5: 98.85
+2026-01-27 19:29:58,440 - log - INFO - iter:260/3669, Original Acc@1: 71.54, Acc@5: 98.85
+2026-01-27 19:29:58,440 - log - INFO - iter:260/3669, Single TTA Acc@1: 36.15, Acc@5: 88.08
+2026-01-27 19:29:58,440 - log - INFO - iter:260/3669, Vanilla TTA Acc@1: 69.62, Acc@5: 96.54
+2026-01-27 19:29:58,440 - log - INFO - iter:260/3669, Vanilla Topk TTA Acc@1: 69.62, Acc@5: 96.54
+2026-01-27 19:29:58,441 - log - INFO - iter:260/3669, Weighted TTA Acc@1: 70.38, Acc@5: 98.08
+2026-01-27 19:30:48,626 - log - INFO - iter:280/3669, clip_clean_acc1=73.21428680419922
+2026-01-27 19:30:48,626 - log - INFO - iter:280/3669, clip_acc1=73.21428680419922
+2026-01-27 19:30:48,626 - log - INFO - iter:280/3669, Original Clean Acc@1: 73.21, Acc@5: 98.93
+2026-01-27 19:30:48,627 - log - INFO - iter:280/3669, Original Acc@1: 73.21, Acc@5: 98.93
+2026-01-27 19:30:48,627 - log - INFO - iter:280/3669, Single TTA Acc@1: 38.21, Acc@5: 88.93
+2026-01-27 19:30:48,627 - log - INFO - iter:280/3669, Vanilla TTA Acc@1: 70.36, Acc@5: 96.79
+2026-01-27 19:30:48,627 - log - INFO - iter:280/3669, Vanilla Topk TTA Acc@1: 70.36, Acc@5: 96.79
+2026-01-27 19:30:48,627 - log - INFO - iter:280/3669, Weighted TTA Acc@1: 71.79, Acc@5: 98.21
+2026-01-27 19:31:40,337 - log - INFO - iter:300/3669, clip_clean_acc1=73.33333587646484
+2026-01-27 19:31:40,338 - log - INFO - iter:300/3669, clip_acc1=73.33333587646484
+2026-01-27 19:31:40,338 - log - INFO - iter:300/3669, Original Clean Acc@1: 73.33, Acc@5: 99.00
+2026-01-27 19:31:40,338 - log - INFO - iter:300/3669, Original Acc@1: 73.33, Acc@5: 99.00
+2026-01-27 19:31:40,338 - log - INFO - iter:300/3669, Single TTA Acc@1: 39.67, Acc@5: 88.33
+2026-01-27 19:31:40,338 - log - INFO - iter:300/3669, Vanilla TTA Acc@1: 70.00, Acc@5: 97.00
+2026-01-27 19:31:40,338 - log - INFO - iter:300/3669, Vanilla Topk TTA Acc@1: 70.00, Acc@5: 97.00
+2026-01-27 19:31:40,338 - log - INFO - iter:300/3669, Weighted TTA Acc@1: 71.67, Acc@5: 98.33
+2026-01-27 19:32:30,301 - log - INFO - iter:320/3669, clip_clean_acc1=73.75
+2026-01-27 19:32:30,301 - log - INFO - iter:320/3669, clip_acc1=73.75
+2026-01-27 19:32:30,301 - log - INFO - iter:320/3669, Original Clean Acc@1: 73.75, Acc@5: 99.06
+2026-01-27 19:32:30,301 - log - INFO - iter:320/3669, Original Acc@1: 73.75, Acc@5: 99.06
+2026-01-27 19:32:30,301 - log - INFO - iter:320/3669, Single TTA Acc@1: 37.50, Acc@5: 88.44
+2026-01-27 19:32:30,302 - log - INFO - iter:320/3669, Vanilla TTA Acc@1: 70.94, Acc@5: 97.19
+2026-01-27 19:32:30,302 - log - INFO - iter:320/3669, Vanilla Topk TTA Acc@1: 70.94, Acc@5: 97.19
+2026-01-27 19:32:30,302 - log - INFO - iter:320/3669, Weighted TTA Acc@1: 72.50, Acc@5: 98.44
+2026-01-27 19:33:20,626 - log - INFO - iter:340/3669, clip_clean_acc1=75.0
+2026-01-27 19:33:20,626 - log - INFO - iter:340/3669, clip_acc1=75.0
+2026-01-27 19:33:20,626 - log - INFO - iter:340/3669, Original Clean Acc@1: 75.00, Acc@5: 99.12
+2026-01-27 19:33:20,626 - log - INFO - iter:340/3669, Original Acc@1: 75.00, Acc@5: 99.12
+2026-01-27 19:33:20,626 - log - INFO - iter:340/3669, Single TTA Acc@1: 36.18, Acc@5: 88.53
+2026-01-27 19:33:20,626 - log - INFO - iter:340/3669, Vanilla TTA Acc@1: 71.76, Acc@5: 97.35
+2026-01-27 19:33:20,626 - log - INFO - iter:340/3669, Vanilla Topk TTA Acc@1: 71.76, Acc@5: 97.35
+2026-01-27 19:33:20,626 - log - INFO - iter:340/3669, Weighted TTA Acc@1: 73.53, Acc@5: 98.53
+2026-01-27 19:34:10,974 - log - INFO - iter:360/3669, clip_clean_acc1=75.83333587646484
+2026-01-27 19:34:10,974 - log - INFO - iter:360/3669, clip_acc1=75.83333587646484
+2026-01-27 19:34:10,974 - log - INFO - iter:360/3669, Original Clean Acc@1: 75.83, Acc@5: 99.17
+2026-01-27 19:34:10,974 - log - INFO - iter:360/3669, Original Acc@1: 75.83, Acc@5: 99.17
+2026-01-27 19:34:10,974 - log - INFO - iter:360/3669, Single TTA Acc@1: 35.28, Acc@5: 88.61
+2026-01-27 19:34:10,974 - log - INFO - iter:360/3669, Vanilla TTA Acc@1: 72.78, Acc@5: 97.50
+2026-01-27 19:34:10,974 - log - INFO - iter:360/3669, Vanilla Topk TTA Acc@1: 72.78, Acc@5: 97.50
+2026-01-27 19:34:10,974 - log - INFO - iter:360/3669, Weighted TTA Acc@1: 74.44, Acc@5: 98.61
+2026-01-27 19:35:00,783 - log - INFO - iter:380/3669, clip_clean_acc1=76.84210968017578
+2026-01-27 19:35:00,783 - log - INFO - iter:380/3669, clip_acc1=76.84210968017578
+2026-01-27 19:35:00,783 - log - INFO - iter:380/3669, Original Clean Acc@1: 76.84, Acc@5: 99.21
+2026-01-27 19:35:00,783 - log - INFO - iter:380/3669, Original Acc@1: 76.84, Acc@5: 99.21
+2026-01-27 19:35:00,784 - log - INFO - iter:380/3669, Single TTA Acc@1: 34.74, Acc@5: 89.21
+2026-01-27 19:35:00,784 - log - INFO - iter:380/3669, Vanilla TTA Acc@1: 73.42, Acc@5: 97.63
+2026-01-27 19:35:00,784 - log - INFO - iter:380/3669, Vanilla Topk TTA Acc@1: 73.42, Acc@5: 97.63
+2026-01-27 19:35:00,784 - log - INFO - iter:380/3669, Weighted TTA Acc@1: 75.00, Acc@5: 98.68
+2026-01-27 19:35:52,574 - log - INFO - iter:400/3669, clip_clean_acc1=78.0
+2026-01-27 19:35:52,575 - log - INFO - iter:400/3669, clip_acc1=78.0
+2026-01-27 19:35:52,575 - log - INFO - iter:400/3669, Original Clean Acc@1: 78.00, Acc@5: 99.25
+2026-01-27 19:35:52,575 - log - INFO - iter:400/3669, Original Acc@1: 78.00, Acc@5: 99.25
+2026-01-27 19:35:52,575 - log - INFO - iter:400/3669, Single TTA Acc@1: 34.75, Acc@5: 89.50
+2026-01-27 19:35:52,575 - log - INFO - iter:400/3669, Vanilla TTA Acc@1: 74.75, Acc@5: 97.75
+2026-01-27 19:35:52,575 - log - INFO - iter:400/3669, Vanilla Topk TTA Acc@1: 74.75, Acc@5: 97.75
+2026-01-27 19:35:52,575 - log - INFO - iter:400/3669, Weighted TTA Acc@1: 76.25, Acc@5: 98.75
+2026-01-27 19:36:42,885 - log - INFO - iter:420/3669, clip_clean_acc1=78.5714340209961
+2026-01-27 19:36:42,885 - log - INFO - iter:420/3669, clip_acc1=78.5714340209961
+2026-01-27 19:36:42,885 - log - INFO - iter:420/3669, Original Clean Acc@1: 78.57, Acc@5: 99.05
+2026-01-27 19:36:42,885 - log - INFO - iter:420/3669, Original Acc@1: 78.57, Acc@5: 99.05
+2026-01-27 19:36:42,885 - log - INFO - iter:420/3669, Single TTA Acc@1: 37.38, Acc@5: 89.52
+2026-01-27 19:36:42,886 - log - INFO - iter:420/3669, Vanilla TTA Acc@1: 75.48, Acc@5: 97.62
+2026-01-27 19:36:42,886 - log - INFO - iter:420/3669, Vanilla Topk TTA Acc@1: 75.48, Acc@5: 97.62
+2026-01-27 19:36:42,886 - log - INFO - iter:420/3669, Weighted TTA Acc@1: 76.90, Acc@5: 98.57
+2026-01-27 19:37:32,758 - log - INFO - iter:440/3669, clip_clean_acc1=79.54544830322266
+2026-01-27 19:37:32,758 - log - INFO - iter:440/3669, clip_acc1=79.54544830322266
+2026-01-27 19:37:32,758 - log - INFO - iter:440/3669, Original Clean Acc@1: 79.55, Acc@5: 99.09
+2026-01-27 19:37:32,759 - log - INFO - iter:440/3669, Original Acc@1: 79.55, Acc@5: 99.09
+2026-01-27 19:37:32,759 - log - INFO - iter:440/3669, Single TTA Acc@1: 40.23, Acc@5: 90.00
+2026-01-27 19:37:32,759 - log - INFO - iter:440/3669, Vanilla TTA Acc@1: 76.59, Acc@5: 97.73
+2026-01-27 19:37:32,759 - log - INFO - iter:440/3669, Vanilla Topk TTA Acc@1: 76.59, Acc@5: 97.73
+2026-01-27 19:37:32,759 - log - INFO - iter:440/3669, Weighted TTA Acc@1: 77.95, Acc@5: 98.64
+2026-01-27 19:38:23,583 - log - INFO - iter:460/3669, clip_clean_acc1=80.43477630615234
+2026-01-27 19:38:23,583 - log - INFO - iter:460/3669, clip_acc1=80.43477630615234
+2026-01-27 19:38:23,583 - log - INFO - iter:460/3669, Original Clean Acc@1: 80.43, Acc@5: 99.13
+2026-01-27 19:38:23,583 - log - INFO - iter:460/3669, Original Acc@1: 80.43, Acc@5: 99.13
+2026-01-27 19:38:23,583 - log - INFO - iter:460/3669, Single TTA Acc@1: 42.61, Acc@5: 90.43
+2026-01-27 19:38:23,583 - log - INFO - iter:460/3669, Vanilla TTA Acc@1: 77.61, Acc@5: 97.83
+2026-01-27 19:38:23,583 - log - INFO - iter:460/3669, Vanilla Topk TTA Acc@1: 77.61, Acc@5: 97.83
+2026-01-27 19:38:23,583 - log - INFO - iter:460/3669, Weighted TTA Acc@1: 78.91, Acc@5: 98.70
+2026-01-27 19:39:15,204 - log - INFO - iter:480/3669, clip_clean_acc1=81.25000762939453
+2026-01-27 19:39:15,205 - log - INFO - iter:480/3669, clip_acc1=81.25000762939453
+2026-01-27 19:39:15,205 - log - INFO - iter:480/3669, Original Clean Acc@1: 81.25, Acc@5: 99.17
+2026-01-27 19:39:15,205 - log - INFO - iter:480/3669, Original Acc@1: 81.25, Acc@5: 99.17
+2026-01-27 19:39:15,205 - log - INFO - iter:480/3669, Single TTA Acc@1: 45.00, Acc@5: 90.83
+2026-01-27 19:39:15,205 - log - INFO - iter:480/3669, Vanilla TTA Acc@1: 78.54, Acc@5: 97.92
+2026-01-27 19:39:15,205 - log - INFO - iter:480/3669, Vanilla Topk TTA Acc@1: 78.54, Acc@5: 97.92
+2026-01-27 19:39:15,205 - log - INFO - iter:480/3669, Weighted TTA Acc@1: 79.79, Acc@5: 98.75
+2026-01-27 19:40:05,605 - log - INFO - iter:500/3669, clip_clean_acc1=82.00000762939453
+2026-01-27 19:40:05,605 - log - INFO - iter:500/3669, clip_acc1=82.00000762939453
+2026-01-27 19:40:05,605 - log - INFO - iter:500/3669, Original Clean Acc@1: 82.00, Acc@5: 99.20
+2026-01-27 19:40:05,605 - log - INFO - iter:500/3669, Original Acc@1: 82.00, Acc@5: 99.20
+2026-01-27 19:40:05,605 - log - INFO - iter:500/3669, Single TTA Acc@1: 46.60, Acc@5: 91.00
+2026-01-27 19:40:05,606 - log - INFO - iter:500/3669, Vanilla TTA Acc@1: 79.40, Acc@5: 98.00
+2026-01-27 19:40:05,606 - log - INFO - iter:500/3669, Vanilla Topk TTA Acc@1: 79.40, Acc@5: 98.00
+2026-01-27 19:40:05,606 - log - INFO - iter:500/3669, Weighted TTA Acc@1: 80.60, Acc@5: 98.80
+2026-01-27 19:40:56,410 - log - INFO - iter:520/3669, clip_clean_acc1=82.30769348144531
+2026-01-27 19:40:56,410 - log - INFO - iter:520/3669, clip_acc1=82.30769348144531
+2026-01-27 19:40:56,410 - log - INFO - iter:520/3669, Original Clean Acc@1: 82.31, Acc@5: 99.23
+2026-01-27 19:40:56,410 - log - INFO - iter:520/3669, Original Acc@1: 82.31, Acc@5: 99.23
+2026-01-27 19:40:56,410 - log - INFO - iter:520/3669, Single TTA Acc@1: 45.77, Acc@5: 90.77
+2026-01-27 19:40:56,411 - log - INFO - iter:520/3669, Vanilla TTA Acc@1: 79.04, Acc@5: 97.88
+2026-01-27 19:40:56,411 - log - INFO - iter:520/3669, Vanilla Topk TTA Acc@1: 79.04, Acc@5: 97.88
+2026-01-27 19:40:56,411 - log - INFO - iter:520/3669, Weighted TTA Acc@1: 80.58, Acc@5: 98.65
+2026-01-27 19:41:47,061 - log - INFO - iter:540/3669, clip_clean_acc1=81.85185241699219
+2026-01-27 19:41:47,061 - log - INFO - iter:540/3669, clip_acc1=81.85185241699219
+2026-01-27 19:41:47,062 - log - INFO - iter:540/3669, Original Clean Acc@1: 81.85, Acc@5: 99.26
+2026-01-27 19:41:47,062 - log - INFO - iter:540/3669, Original Acc@1: 81.85, Acc@5: 99.26
+2026-01-27 19:41:47,062 - log - INFO - iter:540/3669, Single TTA Acc@1: 45.19, Acc@5: 90.37
+2026-01-27 19:41:47,062 - log - INFO - iter:540/3669, Vanilla TTA Acc@1: 78.52, Acc@5: 97.96
+2026-01-27 19:41:47,062 - log - INFO - iter:540/3669, Vanilla Topk TTA Acc@1: 78.52, Acc@5: 97.96
+2026-01-27 19:41:47,062 - log - INFO - iter:540/3669, Weighted TTA Acc@1: 80.00, Acc@5: 98.70
+2026-01-27 19:42:37,362 - log - INFO - iter:560/3669, clip_clean_acc1=81.78571319580078
+2026-01-27 19:42:37,362 - log - INFO - iter:560/3669, clip_acc1=81.78571319580078
+2026-01-27 19:42:37,362 - log - INFO - iter:560/3669, Original Clean Acc@1: 81.79, Acc@5: 99.29
+2026-01-27 19:42:37,362 - log - INFO - iter:560/3669, Original Acc@1: 81.79, Acc@5: 99.29
+2026-01-27 19:42:37,363 - log - INFO - iter:560/3669, Single TTA Acc@1: 44.82, Acc@5: 89.64
+2026-01-27 19:42:37,363 - log - INFO - iter:560/3669, Vanilla TTA Acc@1: 78.21, Acc@5: 97.86
+2026-01-27 19:42:37,363 - log - INFO - iter:560/3669, Vanilla Topk TTA Acc@1: 78.21, Acc@5: 97.86
+2026-01-27 19:42:37,363 - log - INFO - iter:560/3669, Weighted TTA Acc@1: 79.82, Acc@5: 98.57
+2026-01-27 19:43:27,332 - log - INFO - iter:580/3669, clip_clean_acc1=80.86206817626953
+2026-01-27 19:43:27,332 - log - INFO - iter:580/3669, clip_acc1=80.86206817626953
+2026-01-27 19:43:27,332 - log - INFO - iter:580/3669, Original Clean Acc@1: 80.86, Acc@5: 99.31
+2026-01-27 19:43:27,332 - log - INFO - iter:580/3669, Original Acc@1: 80.86, Acc@5: 99.31
+2026-01-27 19:43:27,332 - log - INFO - iter:580/3669, Single TTA Acc@1: 43.62, Acc@5: 89.48
+2026-01-27 19:43:27,332 - log - INFO - iter:580/3669, Vanilla TTA Acc@1: 76.72, Acc@5: 97.76
+2026-01-27 19:43:27,333 - log - INFO - iter:580/3669, Vanilla Topk TTA Acc@1: 76.72, Acc@5: 97.76
+2026-01-27 19:43:27,333 - log - INFO - iter:580/3669, Weighted TTA Acc@1: 78.79, Acc@5: 98.45
+2026-01-27 19:44:17,651 - log - INFO - iter:600/3669, clip_clean_acc1=80.83333587646484
+2026-01-27 19:44:17,651 - log - INFO - iter:600/3669, clip_acc1=80.83333587646484
+2026-01-27 19:44:17,651 - log - INFO - iter:600/3669, Original Clean Acc@1: 80.83, Acc@5: 99.33
+2026-01-27 19:44:17,651 - log - INFO - iter:600/3669, Original Acc@1: 80.83, Acc@5: 99.33
+2026-01-27 19:44:17,651 - log - INFO - iter:600/3669, Single TTA Acc@1: 42.50, Acc@5: 89.00
+2026-01-27 19:44:17,651 - log - INFO - iter:600/3669, Vanilla TTA Acc@1: 76.67, Acc@5: 97.83
+2026-01-27 19:44:17,651 - log - INFO - iter:600/3669, Vanilla Topk TTA Acc@1: 76.67, Acc@5: 97.83
+2026-01-27 19:44:17,651 - log - INFO - iter:600/3669, Weighted TTA Acc@1: 78.67, Acc@5: 98.50
+2026-01-27 19:45:07,911 - log - INFO - iter:620/3669, clip_clean_acc1=81.29032135009766
+2026-01-27 19:45:07,911 - log - INFO - iter:620/3669, clip_acc1=81.29032135009766
+2026-01-27 19:45:07,911 - log - INFO - iter:620/3669, Original Clean Acc@1: 81.29, Acc@5: 99.35
+2026-01-27 19:45:07,911 - log - INFO - iter:620/3669, Original Acc@1: 81.29, Acc@5: 99.35
+2026-01-27 19:45:07,911 - log - INFO - iter:620/3669, Single TTA Acc@1: 42.58, Acc@5: 88.71
+2026-01-27 19:45:07,911 - log - INFO - iter:620/3669, Vanilla TTA Acc@1: 77.10, Acc@5: 97.90
+2026-01-27 19:45:07,911 - log - INFO - iter:620/3669, Vanilla Topk TTA Acc@1: 77.10, Acc@5: 97.90
+2026-01-27 19:45:07,911 - log - INFO - iter:620/3669, Weighted TTA Acc@1: 79.19, Acc@5: 98.55
+2026-01-27 19:45:57,717 - log - INFO - iter:640/3669, clip_clean_acc1=81.09375
+2026-01-27 19:45:57,717 - log - INFO - iter:640/3669, clip_acc1=81.09375
+2026-01-27 19:45:57,717 - log - INFO - iter:640/3669, Original Clean Acc@1: 81.09, Acc@5: 99.38
+2026-01-27 19:45:57,718 - log - INFO - iter:640/3669, Original Acc@1: 81.09, Acc@5: 99.38
+2026-01-27 19:45:57,718 - log - INFO - iter:640/3669, Single TTA Acc@1: 42.19, Acc@5: 88.44
+2026-01-27 19:45:57,718 - log - INFO - iter:640/3669, Vanilla TTA Acc@1: 76.72, Acc@5: 97.97
+2026-01-27 19:45:57,718 - log - INFO - iter:640/3669, Vanilla Topk TTA Acc@1: 76.72, Acc@5: 97.97
+2026-01-27 19:45:57,718 - log - INFO - iter:640/3669, Weighted TTA Acc@1: 78.91, Acc@5: 98.59
+2026-01-27 19:46:47,510 - log - INFO - iter:660/3669, clip_clean_acc1=80.90908813476562
+2026-01-27 19:46:47,510 - log - INFO - iter:660/3669, clip_acc1=80.90908813476562
+2026-01-27 19:46:47,511 - log - INFO - iter:660/3669, Original Clean Acc@1: 80.91, Acc@5: 99.39
+2026-01-27 19:46:47,511 - log - INFO - iter:660/3669, Original Acc@1: 80.91, Acc@5: 99.39
+2026-01-27 19:46:47,511 - log - INFO - iter:660/3669, Single TTA Acc@1: 41.21, Acc@5: 88.03
+2026-01-27 19:46:47,511 - log - INFO - iter:660/3669, Vanilla TTA Acc@1: 76.06, Acc@5: 98.03
+2026-01-27 19:46:47,511 - log - INFO - iter:660/3669, Vanilla Topk TTA Acc@1: 76.06, Acc@5: 98.03
+2026-01-27 19:46:47,511 - log - INFO - iter:660/3669, Weighted TTA Acc@1: 78.03, Acc@5: 98.64
+2026-01-27 19:47:38,277 - log - INFO - iter:680/3669, clip_clean_acc1=81.47058868408203
+2026-01-27 19:47:38,277 - log - INFO - iter:680/3669, clip_acc1=81.47058868408203
+2026-01-27 19:47:38,278 - log - INFO - iter:680/3669, Original Clean Acc@1: 81.47, Acc@5: 99.41
+2026-01-27 19:47:38,278 - log - INFO - iter:680/3669, Original Acc@1: 81.47, Acc@5: 99.41
+2026-01-27 19:47:38,278 - log - INFO - iter:680/3669, Single TTA Acc@1: 40.88, Acc@5: 88.09
+2026-01-27 19:47:38,278 - log - INFO - iter:680/3669, Vanilla TTA Acc@1: 76.18, Acc@5: 98.09
+2026-01-27 19:47:38,278 - log - INFO - iter:680/3669, Vanilla Topk TTA Acc@1: 76.18, Acc@5: 98.09
+2026-01-27 19:47:38,278 - log - INFO - iter:680/3669, Weighted TTA Acc@1: 78.24, Acc@5: 98.68
+2026-01-27 19:48:30,014 - log - INFO - iter:700/3669, clip_clean_acc1=81.42857360839844
+2026-01-27 19:48:30,014 - log - INFO - iter:700/3669, clip_acc1=81.42857360839844
+2026-01-27 19:48:30,014 - log - INFO - iter:700/3669, Original Clean Acc@1: 81.43, Acc@5: 99.14
+2026-01-27 19:48:30,014 - log - INFO - iter:700/3669, Original Acc@1: 81.43, Acc@5: 99.14
+2026-01-27 19:48:30,014 - log - INFO - iter:700/3669, Single TTA Acc@1: 40.14, Acc@5: 87.43
+2026-01-27 19:48:30,014 - log - INFO - iter:700/3669, Vanilla TTA Acc@1: 76.00, Acc@5: 97.86
+2026-01-27 19:48:30,014 - log - INFO - iter:700/3669, Vanilla Topk TTA Acc@1: 76.00, Acc@5: 97.86
+2026-01-27 19:48:30,014 - log - INFO - iter:700/3669, Weighted TTA Acc@1: 78.00, Acc@5: 98.43
+2026-01-27 19:49:21,484 - log - INFO - iter:720/3669, clip_clean_acc1=79.16667175292969
+2026-01-27 19:49:21,484 - log - INFO - iter:720/3669, clip_acc1=79.16667175292969
+2026-01-27 19:49:21,484 - log - INFO - iter:720/3669, Original Clean Acc@1: 79.17, Acc@5: 96.39
+2026-01-27 19:49:21,484 - log - INFO - iter:720/3669, Original Acc@1: 79.17, Acc@5: 96.39
+2026-01-27 19:49:21,485 - log - INFO - iter:720/3669, Single TTA Acc@1: 39.03, Acc@5: 85.00
+2026-01-27 19:49:21,485 - log - INFO - iter:720/3669, Vanilla TTA Acc@1: 73.89, Acc@5: 95.14
+2026-01-27 19:49:21,485 - log - INFO - iter:720/3669, Vanilla Topk TTA Acc@1: 73.89, Acc@5: 95.14
+2026-01-27 19:49:21,485 - log - INFO - iter:720/3669, Weighted TTA Acc@1: 75.83, Acc@5: 95.69
+2026-01-27 19:50:11,343 - log - INFO - iter:740/3669, clip_clean_acc1=77.02703094482422
+2026-01-27 19:50:11,343 - log - INFO - iter:740/3669, clip_acc1=77.02703094482422
+2026-01-27 19:50:11,343 - log - INFO - iter:740/3669, Original Clean Acc@1: 77.03, Acc@5: 93.78
+2026-01-27 19:50:11,343 - log - INFO - iter:740/3669, Original Acc@1: 77.03, Acc@5: 93.78
+2026-01-27 19:50:11,344 - log - INFO - iter:740/3669, Single TTA Acc@1: 37.97, Acc@5: 82.70
+2026-01-27 19:50:11,344 - log - INFO - iter:740/3669, Vanilla TTA Acc@1: 71.89, Acc@5: 92.57
+2026-01-27 19:50:11,344 - log - INFO - iter:740/3669, Vanilla Topk TTA Acc@1: 71.89, Acc@5: 92.57
+2026-01-27 19:50:11,344 - log - INFO - iter:740/3669, Weighted TTA Acc@1: 73.78, Acc@5: 93.11
+2026-01-27 19:51:01,159 - log - INFO - iter:760/3669, clip_clean_acc1=75.0
+2026-01-27 19:51:01,160 - log - INFO - iter:760/3669, clip_acc1=75.0
+2026-01-27 19:51:01,160 - log - INFO - iter:760/3669, Original Clean Acc@1: 75.00, Acc@5: 91.32
+2026-01-27 19:51:01,160 - log - INFO - iter:760/3669, Original Acc@1: 75.00, Acc@5: 91.32
+2026-01-27 19:51:01,160 - log - INFO - iter:760/3669, Single TTA Acc@1: 36.97, Acc@5: 80.53
+2026-01-27 19:51:01,160 - log - INFO - iter:760/3669, Vanilla TTA Acc@1: 70.00, Acc@5: 90.13
+2026-01-27 19:51:01,160 - log - INFO - iter:760/3669, Vanilla Topk TTA Acc@1: 70.00, Acc@5: 90.13
+2026-01-27 19:51:01,160 - log - INFO - iter:760/3669, Weighted TTA Acc@1: 71.84, Acc@5: 90.66
+2026-01-27 19:51:51,653 - log - INFO - iter:780/3669, clip_clean_acc1=73.0769271850586
+2026-01-27 19:51:51,653 - log - INFO - iter:780/3669, clip_acc1=73.0769271850586
+2026-01-27 19:51:51,653 - log - INFO - iter:780/3669, Original Clean Acc@1: 73.08, Acc@5: 88.97
+2026-01-27 19:51:51,654 - log - INFO - iter:780/3669, Original Acc@1: 73.08, Acc@5: 88.97
+2026-01-27 19:51:51,654 - log - INFO - iter:780/3669, Single TTA Acc@1: 36.03, Acc@5: 78.46
+2026-01-27 19:51:51,654 - log - INFO - iter:780/3669, Vanilla TTA Acc@1: 68.21, Acc@5: 87.82
+2026-01-27 19:51:51,654 - log - INFO - iter:780/3669, Vanilla Topk TTA Acc@1: 68.21, Acc@5: 87.82
+2026-01-27 19:51:51,654 - log - INFO - iter:780/3669, Weighted TTA Acc@1: 70.00, Acc@5: 88.33
+2026-01-27 19:52:42,372 - log - INFO - iter:800/3669, clip_clean_acc1=72.625
+2026-01-27 19:52:42,372 - log - INFO - iter:800/3669, clip_acc1=72.625
+2026-01-27 19:52:42,372 - log - INFO - iter:800/3669, Original Clean Acc@1: 72.62, Acc@5: 88.38
+2026-01-27 19:52:42,372 - log - INFO - iter:800/3669, Original Acc@1: 72.62, Acc@5: 88.38
+2026-01-27 19:52:42,372 - log - INFO - iter:800/3669, Single TTA Acc@1: 35.88, Acc@5: 77.88
+2026-01-27 19:52:42,373 - log - INFO - iter:800/3669, Vanilla TTA Acc@1: 67.88, Acc@5: 87.12
+2026-01-27 19:52:42,373 - log - INFO - iter:800/3669, Vanilla Topk TTA Acc@1: 67.88, Acc@5: 87.12
+2026-01-27 19:52:42,373 - log - INFO - iter:800/3669, Weighted TTA Acc@1: 69.62, Acc@5: 87.62
+2026-01-27 19:53:33,264 - log - INFO - iter:820/3669, clip_clean_acc1=72.92682647705078
+2026-01-27 19:53:33,264 - log - INFO - iter:820/3669, clip_acc1=72.92682647705078
+2026-01-27 19:53:33,264 - log - INFO - iter:820/3669, Original Clean Acc@1: 72.93, Acc@5: 88.66
+2026-01-27 19:53:33,264 - log - INFO - iter:820/3669, Original Acc@1: 72.93, Acc@5: 88.66
+2026-01-27 19:53:33,264 - log - INFO - iter:820/3669, Single TTA Acc@1: 35.98, Acc@5: 78.05
+2026-01-27 19:53:33,264 - log - INFO - iter:820/3669, Vanilla TTA Acc@1: 67.80, Acc@5: 87.44
+2026-01-27 19:53:33,264 - log - INFO - iter:820/3669, Vanilla Topk TTA Acc@1: 67.80, Acc@5: 87.44
+2026-01-27 19:53:33,265 - log - INFO - iter:820/3669, Weighted TTA Acc@1: 69.76, Acc@5: 87.93
+2026-01-27 19:54:24,256 - log - INFO - iter:840/3669, clip_clean_acc1=73.45238494873047
+2026-01-27 19:54:24,256 - log - INFO - iter:840/3669, clip_acc1=73.45238494873047
+2026-01-27 19:54:24,256 - log - INFO - iter:840/3669, Original Clean Acc@1: 73.45, Acc@5: 88.93
+2026-01-27 19:54:24,256 - log - INFO - iter:840/3669, Original Acc@1: 73.45, Acc@5: 88.93
+2026-01-27 19:54:24,256 - log - INFO - iter:840/3669, Single TTA Acc@1: 36.79, Acc@5: 78.33
+2026-01-27 19:54:24,257 - log - INFO - iter:840/3669, Vanilla TTA Acc@1: 68.45, Acc@5: 87.74
+2026-01-27 19:54:24,257 - log - INFO - iter:840/3669, Vanilla Topk TTA Acc@1: 68.45, Acc@5: 87.74
+2026-01-27 19:54:24,257 - log - INFO - iter:840/3669, Weighted TTA Acc@1: 70.36, Acc@5: 88.21
+2026-01-27 19:55:14,260 - log - INFO - iter:860/3669, clip_clean_acc1=73.83721160888672
+2026-01-27 19:55:14,261 - log - INFO - iter:860/3669, clip_acc1=73.83721160888672
+2026-01-27 19:55:14,261 - log - INFO - iter:860/3669, Original Clean Acc@1: 73.84, Acc@5: 89.19
+2026-01-27 19:55:14,261 - log - INFO - iter:860/3669, Original Acc@1: 73.84, Acc@5: 89.19
+2026-01-27 19:55:14,261 - log - INFO - iter:860/3669, Single TTA Acc@1: 36.98, Acc@5: 78.37
+2026-01-27 19:55:14,261 - log - INFO - iter:860/3669, Vanilla TTA Acc@1: 68.60, Acc@5: 88.02
+2026-01-27 19:55:14,261 - log - INFO - iter:860/3669, Vanilla Topk TTA Acc@1: 68.60, Acc@5: 88.02
+2026-01-27 19:55:14,261 - log - INFO - iter:860/3669, Weighted TTA Acc@1: 70.81, Acc@5: 88.49
+2026-01-27 19:56:04,083 - log - INFO - iter:880/3669, clip_clean_acc1=74.31817626953125
+2026-01-27 19:56:04,083 - log - INFO - iter:880/3669, clip_acc1=74.31817626953125
+2026-01-27 19:56:04,083 - log - INFO - iter:880/3669, Original Clean Acc@1: 74.32, Acc@5: 89.43
+2026-01-27 19:56:04,083 - log - INFO - iter:880/3669, Original Acc@1: 74.32, Acc@5: 89.43
+2026-01-27 19:56:04,083 - log - INFO - iter:880/3669, Single TTA Acc@1: 37.73, Acc@5: 78.64
+2026-01-27 19:56:04,083 - log - INFO - iter:880/3669, Vanilla TTA Acc@1: 69.20, Acc@5: 88.30
+2026-01-27 19:56:04,083 - log - INFO - iter:880/3669, Vanilla Topk TTA Acc@1: 69.20, Acc@5: 88.30
+2026-01-27 19:56:04,084 - log - INFO - iter:880/3669, Weighted TTA Acc@1: 71.36, Acc@5: 88.75
+2026-01-27 19:56:54,501 - log - INFO - iter:900/3669, clip_clean_acc1=74.55555725097656
+2026-01-27 19:56:54,502 - log - INFO - iter:900/3669, clip_acc1=74.55555725097656
+2026-01-27 19:56:54,502 - log - INFO - iter:900/3669, Original Clean Acc@1: 74.56, Acc@5: 89.67
+2026-01-27 19:56:54,502 - log - INFO - iter:900/3669, Original Acc@1: 74.56, Acc@5: 89.67
+2026-01-27 19:56:54,502 - log - INFO - iter:900/3669, Single TTA Acc@1: 37.44, Acc@5: 78.00
+2026-01-27 19:56:54,502 - log - INFO - iter:900/3669, Vanilla TTA Acc@1: 69.56, Acc@5: 88.56
+2026-01-27 19:56:54,502 - log - INFO - iter:900/3669, Vanilla Topk TTA Acc@1: 69.56, Acc@5: 88.56
+2026-01-27 19:56:54,502 - log - INFO - iter:900/3669, Weighted TTA Acc@1: 71.67, Acc@5: 89.00
+2026-01-27 19:57:44,802 - log - INFO - iter:920/3669, clip_clean_acc1=75.10869598388672
+2026-01-27 19:57:44,803 - log - INFO - iter:920/3669, clip_acc1=75.10869598388672
+2026-01-27 19:57:44,803 - log - INFO - iter:920/3669, Original Clean Acc@1: 75.11, Acc@5: 89.89
+2026-01-27 19:57:44,803 - log - INFO - iter:920/3669, Original Acc@1: 75.11, Acc@5: 89.89
+2026-01-27 19:57:44,803 - log - INFO - iter:920/3669, Single TTA Acc@1: 37.28, Acc@5: 77.61
+2026-01-27 19:57:44,803 - log - INFO - iter:920/3669, Vanilla TTA Acc@1: 70.22, Acc@5: 88.80
+2026-01-27 19:57:44,803 - log - INFO - iter:920/3669, Vanilla Topk TTA Acc@1: 70.22, Acc@5: 88.80
+2026-01-27 19:57:44,803 - log - INFO - iter:920/3669, Weighted TTA Acc@1: 72.28, Acc@5: 89.24
+2026-01-27 19:58:35,120 - log - INFO - iter:940/3669, clip_clean_acc1=75.53191375732422
+2026-01-27 19:58:35,120 - log - INFO - iter:940/3669, clip_acc1=75.53191375732422
+2026-01-27 19:58:35,120 - log - INFO - iter:940/3669, Original Clean Acc@1: 75.53, Acc@5: 90.11
+2026-01-27 19:58:35,121 - log - INFO - iter:940/3669, Original Acc@1: 75.53, Acc@5: 90.11
+2026-01-27 19:58:35,121 - log - INFO - iter:940/3669, Single TTA Acc@1: 36.49, Acc@5: 77.23
+2026-01-27 19:58:35,121 - log - INFO - iter:940/3669, Vanilla TTA Acc@1: 70.85, Acc@5: 89.04
+2026-01-27 19:58:35,121 - log - INFO - iter:940/3669, Vanilla Topk TTA Acc@1: 70.85, Acc@5: 89.04
+2026-01-27 19:58:35,121 - log - INFO - iter:940/3669, Weighted TTA Acc@1: 72.87, Acc@5: 89.47
+2026-01-27 19:59:25,462 - log - INFO - iter:960/3669, clip_clean_acc1=75.93750762939453
+2026-01-27 19:59:25,462 - log - INFO - iter:960/3669, clip_acc1=75.93750762939453
+2026-01-27 19:59:25,462 - log - INFO - iter:960/3669, Original Clean Acc@1: 75.94, Acc@5: 90.31
+2026-01-27 19:59:25,462 - log - INFO - iter:960/3669, Original Acc@1: 75.94, Acc@5: 90.31
+2026-01-27 19:59:25,462 - log - INFO - iter:960/3669, Single TTA Acc@1: 35.94, Acc@5: 77.08
+2026-01-27 19:59:25,462 - log - INFO - iter:960/3669, Vanilla TTA Acc@1: 71.25, Acc@5: 89.27
+2026-01-27 19:59:25,462 - log - INFO - iter:960/3669, Vanilla Topk TTA Acc@1: 71.25, Acc@5: 89.27
+2026-01-27 19:59:25,463 - log - INFO - iter:960/3669, Weighted TTA Acc@1: 73.23, Acc@5: 89.69
+2026-01-27 20:00:16,282 - log - INFO - iter:980/3669, clip_clean_acc1=76.12244415283203
+2026-01-27 20:00:16,283 - log - INFO - iter:980/3669, clip_acc1=76.12244415283203
+2026-01-27 20:00:16,283 - log - INFO - iter:980/3669, Original Clean Acc@1: 76.12, Acc@5: 90.51
+2026-01-27 20:00:16,283 - log - INFO - iter:980/3669, Original Acc@1: 76.12, Acc@5: 90.51
+2026-01-27 20:00:16,283 - log - INFO - iter:980/3669, Single TTA Acc@1: 35.20, Acc@5: 76.84
+2026-01-27 20:00:16,283 - log - INFO - iter:980/3669, Vanilla TTA Acc@1: 71.33, Acc@5: 89.49
+2026-01-27 20:00:16,283 - log - INFO - iter:980/3669, Vanilla Topk TTA Acc@1: 71.33, Acc@5: 89.49
+2026-01-27 20:00:16,283 - log - INFO - iter:980/3669, Weighted TTA Acc@1: 73.37, Acc@5: 89.90
+2026-01-27 20:01:07,109 - log - INFO - iter:1000/3669, clip_clean_acc1=76.5
+2026-01-27 20:01:07,109 - log - INFO - iter:1000/3669, clip_acc1=76.5
+2026-01-27 20:01:07,109 - log - INFO - iter:1000/3669, Original Clean Acc@1: 76.50, Acc@5: 90.70
+2026-01-27 20:01:07,109 - log - INFO - iter:1000/3669, Original Acc@1: 76.50, Acc@5: 90.70
+2026-01-27 20:01:07,109 - log - INFO - iter:1000/3669, Single TTA Acc@1: 35.60, Acc@5: 77.00
+2026-01-27 20:01:07,110 - log - INFO - iter:1000/3669, Vanilla TTA Acc@1: 71.70, Acc@5: 89.70
+2026-01-27 20:01:07,110 - log - INFO - iter:1000/3669, Vanilla Topk TTA Acc@1: 71.70, Acc@5: 89.70
+2026-01-27 20:01:07,110 - log - INFO - iter:1000/3669, Weighted TTA Acc@1: 73.60, Acc@5: 90.10
+2026-01-27 20:01:58,048 - log - INFO - iter:1020/3669, clip_clean_acc1=76.66667175292969
+2026-01-27 20:01:58,049 - log - INFO - iter:1020/3669, clip_acc1=76.66667175292969
+2026-01-27 20:01:58,049 - log - INFO - iter:1020/3669, Original Clean Acc@1: 76.67, Acc@5: 90.88
+2026-01-27 20:01:58,049 - log - INFO - iter:1020/3669, Original Acc@1: 76.67, Acc@5: 90.88
+2026-01-27 20:01:58,049 - log - INFO - iter:1020/3669, Single TTA Acc@1: 36.37, Acc@5: 77.25
+2026-01-27 20:01:58,049 - log - INFO - iter:1020/3669, Vanilla TTA Acc@1: 72.06, Acc@5: 89.90
+2026-01-27 20:01:58,049 - log - INFO - iter:1020/3669, Vanilla Topk TTA Acc@1: 72.06, Acc@5: 89.90
+2026-01-27 20:01:58,049 - log - INFO - iter:1020/3669, Weighted TTA Acc@1: 73.92, Acc@5: 90.29
+2026-01-27 20:02:48,377 - log - INFO - iter:1040/3669, clip_clean_acc1=76.92308044433594
+2026-01-27 20:02:48,377 - log - INFO - iter:1040/3669, clip_acc1=76.92308044433594
+2026-01-27 20:02:48,378 - log - INFO - iter:1040/3669, Original Clean Acc@1: 76.92, Acc@5: 91.06
+2026-01-27 20:02:48,378 - log - INFO - iter:1040/3669, Original Acc@1: 76.92, Acc@5: 91.06
+2026-01-27 20:02:48,378 - log - INFO - iter:1040/3669, Single TTA Acc@1: 37.12, Acc@5: 77.69
+2026-01-27 20:02:48,378 - log - INFO - iter:1040/3669, Vanilla TTA Acc@1: 72.40, Acc@5: 90.10
+2026-01-27 20:02:48,378 - log - INFO - iter:1040/3669, Vanilla Topk TTA Acc@1: 72.40, Acc@5: 90.10
+2026-01-27 20:02:48,378 - log - INFO - iter:1040/3669, Weighted TTA Acc@1: 74.23, Acc@5: 90.48
+2026-01-27 20:03:39,267 - log - INFO - iter:1060/3669, clip_clean_acc1=77.35848999023438
+2026-01-27 20:03:39,267 - log - INFO - iter:1060/3669, clip_acc1=77.35848999023438
+2026-01-27 20:03:39,267 - log - INFO - iter:1060/3669, Original Clean Acc@1: 77.36, Acc@5: 91.23
+2026-01-27 20:03:39,267 - log - INFO - iter:1060/3669, Original Acc@1: 77.36, Acc@5: 91.23
+2026-01-27 20:03:39,267 - log - INFO - iter:1060/3669, Single TTA Acc@1: 38.21, Acc@5: 78.02
+2026-01-27 20:03:39,267 - log - INFO - iter:1060/3669, Vanilla TTA Acc@1: 72.92, Acc@5: 90.28
+2026-01-27 20:03:39,267 - log - INFO - iter:1060/3669, Vanilla Topk TTA Acc@1: 72.92, Acc@5: 90.28
+2026-01-27 20:03:39,267 - log - INFO - iter:1060/3669, Weighted TTA Acc@1: 74.72, Acc@5: 90.66
+2026-01-27 20:04:30,089 - log - INFO - iter:1080/3669, clip_clean_acc1=77.5
+2026-01-27 20:04:30,089 - log - INFO - iter:1080/3669, clip_acc1=77.5
+2026-01-27 20:04:30,089 - log - INFO - iter:1080/3669, Original Clean Acc@1: 77.50, Acc@5: 91.39
+2026-01-27 20:04:30,089 - log - INFO - iter:1080/3669, Original Acc@1: 77.50, Acc@5: 91.39
+2026-01-27 20:04:30,089 - log - INFO - iter:1080/3669, Single TTA Acc@1: 38.70, Acc@5: 78.24
+2026-01-27 20:04:30,090 - log - INFO - iter:1080/3669, Vanilla TTA Acc@1: 73.15, Acc@5: 90.46
+2026-01-27 20:04:30,090 - log - INFO - iter:1080/3669, Vanilla Topk TTA Acc@1: 73.15, Acc@5: 90.46
+2026-01-27 20:04:30,090 - log - INFO - iter:1080/3669, Weighted TTA Acc@1: 74.91, Acc@5: 90.83
+2026-01-27 20:05:20,423 - log - INFO - iter:1100/3669, clip_clean_acc1=77.2727279663086
+2026-01-27 20:05:20,423 - log - INFO - iter:1100/3669, clip_acc1=77.2727279663086
+2026-01-27 20:05:20,423 - log - INFO - iter:1100/3669, Original Clean Acc@1: 77.27, Acc@5: 91.45
+2026-01-27 20:05:20,423 - log - INFO - iter:1100/3669, Original Acc@1: 77.27, Acc@5: 91.45
+2026-01-27 20:05:20,423 - log - INFO - iter:1100/3669, Single TTA Acc@1: 39.45, Acc@5: 78.64
+2026-01-27 20:05:20,423 - log - INFO - iter:1100/3669, Vanilla TTA Acc@1: 72.82, Acc@5: 90.55
+2026-01-27 20:05:20,424 - log - INFO - iter:1100/3669, Vanilla Topk TTA Acc@1: 72.82, Acc@5: 90.55
+2026-01-27 20:05:20,424 - log - INFO - iter:1100/3669, Weighted TTA Acc@1: 74.64, Acc@5: 91.00
+2026-01-27 20:06:10,400 - log - INFO - iter:1120/3669, clip_clean_acc1=77.23213958740234
+2026-01-27 20:06:10,401 - log - INFO - iter:1120/3669, clip_acc1=77.23213958740234
+2026-01-27 20:06:10,401 - log - INFO - iter:1120/3669, Original Clean Acc@1: 77.23, Acc@5: 91.61
+2026-01-27 20:06:10,401 - log - INFO - iter:1120/3669, Original Acc@1: 77.23, Acc@5: 91.61
+2026-01-27 20:06:10,401 - log - INFO - iter:1120/3669, Single TTA Acc@1: 40.09, Acc@5: 78.84
+2026-01-27 20:06:10,401 - log - INFO - iter:1120/3669, Vanilla TTA Acc@1: 72.86, Acc@5: 90.71
+2026-01-27 20:06:10,401 - log - INFO - iter:1120/3669, Vanilla Topk TTA Acc@1: 72.86, Acc@5: 90.71
+2026-01-27 20:06:10,401 - log - INFO - iter:1120/3669, Weighted TTA Acc@1: 74.73, Acc@5: 91.16
+2026-01-27 20:07:03,410 - log - INFO - iter:1140/3669, clip_clean_acc1=77.10526275634766
+2026-01-27 20:07:03,410 - log - INFO - iter:1140/3669, clip_acc1=77.10526275634766
+2026-01-27 20:07:03,411 - log - INFO - iter:1140/3669, Original Clean Acc@1: 77.11, Acc@5: 91.75
+2026-01-27 20:07:03,411 - log - INFO - iter:1140/3669, Original Acc@1: 77.11, Acc@5: 91.75
+2026-01-27 20:07:03,411 - log - INFO - iter:1140/3669, Single TTA Acc@1: 40.61, Acc@5: 79.04
+2026-01-27 20:07:03,411 - log - INFO - iter:1140/3669, Vanilla TTA Acc@1: 72.81, Acc@5: 90.88
+2026-01-27 20:07:03,411 - log - INFO - iter:1140/3669, Vanilla Topk TTA Acc@1: 72.81, Acc@5: 90.88
+2026-01-27 20:07:03,411 - log - INFO - iter:1140/3669, Weighted TTA Acc@1: 74.74, Acc@5: 91.32
+2026-01-27 20:07:55,866 - log - INFO - iter:1160/3669, clip_clean_acc1=77.1551742553711
+2026-01-27 20:07:55,867 - log - INFO - iter:1160/3669, clip_acc1=77.1551742553711
+2026-01-27 20:07:55,867 - log - INFO - iter:1160/3669, Original Clean Acc@1: 77.16, Acc@5: 91.81
+2026-01-27 20:07:55,867 - log - INFO - iter:1160/3669, Original Acc@1: 77.16, Acc@5: 91.81
+2026-01-27 20:07:55,867 - log - INFO - iter:1160/3669, Single TTA Acc@1: 41.21, Acc@5: 79.22
+2026-01-27 20:07:55,867 - log - INFO - iter:1160/3669, Vanilla TTA Acc@1: 72.93, Acc@5: 90.95
+2026-01-27 20:07:55,867 - log - INFO - iter:1160/3669, Vanilla Topk TTA Acc@1: 72.93, Acc@5: 90.95
+2026-01-27 20:07:55,867 - log - INFO - iter:1160/3669, Weighted TTA Acc@1: 74.74, Acc@5: 91.38
+2026-01-27 20:08:46,872 - log - INFO - iter:1180/3669, clip_clean_acc1=77.2033920288086
+2026-01-27 20:08:46,873 - log - INFO - iter:1180/3669, clip_acc1=77.2033920288086
+2026-01-27 20:08:46,873 - log - INFO - iter:1180/3669, Original Clean Acc@1: 77.20, Acc@5: 91.95
+2026-01-27 20:08:46,873 - log - INFO - iter:1180/3669, Original Acc@1: 77.20, Acc@5: 91.95
+2026-01-27 20:08:46,873 - log - INFO - iter:1180/3669, Single TTA Acc@1: 41.78, Acc@5: 79.49
+2026-01-27 20:08:46,873 - log - INFO - iter:1180/3669, Vanilla TTA Acc@1: 73.22, Acc@5: 91.10
+2026-01-27 20:08:46,873 - log - INFO - iter:1180/3669, Vanilla Topk TTA Acc@1: 73.22, Acc@5: 91.10
+2026-01-27 20:08:46,873 - log - INFO - iter:1180/3669, Weighted TTA Acc@1: 74.92, Acc@5: 91.53
+2026-01-27 20:09:38,801 - log - INFO - iter:1200/3669, clip_clean_acc1=77.41667175292969
+2026-01-27 20:09:38,801 - log - INFO - iter:1200/3669, clip_acc1=77.41667175292969
+2026-01-27 20:09:38,801 - log - INFO - iter:1200/3669, Original Clean Acc@1: 77.42, Acc@5: 92.08
+2026-01-27 20:09:38,802 - log - INFO - iter:1200/3669, Original Acc@1: 77.42, Acc@5: 92.08
+2026-01-27 20:09:38,802 - log - INFO - iter:1200/3669, Single TTA Acc@1: 41.33, Acc@5: 79.08
+2026-01-27 20:09:38,802 - log - INFO - iter:1200/3669, Vanilla TTA Acc@1: 73.50, Acc@5: 91.25
+2026-01-27 20:09:38,802 - log - INFO - iter:1200/3669, Vanilla Topk TTA Acc@1: 73.50, Acc@5: 91.25
+2026-01-27 20:09:38,802 - log - INFO - iter:1200/3669, Weighted TTA Acc@1: 75.25, Acc@5: 91.67
+2026-01-27 20:10:28,655 - log - INFO - iter:1220/3669, clip_clean_acc1=77.70491790771484
+2026-01-27 20:10:28,655 - log - INFO - iter:1220/3669, clip_acc1=77.70491790771484
+2026-01-27 20:10:28,655 - log - INFO - iter:1220/3669, Original Clean Acc@1: 77.70, Acc@5: 92.21
+2026-01-27 20:10:28,655 - log - INFO - iter:1220/3669, Original Acc@1: 77.70, Acc@5: 92.21
+2026-01-27 20:10:28,655 - log - INFO - iter:1220/3669, Single TTA Acc@1: 40.74, Acc@5: 78.93
+2026-01-27 20:10:28,655 - log - INFO - iter:1220/3669, Vanilla TTA Acc@1: 73.44, Acc@5: 91.39
+2026-01-27 20:10:28,655 - log - INFO - iter:1220/3669, Vanilla Topk TTA Acc@1: 73.44, Acc@5: 91.39
+2026-01-27 20:10:28,655 - log - INFO - iter:1220/3669, Weighted TTA Acc@1: 75.33, Acc@5: 91.80
+2026-01-27 20:11:19,277 - log - INFO - iter:1240/3669, clip_clean_acc1=77.74193572998047
+2026-01-27 20:11:19,277 - log - INFO - iter:1240/3669, clip_acc1=77.74193572998047
+2026-01-27 20:11:19,277 - log - INFO - iter:1240/3669, Original Clean Acc@1: 77.74, Acc@5: 92.34
+2026-01-27 20:11:19,277 - log - INFO - iter:1240/3669, Original Acc@1: 77.74, Acc@5: 92.34
+2026-01-27 20:11:19,277 - log - INFO - iter:1240/3669, Single TTA Acc@1: 40.48, Acc@5: 78.79
+2026-01-27 20:11:19,277 - log - INFO - iter:1240/3669, Vanilla TTA Acc@1: 73.39, Acc@5: 91.53
+2026-01-27 20:11:19,277 - log - INFO - iter:1240/3669, Vanilla Topk TTA Acc@1: 73.39, Acc@5: 91.53
+2026-01-27 20:11:19,278 - log - INFO - iter:1240/3669, Weighted TTA Acc@1: 75.32, Acc@5: 91.94
+2026-01-27 20:12:09,583 - log - INFO - iter:1260/3669, clip_clean_acc1=78.01587677001953
+2026-01-27 20:12:09,584 - log - INFO - iter:1260/3669, clip_acc1=78.01587677001953
+2026-01-27 20:12:09,584 - log - INFO - iter:1260/3669, Original Clean Acc@1: 78.02, Acc@5: 92.46
+2026-01-27 20:12:09,584 - log - INFO - iter:1260/3669, Original Acc@1: 78.02, Acc@5: 92.46
+2026-01-27 20:12:09,584 - log - INFO - iter:1260/3669, Single TTA Acc@1: 40.16, Acc@5: 78.65
+2026-01-27 20:12:09,584 - log - INFO - iter:1260/3669, Vanilla TTA Acc@1: 73.73, Acc@5: 91.67
+2026-01-27 20:12:09,584 - log - INFO - iter:1260/3669, Vanilla Topk TTA Acc@1: 73.73, Acc@5: 91.67
+2026-01-27 20:12:09,584 - log - INFO - iter:1260/3669, Weighted TTA Acc@1: 75.63, Acc@5: 92.06
+2026-01-27 20:12:59,893 - log - INFO - iter:1280/3669, clip_clean_acc1=78.359375
+2026-01-27 20:12:59,894 - log - INFO - iter:1280/3669, clip_acc1=78.359375
+2026-01-27 20:12:59,894 - log - INFO - iter:1280/3669, Original Clean Acc@1: 78.36, Acc@5: 92.58
+2026-01-27 20:12:59,894 - log - INFO - iter:1280/3669, Original Acc@1: 78.36, Acc@5: 92.58
+2026-01-27 20:12:59,894 - log - INFO - iter:1280/3669, Single TTA Acc@1: 40.16, Acc@5: 78.75
+2026-01-27 20:12:59,894 - log - INFO - iter:1280/3669, Vanilla TTA Acc@1: 74.14, Acc@5: 91.80
+2026-01-27 20:12:59,894 - log - INFO - iter:1280/3669, Vanilla Topk TTA Acc@1: 74.14, Acc@5: 91.80
+2026-01-27 20:12:59,894 - log - INFO - iter:1280/3669, Weighted TTA Acc@1: 76.02, Acc@5: 92.19
+2026-01-27 20:13:50,172 - log - INFO - iter:1300/3669, clip_clean_acc1=78.30769348144531
+2026-01-27 20:13:50,172 - log - INFO - iter:1300/3669, clip_acc1=78.30769348144531
+2026-01-27 20:13:50,172 - log - INFO - iter:1300/3669, Original Clean Acc@1: 78.31, Acc@5: 92.69
+2026-01-27 20:13:50,172 - log - INFO - iter:1300/3669, Original Acc@1: 78.31, Acc@5: 92.69
+2026-01-27 20:13:50,172 - log - INFO - iter:1300/3669, Single TTA Acc@1: 39.85, Acc@5: 79.00
+2026-01-27 20:13:50,173 - log - INFO - iter:1300/3669, Vanilla TTA Acc@1: 74.15, Acc@5: 91.85
+2026-01-27 20:13:50,173 - log - INFO - iter:1300/3669, Vanilla Topk TTA Acc@1: 74.15, Acc@5: 91.85
+2026-01-27 20:13:50,173 - log - INFO - iter:1300/3669, Weighted TTA Acc@1: 76.15, Acc@5: 92.23
+2026-01-27 20:14:39,950 - log - INFO - iter:1320/3669, clip_clean_acc1=78.48484802246094
+2026-01-27 20:14:39,950 - log - INFO - iter:1320/3669, clip_acc1=78.48484802246094
+2026-01-27 20:14:39,950 - log - INFO - iter:1320/3669, Original Clean Acc@1: 78.48, Acc@5: 92.80
+2026-01-27 20:14:39,950 - log - INFO - iter:1320/3669, Original Acc@1: 78.48, Acc@5: 92.80
+2026-01-27 20:14:39,951 - log - INFO - iter:1320/3669, Single TTA Acc@1: 39.32, Acc@5: 78.26
+2026-01-27 20:14:39,951 - log - INFO - iter:1320/3669, Vanilla TTA Acc@1: 74.09, Acc@5: 91.97
+2026-01-27 20:14:39,951 - log - INFO - iter:1320/3669, Vanilla Topk TTA Acc@1: 74.09, Acc@5: 91.97
+2026-01-27 20:14:39,951 - log - INFO - iter:1320/3669, Weighted TTA Acc@1: 76.29, Acc@5: 92.35
+2026-01-27 20:15:31,512 - log - INFO - iter:1340/3669, clip_clean_acc1=78.7313461303711
+2026-01-27 20:15:31,512 - log - INFO - iter:1340/3669, clip_acc1=78.7313461303711
+2026-01-27 20:15:31,512 - log - INFO - iter:1340/3669, Original Clean Acc@1: 78.73, Acc@5: 92.91
+2026-01-27 20:15:31,513 - log - INFO - iter:1340/3669, Original Acc@1: 78.73, Acc@5: 92.91
+2026-01-27 20:15:31,513 - log - INFO - iter:1340/3669, Single TTA Acc@1: 38.96, Acc@5: 78.28
+2026-01-27 20:15:31,513 - log - INFO - iter:1340/3669, Vanilla TTA Acc@1: 74.18, Acc@5: 92.09
+2026-01-27 20:15:31,513 - log - INFO - iter:1340/3669, Vanilla Topk TTA Acc@1: 74.18, Acc@5: 92.09
+2026-01-27 20:15:31,513 - log - INFO - iter:1340/3669, Weighted TTA Acc@1: 76.49, Acc@5: 92.46
+2026-01-27 20:16:21,440 - log - INFO - iter:1360/3669, clip_clean_acc1=78.97058868408203
+2026-01-27 20:16:21,441 - log - INFO - iter:1360/3669, clip_acc1=78.97058868408203
+2026-01-27 20:16:21,441 - log - INFO - iter:1360/3669, Original Clean Acc@1: 78.97, Acc@5: 93.01
+2026-01-27 20:16:21,441 - log - INFO - iter:1360/3669, Original Acc@1: 78.97, Acc@5: 93.01
+2026-01-27 20:16:21,441 - log - INFO - iter:1360/3669, Single TTA Acc@1: 38.53, Acc@5: 78.31
+2026-01-27 20:16:21,441 - log - INFO - iter:1360/3669, Vanilla TTA Acc@1: 74.34, Acc@5: 92.21
+2026-01-27 20:16:21,441 - log - INFO - iter:1360/3669, Vanilla Topk TTA Acc@1: 74.34, Acc@5: 92.21
+2026-01-27 20:16:21,441 - log - INFO - iter:1360/3669, Weighted TTA Acc@1: 76.76, Acc@5: 92.57
+2026-01-27 20:17:11,268 - log - INFO - iter:1380/3669, clip_clean_acc1=79.13043975830078
+2026-01-27 20:17:11,268 - log - INFO - iter:1380/3669, clip_acc1=79.13043975830078
+2026-01-27 20:17:11,268 - log - INFO - iter:1380/3669, Original Clean Acc@1: 79.13, Acc@5: 93.12
+2026-01-27 20:17:11,269 - log - INFO - iter:1380/3669, Original Acc@1: 79.13, Acc@5: 93.12
+2026-01-27 20:17:11,269 - log - INFO - iter:1380/3669, Single TTA Acc@1: 38.33, Acc@5: 78.41
+2026-01-27 20:17:11,269 - log - INFO - iter:1380/3669, Vanilla TTA Acc@1: 74.49, Acc@5: 92.32
+2026-01-27 20:17:11,269 - log - INFO - iter:1380/3669, Vanilla Topk TTA Acc@1: 74.49, Acc@5: 92.32
+2026-01-27 20:17:11,269 - log - INFO - iter:1380/3669, Weighted TTA Acc@1: 76.88, Acc@5: 92.68
+2026-01-27 20:18:02,228 - log - INFO - iter:1400/3669, clip_clean_acc1=79.28571319580078
+2026-01-27 20:18:02,228 - log - INFO - iter:1400/3669, clip_acc1=79.28571319580078
+2026-01-27 20:18:02,228 - log - INFO - iter:1400/3669, Original Clean Acc@1: 79.29, Acc@5: 93.21
+2026-01-27 20:18:02,229 - log - INFO - iter:1400/3669, Original Acc@1: 79.29, Acc@5: 93.21
+2026-01-27 20:18:02,229 - log - INFO - iter:1400/3669, Single TTA Acc@1: 38.43, Acc@5: 78.43
+2026-01-27 20:18:02,229 - log - INFO - iter:1400/3669, Vanilla TTA Acc@1: 74.57, Acc@5: 92.43
+2026-01-27 20:18:02,229 - log - INFO - iter:1400/3669, Vanilla Topk TTA Acc@1: 74.57, Acc@5: 92.43
+2026-01-27 20:18:02,229 - log - INFO - iter:1400/3669, Weighted TTA Acc@1: 77.07, Acc@5: 92.79
+2026-01-27 20:18:53,042 - log - INFO - iter:1420/3669, clip_clean_acc1=79.36619567871094
+2026-01-27 20:18:53,042 - log - INFO - iter:1420/3669, clip_acc1=79.36619567871094
+2026-01-27 20:18:53,042 - log - INFO - iter:1420/3669, Original Clean Acc@1: 79.37, Acc@5: 93.31
+2026-01-27 20:18:53,043 - log - INFO - iter:1420/3669, Original Acc@1: 79.37, Acc@5: 93.31
+2026-01-27 20:18:53,043 - log - INFO - iter:1420/3669, Single TTA Acc@1: 38.66, Acc@5: 78.66
+2026-01-27 20:18:53,043 - log - INFO - iter:1420/3669, Vanilla TTA Acc@1: 74.86, Acc@5: 92.54
+2026-01-27 20:18:53,043 - log - INFO - iter:1420/3669, Vanilla Topk TTA Acc@1: 74.86, Acc@5: 92.54
+2026-01-27 20:18:53,043 - log - INFO - iter:1420/3669, Weighted TTA Acc@1: 77.32, Acc@5: 92.89
+2026-01-27 20:19:43,355 - log - INFO - iter:1440/3669, clip_clean_acc1=79.65277862548828
+2026-01-27 20:19:43,356 - log - INFO - iter:1440/3669, clip_acc1=79.65277862548828
+2026-01-27 20:19:43,356 - log - INFO - iter:1440/3669, Original Clean Acc@1: 79.65, Acc@5: 93.40
+2026-01-27 20:19:43,356 - log - INFO - iter:1440/3669, Original Acc@1: 79.65, Acc@5: 93.40
+2026-01-27 20:19:43,356 - log - INFO - iter:1440/3669, Single TTA Acc@1: 38.96, Acc@5: 78.89
+2026-01-27 20:19:43,356 - log - INFO - iter:1440/3669, Vanilla TTA Acc@1: 75.21, Acc@5: 92.64
+2026-01-27 20:19:43,356 - log - INFO - iter:1440/3669, Vanilla Topk TTA Acc@1: 75.21, Acc@5: 92.64
+2026-01-27 20:19:43,356 - log - INFO - iter:1440/3669, Weighted TTA Acc@1: 77.64, Acc@5: 92.99
+2026-01-27 20:20:34,691 - log - INFO - iter:1460/3669, clip_clean_acc1=79.93151092529297
+2026-01-27 20:20:34,691 - log - INFO - iter:1460/3669, clip_acc1=79.93151092529297
+2026-01-27 20:20:34,691 - log - INFO - iter:1460/3669, Original Clean Acc@1: 79.93, Acc@5: 93.49
+2026-01-27 20:20:34,691 - log - INFO - iter:1460/3669, Original Acc@1: 79.93, Acc@5: 93.49
+2026-01-27 20:20:34,691 - log - INFO - iter:1460/3669, Single TTA Acc@1: 39.38, Acc@5: 79.04
+2026-01-27 20:20:34,692 - log - INFO - iter:1460/3669, Vanilla TTA Acc@1: 75.55, Acc@5: 92.74
+2026-01-27 20:20:34,692 - log - INFO - iter:1460/3669, Vanilla Topk TTA Acc@1: 75.55, Acc@5: 92.74
+2026-01-27 20:20:34,692 - log - INFO - iter:1460/3669, Weighted TTA Acc@1: 77.95, Acc@5: 93.08
+2026-01-27 20:21:25,056 - log - INFO - iter:1480/3669, clip_clean_acc1=80.20270538330078
+2026-01-27 20:21:25,056 - log - INFO - iter:1480/3669, clip_acc1=80.20270538330078
+2026-01-27 20:21:25,057 - log - INFO - iter:1480/3669, Original Clean Acc@1: 80.20, Acc@5: 93.58
+2026-01-27 20:21:25,057 - log - INFO - iter:1480/3669, Original Acc@1: 80.20, Acc@5: 93.58
+2026-01-27 20:21:25,057 - log - INFO - iter:1480/3669, Single TTA Acc@1: 39.32, Acc@5: 79.12
+2026-01-27 20:21:25,057 - log - INFO - iter:1480/3669, Vanilla TTA Acc@1: 75.88, Acc@5: 92.84
+2026-01-27 20:21:25,057 - log - INFO - iter:1480/3669, Vanilla Topk TTA Acc@1: 75.88, Acc@5: 92.84
+2026-01-27 20:21:25,057 - log - INFO - iter:1480/3669, Weighted TTA Acc@1: 78.24, Acc@5: 93.18
+2026-01-27 20:22:15,394 - log - INFO - iter:1500/3669, clip_clean_acc1=80.33333587646484
+2026-01-27 20:22:15,394 - log - INFO - iter:1500/3669, clip_acc1=80.33333587646484
+2026-01-27 20:22:15,394 - log - INFO - iter:1500/3669, Original Clean Acc@1: 80.33, Acc@5: 93.67
+2026-01-27 20:22:15,395 - log - INFO - iter:1500/3669, Original Acc@1: 80.33, Acc@5: 93.67
+2026-01-27 20:22:15,395 - log - INFO - iter:1500/3669, Single TTA Acc@1: 39.93, Acc@5: 79.40
+2026-01-27 20:22:15,395 - log - INFO - iter:1500/3669, Vanilla TTA Acc@1: 76.07, Acc@5: 92.93
+2026-01-27 20:22:15,395 - log - INFO - iter:1500/3669, Vanilla Topk TTA Acc@1: 76.07, Acc@5: 92.93
+2026-01-27 20:22:15,395 - log - INFO - iter:1500/3669, Weighted TTA Acc@1: 78.33, Acc@5: 93.27
+2026-01-27 20:23:05,367 - log - INFO - iter:1520/3669, clip_clean_acc1=80.46053314208984
+2026-01-27 20:23:05,367 - log - INFO - iter:1520/3669, clip_acc1=80.46053314208984
+2026-01-27 20:23:05,367 - log - INFO - iter:1520/3669, Original Clean Acc@1: 80.46, Acc@5: 93.75
+2026-01-27 20:23:05,367 - log - INFO - iter:1520/3669, Original Acc@1: 80.46, Acc@5: 93.75
+2026-01-27 20:23:05,368 - log - INFO - iter:1520/3669, Single TTA Acc@1: 40.46, Acc@5: 79.47
+2026-01-27 20:23:05,368 - log - INFO - iter:1520/3669, Vanilla TTA Acc@1: 76.25, Acc@5: 93.03
+2026-01-27 20:23:05,368 - log - INFO - iter:1520/3669, Vanilla Topk TTA Acc@1: 76.25, Acc@5: 93.03
+2026-01-27 20:23:05,368 - log - INFO - iter:1520/3669, Weighted TTA Acc@1: 78.49, Acc@5: 93.36
+2026-01-27 20:23:55,336 - log - INFO - iter:1540/3669, clip_clean_acc1=80.71428680419922
+2026-01-27 20:23:55,336 - log - INFO - iter:1540/3669, clip_acc1=80.71428680419922
+2026-01-27 20:23:55,336 - log - INFO - iter:1540/3669, Original Clean Acc@1: 80.71, Acc@5: 93.83
+2026-01-27 20:23:55,336 - log - INFO - iter:1540/3669, Original Acc@1: 80.71, Acc@5: 93.83
+2026-01-27 20:23:55,337 - log - INFO - iter:1540/3669, Single TTA Acc@1: 41.04, Acc@5: 79.68
+2026-01-27 20:23:55,337 - log - INFO - iter:1540/3669, Vanilla TTA Acc@1: 76.49, Acc@5: 93.12
+2026-01-27 20:23:55,337 - log - INFO - iter:1540/3669, Vanilla Topk TTA Acc@1: 76.49, Acc@5: 93.12
+2026-01-27 20:23:55,337 - log - INFO - iter:1540/3669, Weighted TTA Acc@1: 78.77, Acc@5: 93.44
+2026-01-27 20:24:45,160 - log - INFO - iter:1560/3669, clip_clean_acc1=80.96154022216797
+2026-01-27 20:24:45,160 - log - INFO - iter:1560/3669, clip_acc1=80.96154022216797
+2026-01-27 20:24:45,160 - log - INFO - iter:1560/3669, Original Clean Acc@1: 80.96, Acc@5: 93.91
+2026-01-27 20:24:45,160 - log - INFO - iter:1560/3669, Original Acc@1: 80.96, Acc@5: 93.91
+2026-01-27 20:24:45,160 - log - INFO - iter:1560/3669, Single TTA Acc@1: 41.60, Acc@5: 79.87
+2026-01-27 20:24:45,160 - log - INFO - iter:1560/3669, Vanilla TTA Acc@1: 76.79, Acc@5: 93.21
+2026-01-27 20:24:45,160 - log - INFO - iter:1560/3669, Vanilla Topk TTA Acc@1: 76.79, Acc@5: 93.21
+2026-01-27 20:24:45,160 - log - INFO - iter:1560/3669, Weighted TTA Acc@1: 79.04, Acc@5: 93.53
+2026-01-27 20:25:35,456 - log - INFO - iter:1580/3669, clip_clean_acc1=81.01265716552734
+2026-01-27 20:25:35,457 - log - INFO - iter:1580/3669, clip_acc1=81.01265716552734
+2026-01-27 20:25:35,457 - log - INFO - iter:1580/3669, Original Clean Acc@1: 81.01, Acc@5: 93.99
+2026-01-27 20:25:35,457 - log - INFO - iter:1580/3669, Original Acc@1: 81.01, Acc@5: 93.99
+2026-01-27 20:25:35,457 - log - INFO - iter:1580/3669, Single TTA Acc@1: 41.96, Acc@5: 80.00
+2026-01-27 20:25:35,457 - log - INFO - iter:1580/3669, Vanilla TTA Acc@1: 77.03, Acc@5: 93.29
+2026-01-27 20:25:35,457 - log - INFO - iter:1580/3669, Vanilla Topk TTA Acc@1: 77.03, Acc@5: 93.29
+2026-01-27 20:25:35,457 - log - INFO - iter:1580/3669, Weighted TTA Acc@1: 79.24, Acc@5: 93.61
+2026-01-27 20:26:26,128 - log - INFO - iter:1600/3669, clip_clean_acc1=80.8125
+2026-01-27 20:26:26,128 - log - INFO - iter:1600/3669, clip_acc1=80.8125
+2026-01-27 20:26:26,128 - log - INFO - iter:1600/3669, Original Clean Acc@1: 80.81, Acc@5: 94.00
+2026-01-27 20:26:26,128 - log - INFO - iter:1600/3669, Original Acc@1: 80.81, Acc@5: 94.00
+2026-01-27 20:26:26,128 - log - INFO - iter:1600/3669, Single TTA Acc@1: 41.88, Acc@5: 79.81
+2026-01-27 20:26:26,129 - log - INFO - iter:1600/3669, Vanilla TTA Acc@1: 76.88, Acc@5: 93.31
+2026-01-27 20:26:26,129 - log - INFO - iter:1600/3669, Vanilla Topk TTA Acc@1: 76.88, Acc@5: 93.31
+2026-01-27 20:26:26,129 - log - INFO - iter:1600/3669, Weighted TTA Acc@1: 79.06, Acc@5: 93.62
+2026-01-27 20:27:15,958 - log - INFO - iter:1620/3669, clip_clean_acc1=80.37037658691406
+2026-01-27 20:27:15,958 - log - INFO - iter:1620/3669, clip_acc1=80.37037658691406
+2026-01-27 20:27:15,958 - log - INFO - iter:1620/3669, Original Clean Acc@1: 80.37, Acc@5: 94.07
+2026-01-27 20:27:15,958 - log - INFO - iter:1620/3669, Original Acc@1: 80.37, Acc@5: 94.07
+2026-01-27 20:27:15,958 - log - INFO - iter:1620/3669, Single TTA Acc@1: 41.60, Acc@5: 79.94
+2026-01-27 20:27:15,958 - log - INFO - iter:1620/3669, Vanilla TTA Acc@1: 76.42, Acc@5: 93.40
+2026-01-27 20:27:15,958 - log - INFO - iter:1620/3669, Vanilla Topk TTA Acc@1: 76.42, Acc@5: 93.40
+2026-01-27 20:27:15,959 - log - INFO - iter:1620/3669, Weighted TTA Acc@1: 78.64, Acc@5: 93.70
+2026-01-27 20:28:06,687 - log - INFO - iter:1640/3669, clip_clean_acc1=80.06097412109375
+2026-01-27 20:28:06,687 - log - INFO - iter:1640/3669, clip_acc1=80.06097412109375
+2026-01-27 20:28:06,688 - log - INFO - iter:1640/3669, Original Clean Acc@1: 80.06, Acc@5: 94.15
+2026-01-27 20:28:06,688 - log - INFO - iter:1640/3669, Original Acc@1: 80.06, Acc@5: 94.15
+2026-01-27 20:28:06,688 - log - INFO - iter:1640/3669, Single TTA Acc@1: 41.46, Acc@5: 79.94
+2026-01-27 20:28:06,688 - log - INFO - iter:1640/3669, Vanilla TTA Acc@1: 76.16, Acc@5: 93.48
+2026-01-27 20:28:06,688 - log - INFO - iter:1640/3669, Vanilla Topk TTA Acc@1: 76.16, Acc@5: 93.48
+2026-01-27 20:28:06,688 - log - INFO - iter:1640/3669, Weighted TTA Acc@1: 78.35, Acc@5: 93.78
+2026-01-27 20:28:58,012 - log - INFO - iter:1660/3669, clip_clean_acc1=79.81928253173828
+2026-01-27 20:28:58,012 - log - INFO - iter:1660/3669, clip_acc1=79.81928253173828
+2026-01-27 20:28:58,012 - log - INFO - iter:1660/3669, Original Clean Acc@1: 79.82, Acc@5: 94.22
+2026-01-27 20:28:58,012 - log - INFO - iter:1660/3669, Original Acc@1: 79.82, Acc@5: 94.22
+2026-01-27 20:28:58,012 - log - INFO - iter:1660/3669, Single TTA Acc@1: 41.20, Acc@5: 80.06
+2026-01-27 20:28:58,012 - log - INFO - iter:1660/3669, Vanilla TTA Acc@1: 75.96, Acc@5: 93.55
+2026-01-27 20:28:58,012 - log - INFO - iter:1660/3669, Vanilla Topk TTA Acc@1: 75.96, Acc@5: 93.55
+2026-01-27 20:28:58,012 - log - INFO - iter:1660/3669, Weighted TTA Acc@1: 78.13, Acc@5: 93.86
+2026-01-27 20:29:49,103 - log - INFO - iter:1680/3669, clip_clean_acc1=79.58333587646484
+2026-01-27 20:29:49,104 - log - INFO - iter:1680/3669, clip_acc1=79.58333587646484
+2026-01-27 20:29:49,104 - log - INFO - iter:1680/3669, Original Clean Acc@1: 79.58, Acc@5: 94.29
+2026-01-27 20:29:49,104 - log - INFO - iter:1680/3669, Original Acc@1: 79.58, Acc@5: 94.29
+2026-01-27 20:29:49,104 - log - INFO - iter:1680/3669, Single TTA Acc@1: 41.31, Acc@5: 80.18
+2026-01-27 20:29:49,104 - log - INFO - iter:1680/3669, Vanilla TTA Acc@1: 75.71, Acc@5: 93.63
+2026-01-27 20:29:49,104 - log - INFO - iter:1680/3669, Vanilla Topk TTA Acc@1: 75.71, Acc@5: 93.63
+2026-01-27 20:29:49,104 - log - INFO - iter:1680/3669, Weighted TTA Acc@1: 77.86, Acc@5: 93.93
+2026-01-27 20:30:40,530 - log - INFO - iter:1700/3669, clip_clean_acc1=79.70587921142578
+2026-01-27 20:30:40,530 - log - INFO - iter:1700/3669, clip_acc1=79.70587921142578
+2026-01-27 20:30:40,531 - log - INFO - iter:1700/3669, Original Clean Acc@1: 79.71, Acc@5: 94.24
+2026-01-27 20:30:40,531 - log - INFO - iter:1700/3669, Original Acc@1: 79.71, Acc@5: 94.24
+2026-01-27 20:30:40,531 - log - INFO - iter:1700/3669, Single TTA Acc@1: 41.35, Acc@5: 80.06
+2026-01-27 20:30:40,531 - log - INFO - iter:1700/3669, Vanilla TTA Acc@1: 75.88, Acc@5: 93.59
+2026-01-27 20:30:40,531 - log - INFO - iter:1700/3669, Vanilla Topk TTA Acc@1: 75.88, Acc@5: 93.59
+2026-01-27 20:30:40,531 - log - INFO - iter:1700/3669, Weighted TTA Acc@1: 78.00, Acc@5: 93.88
+2026-01-27 20:31:32,763 - log - INFO - iter:1720/3669, clip_clean_acc1=79.94185638427734
+2026-01-27 20:31:32,763 - log - INFO - iter:1720/3669, clip_acc1=79.94185638427734
+2026-01-27 20:31:32,763 - log - INFO - iter:1720/3669, Original Clean Acc@1: 79.94, Acc@5: 94.30
+2026-01-27 20:31:32,763 - log - INFO - iter:1720/3669, Original Acc@1: 79.94, Acc@5: 94.30
+2026-01-27 20:31:32,763 - log - INFO - iter:1720/3669, Single TTA Acc@1: 41.69, Acc@5: 80.12
+2026-01-27 20:31:32,763 - log - INFO - iter:1720/3669, Vanilla TTA Acc@1: 76.16, Acc@5: 93.66
+2026-01-27 20:31:32,763 - log - INFO - iter:1720/3669, Vanilla Topk TTA Acc@1: 76.16, Acc@5: 93.66
+2026-01-27 20:31:32,763 - log - INFO - iter:1720/3669, Weighted TTA Acc@1: 78.26, Acc@5: 93.95
+2026-01-27 20:32:24,705 - log - INFO - iter:1740/3669, clip_clean_acc1=80.17241668701172
+2026-01-27 20:32:24,706 - log - INFO - iter:1740/3669, clip_acc1=80.17241668701172
+2026-01-27 20:32:24,706 - log - INFO - iter:1740/3669, Original Clean Acc@1: 80.17, Acc@5: 94.37
+2026-01-27 20:32:24,706 - log - INFO - iter:1740/3669, Original Acc@1: 80.17, Acc@5: 94.37
+2026-01-27 20:32:24,706 - log - INFO - iter:1740/3669, Single TTA Acc@1: 41.90, Acc@5: 80.06
+2026-01-27 20:32:24,706 - log - INFO - iter:1740/3669, Vanilla TTA Acc@1: 76.44, Acc@5: 93.74
+2026-01-27 20:32:24,706 - log - INFO - iter:1740/3669, Vanilla Topk TTA Acc@1: 76.44, Acc@5: 93.74
+2026-01-27 20:32:24,706 - log - INFO - iter:1740/3669, Weighted TTA Acc@1: 78.51, Acc@5: 94.02
+2026-01-27 20:33:15,015 - log - INFO - iter:1760/3669, clip_clean_acc1=80.34090423583984
+2026-01-27 20:33:15,015 - log - INFO - iter:1760/3669, clip_acc1=80.34090423583984
+2026-01-27 20:33:15,015 - log - INFO - iter:1760/3669, Original Clean Acc@1: 80.34, Acc@5: 94.38
+2026-01-27 20:33:15,015 - log - INFO - iter:1760/3669, Original Acc@1: 80.34, Acc@5: 94.38
+2026-01-27 20:33:15,015 - log - INFO - iter:1760/3669, Single TTA Acc@1: 42.10, Acc@5: 80.11
+2026-01-27 20:33:15,016 - log - INFO - iter:1760/3669, Vanilla TTA Acc@1: 76.65, Acc@5: 93.75
+2026-01-27 20:33:15,016 - log - INFO - iter:1760/3669, Vanilla Topk TTA Acc@1: 76.65, Acc@5: 93.75
+2026-01-27 20:33:15,016 - log - INFO - iter:1760/3669, Weighted TTA Acc@1: 78.69, Acc@5: 94.09
+2026-01-27 20:34:05,299 - log - INFO - iter:1780/3669, clip_clean_acc1=80.4494400024414
+2026-01-27 20:34:05,299 - log - INFO - iter:1780/3669, clip_acc1=80.4494400024414
+2026-01-27 20:34:05,299 - log - INFO - iter:1780/3669, Original Clean Acc@1: 80.45, Acc@5: 94.38
+2026-01-27 20:34:05,299 - log - INFO - iter:1780/3669, Original Acc@1: 80.45, Acc@5: 94.38
+2026-01-27 20:34:05,299 - log - INFO - iter:1780/3669, Single TTA Acc@1: 42.02, Acc@5: 79.78
+2026-01-27 20:34:05,299 - log - INFO - iter:1780/3669, Vanilla TTA Acc@1: 76.69, Acc@5: 93.76
+2026-01-27 20:34:05,299 - log - INFO - iter:1780/3669, Vanilla Topk TTA Acc@1: 76.69, Acc@5: 93.76
+2026-01-27 20:34:05,299 - log - INFO - iter:1780/3669, Weighted TTA Acc@1: 78.82, Acc@5: 94.10
+2026-01-27 20:34:55,371 - log - INFO - iter:1800/3669, clip_clean_acc1=80.66667175292969
+2026-01-27 20:34:55,372 - log - INFO - iter:1800/3669, clip_acc1=80.66667175292969
+2026-01-27 20:34:55,372 - log - INFO - iter:1800/3669, Original Clean Acc@1: 80.67, Acc@5: 94.44
+2026-01-27 20:34:55,372 - log - INFO - iter:1800/3669, Original Acc@1: 80.67, Acc@5: 94.44
+2026-01-27 20:34:55,372 - log - INFO - iter:1800/3669, Single TTA Acc@1: 41.94, Acc@5: 79.56
+2026-01-27 20:34:55,372 - log - INFO - iter:1800/3669, Vanilla TTA Acc@1: 76.94, Acc@5: 93.83
+2026-01-27 20:34:55,372 - log - INFO - iter:1800/3669, Vanilla Topk TTA Acc@1: 76.94, Acc@5: 93.83
+2026-01-27 20:34:55,372 - log - INFO - iter:1800/3669, Weighted TTA Acc@1: 79.06, Acc@5: 94.17
+2026-01-27 20:35:47,046 - log - INFO - iter:1820/3669, clip_clean_acc1=80.8791275024414
+2026-01-27 20:35:47,046 - log - INFO - iter:1820/3669, clip_acc1=80.8791275024414
+2026-01-27 20:35:47,046 - log - INFO - iter:1820/3669, Original Clean Acc@1: 80.88, Acc@5: 94.51
+2026-01-27 20:35:47,046 - log - INFO - iter:1820/3669, Original Acc@1: 80.88, Acc@5: 94.51
+2026-01-27 20:35:47,046 - log - INFO - iter:1820/3669, Single TTA Acc@1: 41.98, Acc@5: 79.51
+2026-01-27 20:35:47,046 - log - INFO - iter:1820/3669, Vanilla TTA Acc@1: 77.20, Acc@5: 93.90
+2026-01-27 20:35:47,046 - log - INFO - iter:1820/3669, Vanilla Topk TTA Acc@1: 77.20, Acc@5: 93.90
+2026-01-27 20:35:47,047 - log - INFO - iter:1820/3669, Weighted TTA Acc@1: 79.29, Acc@5: 94.23
+2026-01-27 20:36:38,186 - log - INFO - iter:1840/3669, clip_clean_acc1=81.08695220947266
+2026-01-27 20:36:38,187 - log - INFO - iter:1840/3669, clip_acc1=81.08695220947266
+2026-01-27 20:36:38,187 - log - INFO - iter:1840/3669, Original Clean Acc@1: 81.09, Acc@5: 94.57
+2026-01-27 20:36:38,187 - log - INFO - iter:1840/3669, Original Acc@1: 81.09, Acc@5: 94.57
+2026-01-27 20:36:38,187 - log - INFO - iter:1840/3669, Single TTA Acc@1: 41.79, Acc@5: 79.40
+2026-01-27 20:36:38,187 - log - INFO - iter:1840/3669, Vanilla TTA Acc@1: 77.45, Acc@5: 93.97
+2026-01-27 20:36:38,187 - log - INFO - iter:1840/3669, Vanilla Topk TTA Acc@1: 77.45, Acc@5: 93.97
+2026-01-27 20:36:38,187 - log - INFO - iter:1840/3669, Weighted TTA Acc@1: 79.51, Acc@5: 94.29
+2026-01-27 20:37:28,270 - log - INFO - iter:1860/3669, clip_clean_acc1=81.23656463623047
+2026-01-27 20:37:28,270 - log - INFO - iter:1860/3669, clip_acc1=81.23656463623047
+2026-01-27 20:37:28,270 - log - INFO - iter:1860/3669, Original Clean Acc@1: 81.24, Acc@5: 94.62
+2026-01-27 20:37:28,270 - log - INFO - iter:1860/3669, Original Acc@1: 81.24, Acc@5: 94.62
+2026-01-27 20:37:28,271 - log - INFO - iter:1860/3669, Single TTA Acc@1: 41.77, Acc@5: 79.25
+2026-01-27 20:37:28,271 - log - INFO - iter:1860/3669, Vanilla TTA Acc@1: 77.69, Acc@5: 94.03
+2026-01-27 20:37:28,271 - log - INFO - iter:1860/3669, Vanilla Topk TTA Acc@1: 77.69, Acc@5: 94.03
+2026-01-27 20:37:28,271 - log - INFO - iter:1860/3669, Weighted TTA Acc@1: 79.62, Acc@5: 94.35
+2026-01-27 20:38:18,508 - log - INFO - iter:1880/3669, clip_clean_acc1=81.43616485595703
+2026-01-27 20:38:18,509 - log - INFO - iter:1880/3669, clip_acc1=81.43616485595703
+2026-01-27 20:38:18,509 - log - INFO - iter:1880/3669, Original Clean Acc@1: 81.44, Acc@5: 94.68
+2026-01-27 20:38:18,509 - log - INFO - iter:1880/3669, Original Acc@1: 81.44, Acc@5: 94.68
+2026-01-27 20:38:18,509 - log - INFO - iter:1880/3669, Single TTA Acc@1: 41.65, Acc@5: 79.10
+2026-01-27 20:38:18,509 - log - INFO - iter:1880/3669, Vanilla TTA Acc@1: 77.93, Acc@5: 94.10
+2026-01-27 20:38:18,509 - log - INFO - iter:1880/3669, Vanilla Topk TTA Acc@1: 77.93, Acc@5: 94.10
+2026-01-27 20:38:18,509 - log - INFO - iter:1880/3669, Weighted TTA Acc@1: 79.84, Acc@5: 94.41
+2026-01-27 20:39:08,982 - log - INFO - iter:1900/3669, clip_clean_acc1=81.36841583251953
+2026-01-27 20:39:08,983 - log - INFO - iter:1900/3669, clip_acc1=81.36841583251953
+2026-01-27 20:39:08,983 - log - INFO - iter:1900/3669, Original Clean Acc@1: 81.37, Acc@5: 94.74
+2026-01-27 20:39:08,983 - log - INFO - iter:1900/3669, Original Acc@1: 81.37, Acc@5: 94.74
+2026-01-27 20:39:08,983 - log - INFO - iter:1900/3669, Single TTA Acc@1: 41.68, Acc@5: 79.00
+2026-01-27 20:39:08,983 - log - INFO - iter:1900/3669, Vanilla TTA Acc@1: 77.89, Acc@5: 94.16
+2026-01-27 20:39:08,983 - log - INFO - iter:1900/3669, Vanilla Topk TTA Acc@1: 77.89, Acc@5: 94.16
+2026-01-27 20:39:08,983 - log - INFO - iter:1900/3669, Weighted TTA Acc@1: 79.84, Acc@5: 94.47
+2026-01-27 20:40:00,423 - log - INFO - iter:1920/3669, clip_clean_acc1=81.51042175292969
+2026-01-27 20:40:00,424 - log - INFO - iter:1920/3669, clip_acc1=81.51042175292969
+2026-01-27 20:40:00,424 - log - INFO - iter:1920/3669, Original Clean Acc@1: 81.51, Acc@5: 94.74
+2026-01-27 20:40:00,424 - log - INFO - iter:1920/3669, Original Acc@1: 81.51, Acc@5: 94.74
+2026-01-27 20:40:00,424 - log - INFO - iter:1920/3669, Single TTA Acc@1: 41.51, Acc@5: 78.75
+2026-01-27 20:40:00,424 - log - INFO - iter:1920/3669, Vanilla TTA Acc@1: 78.07, Acc@5: 94.17
+2026-01-27 20:40:00,424 - log - INFO - iter:1920/3669, Vanilla Topk TTA Acc@1: 78.07, Acc@5: 94.17
+2026-01-27 20:40:00,424 - log - INFO - iter:1920/3669, Weighted TTA Acc@1: 80.00, Acc@5: 94.48
+2026-01-27 20:40:51,488 - log - INFO - iter:1940/3669, clip_clean_acc1=81.70103454589844
+2026-01-27 20:40:51,488 - log - INFO - iter:1940/3669, clip_acc1=81.70103454589844
+2026-01-27 20:40:51,489 - log - INFO - iter:1940/3669, Original Clean Acc@1: 81.70, Acc@5: 94.79
+2026-01-27 20:40:51,489 - log - INFO - iter:1940/3669, Original Acc@1: 81.70, Acc@5: 94.79
+2026-01-27 20:40:51,489 - log - INFO - iter:1940/3669, Single TTA Acc@1: 41.49, Acc@5: 78.56
+2026-01-27 20:40:51,489 - log - INFO - iter:1940/3669, Vanilla TTA Acc@1: 78.30, Acc@5: 94.23
+2026-01-27 20:40:51,489 - log - INFO - iter:1940/3669, Vanilla Topk TTA Acc@1: 78.30, Acc@5: 94.23
+2026-01-27 20:40:51,489 - log - INFO - iter:1940/3669, Weighted TTA Acc@1: 80.21, Acc@5: 94.54
+2026-01-27 20:41:41,806 - log - INFO - iter:1960/3669, clip_clean_acc1=81.88774871826172
+2026-01-27 20:41:41,806 - log - INFO - iter:1960/3669, clip_acc1=81.88774871826172
+2026-01-27 20:41:41,806 - log - INFO - iter:1960/3669, Original Clean Acc@1: 81.89, Acc@5: 94.85
+2026-01-27 20:41:41,806 - log - INFO - iter:1960/3669, Original Acc@1: 81.89, Acc@5: 94.85
+2026-01-27 20:41:41,806 - log - INFO - iter:1960/3669, Single TTA Acc@1: 41.53, Acc@5: 78.67
+2026-01-27 20:41:41,806 - log - INFO - iter:1960/3669, Vanilla TTA Acc@1: 78.52, Acc@5: 94.29
+2026-01-27 20:41:41,806 - log - INFO - iter:1960/3669, Vanilla Topk TTA Acc@1: 78.52, Acc@5: 94.29
+2026-01-27 20:41:41,806 - log - INFO - iter:1960/3669, Weighted TTA Acc@1: 80.41, Acc@5: 94.59
+2026-01-27 20:42:32,767 - log - INFO - iter:1980/3669, clip_clean_acc1=82.07070922851562
+2026-01-27 20:42:32,767 - log - INFO - iter:1980/3669, clip_acc1=82.07070922851562
+2026-01-27 20:42:32,767 - log - INFO - iter:1980/3669, Original Clean Acc@1: 82.07, Acc@5: 94.90
+2026-01-27 20:42:32,767 - log - INFO - iter:1980/3669, Original Acc@1: 82.07, Acc@5: 94.90
+2026-01-27 20:42:32,767 - log - INFO - iter:1980/3669, Single TTA Acc@1: 41.31, Acc@5: 78.54
+2026-01-27 20:42:32,767 - log - INFO - iter:1980/3669, Vanilla TTA Acc@1: 78.74, Acc@5: 94.34
+2026-01-27 20:42:32,767 - log - INFO - iter:1980/3669, Vanilla Topk TTA Acc@1: 78.74, Acc@5: 94.34
+2026-01-27 20:42:32,767 - log - INFO - iter:1980/3669, Weighted TTA Acc@1: 80.61, Acc@5: 94.65
+2026-01-27 20:43:23,551 - log - INFO - iter:2000/3669, clip_clean_acc1=82.05000305175781
+2026-01-27 20:43:23,552 - log - INFO - iter:2000/3669, clip_acc1=82.05000305175781
+2026-01-27 20:43:23,552 - log - INFO - iter:2000/3669, Original Clean Acc@1: 82.05, Acc@5: 94.95
+2026-01-27 20:43:23,552 - log - INFO - iter:2000/3669, Original Acc@1: 82.05, Acc@5: 94.95
+2026-01-27 20:43:23,552 - log - INFO - iter:2000/3669, Single TTA Acc@1: 41.25, Acc@5: 78.35
+2026-01-27 20:43:23,552 - log - INFO - iter:2000/3669, Vanilla TTA Acc@1: 78.75, Acc@5: 94.40
+2026-01-27 20:43:23,552 - log - INFO - iter:2000/3669, Vanilla Topk TTA Acc@1: 78.75, Acc@5: 94.40
+2026-01-27 20:43:23,552 - log - INFO - iter:2000/3669, Weighted TTA Acc@1: 80.60, Acc@5: 94.70
+2026-01-27 20:44:14,907 - log - INFO - iter:2020/3669, clip_clean_acc1=82.17822265625
+2026-01-27 20:44:14,907 - log - INFO - iter:2020/3669, clip_acc1=82.17822265625
+2026-01-27 20:44:14,907 - log - INFO - iter:2020/3669, Original Clean Acc@1: 82.18, Acc@5: 95.00
+2026-01-27 20:44:14,908 - log - INFO - iter:2020/3669, Original Acc@1: 82.18, Acc@5: 95.00
+2026-01-27 20:44:14,908 - log - INFO - iter:2020/3669, Single TTA Acc@1: 41.34, Acc@5: 78.47
+2026-01-27 20:44:14,908 - log - INFO - iter:2020/3669, Vanilla TTA Acc@1: 78.91, Acc@5: 94.46
+2026-01-27 20:44:14,908 - log - INFO - iter:2020/3669, Vanilla Topk TTA Acc@1: 78.91, Acc@5: 94.46
+2026-01-27 20:44:14,908 - log - INFO - iter:2020/3669, Weighted TTA Acc@1: 80.74, Acc@5: 94.75
+2026-01-27 20:45:06,247 - log - INFO - iter:2040/3669, clip_clean_acc1=82.30392456054688
+2026-01-27 20:45:06,247 - log - INFO - iter:2040/3669, clip_acc1=82.30392456054688
+2026-01-27 20:45:06,247 - log - INFO - iter:2040/3669, Original Clean Acc@1: 82.30, Acc@5: 95.05
+2026-01-27 20:45:06,247 - log - INFO - iter:2040/3669, Original Acc@1: 82.30, Acc@5: 95.05
+2026-01-27 20:45:06,247 - log - INFO - iter:2040/3669, Single TTA Acc@1: 41.27, Acc@5: 78.58
+2026-01-27 20:45:06,247 - log - INFO - iter:2040/3669, Vanilla TTA Acc@1: 79.02, Acc@5: 94.51
+2026-01-27 20:45:06,247 - log - INFO - iter:2040/3669, Vanilla Topk TTA Acc@1: 79.02, Acc@5: 94.51
+2026-01-27 20:45:06,248 - log - INFO - iter:2040/3669, Weighted TTA Acc@1: 80.88, Acc@5: 94.80
+2026-01-27 20:45:57,638 - log - INFO - iter:2060/3669, clip_clean_acc1=82.4757308959961
+2026-01-27 20:45:57,638 - log - INFO - iter:2060/3669, clip_acc1=82.4757308959961
+2026-01-27 20:45:57,638 - log - INFO - iter:2060/3669, Original Clean Acc@1: 82.48, Acc@5: 95.10
+2026-01-27 20:45:57,638 - log - INFO - iter:2060/3669, Original Acc@1: 82.48, Acc@5: 95.10
+2026-01-27 20:45:57,638 - log - INFO - iter:2060/3669, Single TTA Acc@1: 41.50, Acc@5: 78.59
+2026-01-27 20:45:57,638 - log - INFO - iter:2060/3669, Vanilla TTA Acc@1: 79.13, Acc@5: 94.56
+2026-01-27 20:45:57,638 - log - INFO - iter:2060/3669, Vanilla Topk TTA Acc@1: 79.13, Acc@5: 94.56
+2026-01-27 20:45:57,638 - log - INFO - iter:2060/3669, Weighted TTA Acc@1: 81.02, Acc@5: 94.85
+2026-01-27 20:46:49,299 - log - INFO - iter:2080/3669, clip_clean_acc1=82.54808044433594
+2026-01-27 20:46:49,299 - log - INFO - iter:2080/3669, clip_acc1=82.54808044433594
+2026-01-27 20:46:49,299 - log - INFO - iter:2080/3669, Original Clean Acc@1: 82.55, Acc@5: 95.14
+2026-01-27 20:46:49,299 - log - INFO - iter:2080/3669, Original Acc@1: 82.55, Acc@5: 95.14
+2026-01-27 20:46:49,299 - log - INFO - iter:2080/3669, Single TTA Acc@1: 41.35, Acc@5: 78.51
+2026-01-27 20:46:49,299 - log - INFO - iter:2080/3669, Vanilla TTA Acc@1: 79.18, Acc@5: 94.62
+2026-01-27 20:46:49,299 - log - INFO - iter:2080/3669, Vanilla Topk TTA Acc@1: 79.18, Acc@5: 94.62
+2026-01-27 20:46:49,300 - log - INFO - iter:2080/3669, Weighted TTA Acc@1: 81.11, Acc@5: 94.90
+2026-01-27 20:47:39,061 - log - INFO - iter:2100/3669, clip_clean_acc1=82.61904907226562
+2026-01-27 20:47:39,061 - log - INFO - iter:2100/3669, clip_acc1=82.61904907226562
+2026-01-27 20:47:39,061 - log - INFO - iter:2100/3669, Original Clean Acc@1: 82.62, Acc@5: 95.19
+2026-01-27 20:47:39,061 - log - INFO - iter:2100/3669, Original Acc@1: 82.62, Acc@5: 95.19
+2026-01-27 20:47:39,061 - log - INFO - iter:2100/3669, Single TTA Acc@1: 41.86, Acc@5: 78.71
+2026-01-27 20:47:39,061 - log - INFO - iter:2100/3669, Vanilla TTA Acc@1: 79.29, Acc@5: 94.67
+2026-01-27 20:47:39,061 - log - INFO - iter:2100/3669, Vanilla Topk TTA Acc@1: 79.29, Acc@5: 94.67
+2026-01-27 20:47:39,061 - log - INFO - iter:2100/3669, Weighted TTA Acc@1: 81.19, Acc@5: 94.95
+2026-01-27 20:48:28,800 - log - INFO - iter:2120/3669, clip_clean_acc1=82.68868255615234
+2026-01-27 20:48:28,800 - log - INFO - iter:2120/3669, clip_acc1=82.68868255615234
+2026-01-27 20:48:28,800 - log - INFO - iter:2120/3669, Original Clean Acc@1: 82.69, Acc@5: 95.24
+2026-01-27 20:48:28,800 - log - INFO - iter:2120/3669, Original Acc@1: 82.69, Acc@5: 95.24
+2026-01-27 20:48:28,800 - log - INFO - iter:2120/3669, Single TTA Acc@1: 42.41, Acc@5: 78.92
+2026-01-27 20:48:28,800 - log - INFO - iter:2120/3669, Vanilla TTA Acc@1: 79.39, Acc@5: 94.72
+2026-01-27 20:48:28,801 - log - INFO - iter:2120/3669, Vanilla Topk TTA Acc@1: 79.39, Acc@5: 94.72
+2026-01-27 20:48:28,801 - log - INFO - iter:2120/3669, Weighted TTA Acc@1: 81.27, Acc@5: 95.00
+2026-01-27 20:49:18,586 - log - INFO - iter:2140/3669, clip_clean_acc1=82.80374145507812
+2026-01-27 20:49:18,586 - log - INFO - iter:2140/3669, clip_acc1=82.80374145507812
+2026-01-27 20:49:18,586 - log - INFO - iter:2140/3669, Original Clean Acc@1: 82.80, Acc@5: 95.28
+2026-01-27 20:49:18,586 - log - INFO - iter:2140/3669, Original Acc@1: 82.80, Acc@5: 95.28
+2026-01-27 20:49:18,586 - log - INFO - iter:2140/3669, Single TTA Acc@1: 42.80, Acc@5: 79.07
+2026-01-27 20:49:18,586 - log - INFO - iter:2140/3669, Vanilla TTA Acc@1: 79.53, Acc@5: 94.77
+2026-01-27 20:49:18,586 - log - INFO - iter:2140/3669, Vanilla Topk TTA Acc@1: 79.53, Acc@5: 94.77
+2026-01-27 20:49:18,586 - log - INFO - iter:2140/3669, Weighted TTA Acc@1: 81.45, Acc@5: 95.05
+2026-01-27 20:50:08,850 - log - INFO - iter:2160/3669, clip_clean_acc1=82.96295928955078
+2026-01-27 20:50:08,850 - log - INFO - iter:2160/3669, clip_acc1=82.96295928955078
+2026-01-27 20:50:08,850 - log - INFO - iter:2160/3669, Original Clean Acc@1: 82.96, Acc@5: 95.32
+2026-01-27 20:50:08,850 - log - INFO - iter:2160/3669, Original Acc@1: 82.96, Acc@5: 95.32
+2026-01-27 20:50:08,850 - log - INFO - iter:2160/3669, Single TTA Acc@1: 43.29, Acc@5: 79.26
+2026-01-27 20:50:08,850 - log - INFO - iter:2160/3669, Vanilla TTA Acc@1: 79.72, Acc@5: 94.81
+2026-01-27 20:50:08,850 - log - INFO - iter:2160/3669, Vanilla Topk TTA Acc@1: 79.72, Acc@5: 94.81
+2026-01-27 20:50:08,850 - log - INFO - iter:2160/3669, Weighted TTA Acc@1: 81.62, Acc@5: 95.09
+2026-01-27 20:50:58,628 - log - INFO - iter:2180/3669, clip_clean_acc1=83.11927032470703
+2026-01-27 20:50:58,628 - log - INFO - iter:2180/3669, clip_acc1=83.11927032470703
+2026-01-27 20:50:58,628 - log - INFO - iter:2180/3669, Original Clean Acc@1: 83.12, Acc@5: 95.37
+2026-01-27 20:50:58,628 - log - INFO - iter:2180/3669, Original Acc@1: 83.12, Acc@5: 95.37
+2026-01-27 20:50:58,629 - log - INFO - iter:2180/3669, Single TTA Acc@1: 43.67, Acc@5: 79.45
+2026-01-27 20:50:58,629 - log - INFO - iter:2180/3669, Vanilla TTA Acc@1: 79.86, Acc@5: 94.86
+2026-01-27 20:50:58,629 - log - INFO - iter:2180/3669, Vanilla Topk TTA Acc@1: 79.86, Acc@5: 94.86
+2026-01-27 20:50:58,629 - log - INFO - iter:2180/3669, Weighted TTA Acc@1: 81.74, Acc@5: 95.14
+2026-01-27 20:51:48,519 - log - INFO - iter:2200/3669, clip_clean_acc1=83.2272720336914
+2026-01-27 20:51:48,519 - log - INFO - iter:2200/3669, clip_acc1=83.2272720336914
+2026-01-27 20:51:48,519 - log - INFO - iter:2200/3669, Original Clean Acc@1: 83.23, Acc@5: 95.41
+2026-01-27 20:51:48,520 - log - INFO - iter:2200/3669, Original Acc@1: 83.23, Acc@5: 95.41
+2026-01-27 20:51:48,520 - log - INFO - iter:2200/3669, Single TTA Acc@1: 43.64, Acc@5: 79.45
+2026-01-27 20:51:48,520 - log - INFO - iter:2200/3669, Vanilla TTA Acc@1: 79.91, Acc@5: 94.91
+2026-01-27 20:51:48,520 - log - INFO - iter:2200/3669, Vanilla Topk TTA Acc@1: 79.91, Acc@5: 94.91
+2026-01-27 20:51:48,520 - log - INFO - iter:2200/3669, Weighted TTA Acc@1: 81.82, Acc@5: 95.18
+2026-01-27 20:52:39,127 - log - INFO - iter:2220/3669, clip_clean_acc1=83.37837982177734
+2026-01-27 20:52:39,127 - log - INFO - iter:2220/3669, clip_acc1=83.37837982177734
+2026-01-27 20:52:39,127 - log - INFO - iter:2220/3669, Original Clean Acc@1: 83.38, Acc@5: 95.45
+2026-01-27 20:52:39,127 - log - INFO - iter:2220/3669, Original Acc@1: 83.38, Acc@5: 95.45
+2026-01-27 20:52:39,127 - log - INFO - iter:2220/3669, Single TTA Acc@1: 43.92, Acc@5: 79.59
+2026-01-27 20:52:39,127 - log - INFO - iter:2220/3669, Vanilla TTA Acc@1: 80.09, Acc@5: 94.95
+2026-01-27 20:52:39,127 - log - INFO - iter:2220/3669, Vanilla Topk TTA Acc@1: 80.09, Acc@5: 94.95
+2026-01-27 20:52:39,127 - log - INFO - iter:2220/3669, Weighted TTA Acc@1: 81.98, Acc@5: 95.23
+2026-01-27 20:53:30,012 - log - INFO - iter:2240/3669, clip_clean_acc1=83.48213958740234
+2026-01-27 20:53:30,013 - log - INFO - iter:2240/3669, clip_acc1=83.48213958740234
+2026-01-27 20:53:30,013 - log - INFO - iter:2240/3669, Original Clean Acc@1: 83.48, Acc@5: 95.49
+2026-01-27 20:53:30,013 - log - INFO - iter:2240/3669, Original Acc@1: 83.48, Acc@5: 95.49
+2026-01-27 20:53:30,013 - log - INFO - iter:2240/3669, Single TTA Acc@1: 44.24, Acc@5: 79.78
+2026-01-27 20:53:30,013 - log - INFO - iter:2240/3669, Vanilla TTA Acc@1: 80.22, Acc@5: 95.00
+2026-01-27 20:53:30,013 - log - INFO - iter:2240/3669, Vanilla Topk TTA Acc@1: 80.22, Acc@5: 95.00
+2026-01-27 20:53:30,013 - log - INFO - iter:2240/3669, Weighted TTA Acc@1: 82.10, Acc@5: 95.27
+2026-01-27 20:54:21,044 - log - INFO - iter:2260/3669, clip_clean_acc1=83.58406829833984
+2026-01-27 20:54:21,045 - log - INFO - iter:2260/3669, clip_acc1=83.58406829833984
+2026-01-27 20:54:21,045 - log - INFO - iter:2260/3669, Original Clean Acc@1: 83.58, Acc@5: 95.53
+2026-01-27 20:54:21,045 - log - INFO - iter:2260/3669, Original Acc@1: 83.58, Acc@5: 95.53
+2026-01-27 20:54:21,045 - log - INFO - iter:2260/3669, Single TTA Acc@1: 44.69, Acc@5: 79.96
+2026-01-27 20:54:21,045 - log - INFO - iter:2260/3669, Vanilla TTA Acc@1: 80.40, Acc@5: 95.04
+2026-01-27 20:54:21,045 - log - INFO - iter:2260/3669, Vanilla Topk TTA Acc@1: 80.40, Acc@5: 95.04
+2026-01-27 20:54:21,045 - log - INFO - iter:2260/3669, Weighted TTA Acc@1: 82.21, Acc@5: 95.31
+2026-01-27 20:55:11,663 - log - INFO - iter:2280/3669, clip_clean_acc1=83.68421173095703
+2026-01-27 20:55:11,663 - log - INFO - iter:2280/3669, clip_acc1=83.68421173095703
+2026-01-27 20:55:11,663 - log - INFO - iter:2280/3669, Original Clean Acc@1: 83.68, Acc@5: 95.57
+2026-01-27 20:55:11,663 - log - INFO - iter:2280/3669, Original Acc@1: 83.68, Acc@5: 95.57
+2026-01-27 20:55:11,663 - log - INFO - iter:2280/3669, Single TTA Acc@1: 45.04, Acc@5: 80.13
+2026-01-27 20:55:11,664 - log - INFO - iter:2280/3669, Vanilla TTA Acc@1: 80.57, Acc@5: 95.09
+2026-01-27 20:55:11,664 - log - INFO - iter:2280/3669, Vanilla Topk TTA Acc@1: 80.57, Acc@5: 95.09
+2026-01-27 20:55:11,664 - log - INFO - iter:2280/3669, Weighted TTA Acc@1: 82.37, Acc@5: 95.35
+2026-01-27 20:56:03,206 - log - INFO - iter:2300/3669, clip_clean_acc1=83.26087188720703
+2026-01-27 20:56:03,206 - log - INFO - iter:2300/3669, clip_acc1=83.26087188720703
+2026-01-27 20:56:03,206 - log - INFO - iter:2300/3669, Original Clean Acc@1: 83.26, Acc@5: 95.57
+2026-01-27 20:56:03,206 - log - INFO - iter:2300/3669, Original Acc@1: 83.26, Acc@5: 95.57
+2026-01-27 20:56:03,206 - log - INFO - iter:2300/3669, Single TTA Acc@1: 44.83, Acc@5: 80.00
+2026-01-27 20:56:03,207 - log - INFO - iter:2300/3669, Vanilla TTA Acc@1: 80.17, Acc@5: 95.09
+2026-01-27 20:56:03,207 - log - INFO - iter:2300/3669, Vanilla Topk TTA Acc@1: 80.17, Acc@5: 95.09
+2026-01-27 20:56:03,207 - log - INFO - iter:2300/3669, Weighted TTA Acc@1: 81.96, Acc@5: 95.35
+2026-01-27 20:56:54,086 - log - INFO - iter:2320/3669, clip_clean_acc1=83.27586364746094
+2026-01-27 20:56:54,086 - log - INFO - iter:2320/3669, clip_acc1=83.27586364746094
+2026-01-27 20:56:54,086 - log - INFO - iter:2320/3669, Original Clean Acc@1: 83.28, Acc@5: 95.60
+2026-01-27 20:56:54,086 - log - INFO - iter:2320/3669, Original Acc@1: 83.28, Acc@5: 95.60
+2026-01-27 20:56:54,086 - log - INFO - iter:2320/3669, Single TTA Acc@1: 44.70, Acc@5: 79.78
+2026-01-27 20:56:54,086 - log - INFO - iter:2320/3669, Vanilla TTA Acc@1: 80.13, Acc@5: 95.13
+2026-01-27 20:56:54,087 - log - INFO - iter:2320/3669, Vanilla Topk TTA Acc@1: 80.13, Acc@5: 95.13
+2026-01-27 20:56:54,087 - log - INFO - iter:2320/3669, Weighted TTA Acc@1: 81.94, Acc@5: 95.39
+2026-01-27 20:57:45,169 - log - INFO - iter:2340/3669, clip_clean_acc1=82.991455078125
+2026-01-27 20:57:45,169 - log - INFO - iter:2340/3669, clip_acc1=82.991455078125
+2026-01-27 20:57:45,169 - log - INFO - iter:2340/3669, Original Clean Acc@1: 82.99, Acc@5: 95.64
+2026-01-27 20:57:45,170 - log - INFO - iter:2340/3669, Original Acc@1: 82.99, Acc@5: 95.64
+2026-01-27 20:57:45,170 - log - INFO - iter:2340/3669, Single TTA Acc@1: 44.44, Acc@5: 79.53
+2026-01-27 20:57:45,170 - log - INFO - iter:2340/3669, Vanilla TTA Acc@1: 79.83, Acc@5: 95.13
+2026-01-27 20:57:45,170 - log - INFO - iter:2340/3669, Vanilla Topk TTA Acc@1: 79.83, Acc@5: 95.13
+2026-01-27 20:57:45,170 - log - INFO - iter:2340/3669, Weighted TTA Acc@1: 81.62, Acc@5: 95.43
+2026-01-27 20:58:34,990 - log - INFO - iter:2360/3669, clip_clean_acc1=82.9237289428711
+2026-01-27 20:58:34,990 - log - INFO - iter:2360/3669, clip_acc1=82.9237289428711
+2026-01-27 20:58:34,990 - log - INFO - iter:2360/3669, Original Clean Acc@1: 82.92, Acc@5: 95.68
+2026-01-27 20:58:34,990 - log - INFO - iter:2360/3669, Original Acc@1: 82.92, Acc@5: 95.68
+2026-01-27 20:58:34,991 - log - INFO - iter:2360/3669, Single TTA Acc@1: 44.36, Acc@5: 79.45
+2026-01-27 20:58:34,991 - log - INFO - iter:2360/3669, Vanilla TTA Acc@1: 79.79, Acc@5: 95.17
+2026-01-27 20:58:34,991 - log - INFO - iter:2360/3669, Vanilla Topk TTA Acc@1: 79.79, Acc@5: 95.17
+2026-01-27 20:58:34,991 - log - INFO - iter:2360/3669, Weighted TTA Acc@1: 81.57, Acc@5: 95.47
+2026-01-27 20:59:26,925 - log - INFO - iter:2380/3669, clip_clean_acc1=82.68907928466797
+2026-01-27 20:59:26,926 - log - INFO - iter:2380/3669, clip_acc1=82.68907928466797
+2026-01-27 20:59:26,926 - log - INFO - iter:2380/3669, Original Clean Acc@1: 82.69, Acc@5: 95.71
+2026-01-27 20:59:26,926 - log - INFO - iter:2380/3669, Original Acc@1: 82.69, Acc@5: 95.71
+2026-01-27 20:59:26,926 - log - INFO - iter:2380/3669, Single TTA Acc@1: 44.16, Acc@5: 79.37
+2026-01-27 20:59:26,926 - log - INFO - iter:2380/3669, Vanilla TTA Acc@1: 79.41, Acc@5: 95.21
+2026-01-27 20:59:26,926 - log - INFO - iter:2380/3669, Vanilla Topk TTA Acc@1: 79.41, Acc@5: 95.21
+2026-01-27 20:59:26,926 - log - INFO - iter:2380/3669, Weighted TTA Acc@1: 81.26, Acc@5: 95.50
+2026-01-27 21:00:17,240 - log - INFO - iter:2400/3669, clip_clean_acc1=82.75
+2026-01-27 21:00:17,240 - log - INFO - iter:2400/3669, clip_acc1=82.75
+2026-01-27 21:00:17,241 - log - INFO - iter:2400/3669, Original Clean Acc@1: 82.75, Acc@5: 95.71
+2026-01-27 21:00:17,241 - log - INFO - iter:2400/3669, Original Acc@1: 82.75, Acc@5: 95.71
+2026-01-27 21:00:17,241 - log - INFO - iter:2400/3669, Single TTA Acc@1: 44.29, Acc@5: 79.46
+2026-01-27 21:00:17,241 - log - INFO - iter:2400/3669, Vanilla TTA Acc@1: 79.46, Acc@5: 95.21
+2026-01-27 21:00:17,241 - log - INFO - iter:2400/3669, Vanilla Topk TTA Acc@1: 79.46, Acc@5: 95.21
+2026-01-27 21:00:17,241 - log - INFO - iter:2400/3669, Weighted TTA Acc@1: 81.33, Acc@5: 95.50
+2026-01-27 21:01:07,677 - log - INFO - iter:2420/3669, clip_clean_acc1=82.8099136352539
+2026-01-27 21:01:07,677 - log - INFO - iter:2420/3669, clip_acc1=82.8099136352539
+2026-01-27 21:01:07,677 - log - INFO - iter:2420/3669, Original Clean Acc@1: 82.81, Acc@5: 95.74
+2026-01-27 21:01:07,677 - log - INFO - iter:2420/3669, Original Acc@1: 82.81, Acc@5: 95.74
+2026-01-27 21:01:07,677 - log - INFO - iter:2420/3669, Single TTA Acc@1: 44.38, Acc@5: 79.50
+2026-01-27 21:01:07,678 - log - INFO - iter:2420/3669, Vanilla TTA Acc@1: 79.55, Acc@5: 95.25
+2026-01-27 21:01:07,678 - log - INFO - iter:2420/3669, Vanilla Topk TTA Acc@1: 79.55, Acc@5: 95.25
+2026-01-27 21:01:07,678 - log - INFO - iter:2420/3669, Weighted TTA Acc@1: 81.40, Acc@5: 95.54
+2026-01-27 21:01:58,905 - log - INFO - iter:2440/3669, clip_clean_acc1=82.90983581542969
+2026-01-27 21:01:58,905 - log - INFO - iter:2440/3669, clip_acc1=82.90983581542969
+2026-01-27 21:01:58,905 - log - INFO - iter:2440/3669, Original Clean Acc@1: 82.91, Acc@5: 95.78
+2026-01-27 21:01:58,905 - log - INFO - iter:2440/3669, Original Acc@1: 82.91, Acc@5: 95.78
+2026-01-27 21:01:58,905 - log - INFO - iter:2440/3669, Single TTA Acc@1: 44.63, Acc@5: 79.55
+2026-01-27 21:01:58,906 - log - INFO - iter:2440/3669, Vanilla TTA Acc@1: 79.67, Acc@5: 95.29
+2026-01-27 21:01:58,906 - log - INFO - iter:2440/3669, Vanilla Topk TTA Acc@1: 79.67, Acc@5: 95.29
+2026-01-27 21:01:58,906 - log - INFO - iter:2440/3669, Weighted TTA Acc@1: 81.56, Acc@5: 95.57
+2026-01-27 21:02:49,734 - log - INFO - iter:2460/3669, clip_clean_acc1=83.00812530517578
+2026-01-27 21:02:49,734 - log - INFO - iter:2460/3669, clip_acc1=83.00812530517578
+2026-01-27 21:02:49,735 - log - INFO - iter:2460/3669, Original Clean Acc@1: 83.01, Acc@5: 95.81
+2026-01-27 21:02:49,735 - log - INFO - iter:2460/3669, Original Acc@1: 83.01, Acc@5: 95.81
+2026-01-27 21:02:49,735 - log - INFO - iter:2460/3669, Single TTA Acc@1: 44.84, Acc@5: 79.67
+2026-01-27 21:02:49,735 - log - INFO - iter:2460/3669, Vanilla TTA Acc@1: 79.76, Acc@5: 95.33
+2026-01-27 21:02:49,735 - log - INFO - iter:2460/3669, Vanilla Topk TTA Acc@1: 79.76, Acc@5: 95.33
+2026-01-27 21:02:49,735 - log - INFO - iter:2460/3669, Weighted TTA Acc@1: 81.63, Acc@5: 95.61
+2026-01-27 21:03:40,331 - log - INFO - iter:2480/3669, clip_clean_acc1=83.14515686035156
+2026-01-27 21:03:40,332 - log - INFO - iter:2480/3669, clip_acc1=83.14515686035156
+2026-01-27 21:03:40,332 - log - INFO - iter:2480/3669, Original Clean Acc@1: 83.15, Acc@5: 95.85
+2026-01-27 21:03:40,332 - log - INFO - iter:2480/3669, Original Acc@1: 83.15, Acc@5: 95.85
+2026-01-27 21:03:40,332 - log - INFO - iter:2480/3669, Single TTA Acc@1: 45.20, Acc@5: 79.84
+2026-01-27 21:03:40,332 - log - INFO - iter:2480/3669, Vanilla TTA Acc@1: 79.92, Acc@5: 95.36
+2026-01-27 21:03:40,332 - log - INFO - iter:2480/3669, Vanilla Topk TTA Acc@1: 79.92, Acc@5: 95.36
+2026-01-27 21:03:40,332 - log - INFO - iter:2480/3669, Weighted TTA Acc@1: 81.77, Acc@5: 95.65
+2026-01-27 21:04:31,744 - log - INFO - iter:2500/3669, clip_clean_acc1=83.23999786376953
+2026-01-27 21:04:31,744 - log - INFO - iter:2500/3669, clip_acc1=83.23999786376953
+2026-01-27 21:04:31,744 - log - INFO - iter:2500/3669, Original Clean Acc@1: 83.24, Acc@5: 95.88
+2026-01-27 21:04:31,744 - log - INFO - iter:2500/3669, Original Acc@1: 83.24, Acc@5: 95.88
+2026-01-27 21:04:31,745 - log - INFO - iter:2500/3669, Single TTA Acc@1: 45.56, Acc@5: 80.00
+2026-01-27 21:04:31,745 - log - INFO - iter:2500/3669, Vanilla TTA Acc@1: 80.04, Acc@5: 95.40
+2026-01-27 21:04:31,745 - log - INFO - iter:2500/3669, Vanilla Topk TTA Acc@1: 80.04, Acc@5: 95.40
+2026-01-27 21:04:31,745 - log - INFO - iter:2500/3669, Weighted TTA Acc@1: 81.88, Acc@5: 95.68
+2026-01-27 21:05:22,128 - log - INFO - iter:2520/3669, clip_clean_acc1=83.37301635742188
+2026-01-27 21:05:22,128 - log - INFO - iter:2520/3669, clip_acc1=83.37301635742188
+2026-01-27 21:05:22,128 - log - INFO - iter:2520/3669, Original Clean Acc@1: 83.37, Acc@5: 95.91
+2026-01-27 21:05:22,128 - log - INFO - iter:2520/3669, Original Acc@1: 83.37, Acc@5: 95.91
+2026-01-27 21:05:22,128 - log - INFO - iter:2520/3669, Single TTA Acc@1: 45.99, Acc@5: 80.16
+2026-01-27 21:05:22,128 - log - INFO - iter:2520/3669, Vanilla TTA Acc@1: 80.20, Acc@5: 95.44
+2026-01-27 21:05:22,128 - log - INFO - iter:2520/3669, Vanilla Topk TTA Acc@1: 80.20, Acc@5: 95.44
+2026-01-27 21:05:22,128 - log - INFO - iter:2520/3669, Weighted TTA Acc@1: 82.02, Acc@5: 95.71
+2026-01-27 21:06:13,009 - log - INFO - iter:2540/3669, clip_clean_acc1=83.50393676757812
+2026-01-27 21:06:13,010 - log - INFO - iter:2540/3669, clip_acc1=83.50393676757812
+2026-01-27 21:06:13,010 - log - INFO - iter:2540/3669, Original Clean Acc@1: 83.50, Acc@5: 95.94
+2026-01-27 21:06:13,010 - log - INFO - iter:2540/3669, Original Acc@1: 83.50, Acc@5: 95.94
+2026-01-27 21:06:13,010 - log - INFO - iter:2540/3669, Single TTA Acc@1: 46.38, Acc@5: 80.28
+2026-01-27 21:06:13,010 - log - INFO - iter:2540/3669, Vanilla TTA Acc@1: 80.35, Acc@5: 95.47
+2026-01-27 21:06:13,010 - log - INFO - iter:2540/3669, Vanilla Topk TTA Acc@1: 80.35, Acc@5: 95.47
+2026-01-27 21:06:13,010 - log - INFO - iter:2540/3669, Weighted TTA Acc@1: 82.17, Acc@5: 95.75
+2026-01-27 21:07:03,075 - log - INFO - iter:2560/3669, clip_clean_acc1=83.6328125
+2026-01-27 21:07:03,076 - log - INFO - iter:2560/3669, clip_acc1=83.6328125
+2026-01-27 21:07:03,076 - log - INFO - iter:2560/3669, Original Clean Acc@1: 83.63, Acc@5: 95.98
+2026-01-27 21:07:03,076 - log - INFO - iter:2560/3669, Original Acc@1: 83.63, Acc@5: 95.98
+2026-01-27 21:07:03,076 - log - INFO - iter:2560/3669, Single TTA Acc@1: 46.76, Acc@5: 80.43
+2026-01-27 21:07:03,076 - log - INFO - iter:2560/3669, Vanilla TTA Acc@1: 80.51, Acc@5: 95.51
+2026-01-27 21:07:03,076 - log - INFO - iter:2560/3669, Vanilla Topk TTA Acc@1: 80.51, Acc@5: 95.51
+2026-01-27 21:07:03,076 - log - INFO - iter:2560/3669, Weighted TTA Acc@1: 82.27, Acc@5: 95.78
+2026-01-27 21:07:54,520 - log - INFO - iter:2580/3669, clip_clean_acc1=83.75968933105469
+2026-01-27 21:07:54,520 - log - INFO - iter:2580/3669, clip_acc1=83.75968933105469
+2026-01-27 21:07:54,520 - log - INFO - iter:2580/3669, Original Clean Acc@1: 83.76, Acc@5: 96.01
+2026-01-27 21:07:54,521 - log - INFO - iter:2580/3669, Original Acc@1: 83.76, Acc@5: 96.01
+2026-01-27 21:07:54,521 - log - INFO - iter:2580/3669, Single TTA Acc@1: 47.17, Acc@5: 80.58
+2026-01-27 21:07:54,521 - log - INFO - iter:2580/3669, Vanilla TTA Acc@1: 80.66, Acc@5: 95.54
+2026-01-27 21:07:54,521 - log - INFO - iter:2580/3669, Vanilla Topk TTA Acc@1: 80.66, Acc@5: 95.54
+2026-01-27 21:07:54,521 - log - INFO - iter:2580/3669, Weighted TTA Acc@1: 82.40, Acc@5: 95.81
+2026-01-27 21:08:45,264 - log - INFO - iter:2600/3669, clip_clean_acc1=83.23076629638672
+2026-01-27 21:08:45,265 - log - INFO - iter:2600/3669, clip_acc1=83.23076629638672
+2026-01-27 21:08:45,265 - log - INFO - iter:2600/3669, Original Clean Acc@1: 83.23, Acc@5: 96.04
+2026-01-27 21:08:45,265 - log - INFO - iter:2600/3669, Original Acc@1: 83.23, Acc@5: 96.04
+2026-01-27 21:08:45,265 - log - INFO - iter:2600/3669, Single TTA Acc@1: 46.88, Acc@5: 80.46
+2026-01-27 21:08:45,265 - log - INFO - iter:2600/3669, Vanilla TTA Acc@1: 80.23, Acc@5: 95.58
+2026-01-27 21:08:45,265 - log - INFO - iter:2600/3669, Vanilla Topk TTA Acc@1: 80.23, Acc@5: 95.58
+2026-01-27 21:08:45,265 - log - INFO - iter:2600/3669, Weighted TTA Acc@1: 81.92, Acc@5: 95.85
+2026-01-27 21:09:35,142 - log - INFO - iter:2620/3669, clip_clean_acc1=82.86259460449219
+2026-01-27 21:09:35,142 - log - INFO - iter:2620/3669, clip_acc1=82.86259460449219
+2026-01-27 21:09:35,142 - log - INFO - iter:2620/3669, Original Clean Acc@1: 82.86, Acc@5: 96.07
+2026-01-27 21:09:35,142 - log - INFO - iter:2620/3669, Original Acc@1: 82.86, Acc@5: 96.07
+2026-01-27 21:09:35,142 - log - INFO - iter:2620/3669, Single TTA Acc@1: 46.68, Acc@5: 80.50
+2026-01-27 21:09:35,142 - log - INFO - iter:2620/3669, Vanilla TTA Acc@1: 79.89, Acc@5: 95.61
+2026-01-27 21:09:35,142 - log - INFO - iter:2620/3669, Vanilla Topk TTA Acc@1: 79.89, Acc@5: 95.61
+2026-01-27 21:09:35,142 - log - INFO - iter:2620/3669, Weighted TTA Acc@1: 81.56, Acc@5: 95.88
+2026-01-27 21:10:25,977 - log - INFO - iter:2640/3669, clip_clean_acc1=82.57575225830078
+2026-01-27 21:10:25,977 - log - INFO - iter:2640/3669, clip_acc1=82.57575225830078
+2026-01-27 21:10:25,977 - log - INFO - iter:2640/3669, Original Clean Acc@1: 82.58, Acc@5: 96.10
+2026-01-27 21:10:25,977 - log - INFO - iter:2640/3669, Original Acc@1: 82.58, Acc@5: 96.10
+2026-01-27 21:10:25,978 - log - INFO - iter:2640/3669, Single TTA Acc@1: 46.40, Acc@5: 80.53
+2026-01-27 21:10:25,978 - log - INFO - iter:2640/3669, Vanilla TTA Acc@1: 79.55, Acc@5: 95.64
+2026-01-27 21:10:25,978 - log - INFO - iter:2640/3669, Vanilla Topk TTA Acc@1: 79.55, Acc@5: 95.64
+2026-01-27 21:10:25,978 - log - INFO - iter:2640/3669, Weighted TTA Acc@1: 81.21, Acc@5: 95.91
+2026-01-27 21:11:16,216 - log - INFO - iter:2660/3669, clip_clean_acc1=82.21804809570312
+2026-01-27 21:11:16,216 - log - INFO - iter:2660/3669, clip_acc1=82.21804809570312
+2026-01-27 21:11:16,216 - log - INFO - iter:2660/3669, Original Clean Acc@1: 82.22, Acc@5: 96.13
+2026-01-27 21:11:16,216 - log - INFO - iter:2660/3669, Original Acc@1: 82.22, Acc@5: 96.13
+2026-01-27 21:11:16,216 - log - INFO - iter:2660/3669, Single TTA Acc@1: 46.24, Acc@5: 80.60
+2026-01-27 21:11:16,217 - log - INFO - iter:2660/3669, Vanilla TTA Acc@1: 79.17, Acc@5: 95.68
+2026-01-27 21:11:16,217 - log - INFO - iter:2660/3669, Vanilla Topk TTA Acc@1: 79.17, Acc@5: 95.68
+2026-01-27 21:11:16,217 - log - INFO - iter:2660/3669, Weighted TTA Acc@1: 80.83, Acc@5: 95.94
+2026-01-27 21:12:07,079 - log - INFO - iter:2680/3669, clip_clean_acc1=81.90298461914062
+2026-01-27 21:12:07,080 - log - INFO - iter:2680/3669, clip_acc1=81.90298461914062
+2026-01-27 21:12:07,080 - log - INFO - iter:2680/3669, Original Clean Acc@1: 81.90, Acc@5: 96.16
+2026-01-27 21:12:07,080 - log - INFO - iter:2680/3669, Original Acc@1: 81.90, Acc@5: 96.16
+2026-01-27 21:12:07,080 - log - INFO - iter:2680/3669, Single TTA Acc@1: 46.04, Acc@5: 80.52
+2026-01-27 21:12:07,080 - log - INFO - iter:2680/3669, Vanilla TTA Acc@1: 78.84, Acc@5: 95.71
+2026-01-27 21:12:07,080 - log - INFO - iter:2680/3669, Vanilla Topk TTA Acc@1: 78.84, Acc@5: 95.71
+2026-01-27 21:12:07,080 - log - INFO - iter:2680/3669, Weighted TTA Acc@1: 80.49, Acc@5: 95.97
+2026-01-27 21:12:58,061 - log - INFO - iter:2700/3669, clip_clean_acc1=81.81481170654297
+2026-01-27 21:12:58,061 - log - INFO - iter:2700/3669, clip_acc1=81.81481170654297
+2026-01-27 21:12:58,061 - log - INFO - iter:2700/3669, Original Clean Acc@1: 81.81, Acc@5: 96.19
+2026-01-27 21:12:58,061 - log - INFO - iter:2700/3669, Original Acc@1: 81.81, Acc@5: 96.19
+2026-01-27 21:12:58,061 - log - INFO - iter:2700/3669, Single TTA Acc@1: 46.07, Acc@5: 80.59
+2026-01-27 21:12:58,061 - log - INFO - iter:2700/3669, Vanilla TTA Acc@1: 78.78, Acc@5: 95.74
+2026-01-27 21:12:58,061 - log - INFO - iter:2700/3669, Vanilla Topk TTA Acc@1: 78.78, Acc@5: 95.74
+2026-01-27 21:12:58,061 - log - INFO - iter:2700/3669, Weighted TTA Acc@1: 80.41, Acc@5: 96.00
+2026-01-27 21:13:48,670 - log - INFO - iter:2720/3669, clip_clean_acc1=81.8382339477539
+2026-01-27 21:13:48,671 - log - INFO - iter:2720/3669, clip_acc1=81.8382339477539
+2026-01-27 21:13:48,671 - log - INFO - iter:2720/3669, Original Clean Acc@1: 81.84, Acc@5: 96.21
+2026-01-27 21:13:48,671 - log - INFO - iter:2720/3669, Original Acc@1: 81.84, Acc@5: 96.21
+2026-01-27 21:13:48,671 - log - INFO - iter:2720/3669, Single TTA Acc@1: 46.14, Acc@5: 80.55
+2026-01-27 21:13:48,671 - log - INFO - iter:2720/3669, Vanilla TTA Acc@1: 78.82, Acc@5: 95.77
+2026-01-27 21:13:48,671 - log - INFO - iter:2720/3669, Vanilla Topk TTA Acc@1: 78.82, Acc@5: 95.77
+2026-01-27 21:13:48,671 - log - INFO - iter:2720/3669, Weighted TTA Acc@1: 80.44, Acc@5: 96.03
+2026-01-27 21:14:40,645 - log - INFO - iter:2740/3669, clip_clean_acc1=81.82481384277344
+2026-01-27 21:14:40,645 - log - INFO - iter:2740/3669, clip_acc1=81.82481384277344
+2026-01-27 21:14:40,645 - log - INFO - iter:2740/3669, Original Clean Acc@1: 81.82, Acc@5: 96.24
+2026-01-27 21:14:40,646 - log - INFO - iter:2740/3669, Original Acc@1: 81.82, Acc@5: 96.24
+2026-01-27 21:14:40,646 - log - INFO - iter:2740/3669, Single TTA Acc@1: 46.20, Acc@5: 80.66
+2026-01-27 21:14:40,646 - log - INFO - iter:2740/3669, Vanilla TTA Acc@1: 78.83, Acc@5: 95.80
+2026-01-27 21:14:40,646 - log - INFO - iter:2740/3669, Vanilla Topk TTA Acc@1: 78.83, Acc@5: 95.80
+2026-01-27 21:14:40,646 - log - INFO - iter:2740/3669, Weighted TTA Acc@1: 80.51, Acc@5: 96.06
+2026-01-27 21:15:30,538 - log - INFO - iter:2760/3669, clip_clean_acc1=81.84783172607422
+2026-01-27 21:15:30,538 - log - INFO - iter:2760/3669, clip_acc1=81.84783172607422
+2026-01-27 21:15:30,538 - log - INFO - iter:2760/3669, Original Clean Acc@1: 81.85, Acc@5: 96.27
+2026-01-27 21:15:30,538 - log - INFO - iter:2760/3669, Original Acc@1: 81.85, Acc@5: 96.27
+2026-01-27 21:15:30,538 - log - INFO - iter:2760/3669, Single TTA Acc@1: 46.30, Acc@5: 80.65
+2026-01-27 21:15:30,538 - log - INFO - iter:2760/3669, Vanilla TTA Acc@1: 78.88, Acc@5: 95.83
+2026-01-27 21:15:30,538 - log - INFO - iter:2760/3669, Vanilla Topk TTA Acc@1: 78.88, Acc@5: 95.83
+2026-01-27 21:15:30,539 - log - INFO - iter:2760/3669, Weighted TTA Acc@1: 80.54, Acc@5: 96.09
+2026-01-27 21:16:22,405 - log - INFO - iter:2780/3669, clip_clean_acc1=81.65467834472656
+2026-01-27 21:16:22,405 - log - INFO - iter:2780/3669, clip_acc1=81.65467834472656
+2026-01-27 21:16:22,406 - log - INFO - iter:2780/3669, Original Clean Acc@1: 81.65, Acc@5: 96.29
+2026-01-27 21:16:22,406 - log - INFO - iter:2780/3669, Original Acc@1: 81.65, Acc@5: 96.29
+2026-01-27 21:16:22,406 - log - INFO - iter:2780/3669, Single TTA Acc@1: 46.37, Acc@5: 80.58
+2026-01-27 21:16:22,406 - log - INFO - iter:2780/3669, Vanilla TTA Acc@1: 78.88, Acc@5: 95.83
+2026-01-27 21:16:22,406 - log - INFO - iter:2780/3669, Vanilla Topk TTA Acc@1: 78.88, Acc@5: 95.83
+2026-01-27 21:16:22,406 - log - INFO - iter:2780/3669, Weighted TTA Acc@1: 80.50, Acc@5: 96.08
+2026-01-27 21:17:13,126 - log - INFO - iter:2800/3669, clip_clean_acc1=81.67857360839844
+2026-01-27 21:17:13,126 - log - INFO - iter:2800/3669, clip_acc1=81.67857360839844
+2026-01-27 21:17:13,126 - log - INFO - iter:2800/3669, Original Clean Acc@1: 81.68, Acc@5: 96.29
+2026-01-27 21:17:13,126 - log - INFO - iter:2800/3669, Original Acc@1: 81.68, Acc@5: 96.29
+2026-01-27 21:17:13,126 - log - INFO - iter:2800/3669, Single TTA Acc@1: 46.43, Acc@5: 80.54
+2026-01-27 21:17:13,127 - log - INFO - iter:2800/3669, Vanilla TTA Acc@1: 78.93, Acc@5: 95.79
+2026-01-27 21:17:13,127 - log - INFO - iter:2800/3669, Vanilla Topk TTA Acc@1: 78.93, Acc@5: 95.79
+2026-01-27 21:17:13,127 - log - INFO - iter:2800/3669, Weighted TTA Acc@1: 80.54, Acc@5: 96.04
+2026-01-27 21:18:04,167 - log - INFO - iter:2820/3669, clip_clean_acc1=81.73758697509766
+2026-01-27 21:18:04,168 - log - INFO - iter:2820/3669, clip_acc1=81.73758697509766
+2026-01-27 21:18:04,168 - log - INFO - iter:2820/3669, Original Clean Acc@1: 81.74, Acc@5: 96.31
+2026-01-27 21:18:04,168 - log - INFO - iter:2820/3669, Original Acc@1: 81.74, Acc@5: 96.31
+2026-01-27 21:18:04,168 - log - INFO - iter:2820/3669, Single TTA Acc@1: 46.63, Acc@5: 80.64
+2026-01-27 21:18:04,168 - log - INFO - iter:2820/3669, Vanilla TTA Acc@1: 79.01, Acc@5: 95.82
+2026-01-27 21:18:04,168 - log - INFO - iter:2820/3669, Vanilla Topk TTA Acc@1: 79.01, Acc@5: 95.82
+2026-01-27 21:18:04,168 - log - INFO - iter:2820/3669, Weighted TTA Acc@1: 80.57, Acc@5: 96.06
+2026-01-27 21:18:54,798 - log - INFO - iter:2840/3669, clip_clean_acc1=81.86619567871094
+2026-01-27 21:18:54,798 - log - INFO - iter:2840/3669, clip_acc1=81.86619567871094
+2026-01-27 21:18:54,798 - log - INFO - iter:2840/3669, Original Clean Acc@1: 81.87, Acc@5: 96.34
+2026-01-27 21:18:54,798 - log - INFO - iter:2840/3669, Original Acc@1: 81.87, Acc@5: 96.34
+2026-01-27 21:18:54,799 - log - INFO - iter:2840/3669, Single TTA Acc@1: 46.97, Acc@5: 80.77
+2026-01-27 21:18:54,799 - log - INFO - iter:2840/3669, Vanilla TTA Acc@1: 79.12, Acc@5: 95.85
+2026-01-27 21:18:54,799 - log - INFO - iter:2840/3669, Vanilla Topk TTA Acc@1: 79.12, Acc@5: 95.85
+2026-01-27 21:18:54,799 - log - INFO - iter:2840/3669, Weighted TTA Acc@1: 80.70, Acc@5: 96.09
+2026-01-27 21:19:45,331 - log - INFO - iter:2860/3669, clip_clean_acc1=81.95804595947266
+2026-01-27 21:19:45,331 - log - INFO - iter:2860/3669, clip_acc1=81.95804595947266
+2026-01-27 21:19:45,331 - log - INFO - iter:2860/3669, Original Clean Acc@1: 81.96, Acc@5: 96.36
+2026-01-27 21:19:45,332 - log - INFO - iter:2860/3669, Original Acc@1: 81.96, Acc@5: 96.36
+2026-01-27 21:19:45,332 - log - INFO - iter:2860/3669, Single TTA Acc@1: 47.24, Acc@5: 80.91
+2026-01-27 21:19:45,332 - log - INFO - iter:2860/3669, Vanilla TTA Acc@1: 79.23, Acc@5: 95.87
+2026-01-27 21:19:45,332 - log - INFO - iter:2860/3669, Vanilla Topk TTA Acc@1: 79.23, Acc@5: 95.87
+2026-01-27 21:19:45,332 - log - INFO - iter:2860/3669, Weighted TTA Acc@1: 80.80, Acc@5: 96.12
+2026-01-27 21:20:35,757 - log - INFO - iter:2880/3669, clip_clean_acc1=82.08333587646484
+2026-01-27 21:20:35,758 - log - INFO - iter:2880/3669, clip_acc1=82.08333587646484
+2026-01-27 21:20:35,758 - log - INFO - iter:2880/3669, Original Clean Acc@1: 82.08, Acc@5: 96.39
+2026-01-27 21:20:35,758 - log - INFO - iter:2880/3669, Original Acc@1: 82.08, Acc@5: 96.39
+2026-01-27 21:20:35,758 - log - INFO - iter:2880/3669, Single TTA Acc@1: 47.50, Acc@5: 81.01
+2026-01-27 21:20:35,758 - log - INFO - iter:2880/3669, Vanilla TTA Acc@1: 79.38, Acc@5: 95.90
+2026-01-27 21:20:35,758 - log - INFO - iter:2880/3669, Vanilla Topk TTA Acc@1: 79.38, Acc@5: 95.90
+2026-01-27 21:20:35,758 - log - INFO - iter:2880/3669, Weighted TTA Acc@1: 80.94, Acc@5: 96.15
+2026-01-27 21:21:26,538 - log - INFO - iter:2900/3669, clip_clean_acc1=82.20690155029297
+2026-01-27 21:21:26,538 - log - INFO - iter:2900/3669, clip_acc1=82.20690155029297
+2026-01-27 21:21:26,538 - log - INFO - iter:2900/3669, Original Clean Acc@1: 82.21, Acc@5: 96.41
+2026-01-27 21:21:26,538 - log - INFO - iter:2900/3669, Original Acc@1: 82.21, Acc@5: 96.41
+2026-01-27 21:21:26,538 - log - INFO - iter:2900/3669, Single TTA Acc@1: 47.72, Acc@5: 81.10
+2026-01-27 21:21:26,538 - log - INFO - iter:2900/3669, Vanilla TTA Acc@1: 79.52, Acc@5: 95.93
+2026-01-27 21:21:26,538 - log - INFO - iter:2900/3669, Vanilla Topk TTA Acc@1: 79.52, Acc@5: 95.93
+2026-01-27 21:21:26,539 - log - INFO - iter:2900/3669, Weighted TTA Acc@1: 81.07, Acc@5: 96.17
+2026-01-27 21:22:16,820 - log - INFO - iter:2920/3669, clip_clean_acc1=82.32876586914062
+2026-01-27 21:22:16,820 - log - INFO - iter:2920/3669, clip_acc1=82.32876586914062
+2026-01-27 21:22:16,820 - log - INFO - iter:2920/3669, Original Clean Acc@1: 82.33, Acc@5: 96.44
+2026-01-27 21:22:16,820 - log - INFO - iter:2920/3669, Original Acc@1: 82.33, Acc@5: 96.44
+2026-01-27 21:22:16,820 - log - INFO - iter:2920/3669, Single TTA Acc@1: 48.08, Acc@5: 81.23
+2026-01-27 21:22:16,820 - log - INFO - iter:2920/3669, Vanilla TTA Acc@1: 79.66, Acc@5: 95.96
+2026-01-27 21:22:16,820 - log - INFO - iter:2920/3669, Vanilla Topk TTA Acc@1: 79.66, Acc@5: 95.96
+2026-01-27 21:22:16,821 - log - INFO - iter:2920/3669, Weighted TTA Acc@1: 81.20, Acc@5: 96.20
+2026-01-27 21:23:07,829 - log - INFO - iter:2940/3669, clip_clean_acc1=82.44898223876953
+2026-01-27 21:23:07,829 - log - INFO - iter:2940/3669, clip_acc1=82.44898223876953
+2026-01-27 21:23:07,829 - log - INFO - iter:2940/3669, Original Clean Acc@1: 82.45, Acc@5: 96.46
+2026-01-27 21:23:07,829 - log - INFO - iter:2940/3669, Original Acc@1: 82.45, Acc@5: 96.46
+2026-01-27 21:23:07,829 - log - INFO - iter:2940/3669, Single TTA Acc@1: 48.40, Acc@5: 81.36
+2026-01-27 21:23:07,829 - log - INFO - iter:2940/3669, Vanilla TTA Acc@1: 79.80, Acc@5: 95.99
+2026-01-27 21:23:07,829 - log - INFO - iter:2940/3669, Vanilla Topk TTA Acc@1: 79.80, Acc@5: 95.99
+2026-01-27 21:23:07,829 - log - INFO - iter:2940/3669, Weighted TTA Acc@1: 81.33, Acc@5: 96.22
+2026-01-27 21:23:57,787 - log - INFO - iter:2960/3669, clip_clean_acc1=82.56756591796875
+2026-01-27 21:23:57,788 - log - INFO - iter:2960/3669, clip_acc1=82.56756591796875
+2026-01-27 21:23:57,788 - log - INFO - iter:2960/3669, Original Clean Acc@1: 82.57, Acc@5: 96.49
+2026-01-27 21:23:57,788 - log - INFO - iter:2960/3669, Original Acc@1: 82.57, Acc@5: 96.49
+2026-01-27 21:23:57,788 - log - INFO - iter:2960/3669, Single TTA Acc@1: 48.68, Acc@5: 81.49
+2026-01-27 21:23:57,788 - log - INFO - iter:2960/3669, Vanilla TTA Acc@1: 79.93, Acc@5: 96.01
+2026-01-27 21:23:57,788 - log - INFO - iter:2960/3669, Vanilla Topk TTA Acc@1: 79.93, Acc@5: 96.01
+2026-01-27 21:23:57,788 - log - INFO - iter:2960/3669, Weighted TTA Acc@1: 81.45, Acc@5: 96.25
+2026-01-27 21:24:48,455 - log - INFO - iter:2980/3669, clip_clean_acc1=82.6845703125
+2026-01-27 21:24:48,455 - log - INFO - iter:2980/3669, clip_acc1=82.6845703125
+2026-01-27 21:24:48,455 - log - INFO - iter:2980/3669, Original Clean Acc@1: 82.68, Acc@5: 96.51
+2026-01-27 21:24:48,455 - log - INFO - iter:2980/3669, Original Acc@1: 82.68, Acc@5: 96.51
+2026-01-27 21:24:48,455 - log - INFO - iter:2980/3669, Single TTA Acc@1: 48.89, Acc@5: 81.54
+2026-01-27 21:24:48,455 - log - INFO - iter:2980/3669, Vanilla TTA Acc@1: 80.07, Acc@5: 96.04
+2026-01-27 21:24:48,456 - log - INFO - iter:2980/3669, Vanilla Topk TTA Acc@1: 80.07, Acc@5: 96.04
+2026-01-27 21:24:48,456 - log - INFO - iter:2980/3669, Weighted TTA Acc@1: 81.58, Acc@5: 96.28
+2026-01-27 21:25:38,263 - log - INFO - iter:3000/3669, clip_clean_acc1=82.79999542236328
+2026-01-27 21:25:38,264 - log - INFO - iter:3000/3669, clip_acc1=82.79999542236328
+2026-01-27 21:25:38,264 - log - INFO - iter:3000/3669, Original Clean Acc@1: 82.80, Acc@5: 96.53
+2026-01-27 21:25:38,264 - log - INFO - iter:3000/3669, Original Acc@1: 82.80, Acc@5: 96.53
+2026-01-27 21:25:38,264 - log - INFO - iter:3000/3669, Single TTA Acc@1: 49.07, Acc@5: 81.63
+2026-01-27 21:25:38,264 - log - INFO - iter:3000/3669, Vanilla TTA Acc@1: 80.17, Acc@5: 96.07
+2026-01-27 21:25:38,264 - log - INFO - iter:3000/3669, Vanilla Topk TTA Acc@1: 80.17, Acc@5: 96.07
+2026-01-27 21:25:38,264 - log - INFO - iter:3000/3669, Weighted TTA Acc@1: 81.70, Acc@5: 96.30
+2026-01-27 21:26:29,111 - log - INFO - iter:3020/3669, clip_clean_acc1=82.91390991210938
+2026-01-27 21:26:29,111 - log - INFO - iter:3020/3669, clip_acc1=82.91390991210938
+2026-01-27 21:26:29,111 - log - INFO - iter:3020/3669, Original Clean Acc@1: 82.91, Acc@5: 96.56
+2026-01-27 21:26:29,111 - log - INFO - iter:3020/3669, Original Acc@1: 82.91, Acc@5: 96.56
+2026-01-27 21:26:29,111 - log - INFO - iter:3020/3669, Single TTA Acc@1: 49.30, Acc@5: 81.72
+2026-01-27 21:26:29,112 - log - INFO - iter:3020/3669, Vanilla TTA Acc@1: 80.26, Acc@5: 96.09
+2026-01-27 21:26:29,112 - log - INFO - iter:3020/3669, Vanilla Topk TTA Acc@1: 80.26, Acc@5: 96.09
+2026-01-27 21:26:29,112 - log - INFO - iter:3020/3669, Weighted TTA Acc@1: 81.79, Acc@5: 96.32
+2026-01-27 21:27:19,536 - log - INFO - iter:3040/3669, clip_clean_acc1=83.02632141113281
+2026-01-27 21:27:19,536 - log - INFO - iter:3040/3669, clip_acc1=83.02632141113281
+2026-01-27 21:27:19,536 - log - INFO - iter:3040/3669, Original Clean Acc@1: 83.03, Acc@5: 96.58
+2026-01-27 21:27:19,536 - log - INFO - iter:3040/3669, Original Acc@1: 83.03, Acc@5: 96.58
+2026-01-27 21:27:19,536 - log - INFO - iter:3040/3669, Single TTA Acc@1: 49.54, Acc@5: 81.78
+2026-01-27 21:27:19,536 - log - INFO - iter:3040/3669, Vanilla TTA Acc@1: 80.36, Acc@5: 96.12
+2026-01-27 21:27:19,537 - log - INFO - iter:3040/3669, Vanilla Topk TTA Acc@1: 80.36, Acc@5: 96.12
+2026-01-27 21:27:19,537 - log - INFO - iter:3040/3669, Weighted TTA Acc@1: 81.91, Acc@5: 96.35
+2026-01-27 21:28:10,078 - log - INFO - iter:3060/3669, clip_clean_acc1=83.10457611083984
+2026-01-27 21:28:10,079 - log - INFO - iter:3060/3669, clip_acc1=83.10457611083984
+2026-01-27 21:28:10,079 - log - INFO - iter:3060/3669, Original Clean Acc@1: 83.10, Acc@5: 96.60
+2026-01-27 21:28:10,079 - log - INFO - iter:3060/3669, Original Acc@1: 83.10, Acc@5: 96.60
+2026-01-27 21:28:10,079 - log - INFO - iter:3060/3669, Single TTA Acc@1: 49.71, Acc@5: 81.83
+2026-01-27 21:28:10,079 - log - INFO - iter:3060/3669, Vanilla TTA Acc@1: 80.33, Acc@5: 96.14
+2026-01-27 21:28:10,079 - log - INFO - iter:3060/3669, Vanilla Topk TTA Acc@1: 80.33, Acc@5: 96.14
+2026-01-27 21:28:10,079 - log - INFO - iter:3060/3669, Weighted TTA Acc@1: 81.96, Acc@5: 96.37
+2026-01-27 21:29:00,736 - log - INFO - iter:3080/3669, clip_clean_acc1=83.14934539794922
+2026-01-27 21:29:00,736 - log - INFO - iter:3080/3669, clip_acc1=83.14934539794922
+2026-01-27 21:29:00,736 - log - INFO - iter:3080/3669, Original Clean Acc@1: 83.15, Acc@5: 96.62
+2026-01-27 21:29:00,736 - log - INFO - iter:3080/3669, Original Acc@1: 83.15, Acc@5: 96.62
+2026-01-27 21:29:00,736 - log - INFO - iter:3080/3669, Single TTA Acc@1: 49.97, Acc@5: 81.88
+2026-01-27 21:29:00,736 - log - INFO - iter:3080/3669, Vanilla TTA Acc@1: 80.29, Acc@5: 96.17
+2026-01-27 21:29:00,736 - log - INFO - iter:3080/3669, Vanilla Topk TTA Acc@1: 80.29, Acc@5: 96.17
+2026-01-27 21:29:00,736 - log - INFO - iter:3080/3669, Weighted TTA Acc@1: 82.01, Acc@5: 96.40
+2026-01-27 21:29:52,089 - log - INFO - iter:3100/3669, clip_clean_acc1=83.2258071899414
+2026-01-27 21:29:52,089 - log - INFO - iter:3100/3669, clip_acc1=83.2258071899414
+2026-01-27 21:29:52,089 - log - INFO - iter:3100/3669, Original Clean Acc@1: 83.23, Acc@5: 96.65
+2026-01-27 21:29:52,089 - log - INFO - iter:3100/3669, Original Acc@1: 83.23, Acc@5: 96.65
+2026-01-27 21:29:52,089 - log - INFO - iter:3100/3669, Single TTA Acc@1: 50.10, Acc@5: 81.87
+2026-01-27 21:29:52,089 - log - INFO - iter:3100/3669, Vanilla TTA Acc@1: 80.39, Acc@5: 96.19
+2026-01-27 21:29:52,089 - log - INFO - iter:3100/3669, Vanilla Topk TTA Acc@1: 80.39, Acc@5: 96.19
+2026-01-27 21:29:52,089 - log - INFO - iter:3100/3669, Weighted TTA Acc@1: 82.10, Acc@5: 96.42
+2026-01-27 21:30:42,750 - log - INFO - iter:3120/3669, clip_clean_acc1=83.33333587646484
+2026-01-27 21:30:42,750 - log - INFO - iter:3120/3669, clip_acc1=83.33333587646484
+2026-01-27 21:30:42,750 - log - INFO - iter:3120/3669, Original Clean Acc@1: 83.33, Acc@5: 96.67
+2026-01-27 21:30:42,750 - log - INFO - iter:3120/3669, Original Acc@1: 83.33, Acc@5: 96.67
+2026-01-27 21:30:42,751 - log - INFO - iter:3120/3669, Single TTA Acc@1: 50.29, Acc@5: 81.96
+2026-01-27 21:30:42,751 - log - INFO - iter:3120/3669, Vanilla TTA Acc@1: 80.51, Acc@5: 96.22
+2026-01-27 21:30:42,751 - log - INFO - iter:3120/3669, Vanilla Topk TTA Acc@1: 80.51, Acc@5: 96.22
+2026-01-27 21:30:42,751 - log - INFO - iter:3120/3669, Weighted TTA Acc@1: 82.21, Acc@5: 96.44
+2026-01-27 21:31:33,067 - log - INFO - iter:3140/3669, clip_clean_acc1=83.43949127197266
+2026-01-27 21:31:33,067 - log - INFO - iter:3140/3669, clip_acc1=83.43949127197266
+2026-01-27 21:31:33,067 - log - INFO - iter:3140/3669, Original Clean Acc@1: 83.44, Acc@5: 96.69
+2026-01-27 21:31:33,067 - log - INFO - iter:3140/3669, Original Acc@1: 83.44, Acc@5: 96.69
+2026-01-27 21:31:33,067 - log - INFO - iter:3140/3669, Single TTA Acc@1: 50.57, Acc@5: 82.07
+2026-01-27 21:31:33,067 - log - INFO - iter:3140/3669, Vanilla TTA Acc@1: 80.64, Acc@5: 96.24
+2026-01-27 21:31:33,068 - log - INFO - iter:3140/3669, Vanilla Topk TTA Acc@1: 80.64, Acc@5: 96.24
+2026-01-27 21:31:33,068 - log - INFO - iter:3140/3669, Weighted TTA Acc@1: 82.32, Acc@5: 96.46
+2026-01-27 21:32:24,366 - log - INFO - iter:3160/3669, clip_clean_acc1=83.54430389404297
+2026-01-27 21:32:24,366 - log - INFO - iter:3160/3669, clip_acc1=83.54430389404297
+2026-01-27 21:32:24,366 - log - INFO - iter:3160/3669, Original Clean Acc@1: 83.54, Acc@5: 96.71
+2026-01-27 21:32:24,366 - log - INFO - iter:3160/3669, Original Acc@1: 83.54, Acc@5: 96.71
+2026-01-27 21:32:24,366 - log - INFO - iter:3160/3669, Single TTA Acc@1: 50.79, Acc@5: 82.15
+2026-01-27 21:32:24,366 - log - INFO - iter:3160/3669, Vanilla TTA Acc@1: 80.73, Acc@5: 96.27
+2026-01-27 21:32:24,366 - log - INFO - iter:3160/3669, Vanilla Topk TTA Acc@1: 80.73, Acc@5: 96.27
+2026-01-27 21:32:24,367 - log - INFO - iter:3160/3669, Weighted TTA Acc@1: 82.41, Acc@5: 96.49
+2026-01-27 21:33:16,167 - log - INFO - iter:3180/3669, clip_clean_acc1=83.64779663085938
+2026-01-27 21:33:16,167 - log - INFO - iter:3180/3669, clip_acc1=83.64779663085938
+2026-01-27 21:33:16,168 - log - INFO - iter:3180/3669, Original Clean Acc@1: 83.65, Acc@5: 96.73
+2026-01-27 21:33:16,168 - log - INFO - iter:3180/3669, Original Acc@1: 83.65, Acc@5: 96.73
+2026-01-27 21:33:16,168 - log - INFO - iter:3180/3669, Single TTA Acc@1: 51.04, Acc@5: 82.26
+2026-01-27 21:33:16,168 - log - INFO - iter:3180/3669, Vanilla TTA Acc@1: 80.85, Acc@5: 96.29
+2026-01-27 21:33:16,168 - log - INFO - iter:3180/3669, Vanilla Topk TTA Acc@1: 80.85, Acc@5: 96.29
+2026-01-27 21:33:16,168 - log - INFO - iter:3180/3669, Weighted TTA Acc@1: 82.52, Acc@5: 96.51
+2026-01-27 21:34:05,957 - log - INFO - iter:3200/3669, clip_clean_acc1=83.625
+2026-01-27 21:34:05,957 - log - INFO - iter:3200/3669, clip_acc1=83.625
+2026-01-27 21:34:05,957 - log - INFO - iter:3200/3669, Original Clean Acc@1: 83.62, Acc@5: 96.75
+2026-01-27 21:34:05,957 - log - INFO - iter:3200/3669, Original Acc@1: 83.62, Acc@5: 96.75
+2026-01-27 21:34:05,957 - log - INFO - iter:3200/3669, Single TTA Acc@1: 51.16, Acc@5: 82.22
+2026-01-27 21:34:05,957 - log - INFO - iter:3200/3669, Vanilla TTA Acc@1: 80.81, Acc@5: 96.31
+2026-01-27 21:34:05,957 - log - INFO - iter:3200/3669, Vanilla Topk TTA Acc@1: 80.81, Acc@5: 96.31
+2026-01-27 21:34:05,957 - log - INFO - iter:3200/3669, Weighted TTA Acc@1: 82.47, Acc@5: 96.53
+2026-01-27 21:34:56,023 - log - INFO - iter:3220/3669, clip_clean_acc1=83.69564819335938
+2026-01-27 21:34:56,023 - log - INFO - iter:3220/3669, clip_acc1=83.69564819335938
+2026-01-27 21:34:56,023 - log - INFO - iter:3220/3669, Original Clean Acc@1: 83.70, Acc@5: 96.77
+2026-01-27 21:34:56,023 - log - INFO - iter:3220/3669, Original Acc@1: 83.70, Acc@5: 96.77
+2026-01-27 21:34:56,023 - log - INFO - iter:3220/3669, Single TTA Acc@1: 51.34, Acc@5: 82.24
+2026-01-27 21:34:56,023 - log - INFO - iter:3220/3669, Vanilla TTA Acc@1: 80.90, Acc@5: 96.34
+2026-01-27 21:34:56,023 - log - INFO - iter:3220/3669, Vanilla Topk TTA Acc@1: 80.90, Acc@5: 96.34
+2026-01-27 21:34:56,023 - log - INFO - iter:3220/3669, Weighted TTA Acc@1: 82.55, Acc@5: 96.55
+2026-01-27 21:35:46,319 - log - INFO - iter:3240/3669, clip_clean_acc1=83.79630279541016
+2026-01-27 21:35:46,319 - log - INFO - iter:3240/3669, clip_acc1=83.79630279541016
+2026-01-27 21:35:46,320 - log - INFO - iter:3240/3669, Original Clean Acc@1: 83.80, Acc@5: 96.79
+2026-01-27 21:35:46,320 - log - INFO - iter:3240/3669, Original Acc@1: 83.80, Acc@5: 96.79
+2026-01-27 21:35:46,320 - log - INFO - iter:3240/3669, Single TTA Acc@1: 51.54, Acc@5: 82.31
+2026-01-27 21:35:46,320 - log - INFO - iter:3240/3669, Vanilla TTA Acc@1: 81.02, Acc@5: 96.36
+2026-01-27 21:35:46,320 - log - INFO - iter:3240/3669, Vanilla Topk TTA Acc@1: 81.02, Acc@5: 96.36
+2026-01-27 21:35:46,320 - log - INFO - iter:3240/3669, Weighted TTA Acc@1: 82.65, Acc@5: 96.57
+2026-01-27 21:36:37,112 - log - INFO - iter:3260/3669, clip_clean_acc1=83.89570617675781
+2026-01-27 21:36:37,113 - log - INFO - iter:3260/3669, clip_acc1=83.89570617675781
+2026-01-27 21:36:37,113 - log - INFO - iter:3260/3669, Original Clean Acc@1: 83.90, Acc@5: 96.81
+2026-01-27 21:36:37,113 - log - INFO - iter:3260/3669, Original Acc@1: 83.90, Acc@5: 96.81
+2026-01-27 21:36:37,113 - log - INFO - iter:3260/3669, Single TTA Acc@1: 51.63, Acc@5: 82.30
+2026-01-27 21:36:37,113 - log - INFO - iter:3260/3669, Vanilla TTA Acc@1: 81.10, Acc@5: 96.38
+2026-01-27 21:36:37,113 - log - INFO - iter:3260/3669, Vanilla Topk TTA Acc@1: 81.10, Acc@5: 96.38
+2026-01-27 21:36:37,113 - log - INFO - iter:3260/3669, Weighted TTA Acc@1: 82.73, Acc@5: 96.60
+2026-01-27 21:37:27,475 - log - INFO - iter:3280/3669, clip_clean_acc1=83.96341705322266
+2026-01-27 21:37:27,475 - log - INFO - iter:3280/3669, clip_acc1=83.96341705322266
+2026-01-27 21:37:27,475 - log - INFO - iter:3280/3669, Original Clean Acc@1: 83.96, Acc@5: 96.83
+2026-01-27 21:37:27,475 - log - INFO - iter:3280/3669, Original Acc@1: 83.96, Acc@5: 96.83
+2026-01-27 21:37:27,475 - log - INFO - iter:3280/3669, Single TTA Acc@1: 51.80, Acc@5: 82.38
+2026-01-27 21:37:27,476 - log - INFO - iter:3280/3669, Vanilla TTA Acc@1: 81.19, Acc@5: 96.40
+2026-01-27 21:37:27,476 - log - INFO - iter:3280/3669, Vanilla Topk TTA Acc@1: 81.19, Acc@5: 96.40
+2026-01-27 21:37:27,476 - log - INFO - iter:3280/3669, Weighted TTA Acc@1: 82.80, Acc@5: 96.62
+2026-01-27 21:38:18,296 - log - INFO - iter:3300/3669, clip_clean_acc1=84.06060791015625
+2026-01-27 21:38:18,296 - log - INFO - iter:3300/3669, clip_acc1=84.06060791015625
+2026-01-27 21:38:18,296 - log - INFO - iter:3300/3669, Original Clean Acc@1: 84.06, Acc@5: 96.85
+2026-01-27 21:38:18,296 - log - INFO - iter:3300/3669, Original Acc@1: 84.06, Acc@5: 96.85
+2026-01-27 21:38:18,296 - log - INFO - iter:3300/3669, Single TTA Acc@1: 51.79, Acc@5: 82.24
+2026-01-27 21:38:18,296 - log - INFO - iter:3300/3669, Vanilla TTA Acc@1: 81.30, Acc@5: 96.42
+2026-01-27 21:38:18,297 - log - INFO - iter:3300/3669, Vanilla Topk TTA Acc@1: 81.30, Acc@5: 96.42
+2026-01-27 21:38:18,297 - log - INFO - iter:3300/3669, Weighted TTA Acc@1: 82.91, Acc@5: 96.64
+2026-01-27 21:39:08,805 - log - INFO - iter:3320/3669, clip_clean_acc1=84.12651062011719
+2026-01-27 21:39:08,805 - log - INFO - iter:3320/3669, clip_acc1=84.12651062011719
+2026-01-27 21:39:08,806 - log - INFO - iter:3320/3669, Original Clean Acc@1: 84.13, Acc@5: 96.87
+2026-01-27 21:39:08,806 - log - INFO - iter:3320/3669, Original Acc@1: 84.13, Acc@5: 96.87
+2026-01-27 21:39:08,806 - log - INFO - iter:3320/3669, Single TTA Acc@1: 51.75, Acc@5: 82.23
+2026-01-27 21:39:08,806 - log - INFO - iter:3320/3669, Vanilla TTA Acc@1: 81.42, Acc@5: 96.45
+2026-01-27 21:39:08,806 - log - INFO - iter:3320/3669, Vanilla Topk TTA Acc@1: 81.42, Acc@5: 96.45
+2026-01-27 21:39:08,806 - log - INFO - iter:3320/3669, Weighted TTA Acc@1: 83.01, Acc@5: 96.66
+2026-01-27 21:39:59,460 - log - INFO - iter:3340/3669, clip_clean_acc1=84.2215576171875
+2026-01-27 21:39:59,461 - log - INFO - iter:3340/3669, clip_acc1=84.2215576171875
+2026-01-27 21:39:59,461 - log - INFO - iter:3340/3669, Original Clean Acc@1: 84.22, Acc@5: 96.89
+2026-01-27 21:39:59,461 - log - INFO - iter:3340/3669, Original Acc@1: 84.22, Acc@5: 96.89
+2026-01-27 21:39:59,461 - log - INFO - iter:3340/3669, Single TTA Acc@1: 51.71, Acc@5: 82.22
+2026-01-27 21:39:59,461 - log - INFO - iter:3340/3669, Vanilla TTA Acc@1: 81.53, Acc@5: 96.47
+2026-01-27 21:39:59,461 - log - INFO - iter:3340/3669, Vanilla Topk TTA Acc@1: 81.53, Acc@5: 96.47
+2026-01-27 21:39:59,461 - log - INFO - iter:3340/3669, Weighted TTA Acc@1: 83.11, Acc@5: 96.68
+2026-01-27 21:40:49,770 - log - INFO - iter:3360/3669, clip_clean_acc1=84.31548309326172
+2026-01-27 21:40:49,771 - log - INFO - iter:3360/3669, clip_acc1=84.31548309326172
+2026-01-27 21:40:49,771 - log - INFO - iter:3360/3669, Original Clean Acc@1: 84.32, Acc@5: 96.90
+2026-01-27 21:40:49,771 - log - INFO - iter:3360/3669, Original Acc@1: 84.32, Acc@5: 96.90
+2026-01-27 21:40:49,771 - log - INFO - iter:3360/3669, Single TTA Acc@1: 51.67, Acc@5: 82.11
+2026-01-27 21:40:49,771 - log - INFO - iter:3360/3669, Vanilla TTA Acc@1: 81.64, Acc@5: 96.49
+2026-01-27 21:40:49,771 - log - INFO - iter:3360/3669, Vanilla Topk TTA Acc@1: 81.64, Acc@5: 96.49
+2026-01-27 21:40:49,771 - log - INFO - iter:3360/3669, Weighted TTA Acc@1: 83.21, Acc@5: 96.70
+2026-01-27 21:41:39,597 - log - INFO - iter:3380/3669, clip_clean_acc1=84.40828704833984
+2026-01-27 21:41:39,597 - log - INFO - iter:3380/3669, clip_acc1=84.40828704833984
+2026-01-27 21:41:39,597 - log - INFO - iter:3380/3669, Original Clean Acc@1: 84.41, Acc@5: 96.92
+2026-01-27 21:41:39,597 - log - INFO - iter:3380/3669, Original Acc@1: 84.41, Acc@5: 96.92
+2026-01-27 21:41:39,597 - log - INFO - iter:3380/3669, Single TTA Acc@1: 51.57, Acc@5: 82.13
+2026-01-27 21:41:39,597 - log - INFO - iter:3380/3669, Vanilla TTA Acc@1: 81.75, Acc@5: 96.51
+2026-01-27 21:41:39,597 - log - INFO - iter:3380/3669, Vanilla Topk TTA Acc@1: 81.75, Acc@5: 96.51
+2026-01-27 21:41:39,597 - log - INFO - iter:3380/3669, Weighted TTA Acc@1: 83.31, Acc@5: 96.72
+2026-01-27 21:42:29,801 - log - INFO - iter:3400/3669, clip_clean_acc1=84.26470184326172
+2026-01-27 21:42:29,801 - log - INFO - iter:3400/3669, clip_acc1=84.26470184326172
+2026-01-27 21:42:29,801 - log - INFO - iter:3400/3669, Original Clean Acc@1: 84.26, Acc@5: 96.94
+2026-01-27 21:42:29,801 - log - INFO - iter:3400/3669, Original Acc@1: 84.26, Acc@5: 96.94
+2026-01-27 21:42:29,801 - log - INFO - iter:3400/3669, Single TTA Acc@1: 51.44, Acc@5: 82.21
+2026-01-27 21:42:29,802 - log - INFO - iter:3400/3669, Vanilla TTA Acc@1: 81.74, Acc@5: 96.53
+2026-01-27 21:42:29,802 - log - INFO - iter:3400/3669, Vanilla Topk TTA Acc@1: 81.74, Acc@5: 96.53
+2026-01-27 21:42:29,802 - log - INFO - iter:3400/3669, Weighted TTA Acc@1: 83.26, Acc@5: 96.74
+2026-01-27 21:43:19,586 - log - INFO - iter:3420/3669, clip_clean_acc1=84.06432342529297
+2026-01-27 21:43:19,586 - log - INFO - iter:3420/3669, clip_acc1=84.06432342529297
+2026-01-27 21:43:19,587 - log - INFO - iter:3420/3669, Original Clean Acc@1: 84.06, Acc@5: 96.96
+2026-01-27 21:43:19,587 - log - INFO - iter:3420/3669, Original Acc@1: 84.06, Acc@5: 96.96
+2026-01-27 21:43:19,587 - log - INFO - iter:3420/3669, Single TTA Acc@1: 51.29, Acc@5: 82.19
+2026-01-27 21:43:19,587 - log - INFO - iter:3420/3669, Vanilla TTA Acc@1: 81.58, Acc@5: 96.55
+2026-01-27 21:43:19,587 - log - INFO - iter:3420/3669, Vanilla Topk TTA Acc@1: 81.58, Acc@5: 96.55
+2026-01-27 21:43:19,587 - log - INFO - iter:3420/3669, Weighted TTA Acc@1: 83.07, Acc@5: 96.75
+2026-01-27 21:44:10,937 - log - INFO - iter:3440/3669, clip_clean_acc1=83.89534759521484
+2026-01-27 21:44:10,937 - log - INFO - iter:3440/3669, clip_acc1=83.89534759521484
+2026-01-27 21:44:10,937 - log - INFO - iter:3440/3669, Original Clean Acc@1: 83.90, Acc@5: 96.98
+2026-01-27 21:44:10,937 - log - INFO - iter:3440/3669, Original Acc@1: 83.90, Acc@5: 96.98
+2026-01-27 21:44:10,937 - log - INFO - iter:3440/3669, Single TTA Acc@1: 51.13, Acc@5: 82.18
+2026-01-27 21:44:10,937 - log - INFO - iter:3440/3669, Vanilla TTA Acc@1: 81.45, Acc@5: 96.57
+2026-01-27 21:44:10,937 - log - INFO - iter:3440/3669, Vanilla Topk TTA Acc@1: 81.45, Acc@5: 96.57
+2026-01-27 21:44:10,937 - log - INFO - iter:3440/3669, Weighted TTA Acc@1: 82.94, Acc@5: 96.77
+2026-01-27 21:45:00,712 - log - INFO - iter:3460/3669, clip_clean_acc1=83.78612518310547
+2026-01-27 21:45:00,713 - log - INFO - iter:3460/3669, clip_acc1=83.78612518310547
+2026-01-27 21:45:00,713 - log - INFO - iter:3460/3669, Original Clean Acc@1: 83.79, Acc@5: 96.99
+2026-01-27 21:45:00,713 - log - INFO - iter:3460/3669, Original Acc@1: 83.79, Acc@5: 96.99
+2026-01-27 21:45:00,713 - log - INFO - iter:3460/3669, Single TTA Acc@1: 51.01, Acc@5: 82.28
+2026-01-27 21:45:00,713 - log - INFO - iter:3460/3669, Vanilla TTA Acc@1: 81.39, Acc@5: 96.59
+2026-01-27 21:45:00,713 - log - INFO - iter:3460/3669, Vanilla Topk TTA Acc@1: 81.39, Acc@5: 96.59
+2026-01-27 21:45:00,713 - log - INFO - iter:3460/3669, Weighted TTA Acc@1: 82.83, Acc@5: 96.79
+2026-01-27 21:45:50,508 - log - INFO - iter:3480/3669, clip_clean_acc1=83.73563385009766
+2026-01-27 21:45:50,509 - log - INFO - iter:3480/3669, clip_acc1=83.73563385009766
+2026-01-27 21:45:50,509 - log - INFO - iter:3480/3669, Original Clean Acc@1: 83.74, Acc@5: 97.01
+2026-01-27 21:45:50,509 - log - INFO - iter:3480/3669, Original Acc@1: 83.74, Acc@5: 97.01
+2026-01-27 21:45:50,509 - log - INFO - iter:3480/3669, Single TTA Acc@1: 50.86, Acc@5: 82.16
+2026-01-27 21:45:50,509 - log - INFO - iter:3480/3669, Vanilla TTA Acc@1: 81.38, Acc@5: 96.61
+2026-01-27 21:45:50,509 - log - INFO - iter:3480/3669, Vanilla Topk TTA Acc@1: 81.38, Acc@5: 96.61
+2026-01-27 21:45:50,509 - log - INFO - iter:3480/3669, Weighted TTA Acc@1: 82.76, Acc@5: 96.81
+2026-01-27 21:46:40,810 - log - INFO - iter:3500/3669, clip_clean_acc1=83.82856750488281
+2026-01-27 21:46:40,810 - log - INFO - iter:3500/3669, clip_acc1=83.82856750488281
+2026-01-27 21:46:40,811 - log - INFO - iter:3500/3669, Original Clean Acc@1: 83.83, Acc@5: 97.03
+2026-01-27 21:46:40,811 - log - INFO - iter:3500/3669, Original Acc@1: 83.83, Acc@5: 97.03
+2026-01-27 21:46:40,811 - log - INFO - iter:3500/3669, Single TTA Acc@1: 50.89, Acc@5: 82.06
+2026-01-27 21:46:40,811 - log - INFO - iter:3500/3669, Vanilla TTA Acc@1: 81.49, Acc@5: 96.63
+2026-01-27 21:46:40,811 - log - INFO - iter:3500/3669, Vanilla Topk TTA Acc@1: 81.49, Acc@5: 96.63
+2026-01-27 21:46:40,811 - log - INFO - iter:3500/3669, Weighted TTA Acc@1: 82.86, Acc@5: 96.83
+2026-01-27 21:47:31,133 - log - INFO - iter:3520/3669, clip_clean_acc1=83.92044830322266
+2026-01-27 21:47:31,134 - log - INFO - iter:3520/3669, clip_acc1=83.92044830322266
+2026-01-27 21:47:31,134 - log - INFO - iter:3520/3669, Original Clean Acc@1: 83.92, Acc@5: 97.05
+2026-01-27 21:47:31,134 - log - INFO - iter:3520/3669, Original Acc@1: 83.92, Acc@5: 97.05
+2026-01-27 21:47:31,134 - log - INFO - iter:3520/3669, Single TTA Acc@1: 50.91, Acc@5: 82.02
+2026-01-27 21:47:31,134 - log - INFO - iter:3520/3669, Vanilla TTA Acc@1: 81.59, Acc@5: 96.65
+2026-01-27 21:47:31,134 - log - INFO - iter:3520/3669, Vanilla Topk TTA Acc@1: 81.59, Acc@5: 96.65
+2026-01-27 21:47:31,134 - log - INFO - iter:3520/3669, Weighted TTA Acc@1: 82.95, Acc@5: 96.85
+2026-01-27 21:48:21,162 - log - INFO - iter:3540/3669, clip_clean_acc1=83.9830551147461
+2026-01-27 21:48:21,162 - log - INFO - iter:3540/3669, clip_acc1=83.9830551147461
+2026-01-27 21:48:21,162 - log - INFO - iter:3540/3669, Original Clean Acc@1: 83.98, Acc@5: 97.06
+2026-01-27 21:48:21,162 - log - INFO - iter:3540/3669, Original Acc@1: 83.98, Acc@5: 97.06
+2026-01-27 21:48:21,163 - log - INFO - iter:3540/3669, Single TTA Acc@1: 50.96, Acc@5: 82.01
+2026-01-27 21:48:21,163 - log - INFO - iter:3540/3669, Vanilla TTA Acc@1: 81.69, Acc@5: 96.67
+2026-01-27 21:48:21,163 - log - INFO - iter:3540/3669, Vanilla Topk TTA Acc@1: 81.69, Acc@5: 96.67
+2026-01-27 21:48:21,163 - log - INFO - iter:3540/3669, Weighted TTA Acc@1: 83.02, Acc@5: 96.86
+2026-01-27 21:49:12,231 - log - INFO - iter:3560/3669, clip_clean_acc1=84.0449447631836
+2026-01-27 21:49:12,231 - log - INFO - iter:3560/3669, clip_acc1=84.0449447631836
+2026-01-27 21:49:12,231 - log - INFO - iter:3560/3669, Original Clean Acc@1: 84.04, Acc@5: 97.08
+2026-01-27 21:49:12,231 - log - INFO - iter:3560/3669, Original Acc@1: 84.04, Acc@5: 97.08
+2026-01-27 21:49:12,231 - log - INFO - iter:3560/3669, Single TTA Acc@1: 50.96, Acc@5: 81.88
+2026-01-27 21:49:12,231 - log - INFO - iter:3560/3669, Vanilla TTA Acc@1: 81.80, Acc@5: 96.69
+2026-01-27 21:49:12,231 - log - INFO - iter:3560/3669, Vanilla Topk TTA Acc@1: 81.80, Acc@5: 96.69
+2026-01-27 21:49:12,231 - log - INFO - iter:3560/3669, Weighted TTA Acc@1: 83.12, Acc@5: 96.88
+2026-01-27 21:50:03,055 - log - INFO - iter:3580/3669, clip_clean_acc1=84.05027770996094
+2026-01-27 21:50:03,056 - log - INFO - iter:3580/3669, clip_acc1=84.05027770996094
+2026-01-27 21:50:03,056 - log - INFO - iter:3580/3669, Original Clean Acc@1: 84.05, Acc@5: 97.09
+2026-01-27 21:50:03,056 - log - INFO - iter:3580/3669, Original Acc@1: 84.05, Acc@5: 97.09
+2026-01-27 21:50:03,056 - log - INFO - iter:3580/3669, Single TTA Acc@1: 50.89, Acc@5: 81.73
+2026-01-27 21:50:03,056 - log - INFO - iter:3580/3669, Vanilla TTA Acc@1: 81.84, Acc@5: 96.70
+2026-01-27 21:50:03,056 - log - INFO - iter:3580/3669, Vanilla Topk TTA Acc@1: 81.84, Acc@5: 96.70
+2026-01-27 21:50:03,056 - log - INFO - iter:3580/3669, Weighted TTA Acc@1: 83.13, Acc@5: 96.90
+2026-01-27 21:50:53,650 - log - INFO - iter:3600/3669, clip_clean_acc1=84.1388931274414
+2026-01-27 21:50:53,650 - log - INFO - iter:3600/3669, clip_acc1=84.1388931274414
+2026-01-27 21:50:53,650 - log - INFO - iter:3600/3669, Original Clean Acc@1: 84.14, Acc@5: 97.11
+2026-01-27 21:50:53,650 - log - INFO - iter:3600/3669, Original Acc@1: 84.14, Acc@5: 97.11
+2026-01-27 21:50:53,650 - log - INFO - iter:3600/3669, Single TTA Acc@1: 50.94, Acc@5: 81.69
+2026-01-27 21:50:53,650 - log - INFO - iter:3600/3669, Vanilla TTA Acc@1: 81.94, Acc@5: 96.72
+2026-01-27 21:50:53,651 - log - INFO - iter:3600/3669, Vanilla Topk TTA Acc@1: 81.94, Acc@5: 96.72
+2026-01-27 21:50:53,651 - log - INFO - iter:3600/3669, Weighted TTA Acc@1: 83.22, Acc@5: 96.92
+2026-01-27 21:51:44,018 - log - INFO - iter:3620/3669, clip_clean_acc1=84.22651672363281
+2026-01-27 21:51:44,018 - log - INFO - iter:3620/3669, clip_acc1=84.22651672363281
+2026-01-27 21:51:44,019 - log - INFO - iter:3620/3669, Original Clean Acc@1: 84.23, Acc@5: 97.13
+2026-01-27 21:51:44,019 - log - INFO - iter:3620/3669, Original Acc@1: 84.23, Acc@5: 97.13
+2026-01-27 21:51:44,019 - log - INFO - iter:3620/3669, Single TTA Acc@1: 50.99, Acc@5: 81.69
+2026-01-27 21:51:44,019 - log - INFO - iter:3620/3669, Vanilla TTA Acc@1: 82.04, Acc@5: 96.74
+2026-01-27 21:51:44,019 - log - INFO - iter:3620/3669, Vanilla Topk TTA Acc@1: 82.04, Acc@5: 96.74
+2026-01-27 21:51:44,019 - log - INFO - iter:3620/3669, Weighted TTA Acc@1: 83.31, Acc@5: 96.93
+2026-01-27 21:52:34,953 - log - INFO - iter:3640/3669, clip_clean_acc1=84.31319427490234
+2026-01-27 21:52:34,953 - log - INFO - iter:3640/3669, clip_acc1=84.31319427490234
+2026-01-27 21:52:34,953 - log - INFO - iter:3640/3669, Original Clean Acc@1: 84.31, Acc@5: 97.14
+2026-01-27 21:52:34,953 - log - INFO - iter:3640/3669, Original Acc@1: 84.31, Acc@5: 97.14
+2026-01-27 21:52:34,953 - log - INFO - iter:3640/3669, Single TTA Acc@1: 50.99, Acc@5: 81.68
+2026-01-27 21:52:34,953 - log - INFO - iter:3640/3669, Vanilla TTA Acc@1: 82.14, Acc@5: 96.76
+2026-01-27 21:52:34,953 - log - INFO - iter:3640/3669, Vanilla Topk TTA Acc@1: 82.14, Acc@5: 96.76
+2026-01-27 21:52:34,953 - log - INFO - iter:3640/3669, Weighted TTA Acc@1: 83.41, Acc@5: 96.95
+2026-01-27 21:53:25,893 - log - INFO - iter:3660/3669, clip_clean_acc1=84.37158966064453
+2026-01-27 21:53:25,893 - log - INFO - iter:3660/3669, clip_acc1=84.37158966064453
+2026-01-27 21:53:25,893 - log - INFO - iter:3660/3669, Original Clean Acc@1: 84.37, Acc@5: 97.16
+2026-01-27 21:53:25,893 - log - INFO - iter:3660/3669, Original Acc@1: 84.37, Acc@5: 97.16
+2026-01-27 21:53:25,893 - log - INFO - iter:3660/3669, Single TTA Acc@1: 50.96, Acc@5: 81.56
+2026-01-27 21:53:25,893 - log - INFO - iter:3660/3669, Vanilla TTA Acc@1: 82.21, Acc@5: 96.78
+2026-01-27 21:53:25,893 - log - INFO - iter:3660/3669, Vanilla Topk TTA Acc@1: 82.21, Acc@5: 96.78
+2026-01-27 21:53:25,893 - log - INFO - iter:3660/3669, Weighted TTA Acc@1: 83.47, Acc@5: 96.97
+2026-01-27 21:53:48,309 - log - INFO - iter:3669/3669, clip_clean_acc1=84.38265991210938
+2026-01-27 21:53:48,309 - log - INFO - iter:3669/3669, clip_acc1=84.38265991210938
+2026-01-27 21:53:48,309 - log - INFO - iter:3669/3669, Original Clean Acc@1: 84.38, Acc@5: 97.17
+2026-01-27 21:53:48,309 - log - INFO - iter:3669/3669, Original Acc@1: 84.38, Acc@5: 97.17
+2026-01-27 21:53:48,310 - log - INFO - iter:3669/3669, Single TTA Acc@1: 50.86, Acc@5: 81.44
+2026-01-27 21:53:48,310 - log - INFO - iter:3669/3669, Vanilla TTA Acc@1: 82.26, Acc@5: 96.78
+2026-01-27 21:53:48,310 - log - INFO - iter:3669/3669, Vanilla Topk TTA Acc@1: 82.26, Acc@5: 96.78
+2026-01-27 21:53:48,310 - log - INFO - iter:3669/3669, Weighted TTA Acc@1: 83.51, Acc@5: 96.97
+2026-01-27 21:53:48,370 - log - INFO - Final results - Original Clean Acc@1: 84.38, Acc@5: 97.17
+2026-01-27 21:53:48,370 - log - INFO - Final results - Original Acc@1: 84.38, Acc@5: 97.17
+2026-01-27 21:53:48,371 - log - INFO - Final results - Single TTA Acc@1: 50.86, Acc@5: 81.44
+2026-01-27 21:53:48,371 - log - INFO - Final results - Vanilla TTA Acc@1: 82.26, Acc@5: 96.78
+2026-01-27 21:53:48,371 - log - INFO - Final results - Vanilla Topk TTA Acc@1: 82.26, Acc@5: 96.78
+2026-01-27 21:53:48,371 - log - INFO - Final results - Weighted TTA Acc@1: 83.51, Acc@5: 96.97
+2026-01-27 21:53:48,371 - log - INFO - Improvement from Single TTA in Acc@1 -33.52, and Acc@5 -15.73
+2026-01-27 21:53:48,371 - log - INFO - Improvement from Vanilla TTA in Acc@1 -2.13, and Acc@5 -0.38
+2026-01-27 21:53:48,371 - log - INFO - Improvement from Vanilla Topk TTA in Acc@1 -2.13, and Acc@5 -0.38
+2026-01-27 21:53:48,371 - log - INFO - Improvement from Weighted TTA in Acc@1 -0.87, and Acc@5 -0.19
+2026-01-27 21:53:48,618 - log - INFO - Weighted scores saved to /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results_corrected_ca_tau_AOM/delta_clip_l14_224/Pets/Clean/No_Counter_Attack/No_TPT/Image_Feature_Purify/Type_noisy_anchor_Anchors_10_Alpha_ablation_Sigma_0_18_threshold_0_0_normalize_embeddings_False/Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01/weighted_scores.json
+2026-01-27 21:53:48,619 - log - INFO - Creating plot of average weights for each view
+2026-01-27 21:53:49,167 - log - INFO - Average weights plot saved to /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results_corrected_ca_tau_AOM/delta_clip_l14_224/Pets/Clean/No_Counter_Attack/No_TPT/Image_Feature_Purify/Type_noisy_anchor_Anchors_10_Alpha_ablation_Sigma_0_18_threshold_0_0_normalize_embeddings_False/Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01/weighted_scores_plot.png
+2026-01-27 21:53:49,329 - log - INFO - ECE Calculator
+2026-01-27 21:53:49,330 - log - INFO - Acc: 84.38266557645136
+2026-01-27 21:53:49,330 - log - INFO - ECE: 5.302492534636669
+2026-01-27 21:53:49,330 - log - INFO - ECE results - Original Clean Acc: 84.38,  ECE: 5.30
+2026-01-27 21:53:49,340 - log - INFO - Results saved to /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results_corrected_ca_tau_AOM/delta_clip_l14_224/Pets/Clean/No_Counter_Attack/No_TPT/Image_Feature_Purify/Type_noisy_anchor_Anchors_10_Alpha_ablation_Sigma_0_18_threshold_0_0_normalize_embeddings_False/Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01/results_original_clean.json
+2026-01-27 21:53:49,506 - log - INFO - ECE Calculator
+2026-01-27 21:53:49,506 - log - INFO - Acc: 84.38266557645136
+2026-01-27 21:53:49,506 - log - INFO - ECE: 5.302492534636669
+2026-01-27 21:53:49,506 - log - INFO - ECE results - Original Acc: 84.38,  ECE: 5.30
+2026-01-27 21:53:49,507 - log - INFO - Number of correct predictions from correct clean indices: 3096 out of 3096
+2026-01-27 21:53:49,507 - log - INFO - Number of correct predictions from incorrect clean indices: 0 out of 573
+2026-01-27 21:53:49,507 - log - INFO - The sample indices which are correctly classified from incorrect clean predictions are: []
+2026-01-27 21:53:49,507 - log - INFO - Results saved to /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results_corrected_ca_tau_AOM/delta_clip_l14_224/Pets/Clean/No_Counter_Attack/No_TPT/Image_Feature_Purify/Type_noisy_anchor_Anchors_10_Alpha_ablation_Sigma_0_18_threshold_0_0_normalize_embeddings_False/Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01/results_original.json
+2026-01-27 21:53:49,514 - log - INFO - Results saved to /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results_corrected_ca_tau_AOM/delta_clip_l14_224/Pets/Clean/No_Counter_Attack/No_TPT/Image_Feature_Purify/Type_noisy_anchor_Anchors_10_Alpha_ablation_Sigma_0_18_threshold_0_0_normalize_embeddings_False/Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01/results_single.json
+2026-01-27 21:53:49,676 - log - INFO - ECE Calculator
+2026-01-27 21:53:49,677 - log - INFO - Acc: 84.38266557645136
+2026-01-27 21:53:49,677 - log - INFO - ECE: 5.302492534636669
+2026-01-27 21:53:49,677 - log - INFO - ECE results Alpha 0.0 - Single  Acc: 84.38,  ECE: 5.30
+2026-01-27 21:53:49,677 - log - INFO - Alpha 0.0 Number of correct predictions from correct clean indices: 3096 out of 3096
+2026-01-27 21:53:49,677 - log - INFO - Alpha 0.0 Number of correct predictions from incorrect clean indices: 0 out of 573
+2026-01-27 21:53:49,677 - log - INFO - Alpha 0.0 The sample indices which are correctly classified from incorrect clean predictions are: []
+2026-01-27 21:53:49,677 - log - INFO - Alpha 0.0 Conservative accuracy (assuming clean-incorrect remain incorrect): 0.8438 (3096/3669)
+2026-01-27 21:53:49,840 - log - INFO - ECE Calculator
+2026-01-27 21:53:49,840 - log - INFO - Acc: 81.16653038975198
+2026-01-27 21:53:49,840 - log - INFO - ECE: 7.4452006518759575
+2026-01-27 21:53:49,840 - log - INFO - ECE results Alpha 0.5 - Single  Acc: 81.17,  ECE: 7.45
+2026-01-27 21:53:49,840 - log - INFO - Alpha 0.5 Number of correct predictions from correct clean indices: 2926 out of 3096
+2026-01-27 21:53:49,840 - log - INFO - Alpha 0.5 Number of correct predictions from incorrect clean indices: 52 out of 573
+2026-01-27 21:53:49,840 - log - INFO - Alpha 0.5 The sample indices which are correctly classified from incorrect clean predictions are: [3, 47, 70, 71, 90, 115, 259, 293, 303, 630, 640, 685, 941, 1018, 1096, 1100, 1116, 1133, 1137, 1158, 1167, 1292, 1300, 1389, 1404, 1677, 1881, 1883, 1989, 2117, 2120, 2245, 2289, 2343, 2362, 2681, 2685, 2690, 2700, 2702, 2715, 2721, 2725, 2728, 2732, 2743, 2751, 2762, 2763, 2779, 3078, 3386]
+2026-01-27 21:53:49,840 - log - INFO - Alpha 0.5 Conservative accuracy (assuming clean-incorrect remain incorrect): 0.7975 (2926/3669)
+2026-01-27 21:53:50,004 - log - INFO - ECE Calculator
+2026-01-27 21:53:50,005 - log - INFO - Acc: 67.67511583537748
+2026-01-27 21:53:50,005 - log - INFO - ECE: 6.047913333226951
+2026-01-27 21:53:50,005 - log - INFO - ECE results Alpha 1.0 - Single  Acc: 67.68,  ECE: 6.05
+2026-01-27 21:53:50,005 - log - INFO - Alpha 1.0 Number of correct predictions from correct clean indices: 2428 out of 3096
+2026-01-27 21:53:50,005 - log - INFO - Alpha 1.0 Number of correct predictions from incorrect clean indices: 55 out of 573
+2026-01-27 21:53:50,005 - log - INFO - Alpha 1.0 The sample indices which are correctly classified from incorrect clean predictions are: [71, 75, 92, 115, 215, 221, 237, 243, 259, 293, 941, 1096, 1099, 1100, 1105, 1116, 1129, 1137, 1146, 1167, 1292, 1404, 1483, 1485, 1677, 1881, 1989, 2082, 2112, 2117, 2120, 2245, 2289, 2338, 2343, 2362, 2374, 2451, 2663, 2681, 2690, 2693, 2702, 2721, 2725, 2728, 2743, 2748, 2751, 2762, 2763, 2812, 3078, 3199, 3386]
+2026-01-27 21:53:50,005 - log - INFO - Alpha 1.0 Conservative accuracy (assuming clean-incorrect remain incorrect): 0.6618 (2428/3669)
+2026-01-27 21:53:50,167 - log - INFO - ECE Calculator
+2026-01-27 21:53:50,167 - log - INFO - Acc: 59.60752248569092
+2026-01-27 21:53:50,167 - log - INFO - ECE: 3.740627943462233
+2026-01-27 21:53:50,167 - log - INFO - ECE results Alpha 1.2 - Single  Acc: 59.61,  ECE: 3.74
+2026-01-27 21:53:50,167 - log - INFO - Alpha 1.2 Number of correct predictions from correct clean indices: 2133 out of 3096
+2026-01-27 21:53:50,167 - log - INFO - Alpha 1.2 Number of correct predictions from incorrect clean indices: 54 out of 573
+2026-01-27 21:53:50,167 - log - INFO - Alpha 1.2 The sample indices which are correctly classified from incorrect clean predictions are: [75, 115, 215, 221, 227, 237, 243, 259, 293, 941, 1089, 1093, 1096, 1099, 1100, 1105, 1116, 1129, 1137, 1146, 1167, 1175, 1404, 1483, 1485, 1598, 1677, 1881, 1989, 2082, 2112, 2117, 2120, 2245, 2289, 2338, 2343, 2374, 2451, 2678, 2681, 2690, 2702, 2721, 2725, 2728, 2743, 2748, 2751, 2762, 2812, 3078, 3199, 3386]
+2026-01-27 21:53:50,168 - log - INFO - Alpha 1.2 Conservative accuracy (assuming clean-incorrect remain incorrect): 0.5814 (2133/3669)
+2026-01-27 21:53:50,331 - log - INFO - ECE Calculator
+2026-01-27 21:53:50,331 - log - INFO - Acc: 50.8585445625511
+2026-01-27 21:53:50,331 - log - INFO - ECE: 3.5334211995261127
+2026-01-27 21:53:50,331 - log - INFO - ECE results Alpha 1.4 - Single  Acc: 50.86,  ECE: 3.53
+2026-01-27 21:53:50,331 - log - INFO - Alpha 1.4 Number of correct predictions from correct clean indices: 1820 out of 3096
+2026-01-27 21:53:50,331 - log - INFO - Alpha 1.4 Number of correct predictions from incorrect clean indices: 46 out of 573
+2026-01-27 21:53:50,331 - log - INFO - Alpha 1.4 The sample indices which are correctly classified from incorrect clean predictions are: [115, 215, 221, 227, 229, 237, 259, 293, 1089, 1093, 1096, 1100, 1105, 1116, 1137, 1146, 1167, 1175, 1485, 1598, 1670, 1677, 1881, 1989, 2082, 2088, 2112, 2117, 2120, 2245, 2289, 2300, 2343, 2374, 2451, 2678, 2690, 2702, 2721, 2728, 2743, 2762, 2812, 3078, 3199, 3386]
+2026-01-27 21:53:50,331 - log - INFO - Alpha 1.4 Conservative accuracy (assuming clean-incorrect remain incorrect): 0.4960 (1820/3669)
+2026-01-27 21:53:50,362 - log - INFO - Results saved to /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results_corrected_ca_tau_AOM/delta_clip_l14_224/Pets/Clean/No_Counter_Attack/No_TPT/Image_Feature_Purify/Type_noisy_anchor_Anchors_10_Alpha_ablation_Sigma_0_18_threshold_0_0_normalize_embeddings_False/Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01/results_vanilla.json
+2026-01-27 21:53:50,526 - log - INFO - ECE Calculator
+2026-01-27 21:53:50,526 - log - INFO - Acc: 82.39302262196784
+2026-01-27 21:53:50,526 - log - INFO - ECE: 11.688963045627814
+2026-01-27 21:53:50,526 - log - INFO - ECE results Alpha 0.0 - Vanilla Acc: 82.39,  ECE: 11.69
+2026-01-27 21:53:50,527 - log - INFO - Alpha 0.0 Number of correct predictions from correct clean indices: 2959 out of 3096
+2026-01-27 21:53:50,527 - log - INFO - Alpha 0.0 Number of correct predictions from incorrect clean indices: 64 out of 573
+2026-01-27 21:53:50,527 - log - INFO - Alpha 0.0 The sample indices which are correctly classified from incorrect clean predictions are: [3, 19, 24, 28, 57, 70, 76, 85, 104, 115, 125, 145, 303, 640, 685, 895, 921, 1018, 1116, 1126, 1133, 1137, 1146, 1167, 1243, 1288, 1374, 1389, 1404, 1406, 1563, 1572, 1841, 1883, 1989, 2245, 2268, 2289, 2343, 2436, 2591, 2599, 2649, 2685, 2715, 2762, 2772, 2773, 2774, 2796, 2807, 3309, 3385, 3386, 3396, 3398, 3413, 3424, 3447, 3464, 3534, 3555, 3575, 3667]
+2026-01-27 21:53:50,527 - log - INFO - Alpha 0.0 Conservative accuracy (assuming clean-incorrect remain incorrect): 0.8065 (2959/3669)
+2026-01-27 21:53:50,690 - log - INFO - ECE Calculator
+2026-01-27 21:53:50,691 - log - INFO - Acc: 82.33851185609157
+2026-01-27 21:53:50,691 - log - INFO - ECE: 11.768064505155873
+2026-01-27 21:53:50,691 - log - INFO - ECE results Alpha 0.5 - Vanilla Acc: 82.34,  ECE: 11.77
+2026-01-27 21:53:50,691 - log - INFO - Alpha 0.5 Number of correct predictions from correct clean indices: 2956 out of 3096
+2026-01-27 21:53:50,691 - log - INFO - Alpha 0.5 Number of correct predictions from incorrect clean indices: 65 out of 573
+2026-01-27 21:53:50,691 - log - INFO - Alpha 0.5 The sample indices which are correctly classified from incorrect clean predictions are: [3, 19, 24, 28, 57, 70, 76, 85, 104, 115, 145, 303, 640, 685, 895, 921, 1018, 1116, 1126, 1133, 1137, 1146, 1167, 1243, 1288, 1374, 1389, 1404, 1406, 1563, 1572, 1841, 1883, 1989, 2245, 2268, 2289, 2343, 2436, 2591, 2599, 2649, 2678, 2685, 2715, 2762, 2763, 2772, 2773, 2774, 2796, 2807, 3309, 3385, 3386, 3396, 3398, 3413, 3424, 3447, 3464, 3534, 3555, 3575, 3667]
+2026-01-27 21:53:50,691 - log - INFO - Alpha 0.5 Conservative accuracy (assuming clean-incorrect remain incorrect): 0.8057 (2956/3669)
+2026-01-27 21:53:50,855 - log - INFO - ECE Calculator
+2026-01-27 21:53:50,855 - log - INFO - Acc: 82.31125647315345
+2026-01-27 21:53:50,855 - log - INFO - ECE: 11.917333482769992
+2026-01-27 21:53:50,855 - log - INFO - ECE results Alpha 1.0 - Vanilla Acc: 82.31,  ECE: 11.92
+2026-01-27 21:53:50,855 - log - INFO - Alpha 1.0 Number of correct predictions from correct clean indices: 2956 out of 3096
+2026-01-27 21:53:50,855 - log - INFO - Alpha 1.0 Number of correct predictions from incorrect clean indices: 64 out of 573
+2026-01-27 21:53:50,855 - log - INFO - Alpha 1.0 The sample indices which are correctly classified from incorrect clean predictions are: [3, 19, 24, 28, 57, 70, 76, 85, 104, 115, 303, 640, 685, 895, 921, 1018, 1116, 1126, 1133, 1137, 1146, 1167, 1243, 1288, 1374, 1389, 1404, 1406, 1563, 1572, 1841, 1883, 1989, 2245, 2268, 2289, 2343, 2436, 2591, 2599, 2649, 2678, 2685, 2715, 2762, 2763, 2772, 2773, 2774, 2796, 2807, 3309, 3385, 3386, 3396, 3398, 3413, 3424, 3447, 3464, 3534, 3555, 3575, 3667]
+2026-01-27 21:53:50,855 - log - INFO - Alpha 1.0 Conservative accuracy (assuming clean-incorrect remain incorrect): 0.8057 (2956/3669)
+2026-01-27 21:53:51,018 - log - INFO - ECE Calculator
+2026-01-27 21:53:51,018 - log - INFO - Acc: 82.25674570727719
+2026-01-27 21:53:51,018 - log - INFO - ECE: 11.936182096604595
+2026-01-27 21:53:51,019 - log - INFO - ECE results Alpha 1.2 - Vanilla Acc: 82.26,  ECE: 11.94
+2026-01-27 21:53:51,019 - log - INFO - Alpha 1.2 Number of correct predictions from correct clean indices: 2954 out of 3096
+2026-01-27 21:53:51,019 - log - INFO - Alpha 1.2 Number of correct predictions from incorrect clean indices: 64 out of 573
+2026-01-27 21:53:51,019 - log - INFO - Alpha 1.2 The sample indices which are correctly classified from incorrect clean predictions are: [3, 19, 24, 28, 57, 70, 76, 85, 104, 115, 303, 640, 685, 895, 921, 1018, 1116, 1126, 1133, 1137, 1146, 1167, 1243, 1288, 1374, 1389, 1404, 1406, 1563, 1572, 1841, 1883, 1989, 2245, 2268, 2289, 2343, 2436, 2591, 2599, 2649, 2678, 2685, 2715, 2762, 2763, 2772, 2773, 2774, 2796, 2807, 3309, 3385, 3386, 3396, 3398, 3413, 3424, 3447, 3464, 3534, 3555, 3575, 3667]
+2026-01-27 21:53:51,019 - log - INFO - Alpha 1.2 Conservative accuracy (assuming clean-incorrect remain incorrect): 0.8051 (2954/3669)
+2026-01-27 21:53:51,182 - log - INFO - ECE Calculator
+2026-01-27 21:53:51,182 - log - INFO - Acc: 82.25674570727719
+2026-01-27 21:53:51,182 - log - INFO - ECE: 12.007198138753928
+2026-01-27 21:53:51,182 - log - INFO - ECE results Alpha 1.4 - Vanilla Acc: 82.26,  ECE: 12.01
+2026-01-27 21:53:51,182 - log - INFO - Alpha 1.4 Number of correct predictions from correct clean indices: 2953 out of 3096
+2026-01-27 21:53:51,182 - log - INFO - Alpha 1.4 Number of correct predictions from incorrect clean indices: 65 out of 573
+2026-01-27 21:53:51,182 - log - INFO - Alpha 1.4 The sample indices which are correctly classified from incorrect clean predictions are: [3, 19, 24, 28, 57, 70, 76, 85, 104, 115, 303, 640, 685, 895, 921, 1018, 1116, 1126, 1133, 1137, 1146, 1167, 1175, 1243, 1288, 1374, 1389, 1404, 1406, 1563, 1572, 1841, 1883, 1989, 2245, 2268, 2289, 2343, 2436, 2591, 2599, 2649, 2678, 2685, 2715, 2762, 2763, 2772, 2773, 2774, 2796, 2807, 3309, 3385, 3386, 3396, 3398, 3413, 3424, 3447, 3464, 3534, 3555, 3575, 3667]
+2026-01-27 21:53:51,182 - log - INFO - Alpha 1.4 Conservative accuracy (assuming clean-incorrect remain incorrect): 0.8049 (2953/3669)
+2026-01-27 21:53:51,213 - log - INFO - Results saved to /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results_corrected_ca_tau_AOM/delta_clip_l14_224/Pets/Clean/No_Counter_Attack/No_TPT/Image_Feature_Purify/Type_noisy_anchor_Anchors_10_Alpha_ablation_Sigma_0_18_threshold_0_0_normalize_embeddings_False/Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01/results_vanilla_topk.json
+2026-01-27 21:53:51,377 - log - INFO - ECE Calculator
+2026-01-27 21:53:51,377 - log - INFO - Acc: 82.39302262196784
+2026-01-27 21:53:51,377 - log - INFO - ECE: 11.688963045627814
+2026-01-27 21:53:51,377 - log - INFO - ECE results Alpha 0.0 - Vanilla Topk Acc: 82.39,  ECE: 11.69
+2026-01-27 21:53:51,378 - log - INFO - Alpha 0.0 Number of correct predictions from correct clean indices: 2959 out of 3096
+2026-01-27 21:53:51,378 - log - INFO - Alpha 0.0 Number of correct predictions from incorrect clean indices: 64 out of 573
+2026-01-27 21:53:51,378 - log - INFO - Alpha 0.0 The sample indices which are correctly classified from incorrect clean predictions are: [3, 19, 24, 28, 57, 70, 76, 85, 104, 115, 125, 145, 303, 640, 685, 895, 921, 1018, 1116, 1126, 1133, 1137, 1146, 1167, 1243, 1288, 1374, 1389, 1404, 1406, 1563, 1572, 1841, 1883, 1989, 2245, 2268, 2289, 2343, 2436, 2591, 2599, 2649, 2685, 2715, 2762, 2772, 2773, 2774, 2796, 2807, 3309, 3385, 3386, 3396, 3398, 3413, 3424, 3447, 3464, 3534, 3555, 3575, 3667]
+2026-01-27 21:53:51,378 - log - INFO - Alpha 0.0 Conservative accuracy (assuming clean-incorrect remain incorrect): 0.8065 (2959/3669)
+2026-01-27 21:53:51,546 - log - INFO - ECE Calculator
+2026-01-27 21:53:51,546 - log - INFO - Acc: 82.33851185609157
+2026-01-27 21:53:51,546 - log - INFO - ECE: 11.768064505155873
+2026-01-27 21:53:51,546 - log - INFO - ECE results Alpha 0.5 - Vanilla Topk Acc: 82.34,  ECE: 11.77
+2026-01-27 21:53:51,547 - log - INFO - Alpha 0.5 Number of correct predictions from correct clean indices: 2956 out of 3096
+2026-01-27 21:53:51,547 - log - INFO - Alpha 0.5 Number of correct predictions from incorrect clean indices: 65 out of 573
+2026-01-27 21:53:51,547 - log - INFO - Alpha 0.5 The sample indices which are correctly classified from incorrect clean predictions are: [3, 19, 24, 28, 57, 70, 76, 85, 104, 115, 145, 303, 640, 685, 895, 921, 1018, 1116, 1126, 1133, 1137, 1146, 1167, 1243, 1288, 1374, 1389, 1404, 1406, 1563, 1572, 1841, 1883, 1989, 2245, 2268, 2289, 2343, 2436, 2591, 2599, 2649, 2678, 2685, 2715, 2762, 2763, 2772, 2773, 2774, 2796, 2807, 3309, 3385, 3386, 3396, 3398, 3413, 3424, 3447, 3464, 3534, 3555, 3575, 3667]
+2026-01-27 21:53:51,547 - log - INFO - Alpha 0.5 Conservative accuracy (assuming clean-incorrect remain incorrect): 0.8057 (2956/3669)
+2026-01-27 21:53:51,715 - log - INFO - ECE Calculator
+2026-01-27 21:53:51,715 - log - INFO - Acc: 82.31125647315345
+2026-01-27 21:53:51,716 - log - INFO - ECE: 11.917333482769992
+2026-01-27 21:53:51,716 - log - INFO - ECE results Alpha 1.0 - Vanilla Topk Acc: 82.31,  ECE: 11.92
+2026-01-27 21:53:51,716 - log - INFO - Alpha 1.0 Number of correct predictions from correct clean indices: 2956 out of 3096
+2026-01-27 21:53:51,716 - log - INFO - Alpha 1.0 Number of correct predictions from incorrect clean indices: 64 out of 573
+2026-01-27 21:53:51,716 - log - INFO - Alpha 1.0 The sample indices which are correctly classified from incorrect clean predictions are: [3, 19, 24, 28, 57, 70, 76, 85, 104, 115, 303, 640, 685, 895, 921, 1018, 1116, 1126, 1133, 1137, 1146, 1167, 1243, 1288, 1374, 1389, 1404, 1406, 1563, 1572, 1841, 1883, 1989, 2245, 2268, 2289, 2343, 2436, 2591, 2599, 2649, 2678, 2685, 2715, 2762, 2763, 2772, 2773, 2774, 2796, 2807, 3309, 3385, 3386, 3396, 3398, 3413, 3424, 3447, 3464, 3534, 3555, 3575, 3667]
+2026-01-27 21:53:51,716 - log - INFO - Alpha 1.0 Conservative accuracy (assuming clean-incorrect remain incorrect): 0.8057 (2956/3669)
+2026-01-27 21:53:51,884 - log - INFO - ECE Calculator
+2026-01-27 21:53:51,884 - log - INFO - Acc: 82.25674570727719
+2026-01-27 21:53:51,884 - log - INFO - ECE: 11.936182096604595
+2026-01-27 21:53:51,884 - log - INFO - ECE results Alpha 1.2 - Vanilla Topk Acc: 82.26,  ECE: 11.94
+2026-01-27 21:53:51,885 - log - INFO - Alpha 1.2 Number of correct predictions from correct clean indices: 2954 out of 3096
+2026-01-27 21:53:51,885 - log - INFO - Alpha 1.2 Number of correct predictions from incorrect clean indices: 64 out of 573
+2026-01-27 21:53:51,885 - log - INFO - Alpha 1.2 The sample indices which are correctly classified from incorrect clean predictions are: [3, 19, 24, 28, 57, 70, 76, 85, 104, 115, 303, 640, 685, 895, 921, 1018, 1116, 1126, 1133, 1137, 1146, 1167, 1243, 1288, 1374, 1389, 1404, 1406, 1563, 1572, 1841, 1883, 1989, 2245, 2268, 2289, 2343, 2436, 2591, 2599, 2649, 2678, 2685, 2715, 2762, 2763, 2772, 2773, 2774, 2796, 2807, 3309, 3385, 3386, 3396, 3398, 3413, 3424, 3447, 3464, 3534, 3555, 3575, 3667]
+2026-01-27 21:53:51,885 - log - INFO - Alpha 1.2 Conservative accuracy (assuming clean-incorrect remain incorrect): 0.8051 (2954/3669)
+2026-01-27 21:53:52,053 - log - INFO - ECE Calculator
+2026-01-27 21:53:52,053 - log - INFO - Acc: 82.25674570727719
+2026-01-27 21:53:52,053 - log - INFO - ECE: 12.007198138753928
+2026-01-27 21:53:52,053 - log - INFO - ECE results Alpha 1.4 - Vanilla Topk Acc: 82.26,  ECE: 12.01
+2026-01-27 21:53:52,053 - log - INFO - Alpha 1.4 Number of correct predictions from correct clean indices: 2953 out of 3096
+2026-01-27 21:53:52,054 - log - INFO - Alpha 1.4 Number of correct predictions from incorrect clean indices: 65 out of 573
+2026-01-27 21:53:52,054 - log - INFO - Alpha 1.4 The sample indices which are correctly classified from incorrect clean predictions are: [3, 19, 24, 28, 57, 70, 76, 85, 104, 115, 303, 640, 685, 895, 921, 1018, 1116, 1126, 1133, 1137, 1146, 1167, 1175, 1243, 1288, 1374, 1389, 1404, 1406, 1563, 1572, 1841, 1883, 1989, 2245, 2268, 2289, 2343, 2436, 2591, 2599, 2649, 2678, 2685, 2715, 2762, 2763, 2772, 2773, 2774, 2796, 2807, 3309, 3385, 3386, 3396, 3398, 3413, 3424, 3447, 3464, 3534, 3555, 3575, 3667]
+2026-01-27 21:53:52,054 - log - INFO - Alpha 1.4 Conservative accuracy (assuming clean-incorrect remain incorrect): 0.8049 (2953/3669)
+2026-01-27 21:53:52,087 - log - INFO - Results saved to /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results_corrected_ca_tau_AOM/delta_clip_l14_224/Pets/Clean/No_Counter_Attack/No_TPT/Image_Feature_Purify/Type_noisy_anchor_Anchors_10_Alpha_ablation_Sigma_0_18_threshold_0_0_normalize_embeddings_False/Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01/results_weighted.json
+2026-01-27 21:53:52,256 - log - INFO - ECE Calculator
+2026-01-27 21:53:52,256 - log - INFO - Acc: 83.67402562005996
+2026-01-27 21:53:52,256 - log - INFO - ECE: 6.902743796377553
+2026-01-27 21:53:52,256 - log - INFO - ECE results Alpha 0.0 - Weighted Acc: 83.67,  ECE: 6.90
+2026-01-27 21:53:52,257 - log - INFO - Alpha 0.0 Number of correct predictions from correct clean indices: 3018 out of 3096
+2026-01-27 21:53:52,257 - log - INFO - Alpha 0.0 Number of correct predictions from incorrect clean indices: 52 out of 573
+2026-01-27 21:53:52,257 - log - INFO - Alpha 0.0 The sample indices which are correctly classified from incorrect clean predictions are: [3, 24, 28, 57, 76, 115, 125, 303, 626, 685, 855, 921, 1018, 1126, 1133, 1137, 1167, 1199, 1243, 1287, 1288, 1374, 1389, 1404, 1406, 1561, 1563, 1572, 1883, 1989, 2268, 2289, 2343, 2436, 2599, 2685, 2715, 2725, 2728, 2762, 2772, 2773, 2774, 2796, 3309, 3385, 3386, 3398, 3413, 3424, 3555, 3667]
+2026-01-27 21:53:52,257 - log - INFO - Alpha 0.0 Conservative accuracy (assuming clean-incorrect remain incorrect): 0.8226 (3018/3669)
+2026-01-27 21:53:52,423 - log - INFO - ECE Calculator
+2026-01-27 21:53:52,423 - log - INFO - Acc: 83.59225947124557
+2026-01-27 21:53:52,423 - log - INFO - ECE: 7.0926880541631485
+2026-01-27 21:53:52,423 - log - INFO - ECE results Alpha 0.5 - Weighted Acc: 83.59,  ECE: 7.09
+2026-01-27 21:53:52,423 - log - INFO - Alpha 0.5 Number of correct predictions from correct clean indices: 3017 out of 3096
+2026-01-27 21:53:52,423 - log - INFO - Alpha 0.5 Number of correct predictions from incorrect clean indices: 50 out of 573
+2026-01-27 21:53:52,423 - log - INFO - Alpha 0.5 The sample indices which are correctly classified from incorrect clean predictions are: [3, 24, 28, 57, 76, 115, 125, 303, 626, 685, 855, 921, 1018, 1126, 1133, 1137, 1167, 1199, 1287, 1288, 1374, 1389, 1404, 1406, 1563, 1572, 1883, 1989, 2268, 2289, 2343, 2436, 2599, 2685, 2715, 2725, 2728, 2762, 2772, 2773, 2774, 2796, 3309, 3385, 3386, 3398, 3413, 3424, 3555, 3667]
+2026-01-27 21:53:52,424 - log - INFO - Alpha 0.5 Conservative accuracy (assuming clean-incorrect remain incorrect): 0.8223 (3017/3669)
+2026-01-27 21:53:52,588 - log - INFO - ECE Calculator
+2026-01-27 21:53:52,588 - log - INFO - Acc: 83.53774870536931
+2026-01-27 21:53:52,588 - log - INFO - ECE: 7.359926132487807
+2026-01-27 21:53:52,588 - log - INFO - ECE results Alpha 1.0 - Weighted Acc: 83.54,  ECE: 7.36
+2026-01-27 21:53:52,588 - log - INFO - Alpha 1.0 Number of correct predictions from correct clean indices: 3014 out of 3096
+2026-01-27 21:53:52,588 - log - INFO - Alpha 1.0 Number of correct predictions from incorrect clean indices: 51 out of 573
+2026-01-27 21:53:52,589 - log - INFO - Alpha 1.0 The sample indices which are correctly classified from incorrect clean predictions are: [3, 24, 28, 57, 76, 115, 125, 303, 626, 685, 855, 921, 1018, 1116, 1126, 1133, 1137, 1167, 1199, 1287, 1288, 1374, 1389, 1404, 1406, 1563, 1572, 1883, 1989, 2268, 2289, 2343, 2436, 2599, 2685, 2715, 2725, 2728, 2762, 2772, 2773, 2774, 2796, 3309, 3385, 3386, 3398, 3413, 3424, 3555, 3667]
+2026-01-27 21:53:52,589 - log - INFO - Alpha 1.0 Conservative accuracy (assuming clean-incorrect remain incorrect): 0.8215 (3014/3669)
+2026-01-27 21:53:52,753 - log - INFO - ECE Calculator
+2026-01-27 21:53:52,753 - log - INFO - Acc: 83.48323793949305
+2026-01-27 21:53:52,753 - log - INFO - ECE: 7.386214486720551
+2026-01-27 21:53:52,753 - log - INFO - ECE results Alpha 1.2 - Weighted Acc: 83.48,  ECE: 7.39
+2026-01-27 21:53:52,753 - log - INFO - Alpha 1.2 Number of correct predictions from correct clean indices: 3012 out of 3096
+2026-01-27 21:53:52,753 - log - INFO - Alpha 1.2 Number of correct predictions from incorrect clean indices: 51 out of 573
+2026-01-27 21:53:52,753 - log - INFO - Alpha 1.2 The sample indices which are correctly classified from incorrect clean predictions are: [3, 24, 28, 57, 76, 115, 125, 303, 626, 685, 855, 921, 1018, 1116, 1126, 1133, 1137, 1167, 1199, 1287, 1288, 1374, 1389, 1404, 1406, 1563, 1572, 1883, 1989, 2268, 2289, 2343, 2436, 2599, 2685, 2715, 2725, 2728, 2762, 2772, 2773, 2774, 2796, 3309, 3385, 3386, 3398, 3413, 3424, 3555, 3667]
+2026-01-27 21:53:52,754 - log - INFO - Alpha 1.2 Conservative accuracy (assuming clean-incorrect remain incorrect): 0.8209 (3012/3669)
+2026-01-27 21:53:52,917 - log - INFO - ECE Calculator
+2026-01-27 21:53:52,917 - log - INFO - Acc: 83.51049332243117
+2026-01-27 21:53:52,917 - log - INFO - ECE: 7.475749792520474
+2026-01-27 21:53:52,917 - log - INFO - ECE results Alpha 1.4 - Weighted Acc: 83.51,  ECE: 7.48
+2026-01-27 21:53:52,917 - log - INFO - Alpha 1.4 Number of correct predictions from correct clean indices: 3012 out of 3096
+2026-01-27 21:53:52,917 - log - INFO - Alpha 1.4 Number of correct predictions from incorrect clean indices: 52 out of 573
+2026-01-27 21:53:52,917 - log - INFO - Alpha 1.4 The sample indices which are correctly classified from incorrect clean predictions are: [3, 24, 28, 57, 76, 115, 125, 303, 626, 685, 855, 921, 1018, 1116, 1126, 1133, 1137, 1167, 1199, 1287, 1288, 1374, 1389, 1404, 1406, 1563, 1572, 1883, 1989, 2120, 2268, 2289, 2343, 2436, 2599, 2685, 2715, 2725, 2728, 2762, 2772, 2773, 2774, 2796, 3309, 3385, 3386, 3398, 3413, 3424, 3555, 3667]
+2026-01-27 21:53:52,917 - log - INFO - Alpha 1.4 Conservative accuracy (assuming clean-incorrect remain incorrect): 0.8209 (3012/3669)
+2026-01-27 21:53:52,948 - log - INFO - Average diff ratio: 0.51
+2026-01-27 21:53:52,953 - log - INFO - Average Counter Attack diff ratio: 0.00
+2026-01-27 21:53:52,956 - log - INFO - Average Counter Attack diff ratio (Images TPT Noisy Anchors): 0.34
+2026-01-27 21:53:52,961 - log - INFO - Average Counter Attack diff ratio (Clean Images TPT Noisy Anchors): 0.34
+2026-01-27 21:53:52,971 - log - INFO - => Acc. on testset [Pets]:
+  Original Clean: Clean Acc @1 84.38265991210938/ Clean Acc @5 97.16543579101562
+  Original: Clean Acc @1 84.38265991210938/ Clean Acc @5 97.16543579101562
+  Single TTA: Clean Acc @1 50.858543395996094/ Clean Acc @5 81.43907928466797
+  Vanilla TTA: Clean Acc @1 82.25674438476562/ Clean Acc @5 96.78385925292969
+  Vanilla Topk TTA: Clean Acc @1 82.25674438476562/ Clean Acc @5 96.78385925292969
+  Weighted TTA: Clean Acc @1 83.51049041748047/ Clean Acc @5 96.97464752197266
+2026-01-27 21:53:52,971 - log - INFO - Total script execution time: 9369.95 seconds (156.17 minutes)
