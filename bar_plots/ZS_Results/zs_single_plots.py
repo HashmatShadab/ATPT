@@ -170,146 +170,6 @@ def build_all_data(result_paths: dict, models: list, datasets: list) -> dict:
 
     return DATA
 
-# --- Argparse ---
-parser = argparse.ArgumentParser(description="Zero-shot single plots")
-parser.add_argument("--model", type=str, default="ViT-L/14", help="Model name")
-parser.add_argument("--legend_y", type=float, default=1.1, help="Vertical position of the legend")
-parser.add_argument("--summary_xtick_fontsize", type=int, default=16, help="Font size for x-axis ticks in summary plots")
-args = parser.parse_args()
-
-model = args.model
-safe_model_name = model.replace("/", "-")
-
-DATA = build_all_data(RESULT_PATHS, MODELS, DATASETS)
-
-
-# %% [markdown]
-# ## Inspect one experiment setting + compute accuracies
-
-# %%
-import numpy as np
-
-# %%
-case = "clean"
-# model = "vit_l_14_datacomp_1b" # Removed hardcoded model
-
-
-true_labels_data = {}
-
-
-zero_shot_clean_preds_data = {}
-zero_shot_clean_max_confidences_data = {}
-
-zero_shot_clean_preds_vanilla_data = {}
-zero_shot_clean_max_confidences_vanilla_data = {}
-
-zero_shot_clean_preds_weighted_data = {}
-zero_shot_clean_max_confidences_weighted_data = {}
-
-
-for dataset in DATASETS:
-    example = DATA[case][model][dataset]
-    true_labels_data[dataset] = example["preds"]["original_clean"]["label"]
-
-    zero_shot_clean_preds_data[dataset] = example["preds"]["original_clean"]["prediction"]
-    zero_shot_clean_max_confidences_data[dataset] = example["preds"]["original"]["max_confidence"]
-
-    zero_shot_clean_preds_vanilla_data[dataset] = example["preds"]["vanilla"]["prediction"]
-    zero_shot_clean_max_confidences_vanilla_data[dataset] = example["preds"]["vanilla"]["max_confidence"]
-
-    zero_shot_clean_preds_weighted_data[dataset] = example["preds"]["weighted"]["prediction"]
-    zero_shot_clean_max_confidences_weighted_data[dataset] = example["preds"]["weighted"]["max_confidence"]
-
-    # print accuracy
-    print(dataset, compute_accuracy(zero_shot_clean_preds_data[dataset], true_labels_data[dataset]))
-    # print mean confidence
-    print(dataset, np.mean(zero_shot_clean_max_confidences_data[dataset]))
-
-
-
-case = "adversarial_eps4_steps100"
-# model = "vit_l_14_datacomp_1b" # Removed hardcoded model
-
-zero_shot_adv_preds_data = {}
-zero_shot_adv_max_confidences_data = {}
-
-zero_shot_adv_preds_vanilla_data = {}
-zero_shot_adv_max_confidences_vanilla_data = {}
-
-zero_shot_adv_preds_weighted_data = {}
-zero_shot_adv_max_confidences_weighted_data = {}
-
-
-for dataset in DATASETS:
-    example = DATA[case][model][dataset]
-
-    zero_shot_adv_preds_data[dataset] = example["preds"]["original"]["prediction"]
-    zero_shot_adv_max_confidences_data[dataset] = example["preds"]["original"]["max_confidence"]
-
-    zero_shot_adv_preds_vanilla_data[dataset] = example["preds"]["vanilla"]["prediction"]
-    zero_shot_adv_max_confidences_vanilla_data[dataset] = example["preds"]["vanilla"]["max_confidence"]
-
-    zero_shot_adv_preds_weighted_data[dataset] = example["preds"]["weighted"]["prediction"]
-    zero_shot_adv_max_confidences_weighted_data[dataset] = example["preds"]["weighted"]["max_confidence"]
-
-    # print accuracy
-    print(dataset, compute_accuracy(zero_shot_adv_preds_data[dataset], true_labels_data[dataset]))
-    # print mean confidence
-    print(dataset, np.mean(zero_shot_adv_max_confidences_data[dataset]))
-
-
-case = "adversarial_eps4_steps100_image_only"
-# model = "vit_l_14_datacomp_1b" # Removed hardcoded model
-
-zero_shot_adv_image_only_preds_data = {}
-zero_shot_adv_image_only_max_confidences_data = {}
-
-zero_shot_adv_image_only_preds_vanilla_data = {}
-zero_shot_adv_image_only_max_confidences_vanilla_data = {}
-
-zero_shot_adv_image_only_preds_weighted_data = {}
-zero_shot_adv_image_only_max_confidences_weighted_data = {}
-
-for dataset in DATASETS:
-    example = DATA[case][model][dataset]
-
-    zero_shot_adv_image_only_preds_data[dataset] = example["preds"]["original"]["prediction"]
-    zero_shot_adv_image_only_max_confidences_data[dataset] = example["preds"]["original"]["max_confidence"]
-
-    zero_shot_adv_image_only_preds_vanilla_data[dataset] = example["preds"]["vanilla"]["prediction"]
-    zero_shot_adv_image_only_max_confidences_vanilla_data[dataset] = example["preds"]["vanilla"]["max_confidence"]
-
-    zero_shot_adv_image_only_preds_weighted_data[dataset] = example["preds"]["weighted"]["prediction"]
-    zero_shot_adv_image_only_max_confidences_weighted_data[dataset] = example["preds"]["weighted"]["max_confidence"]
-
-    # print accuracy
-    print(dataset, compute_accuracy(zero_shot_adv_image_only_preds_data[dataset], true_labels_data[dataset]))
-    # print mean confidence
-    print(dataset, np.mean(zero_shot_adv_image_only_max_confidences_data[dataset]))
-
-
-
-TRUE_LABELS_DATASET = true_labels_data
-
-ZS_CLEAN_PREDS_DATASET = zero_shot_clean_preds_data
-ZS_ADV_PREDS_DATASET = zero_shot_adv_preds_data
-ZS_ADV_IMAGE_ONLY_PREDS_DATASET = zero_shot_adv_image_only_preds_data
-
-# Vanilla
-ZS_CLEAN_PREDS_VANILLA_DATASET = zero_shot_clean_preds_vanilla_data
-ZS_ADV_PREDS_VANILLA_DATASET = zero_shot_adv_preds_vanilla_data
-ZS_ADV_IMAGE_ONLY_PREDS_VANILLA_DATASET = zero_shot_adv_image_only_preds_vanilla_data
-
-# Weighted
-ZS_CLEAN_PREDS_WEIGHTED_DATASET = zero_shot_clean_preds_weighted_data
-ZS_ADV_PREDS_WEIGHTED_DATASET = zero_shot_adv_preds_weighted_data
-ZS_ADV_IMAGE_ONLY_PREDS_WEIGHTED_DATASET = zero_shot_adv_image_only_preds_weighted_data
-
-
-
-
-# ## Zero-Shot Experiment Plots (Evaluation on Single image (No Ensembling of Augmnetations))
-
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
@@ -330,36 +190,28 @@ plt.rcParams.update({
 # Custom Palette: Deep Blue, Soft Coral, Sage Green
 colors = ["#2A5A8A", "#D9534F", "#5CB85C"]
 patterns = ["", "//", "oo"] # Clean, Diagonal Stripes, Small Circles
-labels = ['Clean', 'Adv (Image-Text)', 'Adv (Image)']
-datasets = list(DATASETS)
+labels_plt = ['Clean', 'Adv (Image-Text)', 'Adv (Image)']
 
-# --- 2. Data Preparation ---
-clean_accs = [compute_accuracy(ZS_CLEAN_PREDS_DATASET[d], TRUE_LABELS_DATASET[d]) for d in datasets]
-adv_accs = [compute_accuracy(ZS_ADV_PREDS_DATASET[d], TRUE_LABELS_DATASET[d]) for d in datasets]
-adv_img_accs = [compute_accuracy(ZS_ADV_IMAGE_ONLY_PREDS_DATASET[d], TRUE_LABELS_DATASET[d]) for d in datasets]
-
-clean_confs = [np.mean(zero_shot_clean_max_confidences_data[d]) for d in datasets]
-adv_confs = [np.mean(zero_shot_adv_max_confidences_data[d]) for d in datasets]
-adv_img_confs = [np.mean(zero_shot_adv_image_only_max_confidences_data[d]) for d in datasets]
-
-def plot_styled_bars(data_groups, title, ylabel, ylim_top, filename=None, legend_y=1.1):
+def plot_styled_bars(data_groups, title, ylabel, ylim_top, filename=None, legend_y=1.1, datasets_list=None):
     fig, ax = plt.subplots(figsize=(14, 5), dpi=300)
-    x = np.arange(len(datasets))
+    if datasets_list is None:
+        datasets_list = DATASETS
+    x = np.arange(len(datasets_list))
     width = 0.30
 
     # Create the bars with patterns
-    rects1 = ax.bar(x - width, data_groups[0], width, label=labels[0],
+    rects1 = ax.bar(x - width, data_groups[0], width, label=labels_plt[0],
                     color=colors[0], hatch=patterns[0], edgecolor='white', linewidth=1)
-    rects2 = ax.bar(x, data_groups[1], width, label=labels[1],
+    rects2 = ax.bar(x, data_groups[1], width, label=labels_plt[1],
                     color=colors[1], hatch=patterns[1], edgecolor='white', linewidth=1)
-    rects3 = ax.bar(x + width, data_groups[2], width, label=labels[2],
+    rects3 = ax.bar(x + width, data_groups[2], width, label=labels_plt[2],
                     color=colors[2], hatch=patterns[2], edgecolor='white', linewidth=1)
 
     # Styling
     ax.set_title(title, fontsize=18, pad=35, color='#222222')
     ax.set_ylabel(ylabel, fontsize=16)
     ax.set_xticks(x)
-    ax.set_xticklabels(datasets, rotation=0, ha='center', fontsize=16)
+    ax.set_xticklabels(datasets_list, rotation=0, ha='center', fontsize=16)
     ax.set_ylim(0, ylim_top)
 
     # Add light horizontal grid for readability
@@ -390,64 +242,131 @@ def plot_styled_bars(data_groups, title, ylabel, ylim_top, filename=None, legend
         plt.savefig(filename, bbox_inches='tight')
     plt.show()
 
-# --- 3. Execute Plots ---
-# model = "vit_l_14_datacomp_1b" # Removed hardcoded model
-display_name = MODEL_NAME_MAP.get(model, model)
+def run_model_evaluation(model, args, DATA):
+    print(f"\n{'='*40}")
+    print(f"Processing model: {model}")
+    print(f"{'='*40}\n")
+    
+    safe_model_name = model.replace("/", "-")
+    display_name = MODEL_NAME_MAP.get(model, model)
+    output_dir = Path(args.output_dir)
 
-# Accuracy Plot
-plot_styled_bars([clean_accs, adv_accs, adv_img_accs],
-                 f"{display_name}: Accuracy Under Clean/Adversarial Setting ",
-                 "Zero-Shot Accuracy (%)", 110.0, filename=f"zs_single_{safe_model_name}_accuracy_plot.png",
-                 legend_y=args.legend_y)
+    # compute accuracies
+    case = "clean"
+    true_labels_data = {}
+    zero_shot_clean_preds_data = {}
+    zero_shot_clean_max_confidences_data = {}
 
-# Confidence Plot
-plot_styled_bars([clean_confs, adv_confs, adv_img_confs],
-                 f"{display_name}: Prediction Confidence",
-                 "Mean Max Confidence", 1.15, filename=f"zs_single_{safe_model_name}_confidence_plot.png",
-                 legend_y=args.legend_y)
+    for dataset in DATASETS:
+        example = DATA[case][model][dataset]
+        true_labels_data[dataset] = example["preds"]["original_clean"]["label"]
+        zero_shot_clean_preds_data[dataset] = example["preds"]["original_clean"]["prediction"]
+        zero_shot_clean_max_confidences_data[dataset] = example["preds"]["original"]["max_confidence"]
 
-# --- 4. Global Average Plot (Final Summary) ---
-plt.figure(figsize=(10, 6))
-avg_values = [np.mean(clean_accs), np.mean(adv_accs), np.mean(adv_img_accs)]
-avg_labels = ['Clean', 'Adv (Image-Txt)', 'Adv (Image)']
+    case = "adversarial_eps4_steps100"
+    zero_shot_adv_preds_data = {}
+    zero_shot_adv_max_confidences_data = {}
 
-# Barplot with patterns for the summary
-for i in range(len(avg_values)):
-    plt.bar(avg_labels[i], avg_values[i], color=colors[i],
-            hatch=patterns[i], edgecolor='white', width=0.6, linewidth=1.5)
+    for dataset in DATASETS:
+        example = DATA[case][model][dataset]
+        zero_shot_adv_preds_data[dataset] = example["preds"]["original"]["prediction"]
+        zero_shot_adv_max_confidences_data[dataset] = example["preds"]["original"]["max_confidence"]
 
-plt.title(f"{display_name}: Average Accuracy across Datasets", fontsize=18, pad=20)
-plt.ylabel("Average Zero-Shot Accuracy (%)", fontsize=16)
-plt.ylim(0, max(avg_values) * 1.05)
+    case = "adversarial_eps4_steps100_image_only"
+    zero_shot_adv_image_only_preds_data = {}
+    zero_shot_adv_image_only_max_confidences_data = {}
 
-for i, v in enumerate(avg_values):
-    plt.text(i, v + 0.02, f"{v:.3f}", ha='center', va='bottom',  fontsize=16)
+    for dataset in DATASETS:
+        example = DATA[case][model][dataset]
+        zero_shot_adv_image_only_preds_data[dataset] = example["preds"]["original"]["prediction"]
+        zero_shot_adv_image_only_max_confidences_data[dataset] = example["preds"]["original"]["max_confidence"]
 
-plt.xticks(fontsize=args.summary_xtick_fontsize)
-sns.despine()
-plt.tight_layout()
-plt.savefig(f"zs_single_{safe_model_name}_overall_performance_summary.png", bbox_inches='tight')
-plt.show()
+    # preparation for plotting
+    clean_accs = [compute_accuracy(zero_shot_clean_preds_data[d], true_labels_data[d]) for d in DATASETS]
+    adv_accs = [compute_accuracy(zero_shot_adv_preds_data[d], true_labels_data[d]) for d in DATASETS]
+    adv_img_accs = [compute_accuracy(zero_shot_adv_image_only_preds_data[d], true_labels_data[d]) for d in DATASETS]
 
-# --- 5. Global Average Confidence Plot (Final Summary) ---
-plt.figure(figsize=(10, 6))
-avg_conf_values = [np.mean(clean_confs), np.mean(adv_confs), np.mean(adv_img_confs)]
-avg_conf_labels =  ['Clean', 'Adv (Image-Txt)', 'Adv (Image)']
+    clean_confs = [np.mean(zero_shot_clean_max_confidences_data[d]) for d in DATASETS]
+    adv_confs = [np.mean(zero_shot_adv_max_confidences_data[d]) for d in DATASETS]
+    adv_img_confs = [np.mean(zero_shot_adv_image_only_max_confidences_data[d]) for d in DATASETS]
 
-# Barplot with patterns for the summary
-for i in range(len(avg_conf_values)):
-    plt.bar(avg_conf_labels[i], avg_conf_values[i], color=colors[i],
-            hatch=patterns[i], edgecolor='white', width=0.6, linewidth=1.5)
+    # Accuracy Plot
+    plot_styled_bars([clean_accs, adv_accs, adv_img_accs],
+                     f"{display_name}: Accuracy Under Clean/Adversarial Setting ",
+                     "Zero-Shot Accuracy (%)", 110.0, filename=output_dir / f"zs_single_{safe_model_name}_accuracy_plot.png",
+                     legend_y=args.legend_y, datasets_list=DATASETS)
 
-plt.title(f"{display_name}: Average Confidence across Datasets", fontsize=18, pad=20)
-plt.ylabel("Average Confidence", fontsize=16)
-plt.ylim(0, 1.05)
+    # Confidence Plot
+    plot_styled_bars([clean_confs, adv_confs, adv_img_confs],
+                     f"{display_name}: Prediction Confidence",
+                     "Mean Max Confidence", 1.15, filename=output_dir / f"zs_single_{safe_model_name}_confidence_plot.png",
+                     legend_y=args.legend_y, datasets_list=DATASETS)
 
-for i, v in enumerate(avg_conf_values):
-    plt.text(i, v + 0.01, f"{v:.3f}", ha='center', va='bottom',  fontsize=16)
+    # --- 4. Global Average Plot (Final Summary) ---
+    plt.figure(figsize=(10, 6))
+    avg_values = [np.mean(clean_accs), np.mean(adv_accs), np.mean(adv_img_accs)]
+    avg_labels = ['Clean', 'Adv (Image-Txt)', 'Adv (Image)']
 
-plt.xticks(fontsize=args.summary_xtick_fontsize)
-sns.despine()
-plt.tight_layout()
-plt.savefig(f"zs_single_{safe_model_name}_overall_confidence_summary.png", bbox_inches='tight')
-plt.show()
+    # Barplot with patterns for the summary
+    for i in range(len(avg_values)):
+        plt.bar(avg_labels[i], avg_values[i], color=colors[i],
+                hatch=patterns[i], edgecolor='white', width=0.6, linewidth=1.5)
+
+    plt.title(f"{display_name}: Average Accuracy across Datasets", fontsize=18, pad=20)
+    plt.ylabel("Average Zero-Shot Accuracy (%)", fontsize=16)
+    plt.ylim(0, max(avg_values) * 1.05)
+
+    for i, v in enumerate(avg_values):
+        plt.text(i, v + 0.02, f"{v:.3f}", ha='center', va='bottom',  fontsize=16)
+
+    plt.xticks(fontsize=args.summary_xtick_fontsize)
+    sns.despine()
+    plt.tight_layout()
+    plt.savefig(output_dir / f"zs_single_{safe_model_name}_overall_performance_summary.png", bbox_inches='tight')
+    plt.show()
+
+    # --- 5. Global Average Confidence Plot (Final Summary) ---
+    plt.figure(figsize=(10, 6))
+    avg_conf_values = [np.mean(clean_confs), np.mean(adv_confs), np.mean(adv_img_confs)]
+    avg_conf_labels =  ['Clean', 'Adv (Image-Txt)', 'Adv (Image)']
+
+    # Barplot with patterns for the summary
+    for i in range(len(avg_conf_values)):
+        plt.bar(avg_conf_labels[i], avg_conf_values[i], color=colors[i],
+                hatch=patterns[i], edgecolor='white', width=0.6, linewidth=1.5)
+
+    plt.title(f"{display_name}: Average Confidence across Datasets", fontsize=18, pad=20)
+    plt.ylabel("Average Confidence", fontsize=16)
+    plt.ylim(0, 1.05)
+
+    for i, v in enumerate(avg_conf_values):
+        plt.text(i, v + 0.01, f"{v:.3f}", ha='center', va='bottom',  fontsize=16)
+
+    plt.xticks(fontsize=args.summary_xtick_fontsize)
+    sns.despine()
+    plt.tight_layout()
+    plt.savefig(output_dir / f"zs_single_{safe_model_name}_overall_confidence_summary.png", bbox_inches='tight')
+    plt.show()
+
+# --- Argparse ---
+parser = argparse.ArgumentParser(description="Zero-shot single plots")
+parser.add_argument("--model", type=str, default=None, help="Model name (if not provided, loops through all models in MODELS)")
+parser.add_argument("--legend_y", type=float, default=1.1, help="Vertical position of the legend")
+parser.add_argument("--summary_xtick_fontsize", type=int, default=16, help="Font size for x-axis ticks in summary plots")
+parser.add_argument("--output_dir", type=str, default="single_inference", help="Directory to save plots")
+args = parser.parse_args()
+
+output_dir = Path(args.output_dir)
+output_dir.mkdir(parents=True, exist_ok=True)
+
+DATA = build_all_data(RESULT_PATHS, MODELS, DATASETS)
+
+# Determine which models to process
+if args.model:
+    models_to_process = [args.model]
+else:
+    models_to_process = MODELS
+
+if __name__ == "__main__":
+    for model_name in models_to_process:
+        run_model_evaluation(model_name, args, DATA)
