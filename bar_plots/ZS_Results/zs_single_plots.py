@@ -1,6 +1,7 @@
 from pathlib import Path
 import json
 import numpy as np
+import argparse
 
 MODELS = [
     "delta_clip_l14_224",
@@ -8,6 +9,14 @@ MODELS = [
     "ViT-L/14",
     "vit_l_14_datacomp_1b",
 ]
+
+MODEL_NAME_MAP = {
+    "delta_clip_l14_224": "Δ-CLIP (DataComp-1B)",
+    "fare4": "FARE-4",
+    "ViT-L/14": "CLIP",
+    "vit_l_14_datacomp_1b": "CLIP (DataComp-1B)"
+}
+
 
 DATASETS = [
     "DTD",
@@ -161,6 +170,16 @@ def build_all_data(result_paths: dict, models: list, datasets: list) -> dict:
 
     return DATA
 
+# --- Argparse ---
+parser = argparse.ArgumentParser(description="Zero-shot single plots")
+parser.add_argument("--model", type=str, default="ViT-L/14", help="Model name")
+parser.add_argument("--legend_y", type=float, default=1.1, help="Vertical position of the legend")
+parser.add_argument("--summary_xtick_fontsize", type=int, default=16, help="Font size for x-axis ticks in summary plots")
+args = parser.parse_args()
+
+model = args.model
+safe_model_name = model.replace("/", "-")
+
 DATA = build_all_data(RESULT_PATHS, MODELS, DATASETS)
 
 
@@ -172,7 +191,7 @@ import numpy as np
 
 # %%
 case = "clean"
-model = "vit_l_14_datacomp_1b"
+# model = "vit_l_14_datacomp_1b" # Removed hardcoded model
 
 
 true_labels_data = {}
@@ -209,7 +228,7 @@ for dataset in DATASETS:
 
 
 case = "adversarial_eps4_steps100"
-model = "vit_l_14_datacomp_1b"
+# model = "vit_l_14_datacomp_1b" # Removed hardcoded model
 
 zero_shot_adv_preds_data = {}
 zero_shot_adv_max_confidences_data = {}
@@ -240,7 +259,7 @@ for dataset in DATASETS:
 
 
 case = "adversarial_eps4_steps100_image_only"
-model = "vit_l_14_datacomp_1b"
+# model = "vit_l_14_datacomp_1b" # Removed hardcoded model
 
 zero_shot_adv_image_only_preds_data = {}
 zero_shot_adv_image_only_max_confidences_data = {}
@@ -323,8 +342,8 @@ clean_confs = [np.mean(zero_shot_clean_max_confidences_data[d]) for d in dataset
 adv_confs = [np.mean(zero_shot_adv_max_confidences_data[d]) for d in datasets]
 adv_img_confs = [np.mean(zero_shot_adv_image_only_max_confidences_data[d]) for d in datasets]
 
-def plot_styled_bars(data_groups, title, ylabel, ylim_top, filename=None):
-    fig, ax = plt.subplots(figsize=(14, 6), dpi=300)
+def plot_styled_bars(data_groups, title, ylabel, ylim_top, filename=None, legend_y=1.1):
+    fig, ax = plt.subplots(figsize=(14, 5), dpi=300)
     x = np.arange(len(datasets))
     width = 0.30
 
@@ -337,10 +356,10 @@ def plot_styled_bars(data_groups, title, ylabel, ylim_top, filename=None):
                     color=colors[2], hatch=patterns[2], edgecolor='white', linewidth=1)
 
     # Styling
-    ax.set_title(title, fontsize=18, pad=25, color='#222222')
-    ax.set_ylabel(ylabel, fontsize=13)
+    ax.set_title(title, fontsize=18, pad=35, color='#222222')
+    ax.set_ylabel(ylabel, fontsize=16)
     ax.set_xticks(x)
-    ax.set_xticklabels(datasets, rotation=0, ha='center', fontsize=11)
+    ax.set_xticklabels(datasets, rotation=0, ha='center', fontsize=16)
     ax.set_ylim(0, ylim_top)
 
     # Add light horizontal grid for readability
@@ -358,49 +377,77 @@ def plot_styled_bars(data_groups, title, ylabel, ylim_top, filename=None):
                         xy=(rect.get_x() + rect.get_width() / 2, height),
                         xytext=(0, 5),  # 5 points vertical offset
                         textcoords="offset points",
-                        ha='center', va='bottom', fontsize=9, fontweight='bold', color='#444444')
+                        ha='center', va='bottom', fontsize=12,  color='#444444')
 
     autolabel(rects1)
     autolabel(rects2)
     autolabel(rects3)
 
-    ax.legend(loc='upper right', frameon=True, facecolor='white', edgecolor='#DDDDDD', fontsize=10)
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, legend_y),
+              frameon=True, facecolor='white', edgecolor='#DDDDDD', fontsize=16, ncol=3)
     plt.tight_layout()
     if filename:
         plt.savefig(filename, bbox_inches='tight')
     plt.show()
 
 # --- 3. Execute Plots ---
-model = "vit_l_14_datacomp_1b"
+# model = "vit_l_14_datacomp_1b" # Removed hardcoded model
+display_name = MODEL_NAME_MAP.get(model, model)
 
 # Accuracy Plot
 plot_styled_bars([clean_accs, adv_accs, adv_img_accs],
-                 f"Model Accuracy Under Clean/Adversarial Setting ({model})",
-                 "Accuracy (%)", 100.0, filename=f"zs_single_{model}_accuracy_plot.png")
+                 f"{display_name}: Accuracy Under Clean/Adversarial Setting ",
+                 "Zero-Shot Accuracy (%)", 110.0, filename=f"zs_single_{safe_model_name}_accuracy_plot.png",
+                 legend_y=args.legend_y)
 
 # Confidence Plot
 plot_styled_bars([clean_confs, adv_confs, adv_img_confs],
-                 f"Prediction Confidence: Clean vs. Adversarial ({model})",
-                 "Mean Max Confidence", 1.05, filename=f"zs_single_{model}_confidence_plot.png")
+                 f"{display_name}: Prediction Confidence",
+                 "Mean Max Confidence", 1.15, filename=f"zs_single_{safe_model_name}_confidence_plot.png",
+                 legend_y=args.legend_y)
 
 # --- 4. Global Average Plot (Final Summary) ---
-plt.figure(figsize=(8, 6))
+plt.figure(figsize=(10, 6))
 avg_values = [np.mean(clean_accs), np.mean(adv_accs), np.mean(adv_img_accs)]
-avg_labels = ['Avg Clean', 'Avg Adv\n(Img-Txt)', 'Avg Adv\n(Img)']
+avg_labels = ['Clean', 'Adv (Image-Txt)', 'Adv (Image)']
 
 # Barplot with patterns for the summary
 for i in range(len(avg_values)):
     plt.bar(avg_labels[i], avg_values[i], color=colors[i],
             hatch=patterns[i], edgecolor='white', width=0.6, linewidth=1.5)
 
-plt.title(f"Overall Performance Summary ({model})", fontsize=18, pad=20)
-plt.ylabel("Global Mean Accuracy", fontsize=12)
+plt.title(f"{display_name}: Average Accuracy across Datasets", fontsize=18, pad=20)
+plt.ylabel("Average Zero-Shot Accuracy (%)", fontsize=16)
 plt.ylim(0, max(avg_values) * 1.05)
 
 for i, v in enumerate(avg_values):
-    plt.text(i, v + 0.02, f"{v:.3f}", ha='center', va='bottom', fontweight='bold', fontsize=13)
+    plt.text(i, v + 0.02, f"{v:.3f}", ha='center', va='bottom',  fontsize=16)
 
+plt.xticks(fontsize=args.summary_xtick_fontsize)
 sns.despine()
 plt.tight_layout()
-plt.savefig(f"zs_single_{model}_overall_performance_summary.png", bbox_inches='tight')
+plt.savefig(f"zs_single_{safe_model_name}_overall_performance_summary.png", bbox_inches='tight')
+plt.show()
+
+# --- 5. Global Average Confidence Plot (Final Summary) ---
+plt.figure(figsize=(10, 6))
+avg_conf_values = [np.mean(clean_confs), np.mean(adv_confs), np.mean(adv_img_confs)]
+avg_conf_labels =  ['Clean', 'Adv (Image-Txt)', 'Adv (Image)']
+
+# Barplot with patterns for the summary
+for i in range(len(avg_conf_values)):
+    plt.bar(avg_conf_labels[i], avg_conf_values[i], color=colors[i],
+            hatch=patterns[i], edgecolor='white', width=0.6, linewidth=1.5)
+
+plt.title(f"{display_name}: Average Confidence across Datasets", fontsize=18, pad=20)
+plt.ylabel("Average Confidence", fontsize=16)
+plt.ylim(0, 1.05)
+
+for i, v in enumerate(avg_conf_values):
+    plt.text(i, v + 0.01, f"{v:.3f}", ha='center', va='bottom',  fontsize=16)
+
+plt.xticks(fontsize=args.summary_xtick_fontsize)
+sns.despine()
+plt.tight_layout()
+plt.savefig(f"zs_single_{safe_model_name}_overall_confidence_summary.png", bbox_inches='tight')
 plt.show()
