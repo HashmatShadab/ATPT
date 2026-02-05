@@ -338,7 +338,10 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
     rows = (num_attacks + cols - 1) // cols
     
     fig, axes = plt.subplots(rows, cols, figsize=(cols * 7, rows * 4), squeeze=False)
-    
+    if metric_key == 'counter_attack_accuracy':
+        metric_key = "accuracy_after_noise_addition"
+    elif metric_key == 'avg_diff_ratio_after_counter_attack':
+        metric_key = "avg_diff_ratio"
     clean_metric_name = metric_key.replace('_', ' ').title()
     fig.suptitle(f"Average Across Datasets. Added Noise: {noise_type}\n Evaluating Metric: {clean_metric_name}", fontsize=20)
 
@@ -428,7 +431,10 @@ def plot_noise_summary(datasets: Dict[str, Any], model_name: str, clean_attack: 
     unique_noise_vals = sorted(list(set(nv for nv, atk in summary_data.keys())))
     
     fig, ax = plt.subplots(figsize=(12, 7))
-    
+    if metric_key == 'counter_attack_accuracy':
+        metric_key = "accuracy_after_noise_addition"
+    elif metric_key == 'avg_diff_ratio_after_counter_attack':
+        metric_key = "avg_diff_ratio"
     clean_metric_name = metric_key.replace('_', ' ').title()
     ax.set_title(f"{model_name} | Noise: {noise_type} | Average Across Datasets\nMetric: {clean_metric_name}", fontsize=16)
 
