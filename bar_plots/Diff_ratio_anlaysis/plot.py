@@ -231,10 +231,10 @@ def main():
 def get_attack_sort_key(atk_name):
     """
     Custom sort key for adversarial attacks.
-    Order: eps_0.0_steps_0 first, then by eps value, then by steps, then by image_only flag.
+    Order: attacks containing eps_0.0_steps_0 first, then by eps value, then by steps, then by image_only flag.
     Example: 'eps_1.0_steps_10', 'eps_1.0_steps_100', 'eps_1.0_steps_10_image_only_attack_prm', 'eps_1.0_steps_100_image_only_attack_prm'
     """
-    if atk_name == "eps_0.0_steps_0":
+    if "eps_0.0_steps_0" in atk_name:
         return (0.0, 0, False)
     
     # eps_1.0_steps_10
@@ -248,6 +248,16 @@ def get_attack_sort_key(atk_name):
     is_image_only = "image_only" in atk_name
     
     return (eps, is_image_only, steps)
+
+def get_pretty_attack_name(atk_name):
+    if atk_name in ATTACK_NAME_MAPPING:
+        return ATTACK_NAME_MAPPING[atk_name]
+    
+    # Try substring match for Clean
+    if "eps_0.0_steps_0" in atk_name:
+        return ATTACK_NAME_MAPPING["eps_0.0_steps_0"]
+    
+    return atk_name
 
 def generate_plots(aggregated: Dict[str, Any], root: str):
     results = aggregated["results"]
@@ -269,12 +279,23 @@ def generate_plots(aggregated: Dict[str, Any], root: str):
         all_noise_types = set()
         all_datasets = sorted(datasets.keys())
         
+        # Identify the actual clean attack name (which contains "eps_0.0_steps_0")
+        actual_clean_attack = None
+
         for dataset, attacks in datasets.items():
             for attack, noise_types in attacks.items():
-                if attack != CLEAN_ATTACK:
+                if "eps_0.0_steps_0" in attack:
+                    # In case there are multiple attacks containing "eps_0.0_steps_0", 
+                    # we take the first one found or we could handle them differently.
+                    # Usually there is only one such attack.
+                    actual_clean_attack = attack
+                else:
                     all_attacks.add(attack)
                 for noise_type in noise_types.keys():
                     all_noise_types.add(noise_type)
+        
+        if actual_clean_attack is None:
+            actual_clean_attack = "eps_0.0_steps_0" # fallback
         
         # for attack in sorted(list(all_attacks)):
         #     for noise_type in sorted(list(all_noise_types)):
@@ -282,14 +303,14 @@ def generate_plots(aggregated: Dict[str, Any], root: str):
         #
         #         # For each dataset, gather noise_values and corresponding metrics
         #         for metric_name in ["avg_diff_ratio_after_counter_attack", "counter_attack_accuracy"]:
-        #             plot_grid(datasets, model_name, attack, CLEAN_ATTACK, noise_type, metric_name, all_datasets, plots_dir)
+        #             plot_grid(datasets, model_name, attack, actual_clean_attack, noise_type, metric_name, all_datasets, plots_dir)
 
         # New: Plot summary grids averaged across datasets for each noise type
         for metric_name in ["avg_diff_ratio_after_counter_attack", "counter_attack_accuracy"]:
             for noise_type in sorted(list(all_noise_types)):
-                # plot_noise_summary(datasets, model_name, CLEAN_ATTACK, all_attacks, noise_type, metric_name, plots_dir)
+                # plot_noise_summary(datasets, model_name, actual_clean_attack, all_attacks, noise_type, metric_name, plots_dir)
                 # Added: Grid of summary plots (average across datasets) for each attack vs clean
-                plot_attack_vs_clean_summary_grid(datasets, model_name, CLEAN_ATTACK, all_attacks, noise_type, metric_name, plots_dir)
+                plot_attack_vs_clean_summary_grid(datasets, model_name, actual_clean_attack, all_attacks, noise_type, metric_name, plots_dir)
 
 def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str, clean_attack: str, all_attacks: set, noise_type: str, metric_key: str, plots_dir: str):
     """
@@ -368,7 +389,7 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
                                color='skyblue' if label == "Clean" else 'salmon')
                 ax.bar_label(rects, padding=3, fmt='%.2f', fontsize=12)
 
-        pretty_adv_name = ATTACK_NAME_MAPPING.get(adv_attack, adv_attack)
+        pretty_adv_name = get_pretty_attack_name(adv_attack)
         ax.set_title(pretty_adv_name, fontsize=16, fontweight='bold')
         ax.set_xlabel(f"{noise_type} Noise", fontsize=14)
         ax.set_ylabel(clean_metric_name)
@@ -463,7 +484,7 @@ def plot_noise_summary(datasets: Dict[str, Any], model_name: str, clean_attack: 
         
         if y_vals:
             offset = (j - (num_present - 1) / 2) * width
-            label = ATTACK_NAME_MAPPING.get(atk_name, atk_name)
+            label = get_pretty_attack_name(atk_name)
             rects = ax.bar(np.array(idx_list) + offset, y_vals, width, label=label)
             ax.bar_label(rects, padding=3, fmt='%.3f', fontsize=7, rotation=90 if num_present > 3 else 0)
 
@@ -500,7 +521,7 @@ def plot_grid(datasets: Dict[str, Any], model_name: str, adv_attack: str, clean_
     
     # Clean up names for title
     clean_metric_name = metric_key.replace('_', ' ').title()
-    pretty_adv_attack = ATTACK_NAME_MAPPING.get(adv_attack, adv_attack)
+    pretty_adv_attack = get_pretty_attack_name(adv_attack)
     fig.suptitle(f"{model_name} | Adv: {pretty_adv_attack} vs Clean\nNoise: {noise_type} | Metric: {clean_metric_name}", fontsize=20)
 
     # Data structure to accumulate values for averaging: 
