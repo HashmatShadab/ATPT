@@ -413,25 +413,29 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
         ax.set_ylim(current_ylim[0], max(current_ylim[1] * 1.25, 0.1))
 
         # --- Create individual figure ---
-        fig_indiv, ax_indiv = plt.subplots(figsize=(10, 6))
+        metric_indiv_dir = os.path.join(indiv_plots_dir, metric_key)
+        os.makedirs(metric_indiv_dir, exist_ok=True)
+
+        fig_indiv, ax_indiv = plt.subplots(figsize=(12, 8))
         for idx_list, y_vals, label, offset in plot_data_for_indiv:
             rects = ax_indiv.bar(np.array(idx_list) + offset, y_vals, width, label=label,
                                  color='skyblue' if label == "Clean" else 'salmon')
-            ax_indiv.bar_label(rects, padding=3, fmt='%.2f', fontsize=12)
+            ax_indiv.bar_label(rects, padding=3, fmt='%.2f', fontsize=14)
         
-        ax_indiv.set_title(pretty_adv_name, fontsize=16, fontweight='bold')
-        ax_indiv.set_xlabel(f"{noise_type} Noise", fontsize=14)
-        ax_indiv.set_ylabel(clean_metric_name)
+        ax_indiv.set_title(pretty_adv_name, fontsize=22, fontweight='bold', pad=20)
+        ax_indiv.set_xlabel(f"{noise_type} Noise", fontsize=20, labelpad=10)
+        ax_indiv.set_ylabel(clean_metric_name, fontsize=20, labelpad=10)
         ax_indiv.set_xticks(x_indices)
-        ax_indiv.set_xticklabels([str(v) for v in unique_noise_vals])
-        ax_indiv.legend(fontsize=14, loc='upper left', ncol=2)
+        ax_indiv.set_xticklabels([str(v) for v in unique_noise_vals], fontsize=16)
+        ax_indiv.tick_params(axis='y', labelsize=16)
+        ax_indiv.legend(fontsize=18, loc='upper left', ncol=2)
         ax_indiv.grid(True, axis='y', linestyle='--', alpha=0.7)
         
         ax_indiv.set_ylim(ax.get_ylim()) # Match the grid subplot's y-limit
         
         plt.tight_layout()
         indiv_filename = f"{noise_type}_{metric_key}_{adv_attack}_summary.png"
-        fig_indiv.savefig(os.path.join(indiv_plots_dir, indiv_filename))
+        fig_indiv.savefig(os.path.join(metric_indiv_dir, indiv_filename))
         plt.close(fig_indiv)
 
     # Hide unused subplots
@@ -644,7 +648,10 @@ def plot_grid(datasets: Dict[str, Any], model_name: str, adv_attack: str, clean_
         ax.set_ylim(current_ylim[0], max(current_ylim[1] * 1.15, 0.1))
 
         # --- Create individual figure ---
-        fig_indiv, ax_indiv = plt.subplots(figsize=(10, 6))
+        metric_indiv_dir = os.path.join(indiv_plots_dir, metric_key)
+        os.makedirs(metric_indiv_dir, exist_ok=True)
+
+        fig_indiv, ax_indiv = plt.subplots(figsize=(12, 8))
         for j, label in enumerate(labels):
             y_vals = []
             idx_list = []
@@ -657,21 +664,22 @@ def plot_grid(datasets: Dict[str, Any], model_name: str, adv_attack: str, clean_
                 offset = (j - 0.5) * width
                 rects = ax_indiv.bar(np.array(idx_list) + offset, y_vals, width, label=label,
                                      color='skyblue' if label == "Clean" else 'salmon')
-                ax_indiv.bar_label(rects, padding=3, fmt='%.3f', fontsize=12)
+                ax_indiv.bar_label(rects, padding=3, fmt='%.3f', fontsize=14)
         
-        ax_indiv.set_title(title, fontsize=16, fontweight='bold' if i == num_datasets else 'normal')
-        ax_indiv.set_xlabel(f"{noise_type} value", fontsize=16)
-        ax_indiv.set_ylabel(metric_key.replace('_', ' ').title(), fontsize=18)
+        ax_indiv.set_title(title, fontsize=26, fontweight='bold' if i == num_datasets else 'normal', pad=20)
+        ax_indiv.set_xlabel(f"{noise_type} value", fontsize=24, labelpad=10)
+        ax_indiv.set_ylabel(metric_key.replace('_', ' ').title(), fontsize=24, labelpad=10)
         ax_indiv.set_xticks(x_indices)
-        ax_indiv.set_xticklabels([str(v) for v in unique_noise_vals])
-        ax_indiv.legend(fontsize=14)
+        ax_indiv.set_xticklabels([str(v) for v in unique_noise_vals], fontsize=20)
+        ax_indiv.tick_params(axis='y', labelsize=20)
+        ax_indiv.legend(fontsize=20)
         ax_indiv.grid(True, axis='y', linestyle='--', alpha=0.7)
         ax_indiv.set_ylim(ax.get_ylim())
 
         plt.tight_layout()
         safe_title = title.replace(" ", "_").lower()
         indiv_filename = f"{adv_attack}_{noise_type}_{metric_key}_{safe_title}.png"
-        fig_indiv.savefig(os.path.join(indiv_plots_dir, indiv_filename))
+        fig_indiv.savefig(os.path.join(metric_indiv_dir, indiv_filename))
         plt.close(fig_indiv)
 
     # Hide unused subplots
