@@ -268,7 +268,13 @@ def generate_plots(aggregated: Dict[str, Any], root: str):
     # Create output directory for plots
     plots_dir = os.path.join("plots_output", os.path.basename(root))
     os.makedirs(plots_dir, exist_ok=True)
+    
+    # Subfolder for individual plots
+    indiv_plots_dir = os.path.join(plots_dir, "individual_plots")
+    os.makedirs(indiv_plots_dir, exist_ok=True)
+    
     print(f"Saving plots to: {plots_dir}")
+    print(f"Saving individual plots to: {indiv_plots_dir}")
 
     CLEAN_ATTACK = "eps_0.0_steps_0"
 
@@ -303,16 +309,16 @@ def generate_plots(aggregated: Dict[str, Any], root: str):
         #
         #         # For each dataset, gather noise_values and corresponding metrics
         #         for metric_name in ["avg_diff_ratio_after_counter_attack", "counter_attack_accuracy"]:
-        #             plot_grid(datasets, model_name, attack, actual_clean_attack, noise_type, metric_name, all_datasets, plots_dir)
+        #             plot_grid(datasets, model_name, attack, actual_clean_attack, noise_type, metric_name, all_datasets, plots_dir, indiv_plots_dir)
 
         # New: Plot summary grids averaged across datasets for each noise type
         for metric_name in ["avg_diff_ratio_after_counter_attack", "counter_attack_accuracy"]:
             for noise_type in sorted(list(all_noise_types)):
                 # plot_noise_summary(datasets, model_name, actual_clean_attack, all_attacks, noise_type, metric_name, plots_dir)
                 # Added: Grid of summary plots (average across datasets) for each attack vs clean
-                plot_attack_vs_clean_summary_grid(datasets, model_name, actual_clean_attack, all_attacks, noise_type, metric_name, plots_dir)
+                plot_attack_vs_clean_summary_grid(datasets, model_name, actual_clean_attack, all_attacks, noise_type, metric_name, plots_dir, indiv_plots_dir)
 
-def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str, clean_attack: str, all_attacks: set, noise_type: str, metric_key: str, plots_dir: str):
+def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str, clean_attack: str, all_attacks: set, noise_type: str, metric_key: str, plots_dir: str, indiv_plots_dir: str):
     """
     Creates a grid of plots, one for each adversarial attack, averaged across all datasets.
     Each subplot compares 'Clean' vs 'one adversarial variant'.
@@ -369,6 +375,9 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
     for i, adv_attack in enumerate(present_attacks):
         ax = axes[i // cols, i % cols]
         
+        # Data for the individual plot
+        plot_data_for_indiv = []
+        
         x_indices = np.arange(len(unique_noise_vals))
         width = 0.45
         
@@ -388,6 +397,7 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
                 rects = ax.bar(np.array(idx_list) + offset, y_vals, width, label=label,
                                color='skyblue' if label == "Clean" else 'salmon')
                 ax.bar_label(rects, padding=3, fmt='%.2f', fontsize=12)
+                plot_data_for_indiv.append((idx_list, y_vals, label, offset))
 
         pretty_adv_name = get_pretty_attack_name(adv_attack)
         ax.set_title(pretty_adv_name, fontsize=16, fontweight='bold')
@@ -401,6 +411,28 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
         
         current_ylim = ax.get_ylim()
         ax.set_ylim(current_ylim[0], max(current_ylim[1] * 1.25, 0.1))
+
+        # --- Create individual figure ---
+        fig_indiv, ax_indiv = plt.subplots(figsize=(10, 6))
+        for idx_list, y_vals, label, offset in plot_data_for_indiv:
+            rects = ax_indiv.bar(np.array(idx_list) + offset, y_vals, width, label=label,
+                                 color='skyblue' if label == "Clean" else 'salmon')
+            ax_indiv.bar_label(rects, padding=3, fmt='%.2f', fontsize=12)
+        
+        ax_indiv.set_title(pretty_adv_name, fontsize=16, fontweight='bold')
+        ax_indiv.set_xlabel(f"{noise_type} Noise", fontsize=14)
+        ax_indiv.set_ylabel(clean_metric_name)
+        ax_indiv.set_xticks(x_indices)
+        ax_indiv.set_xticklabels([str(v) for v in unique_noise_vals])
+        ax_indiv.legend(fontsize=14, loc='upper left', ncol=2)
+        ax_indiv.grid(True, axis='y', linestyle='--', alpha=0.7)
+        
+        ax_indiv.set_ylim(ax.get_ylim()) # Match the grid subplot's y-limit
+        
+        plt.tight_layout()
+        indiv_filename = f"{noise_type}_{metric_key}_{adv_attack}_summary.png"
+        fig_indiv.savefig(os.path.join(indiv_plots_dir, indiv_filename))
+        plt.close(fig_indiv)
 
     # Hide unused subplots
     for i in range(num_attacks, rows * cols):
@@ -507,7 +539,7 @@ def plot_noise_summary(datasets: Dict[str, Any], model_name: str, clean_attack: 
     plt.close(fig)
     print(f"  - Saved summary plot: {filename}")
 
-def plot_grid(datasets: Dict[str, Any], model_name: str, adv_attack: str, clean_attack: str, noise_type: str, metric_key: str, all_datasets: List[str], plots_dir: str):
+def plot_grid(datasets: Dict[str, Any], model_name: str, adv_attack: str, clean_attack: str, noise_type: str, metric_key: str, all_datasets: List[str], plots_dir: str, indiv_plots_dir: str):
     num_datasets = len(all_datasets)
     if num_datasets == 0:
         return
@@ -610,6 +642,37 @@ def plot_grid(datasets: Dict[str, Any], model_name: str, adv_attack: str, clean_
         # Increase y-limit to avoid labels hitting the top border
         current_ylim = ax.get_ylim()
         ax.set_ylim(current_ylim[0], max(current_ylim[1] * 1.15, 0.1))
+
+        # --- Create individual figure ---
+        fig_indiv, ax_indiv = plt.subplots(figsize=(10, 6))
+        for j, label in enumerate(labels):
+            y_vals = []
+            idx_list = []
+            for nv in unique_noise_vals:
+                match = [m for nv_item, lbl_item, m in plot_data if nv_item == nv and lbl_item == label]
+                if match:
+                    y_vals.append(match[0])
+                    idx_list.append(noise_val_to_idx[nv])
+            if y_vals:
+                offset = (j - 0.5) * width
+                rects = ax_indiv.bar(np.array(idx_list) + offset, y_vals, width, label=label,
+                                     color='skyblue' if label == "Clean" else 'salmon')
+                ax_indiv.bar_label(rects, padding=3, fmt='%.3f', fontsize=12)
+        
+        ax_indiv.set_title(title, fontsize=16, fontweight='bold' if i == num_datasets else 'normal')
+        ax_indiv.set_xlabel(f"{noise_type} value", fontsize=16)
+        ax_indiv.set_ylabel(metric_key.replace('_', ' ').title(), fontsize=18)
+        ax_indiv.set_xticks(x_indices)
+        ax_indiv.set_xticklabels([str(v) for v in unique_noise_vals])
+        ax_indiv.legend(fontsize=14)
+        ax_indiv.grid(True, axis='y', linestyle='--', alpha=0.7)
+        ax_indiv.set_ylim(ax.get_ylim())
+
+        plt.tight_layout()
+        safe_title = title.replace(" ", "_").lower()
+        indiv_filename = f"{adv_attack}_{noise_type}_{metric_key}_{safe_title}.png"
+        fig_indiv.savefig(os.path.join(indiv_plots_dir, indiv_filename))
+        plt.close(fig_indiv)
 
     # Hide unused subplots
     for i in range(total_plots, rows * cols):
