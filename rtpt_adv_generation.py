@@ -580,6 +580,12 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     diff_ratio_adv = 0
 
     diff_ratio_after_counter_attack = []
+    
+    all_true_labels = []
+    all_clean_preds = []
+    all_adv_preds = []
+    all_counter_attack_preds = []
+
     # Iterate through validation data
     for i, data in enumerate(val_loader):
         # Handle different return formats (with or without path)
@@ -850,6 +856,13 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
             total += target.size(0)
 
+            # Store labels and predictions
+            all_true_labels.extend(target.cpu().numpy().tolist())
+            all_clean_preds.extend(clean_pred.cpu().numpy().tolist())
+            all_adv_preds.extend(adv_pred.cpu().numpy().tolist())
+            if args.counter_attack:
+                all_counter_attack_preds.extend(adv_pred_counter.cpu().numpy().tolist())
+
         # Free memory
         del images, adv_images, target
         
@@ -940,6 +953,33 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     if args.counter_attack:
         adv_accuracy_counter = adv_correct_counter / total
 
+    # Verify the predictions list saved in the info give the correct accuracies
+    all_true_labels_np = np.array(all_true_labels)
+    all_clean_preds_np = np.array(all_clean_preds)
+    all_adv_preds_np = np.array(all_adv_preds)
+    
+    clean_acc_calc = (all_clean_preds_np == all_true_labels_np).mean()
+    adv_acc_calc = (all_adv_preds_np == all_true_labels_np).mean()
+    
+    if logger:
+        logger.info(f"Verification - Clean Accuracy: {original_accuracy_orig:.4f} vs {clean_acc_calc:.4f}")
+        logger.info(f"Verification - Adversarial Accuracy: {adv_accuracy_orig:.4f} vs {adv_acc_calc:.4f}")
+    else:
+        print(f"Verification - Clean Accuracy: {original_accuracy_orig:.4f} vs {clean_acc_calc:.4f}")
+        print(f"Verification - Adversarial Accuracy: {adv_accuracy_orig:.4f} vs {adv_acc_calc:.4f}")
+    
+    assert abs(original_accuracy_orig - clean_acc_calc) < 1e-6, f"Clean accuracy mismatch: {original_accuracy_orig} vs {clean_acc_calc}"
+    assert abs(adv_accuracy_orig - adv_acc_calc) < 1e-6, f"Adversarial accuracy mismatch: {adv_accuracy_orig} vs {adv_acc_calc}"
+
+    if args.counter_attack:
+        all_counter_attack_preds_np = np.array(all_counter_attack_preds)
+        counter_acc_calc = (all_counter_attack_preds_np == all_true_labels_np).mean()
+        if logger:
+            logger.info(f"Verification - Counter-attack Accuracy: {adv_accuracy_counter:.4f} vs {counter_acc_calc:.4f}")
+        else:
+            print(f"Verification - Counter-attack Accuracy: {adv_accuracy_counter:.4f} vs {counter_acc_calc:.4f}")
+        assert abs(adv_accuracy_counter - counter_acc_calc) < 1e-6, f"Counter-attack accuracy mismatch: {adv_accuracy_counter} vs {counter_acc_calc}"
+
     if logger:
         if args.image_feature_purify:
             logger.info(f"Final Clean orig accuracy: {original_accuracy_orig:.4f} | Clean purify accuracy: {original_accuracy_purify:.4f}")
@@ -986,6 +1026,10 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         'original_clean_accuracy': original_accuracy_orig,
         'adversarial_accuracy': adv_accuracy_orig,
         "counter_attack_accuracy": adv_accuracy_counter if args.counter_attack else None,
+        'true_labels': all_true_labels,
+        'original_clean_predictions': all_clean_preds,
+        'adversarial_predictions': all_adv_preds,
+        'counter_attack_predictions': all_counter_attack_preds if args.counter_attack else None,
     }
     with open(os.path.join(args.log_output_dir, f'diff_ratio_after_counter_attack.json'), 'w') as f:
         json.dump(info, f, indent=4)

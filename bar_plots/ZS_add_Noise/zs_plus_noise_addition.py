@@ -127,8 +127,6 @@ def get_zs_results():
         }
     }
 
-    # %%
-    # Map semantic keys -> filenames
     JSON_KEYMAP = {
         # prediction-style
         "original": "results_original.json",
