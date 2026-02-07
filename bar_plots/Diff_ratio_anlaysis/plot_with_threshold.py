@@ -663,10 +663,18 @@ def main():
     
     # Identify all (dr_label, ca_label) combinations across all attacks
     combinations = set()
+    ca_to_drs = {} # Map ca_label to list of dr_labels for grid plotting
     for attack in final_results_average_dic:
         for dr_label in final_results_average_dic[attack]:
             for ca_label in final_results_average_dic[attack][dr_label]:
                 combinations.add((dr_label, ca_label))
+                if ca_label not in ca_to_drs:
+                    ca_to_drs[ca_label] = set()
+                ca_to_drs[ca_label].add(dr_label)
+    
+    # Sort for consistency
+    for ca in ca_to_drs:
+        ca_to_drs[ca] = sorted(list(ca_to_drs[ca]))
                 
     for dr_label, ca_label in combinations:
         plt.figure(figsize=(18, 10))
@@ -820,7 +828,100 @@ def main():
         plt.close()
         print(f"  Saved plot: {plot_path}")
         
-    print("\nAll plots generated.")
+    print("\nAll individual plots generated.")
+    
+    # --- GRID PLOTTING LOGIC ---
+    print("\nGenerating grid plots per CA label...")
+    for ca_label in sorted(ca_to_drs.keys()):
+        dr_labels = ca_to_drs[ca_label]
+        num_plots = len(dr_labels)
+        if num_plots == 0:
+            continue
+            
+        # Determine grid size
+        cols = 4
+        rows = (num_plots + cols - 1) // cols
+        
+        fig, axes = plt.subplots(rows, cols, figsize=(cols * 15, rows * 12), squeeze=False)
+        fig.suptitle(f'Grid Plot: Accuracy vs Threshold | CA: {ca_label}', fontsize=32, fontweight='bold')
+        
+        for idx, dr_label in enumerate(dr_labels):
+            r, c = divmod(idx, cols)
+            ax = axes[r, c]
+            
+            sorted_thresholds = sorted(thresholds)
+            x = np.arange(len(sorted_thresholds))
+            width = 0.4
+            
+            attack_accs = {}
+            attack_keys = ["eps_0.0_steps_0", "eps_4.0_steps_100"]
+            colors = ['skyblue', 'salmon']
+            
+            for i, attack_key in enumerate(attack_keys):
+                if attack_key in final_results_average_dic and \
+                   dr_label in final_results_average_dic[attack_key] and \
+                   ca_label in final_results_average_dic[attack_key][dr_label]:
+                    
+                    accs = [final_results_average_dic[attack_key][dr_label][ca_label][t] for t in sorted_thresholds]
+                    attack_accs[attack_key] = accs
+                    label = ATTACK_NAME_MAPPING.get(attack_key, attack_key)
+                    
+                    offset = (i - 0.5) * width
+                    bars = ax.bar(x + offset, accs, width, label=f"{label}", color=colors[i], alpha=0.7)
+                    
+                    for bar in bars:
+                        height = bar.get_height()
+                        ax.text(bar.get_x() + bar.get_width()/2., height + 0.5,
+                                f'{height:.1f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
+            
+            if len(attack_accs) == len(attack_keys):
+                net_accs = [(attack_accs[attack_keys[0]][j] + attack_accs[attack_keys[1]][j]) / 2.0 for j in range(len(sorted_thresholds))]
+                ax.plot(x, net_accs, marker='o', color='purple', label="Net Average", linewidth=2)
+                
+                offset_clean = (0 - 0.5) * width
+                ax.plot(x + offset_clean, attack_accs[attack_keys[0]], marker='s', color='blue', label="Clean", linewidth=1.5, linestyle='--')
+                
+                offset_pgd = (1 - 0.5) * width
+                ax.plot(x + offset_pgd, attack_accs[attack_keys[1]], marker='^', color='red', label="PGD", linewidth=1.5, linestyle='--')
+                
+                # Highlight Net Max
+                max_net_acc = max(net_accs)
+                for max_idx in [i for i, v in enumerate(net_accs) if v == max_net_acc]:
+                    ax.plot(x[max_idx], net_accs[max_idx], marker='*', color='gold', markersize=15, markeredgecolor='black', zorder=5)
+                    ax.annotate(f"T: {sorted_thresholds[max_idx]}", xy=(x[max_idx], net_accs[max_idx]), xytext=(0, 10), textcoords='offset points', ha='center', fontweight='bold', color='purple', fontsize=10)
+                
+                # Highlight Clean Max
+                clean_accs = attack_accs[attack_keys[0]]
+                max_clean_acc = max(clean_accs)
+                for max_idx in [i for i, v in enumerate(clean_accs) if v == max_clean_acc]:
+                    ax.plot(x[max_idx] + offset_clean, clean_accs[max_idx], marker='*', color='gold', markersize=12, markeredgecolor='black', zorder=5)
+                
+                # Highlight PGD Max
+                pgd_accs = attack_accs[attack_keys[1]]
+                max_pgd_acc = max(pgd_accs)
+                for max_idx in [i for i, v in enumerate(pgd_accs) if v == max_pgd_acc]:
+                    ax.plot(x[max_idx] + offset_pgd, pgd_accs[max_idx], marker='*', color='gold', markersize=12, markeredgecolor='black', zorder=5)
+
+            ax.set_xlabel('Threshold')
+            ax.set_ylabel('Average Accuracy (%)')
+            ax.set_title(f'DR: {dr_label}', fontsize=16)
+            ax.set_xticks(x)
+            ax.set_xticklabels([str(t) for t in sorted_thresholds])
+            ax.set_ylim(0, 100)
+            ax.legend(fontsize=8)
+            ax.grid(axis='y', linestyle='--', alpha=0.7)
+            
+        # Hide empty subplots
+        for i in range(idx + 1, rows * cols):
+            axes.flatten()[i].axis('off')
+            
+        plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+        grid_plot_path = os.path.join(output_base_dir, ca_label, "grid_accuracy_vs_threshold.png")
+        plt.savefig(grid_plot_path)
+        plt.close()
+        print(f"  Saved grid plot: {grid_plot_path}")
+
+    print("\nAll grid plots generated.")
     
     # Optional: Print some results to verify
     for attack in final_results_average_dic:
