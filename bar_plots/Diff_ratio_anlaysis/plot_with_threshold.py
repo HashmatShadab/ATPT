@@ -618,7 +618,49 @@ def main():
                                         acc = compute_accuracy(combined_preds, true_labels)
                                         final_results[dataset][attack][dr_label][ca_label].setdefault(threshold, [])
                                         final_results[dataset][attack][dr_label][ca_label][threshold].append(acc)
+    
+    # 3. Create final_results_average_dic by averaging across datasets.
+    print("\nAveraging results across datasets...")
+    final_results_average_dic = {}
+    
+    for dataset in final_results:
+        for attack in final_results[dataset]:
+            final_results_average_dic.setdefault(attack, {})
+            for dr_label in final_results[dataset][attack]:
+                final_results_average_dic[attack].setdefault(dr_label, {})
+                for ca_label in final_results[dataset][attack][dr_label]:
+                    final_results_average_dic[attack][dr_label].setdefault(ca_label, {})
+                    for threshold in final_results[dataset][attack][dr_label][ca_label]:
+                        final_results_average_dic[attack][dr_label][ca_label].setdefault(threshold, [])
+                        # Extend the list of accuracies for this config across all datasets
+                        final_results_average_dic[attack][dr_label][ca_label][threshold].extend(
+                            final_results[dataset][attack][dr_label][ca_label][threshold]
+                        )
 
+    # Compute the mean for each configuration
+    for attack in final_results_average_dic:
+        for dr_label in final_results_average_dic[attack]:
+            for ca_label in final_results_average_dic[attack][dr_label]:
+                for threshold in final_results_average_dic[attack][dr_label][ca_label]:
+                    acc_list = final_results_average_dic[attack][dr_label][ca_label][threshold]
+                    if acc_list:
+                        final_results_average_dic[attack][dr_label][ca_label][threshold] = np.mean(acc_list)
+                    else:
+                        final_results_average_dic[attack][dr_label][ca_label][threshold] = 0.0
+
+    print("Averaging complete.")
+    
+    # Optional: Print some results to verify
+    for attack in final_results_average_dic:
+        print(f"\nAttack: {attack}")
+        for dr_label in list(final_results_average_dic[attack].keys())[:1]: # Print first DR label only
+            for ca_label in list(final_results_average_dic[attack][dr_label].keys())[:1]: # Print first CA label only
+                print(f"  Configuration: {dr_label} | {ca_label}")
+                for threshold in sorted(final_results_average_dic[attack][dr_label][ca_label].keys()):
+                    avg_acc = final_results_average_dic[attack][dr_label][ca_label][threshold]
+                    print(f"    Threshold {threshold}: {avg_acc:.2f}%")
+    
+    
 
 
 
