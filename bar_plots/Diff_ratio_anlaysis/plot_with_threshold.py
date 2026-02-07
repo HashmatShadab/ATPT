@@ -1,3 +1,5 @@
+# Load zero-shot (ZS) results for a given model.
+# These results serve as the baseline (no noise added) for clean and adversarial scenarios.
 def get_zs_results(model_name):
     from pathlib import Path
     import json
@@ -365,6 +367,7 @@ def load_metrics_or_none(exp_folder_path: str) -> Dict[str, Any]:
 
 METRICS_FILENAME = "diff_ratio_after_counter_attack.json"
 
+# Mapping of dataset folder names to more descriptive labels for plots (if needed).
 ATTACK_NAME_MAPPING = {
     "eps_0.0_steps_0": "Clean",
     "eps_4.0_steps_100": "PGD 4/255 (100 steps)",
@@ -373,6 +376,8 @@ ATTACK_NAME_MAPPING = {
 
 
 
+# Traverse the root directory to aggregate experiment results.
+# Experiments are expected to be organized as: root/dataset/experiment_folder/metrics.json
 def get_aggregated_results(root: str, selected_attacks: Optional[List[str]] = None) -> dict:
     if not os.path.isdir(root):
         raise RuntimeError(f"Root is not a directory: {root}")
@@ -497,10 +502,175 @@ def main():
     root_diff_ratio = os.path.abspath(args.root_diff_ratio)
     root_results = os.path.abspath(args.root_results)
     selected_attacks = ['eps_0.0_steps_0', 'eps_4.0_steps_100']
+    # 1. Load data from two different result directories (e.g., different noise configurations).
+    print(f"Loading diff ratio results from: {root_diff_ratio}")
     diff_ratio_dic = get_aggregated_results(root_diff_ratio, selected_attacks=selected_attacks)
+    print(f"Loading counter-attack results from: {root_results}")
     results_dic = get_aggregated_results(root_results, selected_attacks=selected_attacks)
 
+    # 2. Load Zero-Shot baseline results for comparison.
+    print("Loading Zero-Shot results...")
     TRUE_LABELS_DATASET, ZS_CLEAN_PREDS_DATASET, ZS_ADV_PREDS_DATASET, ZS_ADV_IMAGE_ONLY_PREDS_DATASET = get_zs_results("vit_l_14_datacomp_1b")
+    print("Zero-Shot results loaded.")
+
+    # Helper to compute accuracy percentage from predictions and labels.
+    def compute_accuracy(preds, labels):
+        if preds is None or labels is None:
+            return 0.0
+        preds = np.asarray(preds)
+        labels = np.asarray(labels)
+        if len(preds) == 0:
+            return 0.0
+        return (preds == labels).mean() * 100.0
+
+    # Range of thresholds for the Diff Ratio.
+    # For each sample: if sample_diff_ratio < threshold, use ZS prediction; otherwise, use Counter-Attack prediction.
+    thresholds = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    
+    model_name = "vit_l_14_datacomp_1b"
+    datasets = list(results_dic['results'][model_name].keys())
+    
+    # Structure to hold results: attack -> noise_type -> noise_param -> threshold -> list of accuracies (one per dataset)
+    final_results = {}
+
+    # Iterate through each dataset to process samples.
+    print(f"\nProcessing {len(datasets)} datasets...")
+    for dataset in datasets:
+        print(f"  Dataset: {dataset}")
+        true_labels = TRUE_LABELS_DATASET.get(dataset)
+        if true_labels is None:
+            print(f"    Warning: No true labels found for {dataset}. Skipping.")
+            continue
+            
+        for attack in selected_attacks:
+            if attack not in results_dic['results'][model_name][dataset]:
+                continue
+            
+            print(f"    Attack: {attack}")
+            
+            # Select the appropriate Zero-Shot baseline based on the attack type.
+            if attack == 'eps_0.0_steps_0':
+                zs_preds = ZS_CLEAN_PREDS_DATASET.get(dataset)
+            else:
+                zs_preds = ZS_ADV_PREDS_DATASET.get(dataset)
+                
+            if zs_preds is None:
+                continue
+                
+            final_results.setdefault(attack, {})
+            
+            # Process each noise configuration in diff_ratio_dic.
+            # We iterate over diff_ratio_dic to use all available diff ratios for thresholding.
+            dr_noise_types = diff_ratio_dic['results'].get(model_name, {}).get(dataset, {}).get(attack, {})
+            
+            for noise_type in dr_noise_types:
+                final_results[attack].setdefault(noise_type, {})
+                
+                dr_noise_params = dr_noise_types[noise_type]
+                for noise_param in dr_noise_params:
+                    dr_tau_types = dr_noise_params[noise_param]
+                    for tau_type in dr_tau_types:
+                        dr_entry = dr_tau_types[tau_type]
+                        diff_ratios = dr_entry.get('diff_ratio_after_counter_attack')
+                        
+                        if diff_ratios is None:
+                            continue
+                            
+                        # Now find the corresponding ca_preds in results_dic.
+                        # We try to find a match for the same noise_type and tau_type.
+                        # If the exact noise_param isn't found, we pick the first available noise_param in results_dic for that noise_type.
+                        res_dataset_attack = results_dic['results'].get(model_name, {}).get(dataset, {}).get(attack, {})
+                        res_noise_type_dict = res_dataset_attack.get(noise_type, {})
+                        
+                        ca_preds = None
+                        matched_param = None
+                        # Try exact match for noise_param first
+                        if noise_param in res_noise_type_dict:
+                            res_entry = res_noise_type_dict[noise_param].get(tau_type)
+                            if res_entry:
+                                ca_preds = res_entry.get('counter_attack_predictions')
+                                matched_param = noise_param
+                        
+                        # Fallback: pick the first available noise_param for the same noise_type and tau_type
+                        if ca_preds is None:
+                            for any_param in res_noise_type_dict:
+                                res_entry = res_noise_type_dict[any_param].get(tau_type)
+                                if res_entry:
+                                    ca_preds = res_entry.get('counter_attack_predictions')
+                                    if ca_preds is not None:
+                                        matched_param = any_param
+                                        break
+                                        
+                        if ca_preds is None:
+                            print(f"      No counter-attack predictions found for {noise_type} {tau_type}. Skipping.")
+                            continue
+
+                        print(f"      Matched: DR({noise_param}) -> CA({matched_param}) [{noise_type}, {tau_type}]")
+
+                        # Verify data consistency across baseline, counter-attack, and diff ratios.
+                        if len(ca_preds) != len(diff_ratios) or len(ca_preds) != len(zs_preds):
+                            print(f"Warning: length mismatch for {dataset} {attack} {noise_type} {noise_param}")
+                            continue
+                            
+                        final_results[attack][noise_type].setdefault(noise_param, {})
+                        
+                        # Apply thresholding logic per sample.
+                        for threshold in thresholds:
+                            combined_preds = [
+                                zs_preds[i] if diff_ratios[i] < threshold else ca_preds[i]
+                                for i in range(len(zs_preds))
+                            ]
+                            acc = compute_accuracy(combined_preds, true_labels)
+                            # Store accuracy to later average across all datasets.
+                            final_results[attack][noise_type][noise_param].setdefault(threshold, [])
+                            final_results[attack][noise_type][noise_param][threshold].append(acc)
+
+    # 3. Aggregate results across datasets and generate plots for each attack type.
+    for attack in final_results:
+        plt.figure(figsize=(12, 8))
+        attack_label = ATTACK_NAME_MAPPING.get(attack, attack)
+        
+        for noise_type in final_results[attack]:
+            for noise_param in final_results[attack][noise_type]:
+                avg_accs = []
+                valid_thresholds = []
+                for threshold in thresholds:
+                    acc_list = final_results[attack][noise_type][noise_param].get(threshold, [])
+                    if acc_list:
+                        avg_accs.append(np.mean(acc_list))
+                        valid_thresholds.append(threshold)
+                
+                if avg_accs:
+                    plt.plot(valid_thresholds, avg_accs, marker='o', label=f"{noise_type} {noise_param}")
+        
+        plt.title(f"Accuracy vs Diff Ratio Threshold ({attack_label})")
+        plt.xlabel("Threshold (if diff_ratio < threshold use ZS, else CA)")
+        plt.ylabel("Average Accuracy (%)")
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.grid(True)
+        plt.tight_layout()
+        
+        # Save plot
+        safe_attack_name = attack.replace('.', '_')
+        plot_path = f"accuracy_vs_threshold_{safe_attack_name}.png"
+        plt.savefig(plot_path)
+        print(f"Saved plot to {plot_path}")
+        plt.close()
+
+    # Save aggregated results to JSON
+    output_data = {}
+    for attack, nt_dict in final_results.items():
+        output_data[attack] = {}
+        for nt, np_dict in nt_dict.items():
+            output_data[attack][nt] = {}
+            for np_val, t_dict in np_dict.items():
+                output_data[attack][nt][np_val] = {
+                    str(t): np.mean(accs) for t, accs in t_dict.items() if accs
+                }
+    
+    with open("threshold_analysis_results.json", "w") as f:
+        json.dump(output_data, f, indent=4)
+    print("Saved aggregated results to threshold_analysis_results.json")
 
 if __name__ == "__main__":
     main()
