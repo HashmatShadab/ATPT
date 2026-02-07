@@ -469,6 +469,84 @@ def get_aggregated_results(root: str, selected_attacks: Optional[List[str]] = No
 
     return aggregated
 
+def format_tau_label_from_dr(dr_label: str):
+    """
+    Convert DR_* label into a clean tau-based mathematical label.
+
+    Examples:
+    DR_uniform_Eps_1.0_normal_anchors -> τ(𝒰, ε = 1/255)
+    DR_gaussian_Sigma_0.06_noisy      -> τ(𝒩, σ = 0.06)
+    """
+
+    parts = dr_label.split("_")
+
+    if len(parts) < 4 or parts[0] != "DR":
+        raise ValueError(f"Invalid DR label format: {dr_label}")
+
+    noise_type = parts[1].lower()
+    param_name = parts[2]
+    param_value = parts[3]
+
+    # Noise distribution
+    if noise_type == "gaussian":
+        noise_symbol = r"\mathcal{N}"
+    elif noise_type == "uniform":
+        noise_symbol = r"\mathcal{U}"
+    else:
+        noise_symbol = noise_type.capitalize()
+
+    # Noise parameter
+    if param_name == "Sigma":
+        # keep sigma as-is
+        param_str = rf"\sigma = {param_value}"
+    elif param_name == "Eps":
+        # convert to k/255
+        k = int(float(param_value))
+        param_str = rf"\epsilon = {k}/255"
+    else:
+        param_str = f"{param_name} = {param_value}"
+
+    return rf"$\tau({noise_symbol},\ {param_str})$"
+
+def format_tau_label_from_ca(dr_label: str):
+    """
+    Convert DR_* label into a clean tau-based mathematical label.
+
+    Examples:
+    DR_uniform_Eps_1.0_normal_anchors -> τ(𝒰, ε = 1/255)
+    DR_gaussian_Sigma_0.06_noisy      -> τ(𝒩, σ = 0.06)
+    """
+
+    parts = dr_label.split("_")
+
+    if len(parts) < 4 or parts[0] != "CA":
+        raise ValueError(f"Invalid CA label format: {dr_label}")
+
+    noise_type = parts[1].lower()
+    param_name = parts[2]
+    param_value = parts[3]
+
+    # Noise distribution
+    if noise_type == "gaussian":
+        noise_symbol = r"\mathcal{N}"
+    elif noise_type == "uniform":
+        noise_symbol = r"\mathcal{U}"
+    else:
+        noise_symbol = noise_type.capitalize()
+
+    # Noise parameter
+    if param_name == "Sigma":
+        # keep sigma as-is
+        param_str = rf"\sigma = {param_value}"
+    elif param_name == "Eps":
+        # convert to k/255
+        k = int(float(param_value))
+        param_str = rf"\epsilon = {k}/255"
+    else:
+        param_str = f"{param_name} = {param_value}"
+
+    return rf"Additive Noise ({noise_symbol},\ {param_str})$"
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -845,7 +923,7 @@ def main():
             
         plt.xlabel('Threshold', fontsize=24)
         plt.ylabel('Average Accuracy (%)', fontsize=24)
-        plt.title(f'Accuracy vs Threshold\nDR: {dr_label} | CA: {ca_label}', fontsize=20)
+        plt.title(f'Accuracy vs Threshold\n {format_tau_label_from_dr(dr_label)} | {format_tau_label_from_ca(ca_label)}', fontsize=20)
         plt.xticks(x, [str(t) for t in sorted_thresholds], fontsize=20)
         # Calculate dynamic y-limits
         all_values = []
@@ -979,7 +1057,7 @@ def main():
 
             ax.set_xlabel('Threshold')
             ax.set_ylabel('Average Accuracy (%)')
-            ax.set_title(f'DR: {dr_label}', fontsize=16)
+            ax.set_title(f'{dr_label}', fontsize=16)
             ax.set_xticks(x)
             ax.set_xticklabels([str(t) for t in sorted_thresholds])
             ax.legend(fontsize=8)
