@@ -715,7 +715,7 @@ def main():
         plt.grid(axis='y', linestyle='--', alpha=0.7)
         
         # Save the plot in structured directory
-        plot_dir = os.path.join(output_base_dir, dr_label, ca_label)
+        plot_dir = os.path.join(output_base_dir, ca_label, dr_label)
         os.makedirs(plot_dir, exist_ok=True)
         plot_path = os.path.join(plot_dir, "accuracy_vs_threshold.png")
         
