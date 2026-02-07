@@ -982,7 +982,7 @@ def main():
         rows = (num_plots + cols - 1) // cols
         
         fig, axes = plt.subplots(rows, cols, figsize=(cols * 15, rows * 12), squeeze=False)
-        fig.suptitle(f'Grid Plot: Accuracy vs Threshold | CA: {ca_label}', fontsize=32, fontweight='bold')
+        fig.suptitle(f'Accuracy vs Threshold {format_tau_label_from_ca(ca_label)}', fontsize=42, fontweight='bold')
         
         for idx, dr_label in enumerate(dr_labels):
             r, c = divmod(idx, cols)
