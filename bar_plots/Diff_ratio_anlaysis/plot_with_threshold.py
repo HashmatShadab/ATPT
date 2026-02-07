@@ -669,7 +669,7 @@ def main():
                 combinations.add((dr_label, ca_label))
                 
     for dr_label, ca_label in combinations:
-        plt.figure(figsize=(12, 7))
+        plt.figure(figsize=(18, 8))
         
         # Prepare data for this combination
         # x_values: thresholds
@@ -678,9 +678,13 @@ def main():
         # Determine available thresholds (should be same for all)
         sorted_thresholds = sorted(thresholds)
         x = np.arange(len(sorted_thresholds))
-        width = 0.35  # width of the bars
+        width = 0.4  # width of the bars
         
         found_data = False
+        
+        # Store accuracies for net average calculation
+        # attack_key -> list of accuracies across thresholds
+        attack_accs = {}
         
         # Plot bars for each attack
         # We use ATTACK_NAME_MAPPING to identify 'Clean' and 'PGD'
@@ -696,15 +700,65 @@ def main():
                ca_label in final_results_average_dic[attack_key][dr_label]:
                 
                 accs = [final_results_average_dic[attack_key][dr_label][ca_label][t] for t in sorted_thresholds]
+                attack_accs[attack_key] = accs
                 label = ATTACK_NAME_MAPPING.get(attack_key, attack_key)
                 
+                # Plot Bars
                 offset = (i - 0.5) * width
-                plt.bar(x + offset, accs, width, label=label, color=colors[i])
-                found_data = True
+                bars = plt.bar(x + offset, accs, width, label=f"{label} (Bar)", color=colors[i], alpha=0.7)
                 
+                # Add text value on the bar
+                for bar in bars:
+                    height = bar.get_height()
+                    plt.text(bar.get_x() + bar.get_width()/2., height + 0.5,
+                             f'{height:.1f}', ha='center', va='bottom', fontsize=8, fontweight='bold')
+                
+                found_data = True
+
         if not found_data:
             plt.close()
             continue
+
+        # Plot Net Accuracy Line (average of Clean and PGD)
+        if len(attack_accs) == len(attack_keys):
+            # Calculate net average accuracy across thresholds
+            net_accs = [
+                (attack_accs[attack_keys[0]][j] + attack_accs[attack_keys[1]][j]) / 2.0
+                for j in range(len(sorted_thresholds))
+            ]
+            
+            plt.plot(x, net_accs, marker='o', color='purple', label="Net Average (Line)", linewidth=2)
+            
+            # Highlight the dot with the highest score and mention the threshold
+            max_net_acc = max(net_accs)
+            max_indices = [idx for idx, val in enumerate(net_accs) if val == max_net_acc]
+            for max_idx in max_indices:
+                plt.plot(x[max_idx], net_accs[max_idx], marker='*', color='gold', markersize=15, markeredgecolor='black', zorder=5)
+                # Annotate with threshold value
+                plt.annotate(f"Threshold: {sorted_thresholds[max_idx]}", 
+                             xy=(x[max_idx], net_accs[max_idx]),
+                             xytext=(0, 10), 
+                             textcoords='offset points',
+                             ha='center',
+                             fontweight='bold',
+                             color='darkred')
+                             
+        elif len(attack_accs) > 0:
+            # If only one attack is present, just plot its line (fallback)
+            for attack_key, accs in attack_accs.items():
+                label = ATTACK_NAME_MAPPING.get(attack_key, attack_key)
+                plt.plot(x, accs, marker='o', label=f"{label} (Line)", linewidth=2)
+                
+                max_acc = max(accs)
+                max_indices = [idx for idx, val in enumerate(accs) if val == max_acc]
+                for max_idx in max_indices:
+                    plt.plot(x[max_idx], accs[max_idx], marker='*', color='gold', markersize=15, markeredgecolor='black', zorder=5)
+                    plt.annotate(f"Threshold: {sorted_thresholds[max_idx]}", 
+                                 xy=(x[max_idx], accs[max_idx]),
+                                 xytext=(0, 10), 
+                                 textcoords='offset points',
+                                 ha='center',
+                                 fontweight='bold')
             
         plt.xlabel('Threshold')
         plt.ylabel('Average Accuracy (%)')
