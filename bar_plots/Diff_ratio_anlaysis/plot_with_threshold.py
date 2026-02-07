@@ -501,23 +501,23 @@ def main():
     diff_ratio_dic = get_aggregated_results(root_diff_ratio, selected_attacks=selected_attacks)
 
     # os.makedirs(out_path, exist_ok=True)
-    with open(out_path_diff_ratio, "w", encoding="utf-8") as f:
-        json.dump(diff_ratio_dic, f, indent=2)
-
-    print(f"[OK] Saved: {out_path_diff_ratio}")
-    print("[OK] Stats:")
-    for k, v in diff_ratio_dic["stats"].items():
-        print(f"  - {k}: {v}")
+    # with open(out_path_diff_ratio, "w", encoding="utf-8") as f:
+    #     json.dump(diff_ratio_dic, f, indent=2)
+    #
+    # print(f"[OK] Saved: {out_path_diff_ratio}")
+    # print("[OK] Stats:")
+    # for k, v in diff_ratio_dic["stats"].items():
+    #     print(f"  - {k}: {v}")
 
     results_dic = get_aggregated_results(args.root_results, selected_attacks=selected_attacks)
 
-    out_path_results = args.out_results
-    with open(out_path_results, "w", encoding="utf-8") as f:
-        json.dump(results_dic, f, indent=2)
-    print(f"[OK] Saved: {out_path_results}")
-    print("[OK] Stats:")
-    for k, v in results_dic["stats"].items():
-        print(f"  - {k}: {v}")
+    # out_path_results = args.out_results
+    # with open(out_path_results, "w", encoding="utf-8") as f:
+    #     json.dump(results_dic, f, indent=2)
+    # print(f"[OK] Saved: {out_path_results}")
+    # print("[OK] Stats:")
+    # for k, v in results_dic["stats"].items():
+    #     print(f"  - {k}: {v}")
 
 
 
