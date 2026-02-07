@@ -122,7 +122,7 @@ def main():
     parser.add_argument(
         "--root",
         type=str,
-        default="../../Diffratio_Adv_gen_Results/delta_clip_l14_224",
+        default="../../Diffratio_Adv_gen_Results/vit_l_14_datacomp_1b",
         help="Root path containing dataset subfolders (e.g., Diffratio_Adv_gen_Results/vit_l_14_datacomp_1b)",
     )
     parser.add_argument(

@@ -432,9 +432,9 @@ def get_aggregated_results(root: str, selected_attacks: Optional[List[str]] = No
             noise_param_obj = params["noise_param"]  # {"name": "Sigma", "value": 0.03}
             tau_type = params["tau_type"]
 
-            # Filter: remove or don't add values which have Noise uniform and value is 48.0
-            if noise_type.lower() == "uniform" and noise_param_obj["value"] == 48.0:
-                continue
+            # # Filter: remove or don't add values which have Noise uniform and value is 48.0
+            # if noise_type.lower() == "uniform" and noise_param_obj["value"] == 48.0:
+            #     continue
 
             # Construct noise_param string key
             if noise_param_obj["name"] and noise_param_obj["value"] is not None:
@@ -525,7 +525,7 @@ def main():
 
     # Range of thresholds for the Diff Ratio.
     # For each sample: if sample_diff_ratio < threshold, use ZS prediction; otherwise, use Counter-Attack prediction.
-    thresholds = [0.0, 0.1,  0.2, 0.3,  0.4,  0.5, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0]
+    thresholds = [0.0, 0.1,  0.2, 0.3,  0.4,  0.5, 0.6, 0.7,  0.8, 0.85, 0.9,  1.0]
     
     model_name = "vit_l_14_datacomp_1b"
     datasets = list(results_dic['results'][model_name].keys())
@@ -664,6 +664,11 @@ def main():
     # Identify all (dr_label, ca_label) combinations across all attacks
     combinations = set()
     ca_to_drs = {} # Map ca_label to list of dr_labels for grid plotting
+    
+    # Tracking best configurations per CA label
+    # ca_label -> {'net': (score, dr_label), 'clean': (score, dr_label), 'pgd': (score, dr_label)}
+    best_configs = {}
+
     for attack in final_results_average_dic:
         for dr_label in final_results_average_dic[attack]:
             for ca_label in final_results_average_dic[attack][dr_label]:
@@ -671,13 +676,40 @@ def main():
                 if ca_label not in ca_to_drs:
                     ca_to_drs[ca_label] = set()
                 ca_to_drs[ca_label].add(dr_label)
+                
+                # Initialize best tracking for this ca_label
+                if ca_label not in best_configs:
+                    best_configs[ca_label] = {
+                        'net': (-1.0, None),
+                        'clean': (-1.0, None),
+                        'pgd': (-1.0, None)
+                    }
+                
+                # Calculate max scores for this (dr_label, ca_label)
+                # Note: We need both attacks to compute Net Avg properly
+                attack_keys = ["eps_0.0_steps_0", "eps_4.0_steps_100"]
+                if all(ak in final_results_average_dic and dr_label in final_results_average_dic[ak] and ca_label in final_results_average_dic[ak][dr_label] for ak in attack_keys):
+                    clean_accs = [final_results_average_dic[attack_keys[0]][dr_label][ca_label][t] for t in thresholds]
+                    pgd_accs = [final_results_average_dic[attack_keys[1]][dr_label][ca_label][t] for t in thresholds]
+                    net_accs = [(c + p) / 2.0 for c, p in zip(clean_accs, pgd_accs)]
+                    
+                    max_net = max(net_accs)
+                    max_clean = max(clean_accs)
+                    max_pgd = max(pgd_accs)
+                    
+                    if max_net > best_configs[ca_label]['net'][0]:
+                        best_configs[ca_label]['net'] = (max_net, dr_label)
+                    if max_clean > best_configs[ca_label]['clean'][0]:
+                        best_configs[ca_label]['clean'] = (max_clean, dr_label)
+                    if max_pgd > best_configs[ca_label]['pgd'][0]:
+                        best_configs[ca_label]['pgd'] = (max_pgd, dr_label)
     
     # Sort for consistency
     for ca in ca_to_drs:
         ca_to_drs[ca] = sorted(list(ca_to_drs[ca]))
                 
     for dr_label, ca_label in combinations:
-        plt.figure(figsize=(18, 10))
+        plt.figure(figsize=(20, 10))
         
         # Prepare data for this combination
         # x_values: thresholds
@@ -713,13 +745,13 @@ def main():
                 
                 # Plot Bars
                 offset = (i - 0.5) * width
-                bars = plt.bar(x + offset, accs, width, label=f"{label} (Bar)", color=colors[i], alpha=0.7)
+                bars = plt.bar(x + offset, accs, width, label=f"{label}", color=colors[i], alpha=0.7)
                 
                 # Add text value on the bar
                 for bar in bars:
                     height = bar.get_height()
                     plt.text(bar.get_x() + bar.get_width()/2., height + 0.5,
-                             f'{height:.1f}', ha='center', va='bottom', fontsize=12, fontweight='bold')
+                             f'{height:.1f}', ha='center', va='bottom', fontsize=16)
                 
                 found_data = True
 
@@ -735,15 +767,15 @@ def main():
                 for j in range(len(sorted_thresholds))
             ]
             
-            plt.plot(x, net_accs, marker='o', color='purple', label="Net Average (Line)", linewidth=2)
+            plt.plot(x, net_accs, marker='o', color='purple', label="Net Average", linewidth=2)
             
             # Add line plots for Clean and Adversarial alone
             if attack_keys[0] in attack_accs:
                 offset_clean = (0 - 0.5) * width
-                plt.plot(x + offset_clean, attack_accs[attack_keys[0]], marker='s', color='blue', label="Clean (Line)", linewidth=1.5, linestyle='--')
+                plt.plot(x + offset_clean, attack_accs[attack_keys[0]], marker='s', color='blue', label="Clean", linewidth=1.5, linestyle='--')
             if attack_keys[1] in attack_accs:
                 offset_pgd = (1 - 0.5) * width
-                plt.plot(x + offset_pgd, attack_accs[attack_keys[1]], marker='^', color='red', label="PGD (Line)", linewidth=1.5, linestyle='--')
+                plt.plot(x + offset_pgd, attack_accs[attack_keys[1]], marker='^', color='red', label="Adversarial", linewidth=1.5, linestyle='--')
             
             # Highlight the dot with the highest score and mention the threshold
             max_net_acc = max(net_accs)
@@ -751,14 +783,14 @@ def main():
             for max_idx in max_indices:
                 plt.plot(x[max_idx], net_accs[max_idx], marker='*', color='gold', markersize=15, markeredgecolor='black', zorder=5)
                 # Annotate with threshold value
-                plt.annotate(f"T: {sorted_thresholds[max_idx]}", 
-                             xy=(x[max_idx], net_accs[max_idx]),
-                             xytext=(0, 10), 
-                             textcoords='offset points',
-                             ha='center',
-                             fontweight='bold',
-                             color='purple',
-                             fontsize=12)
+                # plt.annotate(f"T: {sorted_thresholds[max_idx]}",
+                #              xy=(x[max_idx], net_accs[max_idx]),
+                #              xytext=(0, 10),
+                #              textcoords='offset points',
+                #              ha='center',
+                #              fontweight='bold',
+                #              color='purple',
+                #              fontsize=14)
 
             # Highlight Clean line max
             if attack_keys[0] in attack_accs:
@@ -767,7 +799,7 @@ def main():
                 max_clean_indices = [idx for idx, val in enumerate(clean_accs) if val == max_clean_acc]
                 offset_clean = (0 - 0.5) * width
                 for max_idx in max_clean_indices:
-                    plt.plot(x[max_idx] + offset_clean, clean_accs[max_idx], marker='*', color='gold', markersize=12, markeredgecolor='black', zorder=5)
+                    plt.plot(x[max_idx] + offset_clean, clean_accs[max_idx], marker='*', color='gold', markersize=15, markeredgecolor='black', zorder=5)
                     # plt.annotate(f"T: {sorted_thresholds[max_idx]}",
                     #              xy=(x[max_idx] + offset_clean, clean_accs[max_idx]),
                     #              xytext=(0, -15),
@@ -784,7 +816,7 @@ def main():
                 max_pgd_indices = [idx for idx, val in enumerate(pgd_accs) if val == max_pgd_acc]
                 offset_pgd = (1 - 0.5) * width
                 for max_idx in max_pgd_indices:
-                    plt.plot(x[max_idx] + offset_pgd, pgd_accs[max_idx], marker='*', color='gold', markersize=12, markeredgecolor='black', zorder=5)
+                    plt.plot(x[max_idx] + offset_pgd, pgd_accs[max_idx], marker='*', color='gold', markersize=15, markeredgecolor='black', zorder=5)
                     # plt.annotate(f"T: {sorted_thresholds[max_idx]}",
                     #              xy=(x[max_idx] + offset_pgd, pgd_accs[max_idx]),
                     #              xytext=(0, 10),
@@ -811,12 +843,12 @@ def main():
                     #              ha='center',
                     #              fontweight='bold')
             
-        plt.xlabel('Threshold')
-        plt.ylabel('Average Accuracy (%)')
-        plt.title(f'Accuracy vs Threshold\nDR: {dr_label} | CA: {ca_label}')
-        plt.xticks(x, [str(t) for t in sorted_thresholds])
-        plt.ylim(0, 100)
-        plt.legend()
+        plt.xlabel('Threshold', fontsize=24)
+        plt.ylabel('Average Accuracy (%)', fontsize=24)
+        plt.title(f'Accuracy vs Threshold\nDR: {dr_label} | CA: {ca_label}', fontsize=20)
+        plt.xticks(x, [str(t) for t in sorted_thresholds], fontsize=20)
+        plt.ylim(40, 80)
+        plt.legend(fontsize=18)
         plt.grid(axis='y', linestyle='--', alpha=0.7)
         
         # Save the plot in structured directory
@@ -825,6 +857,22 @@ def main():
         plot_path = os.path.join(plot_dir, "accuracy_vs_threshold.png")
         
         plt.savefig(plot_path)
+        
+        # Check if this is a "best" plot for the current ca_label and save with specific name
+        if ca_label in best_configs:
+            if dr_label == best_configs[ca_label]['net'][1]:
+                best_net_path = os.path.join(output_base_dir, ca_label, "best_net_avg.png")
+                plt.savefig(best_net_path)
+                print(f"  Saved best net plot: {best_net_path}")
+            if dr_label == best_configs[ca_label]['clean'][1]:
+                best_clean_path = os.path.join(output_base_dir, ca_label, "best_clean.png")
+                plt.savefig(best_clean_path)
+                print(f"  Saved best clean plot: {best_clean_path}")
+            if dr_label == best_configs[ca_label]['pgd'][1]:
+                best_pgd_path = os.path.join(output_base_dir, ca_label, "best_adversarial.png")
+                plt.savefig(best_pgd_path)
+                print(f"  Saved best adversarial plot: {best_pgd_path}")
+
         plt.close()
         print(f"  Saved plot: {plot_path}")
         
