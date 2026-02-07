@@ -506,7 +506,7 @@ def format_tau_label_from_dr(dr_label: str):
     else:
         param_str = f"{param_name} = {param_value}"
 
-    return rf"$\tau({noise_symbol},\ {param_str})$"
+    return rf"Threshold $\tau({noise_symbol},\ {param_str})$"
 
 def format_tau_label_from_ca(dr_label: str):
     """
@@ -545,7 +545,7 @@ def format_tau_label_from_ca(dr_label: str):
     else:
         param_str = f"{param_name} = {param_value}"
 
-    return rf"Additive Noise ({noise_symbol},\ {param_str})$"
+    return rf"Additive Noise $({noise_symbol},\ {param_str})$"
 
 
 def main():
@@ -921,9 +921,9 @@ def main():
                     #              ha='center',
                     #              fontweight='bold')
             
-        plt.xlabel('Threshold', fontsize=24)
+        plt.xlabel(rf"Threshold $\tau$", fontsize=24)
         plt.ylabel('Average Accuracy (%)', fontsize=24)
-        plt.title(f'Accuracy vs Threshold\n {format_tau_label_from_dr(dr_label)} | {format_tau_label_from_ca(ca_label)}', fontsize=20)
+        plt.title(f'{format_tau_label_from_ca(ca_label)}\n{format_tau_label_from_dr(dr_label)}', fontsize=20)
         plt.xticks(x, [str(t) for t in sorted_thresholds], fontsize=20)
         # Calculate dynamic y-limits
         all_values = []
