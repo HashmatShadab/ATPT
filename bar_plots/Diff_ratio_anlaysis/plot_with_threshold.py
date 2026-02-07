@@ -166,7 +166,7 @@ def get_zs_results(model_name):
     import numpy as np
 
     case = "clean"
-    model = "vit_l_14_datacomp_1b"
+    model = model_name
 
     true_labels_data = {}
 
@@ -198,7 +198,7 @@ def get_zs_results(model_name):
         print(dataset, np.mean(zero_shot_clean_max_confidences_data[dataset]))
 
     case = "adversarial_eps4_steps100"
-    model = "vit_l_14_datacomp_1b"
+    model = model_name
 
     zero_shot_adv_preds_data = {}
     zero_shot_adv_max_confidences_data = {}
@@ -227,7 +227,7 @@ def get_zs_results(model_name):
         print(dataset, np.mean(zero_shot_adv_max_confidences_data[dataset]))
 
     case = "adversarial_eps4_steps100_image_only"
-    model = "vit_l_14_datacomp_1b"
+    model = model_name
 
     zero_shot_adv_image_only_preds_data = {}
     zero_shot_adv_image_only_max_confidences_data = {}
