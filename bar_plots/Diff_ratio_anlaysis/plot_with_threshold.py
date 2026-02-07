@@ -650,6 +650,81 @@ def main():
 
     print("Averaging complete.")
     
+    # --- PLOTTING LOGIC ---
+    print("\nGenerating bar plots...")
+    
+    # Create base output directory
+    output_base_dir = "plots_threshold_bar"
+    os.makedirs(output_base_dir, exist_ok=True)
+    
+    # We want to plot thresholds on x-axis, average accuracy on y-axis.
+    # For each (dr_label, ca_label) pair, we create one plot.
+    # Each plot will show 'Clean' and 'PGD 4/255 (100 steps)' accuracies.
+    
+    # Identify all (dr_label, ca_label) combinations across all attacks
+    combinations = set()
+    for attack in final_results_average_dic:
+        for dr_label in final_results_average_dic[attack]:
+            for ca_label in final_results_average_dic[attack][dr_label]:
+                combinations.add((dr_label, ca_label))
+                
+    for dr_label, ca_label in combinations:
+        plt.figure(figsize=(12, 7))
+        
+        # Prepare data for this combination
+        # x_values: thresholds
+        # y_values: accuracies for each attack
+        
+        # Determine available thresholds (should be same for all)
+        sorted_thresholds = sorted(thresholds)
+        x = np.arange(len(sorted_thresholds))
+        width = 0.35  # width of the bars
+        
+        found_data = False
+        
+        # Plot bars for each attack
+        # We use ATTACK_NAME_MAPPING to identify 'Clean' and 'PGD'
+        # eps_0.0_steps_0 -> Clean
+        # eps_4.0_steps_100 -> PGD 4/255 (100 steps)
+        
+        attack_keys = ["eps_0.0_steps_0", "eps_4.0_steps_100"]
+        colors = ['skyblue', 'salmon']
+        
+        for i, attack_key in enumerate(attack_keys):
+            if attack_key in final_results_average_dic and \
+               dr_label in final_results_average_dic[attack_key] and \
+               ca_label in final_results_average_dic[attack_key][dr_label]:
+                
+                accs = [final_results_average_dic[attack_key][dr_label][ca_label][t] for t in sorted_thresholds]
+                label = ATTACK_NAME_MAPPING.get(attack_key, attack_key)
+                
+                offset = (i - 0.5) * width
+                plt.bar(x + offset, accs, width, label=label, color=colors[i])
+                found_data = True
+                
+        if not found_data:
+            plt.close()
+            continue
+            
+        plt.xlabel('Threshold')
+        plt.ylabel('Average Accuracy (%)')
+        plt.title(f'Accuracy vs Threshold\nDR: {dr_label} | CA: {ca_label}')
+        plt.xticks(x, [str(t) for t in sorted_thresholds])
+        plt.ylim(0, 100)
+        plt.legend()
+        plt.grid(axis='y', linestyle='--', alpha=0.7)
+        
+        # Save the plot in structured directory
+        plot_dir = os.path.join(output_base_dir, dr_label, ca_label)
+        os.makedirs(plot_dir, exist_ok=True)
+        plot_path = os.path.join(plot_dir, "accuracy_vs_threshold.png")
+        
+        plt.savefig(plot_path)
+        plt.close()
+        print(f"  Saved plot: {plot_path}")
+        
+    print("\nAll plots generated.")
+    
     # Optional: Print some results to verify
     for attack in final_results_average_dic:
         print(f"\nAttack: {attack}")
