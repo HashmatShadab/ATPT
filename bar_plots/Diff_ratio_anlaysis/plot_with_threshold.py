@@ -326,6 +326,10 @@ def load_metrics_or_none(exp_folder_path: str) -> Dict[str, Any]:
         "original_clean_accuracy": None,
         "adversarial_accuracy": None,
         "counter_attack_accuracy": None,
+        "true_labels": None,
+        "original_clean_predictions": None,
+        "adversarial_predictions": None,
+        "counter_attack_predictions": None,
         "metrics_json_present": False,
         "metrics_json_error": None,
     }
@@ -336,16 +340,22 @@ def load_metrics_or_none(exp_folder_path: str) -> Dict[str, Any]:
     try:
         with open(metrics_path, "r", encoding="utf-8") as f:
             data = json.load(f)
+        if not isinstance(data, dict):
+            data = {}
     except Exception as e:
         metrics["metrics_json_error"] = str(e)
         return metrics
 
     metrics.update({
-        "diff_ratio_after_counter_attack": data.get("diff_ratio_after_counter_attack"),
-        "avg_diff_ratio_after_counter_attack": data.get("avg_diff_ratio_after_counter_attack"),
-        "original_clean_accuracy": data.get("original_clean_accuracy"),
-        "adversarial_accuracy": data.get("adversarial_accuracy"),
-        "counter_attack_accuracy": data.get("counter_attack_accuracy"),
+        "diff_ratio_after_counter_attack": data.get("diff_ratio_after_counter_attack", None),
+        "avg_diff_ratio_after_counter_attack": data.get("avg_diff_ratio_after_counter_attack", None),
+        "original_clean_accuracy": data.get("original_clean_accuracy", None),
+        "adversarial_accuracy": data.get("adversarial_accuracy", None),
+        "counter_attack_accuracy": data.get("counter_attack_accuracy", None),
+        "true_labels": data.get("true_labels", None),
+        "original_clean_predictions": data.get("original_clean_predictions", None),
+        "adversarial_predictions": data.get("adversarial_predictions", None),
+        "counter_attack_predictions": data.get("counter_attack_predictions", None),
         "metrics_json_present": True,
         "metrics_json_error": None,
     })
@@ -357,42 +367,13 @@ METRICS_FILENAME = "diff_ratio_after_counter_attack.json"
 
 ATTACK_NAME_MAPPING = {
     "eps_0.0_steps_0": "Clean",
-    "eps_1.0_steps_10": "PGD 1/255 (10 steps)",
-    "eps_1.0_steps_10_image_only_attack_prm": "PGD 1/255 (10 steps, image only)",
-    "eps_1.0_steps_100": "PGD 1/255 (100 steps)",
-    "eps_1.0_steps_100_image_only_attack_prm": "PGD 1/255 (100 steps, image only)",
-    "eps_4.0_steps_10": "PGD 4/255 (10 steps)",
-    "eps_4.0_steps_10_image_only_attack_prm": "PGD 4/255 (10 steps, image only)",
     "eps_4.0_steps_100": "PGD 4/255 (100 steps)",
-    "eps_4.0_steps_100_image_only_attack_prm": "PGD 4/255 (100 steps, image only)",
-    "eps_8.0_steps_10": "PGD 8/255 (10 steps)",
-    "eps_8.0_steps_10_image_only_attack_prm": "PGD 8/255 (10 steps, image only)",
-    "eps_8.0_steps_100": "PGD 8/255 (100 steps)",
-    "eps_8.0_steps_100_image_only_attack_prm": "PGD 8/255 (100 steps, image only)",
 }
 
 
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--root",
-        type=str,
-        default="../../Diffratio_Adv_gen_Results/vit_l_14_datacomp_1b",
-        help="Root path containing dataset subfolders (e.g., Diffratio_Adv_gen_Results/vit_l_14_datacomp_1b)",
-    )
-    parser.add_argument(
-        "--out",
-        type=str,
-        default="aggregated_results_with_threshold.json",
-        help="Output JSON filename (written under --root unless absolute path)",
-    )
-    args = parser.parse_args()
-
-    root = os.path.abspath(args.root)
-    out_path = args.out
-
+def get_aggregated_results(root: str, selected_attacks: Optional[List[str]] = None) -> dict:
     if not os.path.isdir(root):
         raise RuntimeError(f"Root is not a directory: {root}")
 
@@ -433,6 +414,15 @@ def main():
 
             # Extract param components
             attack = params["attack"]
+            
+            # Mapping: 'eps_0.0_steps_0_image_only_attack_prm' -> 'eps_0.0_steps_0'
+            if attack == "eps_0.0_steps_0_image_only_attack_prm":
+                attack = "eps_0.0_steps_0"
+
+            # Filtering: if selected_attacks is provided, only include those attacks
+            if selected_attacks is not None and attack not in selected_attacks:
+                continue
+
             noise_type = params["noise_type"]
             noise_param_obj = params["noise_param"]  # {"name": "Sigma", "value": 0.03}
             tau_type = params["tau_type"]
@@ -472,14 +462,64 @@ def main():
             else:
                 aggregated["stats"]["num_json_missing_or_invalid"] += 1
 
-    # os.makedirs(out_path, exist_ok=True)
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(aggregated, f, indent=2)
+    return aggregated
 
-    print(f"[OK] Saved: {out_path}")
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--root_diff_ratio",
+        type=str,
+        default="../../Diffratio_Adv_gen_Results/vit_l_14_datacomp_1b",
+        help="Root path containing dataset subfolders (e.g., Diffratio_Adv_gen_Results/vit_l_14_datacomp_1b)",
+    )
+    parser.add_argument(
+        "--out_diff_ratio",
+        type=str,
+        default="aggregated_results_with_diff_ratio.json",
+        help="Output JSON filename (written under --root unless absolute path)",
+    )
+    parser.add_argument(
+        "--root_results",
+        type=str,
+        default="../../Diffratio_Adv_gen_Results_v2/vit_l_14_datacomp_1b",
+        help="Root path containing dataset subfolders (e.g., Diffratio_Adv_gen_Results/vit_l_14_datacomp_1b)",
+    )
+
+    parser.add_argument(
+        "--out_results",
+        type=str,
+        default="aggregated_results_v2.json",
+        help="Output JSON filename (written under --root unless absolute path)",
+    )
+    args = parser.parse_args()
+
+    root_diff_ratio = os.path.abspath(args.root_diff_ratio)
+    out_path_diff_ratio = args.out_diff_ratio
+
+    selected_attacks = ['eps_0.0_steps_0', 'eps_4.0_steps_100']
+    diff_ratio_dic = get_aggregated_results(root_diff_ratio, selected_attacks=selected_attacks)
+
+    # os.makedirs(out_path, exist_ok=True)
+    with open(out_path_diff_ratio, "w", encoding="utf-8") as f:
+        json.dump(diff_ratio_dic, f, indent=2)
+
+    print(f"[OK] Saved: {out_path_diff_ratio}")
     print("[OK] Stats:")
-    for k, v in aggregated["stats"].items():
+    for k, v in diff_ratio_dic["stats"].items():
         print(f"  - {k}: {v}")
+
+    results_dic = get_aggregated_results(args.root_results, selected_attacks=selected_attacks)
+
+    out_path_results = args.out_results
+    with open(out_path_results, "w", encoding="utf-8") as f:
+        json.dump(results_dic, f, indent=2)
+    print(f"[OK] Saved: {out_path_results}")
+    print("[OK] Stats:")
+    for k, v in results_dic["stats"].items():
+        print(f"  - {k}: {v}")
+
+
 
     TRUE_LABELS_DATASET, ZS_CLEAN_PREDS_DATASET, ZS_ADV_PREDS_DATASET, ZS_ADV_IMAGE_ONLY_PREDS_DATASET = get_zs_results()
 
