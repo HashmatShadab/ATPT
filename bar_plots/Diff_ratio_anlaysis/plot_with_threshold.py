@@ -847,7 +847,20 @@ def main():
         plt.ylabel('Average Accuracy (%)', fontsize=24)
         plt.title(f'Accuracy vs Threshold\nDR: {dr_label} | CA: {ca_label}', fontsize=20)
         plt.xticks(x, [str(t) for t in sorted_thresholds], fontsize=20)
-        plt.ylim(40, 80)
+        # Calculate dynamic y-limits
+        all_values = []
+        for acc_list in attack_accs.values():
+            all_values.extend(acc_list)
+        if 'net_accs' in locals() or 'net_accs' in globals():
+            all_values.extend(net_accs)
+        
+        if all_values:
+            min_val = min(all_values)
+            max_val = max(all_values)
+            plt.ylim(max(min_val - 10, 0), max_val + 10)
+        else:
+            plt.ylim(40, 80)
+        
         plt.legend(fontsize=18)
         plt.grid(axis='y', linestyle='--', alpha=0.7)
         
@@ -950,12 +963,25 @@ def main():
                 for max_idx in [i for i, v in enumerate(pgd_accs) if v == max_pgd_acc]:
                     ax.plot(x[max_idx] + offset_pgd, pgd_accs[max_idx], marker='*', color='gold', markersize=12, markeredgecolor='black', zorder=5)
 
+            # Calculate dynamic y-limits for subplot
+            all_values_subplot = []
+            for acc_list in attack_accs.values():
+                all_values_subplot.extend(acc_list)
+            if 'net_accs' in locals():
+                all_values_subplot.extend(net_accs)
+            
+            if all_values_subplot:
+                min_val = min(all_values_subplot)
+                max_val = max(all_values_subplot)
+                ax.set_ylim(min_val - 10, max_val + 10)
+            else:
+                ax.set_ylim(0, 100)
+
             ax.set_xlabel('Threshold')
             ax.set_ylabel('Average Accuracy (%)')
             ax.set_title(f'DR: {dr_label}', fontsize=16)
             ax.set_xticks(x)
             ax.set_xticklabels([str(t) for t in sorted_thresholds])
-            ax.set_ylim(0, 100)
             ax.legend(fontsize=8)
             ax.grid(axis='y', linestyle='--', alpha=0.7)
             
