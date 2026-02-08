@@ -1207,16 +1207,25 @@ if __name__ == "__main__":
                 else:
                     logic_str = r"{Apply Counter Attack if $\tau \leq \tau_{threshold}$; otherwise Zero-Shot (Baseline)}"
 
-                title = (f"Test Time Counter Attack {logic_str}\n"
-                         f"{format_noise_math(noise_type, noise_param)}\n"
-                         # f"Max Clean: {max_clean_val:.1f}% @ {max_clean_thr}, "
-                         # f"Max Adv: {max_adv_val:.1f}% @ {max_adv_thr}, "
-                         rf"Best Average Performance: {max_net_val:.1f}% at $\tau_{{\text{{threshold}}}} = {max_net_thr}$"
+                # First two lines (normal)
+                plt.title(
+                    f"Test Time Counter Attack {logic_str}\n"
+                    f"{format_noise_math(noise_type, noise_param)}",
+                    fontsize=12
+                )
 
-                            )
-                
-                plt.title(title, fontsize=12)
-                plt.legend(fontsize=10, loc='upper left', bbox_to_anchor=(1, 1))
+                # Third line (colored separately)
+                plt.text(
+                    0.5, .92,
+                    rf"Best Average Performance: {max_net_val:.1f}% at $\tau_{{\text{{threshold}}}} = {max_net_thr}$",
+                    color="blue",
+                    fontsize=12,
+                    ha="center",
+                    va="bottom",
+                    transform=plt.gca().transAxes
+                )
+
+                plt.legend(fontsize=18, loc='upper left', bbox_to_anchor=(1, 1))
                 plt.ylim(0, 85) # Increased to give space for text
                 plt.grid(axis='y', linestyle='--', alpha=0.7)
 
