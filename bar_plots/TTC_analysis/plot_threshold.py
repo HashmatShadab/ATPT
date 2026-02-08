@@ -978,7 +978,7 @@ if __name__ == "__main__":
     print(f"Zero-Shot Clean: {zs_avg_clean:.2f}, Adv: {zs_avg_adv:.2f}")
     print(f"TTC Clean: {ttc_avg_clean:.2f}, Adv: {ttc_avg_adv:.2f}")
 
-    output_dir = "ttc_wihtout_threshold"
+    output_dir = "ttc_withtout_threshold"
     os.makedirs(output_dir, exist_ok=True)
 
     # Plot 1: Zero-Shot Average Accuracy
@@ -989,7 +989,7 @@ if __name__ == "__main__":
     bars = plt.bar(labels, values, color=['#4682B4', '#FF7F50'], edgecolor='black', linewidth=0.5)
     plt.ylabel('Average Accuracy (%)', fontsize=12)
     plt.title('Average Zero-Shot Accuracy', fontsize=14, fontweight='bold')
-    plt.ylim(0, 110)
+    plt.ylim(0, 85)
     plt.grid(axis='y', linestyle='--', alpha=0.7)
     for bar in bars:
         yval = bar.get_height()
@@ -1005,7 +1005,7 @@ if __name__ == "__main__":
     bars = plt.bar(labels, values, color=['#4682B4', '#FF7F50'], edgecolor='black', linewidth=0.5)
     plt.ylabel('Average Accuracy (%)', fontsize=12)
     plt.title('Average TTC Accuracy', fontsize=14, fontweight='bold')
-    plt.ylim(0, 110)
+    plt.ylim(0, 85)
     plt.grid(axis='y', linestyle='--', alpha=0.7)
     for bar in bars:
         yval = bar.get_height()
@@ -1017,8 +1017,8 @@ if __name__ == "__main__":
 
     diff_ratio_thresholds = [
         0.0, 0.1, 0.2, 0.25, 0.3, 0.4,
-        0.5, 0.6, 0.65, 0.7,
-        0.75, 0.8, 0.85, 0.9, 1.0
+        0.5, 0.6,  0.7,
+     0.8, 0.85, 0.9, 1.0
     ]
 
 
@@ -1059,11 +1059,11 @@ if __name__ == "__main__":
 
 
     # --- Original Gating Logic (TTC if > threshold) ---
-    output_root = os.path.join("ttc_with_threshold", model_name)
+    output_root = os.path.join("ttc_with_our_threshold", model_name)
     os.makedirs(output_root, exist_ok=True)
 
     # --- Opposite Gating Logic (TTC if <= threshold) ---
-    output_root_default = os.path.join("ttc_with_threshold_default", model_name)
+    output_root_default = os.path.join("ttc_with_reported_threshold", model_name)
     os.makedirs(output_root_default, exist_ok=True)
 
     for noise_type in ["Gaussian", "Uniform"]:
@@ -1110,6 +1110,24 @@ if __name__ == "__main__":
                     clean_accs.append(np.mean(clean_dataset_accs))
                     adv_accs.append(np.mean(adv_dataset_accs))
 
+                clean_accs = np.array(clean_accs)
+                adv_accs = np.array(adv_accs)
+                net_accs = (clean_accs + adv_accs) / 2
+
+                # Identify max values and corresponding thresholds
+                max_clean_idx = np.argmax(clean_accs)
+                max_adv_idx = np.argmax(adv_accs)
+                max_net_idx = np.argmax(net_accs)
+
+                max_clean_val = clean_accs[max_clean_idx]
+                max_clean_thr = diff_ratio_thresholds[max_clean_idx]
+
+                max_adv_val = adv_accs[max_adv_idx]
+                max_adv_thr = diff_ratio_thresholds[max_adv_idx]
+
+                max_net_val = net_accs[max_net_idx]
+                max_net_thr = diff_ratio_thresholds[max_net_idx]
+
                 # ---- Plot ----
                 save_dir = os.path.join(current_output_root, noise_type, noise_param)
                 os.makedirs(save_dir, exist_ok=True)
@@ -1117,10 +1135,10 @@ if __name__ == "__main__":
                 x = np.arange(len(diff_ratio_thresholds))
                 width = 0.35
 
-                plt.figure(figsize=(12, 6))
+                plt.figure(figsize=(12, 8))
                 # Professional colors: Steel Blue and Coral
-                bars1 = plt.bar(x - width / 2, clean_accs, width, label="Clean", color='#4682B4', edgecolor='black', linewidth=0.5)
-                bars2 = plt.bar(x + width / 2, adv_accs, width, label="Adversarial", color='#FF7F50', edgecolor='black', linewidth=0.5)
+                bars1 = plt.bar(x - width / 2, clean_accs, width, label="Clean", color='#4682B4', edgecolor='black', linewidth=0.5, alpha=0.7)
+                bars2 = plt.bar(x + width / 2, adv_accs, width, label="Adversarial", color='#FF7F50', edgecolor='black', linewidth=0.5, alpha=0.7)
 
                 plt.xticks(x, diff_ratio_thresholds, rotation=45)
                 plt.xlabel("Diff-Ratio Threshold", fontsize=12)
@@ -1131,16 +1149,22 @@ if __name__ == "__main__":
                 else:
                     logic_str = "TTC if Diff-Ratio <= Threshold"
                     
-                plt.title(f"TTC Gated by Diff Ratio ({logic_str})\n({noise_type}, {noise_param})", fontsize=14, fontweight='bold')
-                plt.legend(fontsize=10)
-                plt.ylim(0, 110) # Increased to give space for text
+                title = (f"TTC Gated by Diff Ratio ({logic_str})\n"
+                         f"({noise_type}, {noise_param})\n"
+                         f"Max Clean: {max_clean_val:.1f}% @ {max_clean_thr}, "
+                         f"Max Adv: {max_adv_val:.1f}% @ {max_adv_thr}, "
+                         f"Max Net: {max_net_val:.1f}% @ {max_net_thr}")
+                
+                plt.title(title, fontsize=12, fontweight='bold')
+                plt.legend(fontsize=10, loc='upper left', bbox_to_anchor=(1, 1))
+                plt.ylim(0, 85) # Increased to give space for text
                 plt.grid(axis='y', linestyle='--', alpha=0.7)
 
                 def add_labels(bars):
                     for bar in bars:
                         height = bar.get_height()
                         plt.text(bar.get_x() + bar.get_width() / 2., height + 1,
-                                 f'{height:.1f}', ha='center', va='bottom', fontsize=9, fontweight='bold')
+                                 f'{height:.1f}', ha='center', va='bottom', fontsize=8, fontweight='bold')
 
                 add_labels(bars1)
                 add_labels(bars2)
