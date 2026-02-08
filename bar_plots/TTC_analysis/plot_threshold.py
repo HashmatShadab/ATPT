@@ -917,10 +917,6 @@ if __name__ == "__main__":
     # TTC adversarial predictions for all datasets
     TTC_ADV_PREDS_SINGLE_DATASET = ttc_dic["ttc_single_adv"]
 
-    # Zero-Shot clean predictions for all datasets from TTC dict
-    ZS_TTC_CLEAN_PREDS_DATASET = ttc_dic["zero_shot_clean"]
-    # Zero-Shot adversarial predictions for all datasets from TTC dict
-    ZS_TTC_ADV_PREDS_DATASET = ttc_dic["zero_shot_adv"]
 
     # compute zero shot accuracy
     def compute_accuracy(preds, labels):
@@ -962,7 +958,58 @@ if __name__ == "__main__":
                         final_diff_ratio_dic[dataset_key][attack_name][noise_type_name][noise_param_key] = diff_ratio
 
 
-    diff_ratio_thresholds = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 1.0]
+
+    # Calculate Average Accuracies
+    def get_avg_acc(preds_dict, labels_dict):
+        accs = []
+        for dataset in datasets:
+            acc = compute_accuracy(preds_dict[dataset], labels_dict[dataset])
+            accs.append(acc)
+        return np.mean(accs)
+
+    # Zero-Shot Average Accuracies
+    zs_avg_clean = get_avg_acc(ZS_CLEAN_PREDS_DATASET, TRUE_LABELS_DATASET)
+    zs_avg_adv = get_avg_acc(ZS_ADV_PREDS_DATASET, TRUE_LABELS_DATASET)
+
+    # TTC Average Accuracies
+    ttc_avg_clean = get_avg_acc(TTC_CLEAN_PREDS_SINGLE_DATASET, TRUE_LABELS_DATASET)
+    ttc_avg_adv = get_avg_acc(TTC_ADV_PREDS_SINGLE_DATASET, TRUE_LABELS_DATASET)
+
+    print(f"Zero-Shot Clean: {zs_avg_clean:.2f}, Adv: {zs_avg_adv:.2f}")
+    print(f"TTC Clean: {ttc_avg_clean:.2f}, Adv: {ttc_avg_adv:.2f}")
+
+    output_dir = "ttc_wihtout_threshold"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Plot 1: Zero-Shot Average Accuracy
+    plt.figure(figsize=(6, 6))
+    labels = ['Clean', 'Adversarial']
+    values = [zs_avg_clean, zs_avg_adv]
+    bars = plt.bar(labels, values, color=['blue', 'red'])
+    plt.ylabel('Average Accuracy (%)')
+    plt.title('Average Zero-Shot Accuracy')
+    plt.ylim(0, 100)
+    for bar in bars:
+        yval = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width()/2, yval + 1, f'{yval:.2f}%', ha='center', va='bottom')
+    plt.savefig(os.path.join(output_dir, 'average_zs_accuracy.png'))
+    plt.close()
+
+    # Plot 2: TTC Average Accuracy
+    plt.figure(figsize=(6, 6))
+    labels = ['Clean', 'Adversarial']
+    values = [ttc_avg_clean, ttc_avg_adv]
+    bars = plt.bar(labels, values, color=['blue', 'red'])
+    plt.ylabel('Average Accuracy (%)')
+    plt.title('Average TTC Accuracy')
+    plt.ylim(0, 100)
+    for bar in bars:
+        yval = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width()/2, yval + 1, f'{yval:.2f}%', ha='center', va='bottom')
+    plt.savefig(os.path.join(output_dir, 'average_ttc_accuracy.png'))
+    plt.close()
+
+    print(f"Plots saved in {output_dir}")
 
 
 
