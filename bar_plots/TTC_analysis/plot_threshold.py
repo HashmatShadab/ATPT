@@ -21,9 +21,34 @@ import re
 from typing import Any, Dict, Optional, List
 import matplotlib.pyplot as plt
 import numpy as np
+from PIL import Image
 
+def create_image_grid(image_paths, output_path, cols=3):
+    """
+    Creates a grid of images.
+    """
+    if not image_paths:
+        return
 
+    images = [Image.open(x) for x in image_paths]
+    widths, heights = zip(*(i.size for i in images))
 
+    max_width = max(widths)
+    max_height = max(heights)
+
+    rows = (len(images) + cols - 1) // cols
+    grid_width = cols * max_width
+    grid_height = rows * max_height
+
+    new_im = Image.new('RGB', (grid_width, grid_height), (255, 255, 255))
+
+    for i, im in enumerate(images):
+        row = i // cols
+        col = i % cols
+        new_im.paste(im, (col * max_width, row * max_height))
+
+    new_im.save(output_path)
+    print(f"Saved grid to: {output_path}")
 
 def get_zs_results(model_name):
     from pathlib import Path
@@ -1022,6 +1047,39 @@ if __name__ == "__main__":
     ]
 
 
+    def format_noise_math(noise_type: str, noise_param: str) -> str:
+        """
+        Convert (noise_type, noise_param) into a LaTeX-style mathematical string
+        using standard noise distribution symbols.
+
+        Examples:
+        - ("Gaussian", "Sigma_0.12") -> r"$\mathcal{N}(0, \sigma^2),\ \sigma=0.12$"
+        - ("Uniform", "Eps_48.0")   -> r"$\mathcal{U}(-\epsilon, \epsilon),\ \epsilon=48/255$"
+        """
+
+        if noise_param is None:
+            return noise_type
+
+        try:
+            name, value = noise_param.split("_")
+            value = float(value)
+        except Exception:
+            return noise_type
+
+        # Gaussian noise
+        if noise_type.lower() == "gaussian" and name.lower() == "sigma":
+            return rf"$\mathcal{{N}}(0, \sigma^2),\ \sigma = {value}$"
+
+        # Uniform noise
+        if noise_type.lower() == "uniform" and name.lower() == "eps":
+            if value > 1:
+                return rf"$\mathcal{{U}}(-\epsilon, \epsilon),\ \epsilon = {int(value)}/255$"
+            else:
+                return rf"$\mathcal{{U}}(-\epsilon, \epsilon),\ \epsilon = {value}$"
+
+        return noise_type
+
+
     def gated_accuracy(
             diff_ratios,
             zs_preds,
@@ -1149,11 +1207,11 @@ if __name__ == "__main__":
                 else:
                     logic_str = "TTC if Diff-Ratio <= Threshold"
                     
-                title = (f"TTC Gated by Diff Ratio ({logic_str})\n"
-                         f"({noise_type}, {noise_param})\n"
-                         f"Max Clean: {max_clean_val:.1f}% @ {max_clean_thr}, "
-                         f"Max Adv: {max_adv_val:.1f}% @ {max_adv_thr}, "
-                         f"Max Net: {max_net_val:.1f}% @ {max_net_thr}")
+                title = (f"Test Time Counter Attacks with ({logic_str})\n"
+                         f"{format_noise_math(noise_type, noise_param)}\n"
+                         # f"Max Clean: {max_clean_val:.1f}% @ {max_clean_thr}, "
+                         # f"Max Adv: {max_adv_val:.1f}% @ {max_adv_thr}, "
+                         f"Best Average Performance: {max_net_val:.1f}% @ {max_net_thr}")
                 
                 plt.title(title, fontsize=12, fontweight='bold')
                 plt.legend(fontsize=10, loc='upper left', bbox_to_anchor=(1, 1))
@@ -1172,10 +1230,35 @@ if __name__ == "__main__":
                 plt.tight_layout()
 
                 plt.savefig(os.path.join(save_dir, "accuracy_vs_threshold.png"), dpi=300)
-                plt.savefig(os.path.join(save_dir, "accuracy_vs_threshold.pdf"))
+                # plt.savefig(os.path.join(save_dir, "accuracy_vs_threshold.pdf"))
                 plt.close()
 
                 print(f"Saved plots to: {save_dir}")
+
+    # --- Create Grids ---
+    print("\nGenerating grids...")
+    for root_dir in ["ttc_with_our_threshold", "ttc_with_reported_threshold"]:
+        for noise_type in ["Gaussian", "Uniform"]:
+            plots_to_grid = []
+            
+            # Walk through the model directory in the root
+            model_path = os.path.join(root_dir, model_name, noise_type)
+            if not os.path.exists(model_path):
+                continue
+                
+            for noise_param in sorted(os.listdir(model_path)):
+                param_path = os.path.join(model_path, noise_param)
+                if not os.path.isdir(param_path):
+                    continue
+                
+                img_path = os.path.join(param_path, "accuracy_vs_threshold.png")
+                if os.path.exists(img_path):
+                    plots_to_grid.append(img_path)
+            
+            if plots_to_grid:
+                grid_name = f"{noise_type.lower()}_plots_grid.png"
+                grid_output = os.path.join(root_dir, model_name, grid_name)
+                create_image_grid(plots_to_grid, grid_output, cols=2)
 
 
 
