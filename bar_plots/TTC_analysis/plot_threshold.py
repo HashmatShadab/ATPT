@@ -1068,14 +1068,14 @@ if __name__ == "__main__":
 
         # Gaussian noise
         if noise_type.lower() == "gaussian" and name.lower() == "sigma":
-            return rf"$\mathcal{{N}}(0, \sigma^2),\ \sigma = {value}$"
+            return rf"Threshold $\tau(\mathcal{{N}}, \sigma = {value})$"
 
         # Uniform noise
         if noise_type.lower() == "uniform" and name.lower() == "eps":
             if value > 1:
-                return rf"$\mathcal{{U}}(-\epsilon, \epsilon),\ \epsilon = {int(value)}/255$"
+                return rf"Threshold $\tau(\mathcal{{U}}, \epsilon = {int(value)}/255)$"
             else:
-                return rf"$\mathcal{{U}}(-\epsilon, \epsilon),\ \epsilon = {value}$"
+                return rf"Threshold $\tau(\mathcal{{U}},\ \epsilon = {value})$"
 
         return noise_type
 
@@ -1198,22 +1198,24 @@ if __name__ == "__main__":
                 bars1 = plt.bar(x - width / 2, clean_accs, width, label="Clean", color='#4682B4', edgecolor='black', linewidth=0.5, alpha=0.7)
                 bars2 = plt.bar(x + width / 2, adv_accs, width, label="Adversarial", color='#FF7F50', edgecolor='black', linewidth=0.5, alpha=0.7)
 
-                plt.xticks(x, diff_ratio_thresholds, rotation=45)
-                plt.xlabel("Diff-Ratio Threshold", fontsize=12)
-                plt.ylabel("Average Accuracy (%)", fontsize=12)
-                
+                plt.xticks(x, diff_ratio_thresholds, fontsize=18)
+                plt.xlabel(r"$\tau_{\text{threshold}}$", fontsize=24)
+                plt.ylabel("Average Accuracy (%)", fontsize=24)
+
                 if current_logic == "greater":
-                    logic_str = "TTC if Diff-Ratio > Threshold"
+                    logic_str = r"{Apply Counter Attack if $\tau > \tau_{threshold}$; otherwise Zero-Shot (Ours)}"
                 else:
-                    logic_str = "TTC if Diff-Ratio <= Threshold"
-                    
-                title = (f"Test Time Counter Attacks with ({logic_str})\n"
+                    logic_str = r"{Apply Counter Attack if $\tau \leq \tau_{threshold}$; otherwise Zero-Shot (Baseline)}"
+
+                title = (f"Test Time Counter Attack {logic_str}\n"
                          f"{format_noise_math(noise_type, noise_param)}\n"
                          # f"Max Clean: {max_clean_val:.1f}% @ {max_clean_thr}, "
                          # f"Max Adv: {max_adv_val:.1f}% @ {max_adv_thr}, "
-                         f"Best Average Performance: {max_net_val:.1f}% @ {max_net_thr}")
+                         rf"Best Average Performance: {max_net_val:.1f}% at $\tau_{{\text{{threshold}}}} = {max_net_thr}$"
+
+                            )
                 
-                plt.title(title, fontsize=12, fontweight='bold')
+                plt.title(title, fontsize=12)
                 plt.legend(fontsize=10, loc='upper left', bbox_to_anchor=(1, 1))
                 plt.ylim(0, 85) # Increased to give space for text
                 plt.grid(axis='y', linestyle='--', alpha=0.7)
