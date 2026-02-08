@@ -985,31 +985,149 @@ if __name__ == "__main__":
     plt.figure(figsize=(6, 6))
     labels = ['Clean', 'Adversarial']
     values = [zs_avg_clean, zs_avg_adv]
-    bars = plt.bar(labels, values, color=['blue', 'red'])
-    plt.ylabel('Average Accuracy (%)')
-    plt.title('Average Zero-Shot Accuracy')
-    plt.ylim(0, 100)
+    # Professional colors
+    bars = plt.bar(labels, values, color=['#4682B4', '#FF7F50'], edgecolor='black', linewidth=0.5)
+    plt.ylabel('Average Accuracy (%)', fontsize=12)
+    plt.title('Average Zero-Shot Accuracy', fontsize=14, fontweight='bold')
+    plt.ylim(0, 110)
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
     for bar in bars:
         yval = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width()/2, yval + 1, f'{yval:.2f}%', ha='center', va='bottom')
-    plt.savefig(os.path.join(output_dir, 'average_zs_accuracy.png'))
+        plt.text(bar.get_x() + bar.get_width()/2, yval + 1, f'{yval:.2f}%', ha='center', va='bottom', fontweight='bold')
+    plt.savefig(os.path.join(output_dir, 'average_zs_accuracy.png'), dpi=300)
     plt.close()
 
     # Plot 2: TTC Average Accuracy
     plt.figure(figsize=(6, 6))
     labels = ['Clean', 'Adversarial']
     values = [ttc_avg_clean, ttc_avg_adv]
-    bars = plt.bar(labels, values, color=['blue', 'red'])
-    plt.ylabel('Average Accuracy (%)')
-    plt.title('Average TTC Accuracy')
-    plt.ylim(0, 100)
+    # Professional colors
+    bars = plt.bar(labels, values, color=['#4682B4', '#FF7F50'], edgecolor='black', linewidth=0.5)
+    plt.ylabel('Average Accuracy (%)', fontsize=12)
+    plt.title('Average TTC Accuracy', fontsize=14, fontweight='bold')
+    plt.ylim(0, 110)
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
     for bar in bars:
         yval = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width()/2, yval + 1, f'{yval:.2f}%', ha='center', va='bottom')
-    plt.savefig(os.path.join(output_dir, 'average_ttc_accuracy.png'))
+        plt.text(bar.get_x() + bar.get_width()/2, yval + 1, f'{yval:.2f}%', ha='center', va='bottom', fontweight='bold')
+    plt.savefig(os.path.join(output_dir, 'average_ttc_accuracy.png'), dpi=300)
     plt.close()
 
     print(f"Plots saved in {output_dir}")
+
+    diff_ratio_thresholds = [
+        0.0, 0.1, 0.2, 0.3, 0.4,
+        0.5, 0.6, 0.65, 0.7,
+        0.75, 0.8, 0.85, 0.9, 1.0
+    ]
+
+
+    def gated_accuracy(
+            diff_ratios,
+            zs_preds,
+            ttc_preds,
+            labels,
+            threshold
+    ):
+        """
+        diff_ratios: list[float]
+        zs_preds: list[int]
+        ttc_preds: list[int]
+        labels: list[int]
+        """
+        correct = 0
+        total = len(labels)
+
+        for i in range(total):
+            if diff_ratios[i] > threshold:
+                pred = ttc_preds[i]
+            else:
+                pred = zs_preds[i]
+
+            if pred == labels[i]:
+                correct += 1
+
+        return 100.0 * correct / total
+
+
+    output_root = os.path.join("ttc_with_threshold", model_name)
+    os.makedirs(output_root, exist_ok=True)
+
+    for noise_type in ["Gaussian", "Uniform"]:
+        for noise_param in next(
+                iter(final_diff_ratio_dic.values())
+        )["Clean"].get(noise_type, {}).keys():
+
+            clean_accs = []
+            adv_accs = []
+
+            for tau in diff_ratio_thresholds:
+                clean_dataset_accs = []
+                adv_dataset_accs = []
+
+                for dataset in datasets:
+                    # --- Clean ---
+                    diff_clean = final_diff_ratio_dic[dataset]["Clean"][noise_type][noise_param]
+                    acc_clean = gated_accuracy(
+                        diff_clean,
+                        ZS_CLEAN_PREDS_DATASET[dataset],
+                        TTC_CLEAN_PREDS_SINGLE_DATASET[dataset],
+                        TRUE_LABELS_DATASET[dataset],
+                        tau
+                    )
+                    clean_dataset_accs.append(acc_clean)
+
+                    # --- Adversarial ---
+                    diff_adv = final_diff_ratio_dic[dataset]["Adversarial"][noise_type][noise_param]
+                    acc_adv = gated_accuracy(
+                        diff_adv,
+                        ZS_ADV_PREDS_DATASET[dataset],
+                        TTC_ADV_PREDS_SINGLE_DATASET[dataset],
+                        TRUE_LABELS_DATASET[dataset],
+                        tau
+                    )
+                    adv_dataset_accs.append(acc_adv)
+
+                clean_accs.append(np.mean(clean_dataset_accs))
+                adv_accs.append(np.mean(adv_dataset_accs))
+
+            # ---- Plot ----
+            save_dir = os.path.join(output_root, noise_type, noise_param)
+            os.makedirs(save_dir, exist_ok=True)
+
+            x = np.arange(len(diff_ratio_thresholds))
+            width = 0.35
+
+            plt.figure(figsize=(12, 6))
+            # Professional colors: Steel Blue and Coral
+            bars1 = plt.bar(x - width / 2, clean_accs, width, label="Clean", color='#4682B4', edgecolor='black', linewidth=0.5)
+            bars2 = plt.bar(x + width / 2, adv_accs, width, label="Adversarial", color='#FF7F50', edgecolor='black', linewidth=0.5)
+
+            plt.xticks(x, diff_ratio_thresholds, rotation=45)
+            plt.xlabel("Diff-Ratio Threshold", fontsize=12)
+            plt.ylabel("Average Accuracy (%)", fontsize=12)
+            plt.title(f"TTC Gated by Diff Ratio\n({noise_type}, {noise_param})", fontsize=14, fontweight='bold')
+            plt.legend(fontsize=10)
+            plt.ylim(0, 110) # Increased to give space for text
+            plt.grid(axis='y', linestyle='--', alpha=0.7)
+
+            def add_labels(bars):
+                for bar in bars:
+                    height = bar.get_height()
+                    plt.text(bar.get_x() + bar.get_width() / 2., height + 1,
+                             f'{height:.1f}', ha='center', va='bottom', fontsize=9, fontweight='bold')
+
+            add_labels(bars1)
+            add_labels(bars2)
+
+            plt.tight_layout()
+
+            plt.savefig(os.path.join(save_dir, "accuracy_vs_threshold.png"), dpi=300)
+            plt.savefig(os.path.join(save_dir, "accuracy_vs_threshold.pdf"))
+            plt.close()
+
+            print(f"Saved plots to: {save_dir}")
+
 
 
 
