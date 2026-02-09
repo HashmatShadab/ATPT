@@ -15,7 +15,7 @@ SRC_ROOT = Path(
 
 DST_BASE = Path(
     "/leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/"
-    "atpt_data_compressed"
+    "atpt_data_compressed/"
     "Evaluations_Leonardo"
 )
 
