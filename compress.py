@@ -1,3 +1,4 @@
+import argparse
 import tarfile
 from pathlib import Path
 
@@ -80,13 +81,28 @@ def process_model(model_name: str, sublevel: str | None):
 # ============================================================
 
 def main():
+    parser = argparse.ArgumentParser(description="Dataset-level compression script")
+    parser.add_argument(
+        "--model", 
+        type=str, 
+        choices=list(MODELS.keys()) + ["all"],
+        default="all",
+        help="Name of the model to process (default: all)"
+    )
+    args = parser.parse_args()
+
     print("==============================================")
     print(" Dataset-level compression started")
     print("==============================================")
     print(f"Source root:      {SRC_ROOT}")
     print(f"Destination root: {DST_ROOT}")
 
-    for model_name, sublevel in MODELS.items():
+    if args.model == "all":
+        models_to_process = MODELS.items()
+    else:
+        models_to_process = [(args.model, MODELS[args.model])]
+
+    for model_name, sublevel in models_to_process:
         process_model(model_name, sublevel)
 
     print("\n==============================================")
