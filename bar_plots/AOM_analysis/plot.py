@@ -334,7 +334,7 @@ def get_zs_results(model_name):
     return return_dic
 
 
-def get_ttc_results(model_name):
+def get_aom_results(model_name):
     from pathlib import Path
     import json
     import numpy as np
@@ -503,179 +503,7 @@ def get_ttc_results(model_name):
 
     AOM_DATA = build_all_data(RESULT_PATHS, MODELS, DATASETS, anchor_noises, normalize_embeddings)
 
-    import numpy as np
-
-    case = "clean"
-    model = model_name
-
-    true_labels_data = {}
-
-    # Clean zero shot
-    zero_shot_clean_preds_data = {}
-    zero_shot_clean_max_confidences_data = {}
-
-
-    # Clean single TTC
-    ttc_clean_preds_single_data = {}
-    ttc_clean_max_confidences_single_data = {}
-
-    # Clean Vanilla TTC
-    ttc_clean_preds_vanilla_data = {}
-    ttc_clean_max_confidences_vanilla_data = {}
-
-    # Clean Weighted TTC
-    ttc_clean_preds_weighted_data = {}
-    ttc_clean_max_confidences_weighted_data = {}
-
-    for dataset in DATASETS:
-        example = AOM_DATA[case][model][dataset]
-        true_labels_data[dataset] = example["preds"]["original_clean"]["label"]
-
-        zero_shot_clean_preds_data[dataset] = example["preds"]["original_clean"]["prediction"]
-        zero_shot_clean_max_confidences_data[dataset] = example["preds"]["original_clean"]["max_confidence"]
-
-
-        ttc_clean_preds_single_data[dataset] = example["preds"]["single"]["prediction"]
-        ttc_clean_max_confidences_single_data[dataset] = example["preds"]["single"]["max_confidence"]
-
-        ttc_clean_preds_vanilla_data[dataset] = example["preds"]["vanilla"]["prediction"]
-        ttc_clean_max_confidences_vanilla_data[dataset] = example["preds"]["vanilla"]["max_confidence"]
-
-        ttc_clean_preds_weighted_data[dataset] = example["preds"]["weighted"]["prediction"]
-        ttc_clean_max_confidences_weighted_data[dataset] = example["preds"]["weighted"]["max_confidence"]
-
-        # # print accuracy
-        # print(dataset, compute_accuracy(zero_shot_clean_preds_data[dataset], true_labels_data[dataset]))
-        # print(dataset, compute_accuracy(ttc_clean_preds_single_data[dataset], true_labels_data[dataset]))
-        # print(dataset, compute_accuracy(ttc_clean_preds_vanilla_data[dataset], true_labels_data[dataset]))
-        # print(dataset, compute_accuracy(ttc_clean_preds_weighted_data[dataset], true_labels_data[dataset]))
-        # # print mean confidence
-        # print(dataset, np.mean(zero_shot_clean_max_confidences_data[dataset]))
-        # print(dataset, np.mean(ttc_clean_max_confidences_single_data[dataset]))
-        # print(dataset, np.mean(ttc_clean_max_confidences_vanilla_data[dataset]))
-        # print(dataset, np.mean(ttc_clean_max_confidences_weighted_data[dataset]))
-
-
-    case = "adversarial_eps4_steps100"
-    model = model_name
-
-    # Adversarial zero shot
-    zero_shot_adv_preds_data = {}
-    zero_shot_adv_max_confidences_data = {}
-
-    # Adversarial single TTC
-    ttc_adv_preds_single_data = {}
-    ttc_adv_max_confidences_single_data = {}
-
-    # Adversarial Vanilla TTC
-    ttc_adv_preds_vanilla_data = {}
-    ttc_adv_max_confidences_vanilla_data = {}
-
-    # Adversarial Weighted TTC
-    ttc_adv_preds_weighted_data = {}
-    ttc_adv_max_confidences_weighted_data = {}
-
-
-    for dataset in DATASETS:
-        example = AOM_DATA[case][model][dataset]
-
-        zero_shot_adv_preds_data[dataset] = example["preds"]["original"]["prediction"]
-        zero_shot_adv_max_confidences_data[dataset] = example["preds"]["original"]["max_confidence"]
-
-        ttc_adv_preds_single_data[dataset] = example["preds"]["single"]["prediction"]
-        ttc_adv_max_confidences_single_data[dataset] = example["preds"]["single"]["max_confidence"]
-
-        ttc_adv_preds_vanilla_data[dataset] = example["preds"]["vanilla"]["prediction"]
-        ttc_adv_max_confidences_vanilla_data[dataset] = example["preds"]["vanilla"]["max_confidence"]
-
-        ttc_adv_preds_weighted_data[dataset] = example["preds"]["weighted"]["prediction"]
-        ttc_adv_max_confidences_weighted_data[dataset] = example["preds"]["weighted"]["max_confidence"]
-
-        # print accuracy
-        print(dataset, compute_accuracy(zero_shot_adv_preds_data[dataset], true_labels_data[dataset]))
-        # print(dataset, compute_accuracy(ttc_adv_preds_single_data[dataset], true_labels_data[dataset]))
-        # print(dataset, compute_accuracy(ttc_adv_preds_vanilla_data[dataset], true_labels_data[dataset]))
-        # print(dataset, compute_accuracy(ttc_adv_preds_weighted_data[dataset], true_labels_data[dataset]))
-        # # print mean confidence
-        # print(dataset, np.mean(zero_shot_adv_max_confidences_data[dataset]))
-        # print(dataset, np.mean(ttc_adv_max_confidences_single_data[dataset]))
-        # print(dataset, np.mean(ttc_adv_max_confidences_vanilla_data[dataset]))
-        # print(dataset, np.mean(ttc_adv_max_confidences_weighted_data[dataset]))
-
-    case = "adversarial_eps4_steps100_image_only"
-    model = model_name
-
-    # # Adversarial image only zero shot
-    # zero_shot_adv_image_only_preds_data = {}
-    # zero_shot_adv_image_only_max_confidences_data = {}
-    #
-    # # Adversarial image only single TTC
-    # ttc_adv_image_only_preds_single_data = {}
-    # ttc_adv_image_only_max_confidences_single_data = {}
-    #
-    # # Adversarial image only Vanilla TTC
-    # ttc_adv_image_only_preds_vanilla_data = {}
-    # ttc_adv_image_only_max_confidences_vanilla_data = {}
-    #
-    # # Adversarial image only Weighted TTC
-    # ttc_adv_image_only_preds_weighted_data = {}
-    # ttc_adv_image_only_max_confidences_weighted_data = {}
-    #
-    #
-    # for dataset in DATASETS:
-    #     example = AOM_DATA[case][model][dataset]
-    #
-    #     zero_shot_adv_image_only_preds_data[dataset] = example["preds"]["original"]["prediction"]
-    #     zero_shot_adv_image_only_max_confidences_data[dataset] = example["preds"]["original"]["max_confidence"]
-    #
-    #     ttc_adv_image_only_preds_single_data[dataset] = example["preds"]["single"]["prediction"]
-    #     ttc_adv_image_only_max_confidences_single_data[dataset] = example["preds"]["single"]["max_confidence"]
-    #
-    #     ttc_adv_image_only_preds_vanilla_data[dataset] = example["preds"]["vanilla"]["prediction"]
-    #     ttc_adv_image_only_max_confidences_vanilla_data[dataset] = example["preds"]["vanilla"]["max_confidence"]
-    #
-    #     ttc_adv_image_only_preds_weighted_data[dataset] = example["preds"]["weighted"]["prediction"]
-    #     ttc_adv_image_only_max_confidences_weighted_data[dataset] = example["preds"]["weighted"]["max_confidence"]
-    #
-    #     # print accuracy
-    #     print(dataset, compute_accuracy(zero_shot_adv_image_only_preds_data[dataset], true_labels_data[dataset]))
-    #     print(dataset, compute_accuracy(ttc_adv_image_only_preds_single_data[dataset], true_labels_data[dataset]))
-    #     print(dataset, compute_accuracy(ttc_adv_image_only_preds_vanilla_data[dataset], true_labels_data[dataset]))
-    #     print(dataset, compute_accuracy(ttc_adv_image_only_preds_weighted_data[dataset], true_labels_data[dataset]))
-    #     # print mean confidence
-    #     print(dataset, np.mean(zero_shot_adv_image_only_max_confidences_data[dataset]))
-    #     print(dataset, np.mean(ttc_adv_image_only_max_confidences_single_data[dataset]))
-    #     print(dataset, np.mean(ttc_adv_image_only_max_confidences_vanilla_data[dataset]))
-    #     print(dataset, np.mean(ttc_adv_image_only_max_confidences_weighted_data[dataset]))
-
-    TRUE_LABELS_DATASET = true_labels_data
-
-    # Zero Shot
-    ZS_CLEAN_PREDS_DATASET = zero_shot_clean_preds_data
-    ZS_ADV_PREDS_DATASET = zero_shot_adv_preds_data
-    # ZS_ADV_IMAGE_ONLY_PREDS_DATASET = zero_shot_adv_image_only_preds_data
-
-    # Single
-    TTC_CLEAN_PREDS_SINGLE_DATASET = ttc_clean_preds_single_data
-    TTC_ADV_PREDS_SINGLE_DATASET = ttc_adv_preds_single_data
-    # TTC_ADV_IMAGE_ONLY_PREDS_SINGLE_DATASET = ttc_adv_image_only_preds_single_data
-
-    # Vanilla
-    TTC_CLEAN_PREDS_VANILLA_DATASET = ttc_clean_preds_vanilla_data
-    TTC_ADV_PREDS_VANILLA_DATASET = ttc_adv_preds_vanilla_data
-    # TTC_ADV_IMAGE_ONLY_PREDS_VANILLA_DATASET = ttc_adv_image_only_preds_vanilla_data
-
-    # Weighted
-    TTC_CLEAN_PREDS_WEIGHTED_DATASET = ttc_clean_preds_weighted_data
-    TTC_ADV_PREDS_WEIGHTED_DATASET = ttc_adv_preds_weighted_data
-    # TTC_ADV_IMAGE_ONLY_PREDS_WEIGHTED_DATASET = ttc_adv_image_only_preds_weighted_data
-
-    # create a dcitionary to return this in structured format, return only single setting in ttc and zs
-
-    return_dic = {"zero_shot_clean": ZS_CLEAN_PREDS_DATASET, "zero_shot_adv": ZS_ADV_PREDS_DATASET,
-                 "ttc_single_clean": TTC_CLEAN_PREDS_SINGLE_DATASET, "ttc_single_adv": TTC_ADV_PREDS_SINGLE_DATASET,
-                 "true_labels": TRUE_LABELS_DATASET}
-    return return_dic
+    return AOM_DATA
 
 def parse_experiment_folder_name(folder_name: str) -> Optional[Dict[str, Any]]:
     """
@@ -947,7 +775,7 @@ if __name__ == "__main__":
     model_name = args.model_name
 
     zero_shot_dic = get_zs_results(model_name)
-    ttc_dic = get_ttc_results(
+    aom_dic = get_aom_results(
         model_name,
 
     )
@@ -960,9 +788,9 @@ if __name__ == "__main__":
     ZS_ADV_PREDS_DATASET = zero_shot_dic["zero_shot_adv"]
 
     # TTC clean predictions for all datasets
-    TTC_CLEAN_PREDS_SINGLE_DATASET = ttc_dic["ttc_single_clean"]
+    TTC_CLEAN_PREDS_SINGLE_DATASET = aom_dic["aom_single_clean"]
     # TTC adversarial predictions for all datasets
-    TTC_ADV_PREDS_SINGLE_DATASET = ttc_dic["ttc_single_adv"]
+    TTC_ADV_PREDS_SINGLE_DATASET = aom_dic["aom_single_adv"]
 
 
     # compute zero shot accuracy
