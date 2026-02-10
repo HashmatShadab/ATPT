@@ -223,6 +223,7 @@ def get_zs_results(model_name):
     true_labels_data = {}
 
     zero_shot_clean_preds_data = {}
+    zero_shot_clean_correct_preds = {}
     zero_shot_clean_max_confidences_data = {}
 
     zero_shot_clean_preds_vanilla_data = {}
@@ -237,6 +238,7 @@ def get_zs_results(model_name):
 
         zero_shot_clean_preds_data[dataset] = example["preds"]["original_clean"]["prediction"]
         zero_shot_clean_max_confidences_data[dataset] = example["preds"]["original"]["max_confidence"]
+        zero_shot_clean_correct_preds[dataset] = example["preds"]["original_clean_correct"]
 
         zero_shot_clean_preds_vanilla_data[dataset] = example["preds"]["vanilla"]["prediction"]
         zero_shot_clean_max_confidences_vanilla_data[dataset] = example["preds"]["vanilla"]["max_confidence"]
@@ -312,6 +314,7 @@ def get_zs_results(model_name):
     ZS_CLEAN_PREDS_DATASET = zero_shot_clean_preds_data
     ZS_ADV_PREDS_DATASET = zero_shot_adv_preds_data
     ZS_ADV_IMAGE_ONLY_PREDS_DATASET = zero_shot_adv_image_only_preds_data
+    ZS_CLEAN_CORRECT_PREDS = zero_shot_clean_correct_preds
 
     # Vanilla
     ZS_CLEAN_PREDS_VANILLA_DATASET = zero_shot_clean_preds_vanilla_data
@@ -325,7 +328,8 @@ def get_zs_results(model_name):
 
     return_dic = {"zero_shot_clean": ZS_CLEAN_PREDS_DATASET, "zero_shot_adv": ZS_ADV_PREDS_DATASET,
                   "zero_shot_adv_image_only": ZS_ADV_IMAGE_ONLY_PREDS_DATASET,
-                  "true_labels": TRUE_LABELS_DATASET}
+                  "true_labels": TRUE_LABELS_DATASET,
+                  "zero_shot_clean_correct_preds": ZS_CLEAN_CORRECT_PREDS,}
 
     return return_dic
 
@@ -356,26 +360,16 @@ def get_ttc_results(model_name):
         "eurosat",
     ]
 
-    PRED_KEYS = ("max_confidence", "prediction", "label", 'number_of_correct_predictions_from_correct_clean_indices',
-                 'number_of_incorrect_predictions_from_correct_clean_indices',
-                 'sample_indices_correct_classified_from_incorrect_clean_predictions')
+    PRED_KEYS = ("max_confidence", "prediction", "label",)
     def _load_json(path: Path) -> dict:
         with path.open("r", encoding="utf-8") as f:
             return json.load(f)
 
     def _load_pred_json(obj: dict, *, allow_extra: bool = False) -> dict:
         out = {}
-        for k in PRED_KEYS:
-            if k not in obj:
-                raise KeyError(f"Missing key '{k}' in prediction json.")
+        for k in obj.keys():
             out[k] = obj[k]
 
-        if allow_extra:
-            # these only exist for results_original_clean.json (as you described)
-            if "correct_clean_indices" in obj:
-                out["correct_clean_indices"] = obj["correct_clean_indices"]
-            if "incorrect_clean_indices" in obj:
-                out["incorrect_clean_indices"] = obj["incorrect_clean_indices"]
 
         return out
 
@@ -458,22 +452,29 @@ def get_ttc_results(model_name):
 
         # --- prediction jsons
         preds = {}
-        for key in ["original", "single", "vanilla", "weighted"]:
+        for key in ["original"]:
             fp = base / JSON_KEYMAP[key]
             obj = _load_json(fp)
             preds[key] = _load_pred_json(obj)
 
+        for key in ["single", "vanilla", "weighted"]:
+            fp = base / JSON_KEYMAP[key]
+            obj = _load_json(fp)
+            preds[key] = {}
+            for alpha, value in obj.items():
+                preds[key][alpha] = _load_pred_json(value)
+
         # --- original_clean json (special extras)
         fp = base / JSON_KEYMAP["original_clean"]
         obj = _load_json(fp)
-        preds["original_clean"] = _load_pred_json(obj, allow_extra=True)
+        preds["original_clean"] = _load_pred_json(obj)
 
         # --- counter-attack diff-ratio json
-        fp = base / JSON_KEYMAP["results_counter_attack_diff_ratio"]
-        obj = _load_json(fp)
-        counter_attack = diff_ratio(obj)
+        # fp = base / JSON_KEYMAP["results_counter_attack_diff_ratio"]
+        # obj = _load_json(fp)
+        # counter_attack = diff_ratio(obj)
 
-        return {"preds": preds, "results_counter_attack_diff_ratio": counter_attack}
+        return {"preds": preds}
 
     def build_all_data(result_paths: dict, models: list, datasets: list) -> dict:
         DATA = {}
