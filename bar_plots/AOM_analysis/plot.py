@@ -213,7 +213,7 @@ def get_zs_results(model_name):
 
         return DATA
 
-    DATA = build_all_data(RESULT_PATHS, MODELS, DATASETS)
+    ZS_DATA = build_all_data(RESULT_PATHS, MODELS, DATASETS)
 
     import numpy as np
 
@@ -233,7 +233,7 @@ def get_zs_results(model_name):
     zero_shot_clean_max_confidences_weighted_data = {}
 
     for dataset in DATASETS:
-        example = DATA[case][model][dataset]
+        example = ZS_DATA[case][model][dataset]
         true_labels_data[dataset] = example["preds"]["original_clean"]["label"]
 
         zero_shot_clean_preds_data[dataset] = example["preds"]["original_clean"]["prediction"]
@@ -264,7 +264,7 @@ def get_zs_results(model_name):
     zero_shot_adv_max_confidences_weighted_data = {}
 
     for dataset in DATASETS:
-        example = DATA[case][model][dataset]
+        example = ZS_DATA[case][model][dataset]
 
         zero_shot_adv_preds_data[dataset] = example["preds"]["original"]["prediction"]
         zero_shot_adv_max_confidences_data[dataset] = example["preds"]["original"]["max_confidence"]
@@ -293,7 +293,7 @@ def get_zs_results(model_name):
     zero_shot_adv_image_only_max_confidences_weighted_data = {}
 
     for dataset in DATASETS:
-        example = DATA[case][model][dataset]
+        example = ZS_DATA[case][model][dataset]
 
         zero_shot_adv_image_only_preds_data[dataset] = example["preds"]["original"]["prediction"]
         zero_shot_adv_image_only_max_confidences_data[dataset] = example["preds"]["original"]["max_confidence"]
@@ -360,7 +360,9 @@ def get_ttc_results(model_name):
         "eurosat",
     ]
 
-    PRED_KEYS = ("max_confidence", "prediction", "label",)
+    anchor_noises = ["Sigma_0_06", "Sigma_0_12", "Sigma_0_18", "Sigma_0_24", "Eps_16_0", "Eps_32_0", "Eps_40_0", "Eps_48_0"]
+    normalize_embeddings = ["False", "True"]
+
     def _load_json(path: Path) -> dict:
         with path.open("r", encoding="utf-8") as f:
             return json.load(f)
@@ -373,14 +375,7 @@ def get_ttc_results(model_name):
 
         return out
 
-    def diff_ratio(obj: dict) -> dict:
-        # note: keeping your spelling "avergae_diff_ratio" as-is
-        if "diff_ratio" not in obj or "avergae_diff_ratio" not in obj:
-            raise KeyError("Expected keys: 'diff_ratio' and 'avergae_diff_ratio' (note spelling).")
-        return {
-            "diff_ratio_per_sample": obj["diff_ratio"],
-            "diff_ratio_avg": obj["avergae_diff_ratio"],
-        }
+
 
     def compute_accuracy(preds, labels):
         preds = np.asarray(preds)
@@ -403,7 +398,7 @@ def get_ttc_results(model_name):
                 "base_path": (
                     "../../Final_Results_corrected_ca_tau_AOM/"
                     "{model}/{dataset}/"
-                    "Clean/No_Counter_Attack/No_TPT/Image_Feature_Purify/Type_noisy_anchor_Anchors_10_Alpha_ablation_Sigma_0_06_threshold_0_0_normalize_embeddings_False/"
+                    "Clean/No_Counter_Attack/No_TPT/Image_Feature_Purify/Type_{noisy}_anchor_Anchors_10_Alpha_ablation_{noise_anchor}_threshold_0_0_normalize_embeddings_{normalize_embeddings}/"
                     "Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01"
                 ),
             },
@@ -412,7 +407,7 @@ def get_ttc_results(model_name):
                     "../../Final_Results_corrected_ca_tau_AOM/"
                     "{model}/{dataset}/"
                     "Adversarial_Eps_4_0_Steps_100/"
-                    "No_Counter_Attack/No_TPT/Image_Feature_Purify/Type_noisy_anchor_Anchors_10_Alpha_ablation_Sigma_0_06_threshold_0_0_normalize_embeddings_False/"
+                    "No_Counter_Attack/No_TPT/Image_Feature_Purify/Type_{noisy}_anchor_Anchors_10_Alpha_ablation_{noise_anchor}_threshold_0_0_normalize_embeddings_{normalize_embeddings}/"
                     "Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01"
                 ),
             },
@@ -476,7 +471,7 @@ def get_ttc_results(model_name):
 
         return {"preds": preds}
 
-    def build_all_data(result_paths: dict, models: list, datasets: list) -> dict:
+    def build_all_data(result_paths: dict, models: list, datasets: list, anchor_noises: list, normalize_embeddings: list) -> dict:
         DATA = {}
 
         for case, cfg in result_paths["AOM"].items():
@@ -487,12 +482,26 @@ def get_ttc_results(model_name):
                 DATA[case].setdefault(model, {})
 
                 for dataset in datasets:
-                    base_path = base_template.format(model=model, dataset=dataset)
-                    DATA[case][model][dataset] = load_one_setting(base_path)
+                    DATA[case][model].setdefault(dataset, {})
+                    for noise_anchor in anchor_noises:
+                        if noise_anchor.startswith("Sigma"):
+                            noise_anchor_name = "noisy"
+                        else:
+                            noise_anchor_name = "uniform"
+                        DATA[case][model][dataset].setdefault(f"{noise_anchor_name}_{noise_anchor}", {})
+                        for normalize_embedding in normalize_embeddings:
+                            base_path = base_template.format(
+                                model=model,
+                                dataset=dataset,
+                                noisy=noise_anchor_name,
+                                noise_anchor=noise_anchor,
+                                normalize_embeddings=normalize_embedding,
+                            )
+                            DATA[case][model][dataset][f"{noise_anchor_name}_{noise_anchor}"][normalize_embedding] = load_one_setting(base_path)
 
         return DATA
 
-    DATA = build_all_data(RESULT_PATHS, MODELS, DATASETS)
+    AOM_DATA = build_all_data(RESULT_PATHS, MODELS, DATASETS, anchor_noises, normalize_embeddings)
 
     import numpy as np
 
@@ -519,7 +528,7 @@ def get_ttc_results(model_name):
     ttc_clean_max_confidences_weighted_data = {}
 
     for dataset in DATASETS:
-        example = DATA[case][model][dataset]
+        example = AOM_DATA[case][model][dataset]
         true_labels_data[dataset] = example["preds"]["original_clean"]["label"]
 
         zero_shot_clean_preds_data[dataset] = example["preds"]["original_clean"]["prediction"]
@@ -568,7 +577,7 @@ def get_ttc_results(model_name):
 
 
     for dataset in DATASETS:
-        example = DATA[case][model][dataset]
+        example = AOM_DATA[case][model][dataset]
 
         zero_shot_adv_preds_data[dataset] = example["preds"]["original"]["prediction"]
         zero_shot_adv_max_confidences_data[dataset] = example["preds"]["original"]["max_confidence"]
@@ -614,7 +623,7 @@ def get_ttc_results(model_name):
     #
     #
     # for dataset in DATASETS:
-    #     example = DATA[case][model][dataset]
+    #     example = AOM_DATA[case][model][dataset]
     #
     #     zero_shot_adv_image_only_preds_data[dataset] = example["preds"]["original"]["prediction"]
     #     zero_shot_adv_image_only_max_confidences_data[dataset] = example["preds"]["original"]["max_confidence"]
@@ -929,9 +938,19 @@ def get_aggregated_results(root: str, selected_attacks: Optional[List[str]] = No
 
 
 if __name__ == "__main__":
-    model_name = "vit_l_14_datacomp_1b"
+    parser = argparse.ArgumentParser(description="AOM analysis plotting / aggregation")
+    parser.add_argument("--model-name", type=str, default="vit_l_14_datacomp_1b")
+
+
+    args = parser.parse_args()
+
+    model_name = args.model_name
+
     zero_shot_dic = get_zs_results(model_name)
-    ttc_dic = get_ttc_results(model_name)
+    ttc_dic = get_ttc_results(
+        model_name,
+
+    )
 
     # True labels for all datasets
     TRUE_LABELS_DATASET = zero_shot_dic["true_labels"]
