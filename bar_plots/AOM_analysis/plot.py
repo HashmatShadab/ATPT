@@ -775,33 +775,14 @@ if __name__ == "__main__":
     model_name = args.model_name
 
     zero_shot_dic = get_zs_results(model_name)
-    aom_dic = get_aom_results(
-        model_name,
-
-    )
-
     # True labels for all datasets
     TRUE_LABELS_DATASET = zero_shot_dic["true_labels"]
     # Zero-Shot clean predictions for all datasets
     ZS_CLEAN_PREDS_DATASET = zero_shot_dic["zero_shot_clean"]
     # Zero-Shot adversarial predictions for all datasets
     ZS_ADV_PREDS_DATASET = zero_shot_dic["zero_shot_adv"]
-
-    # TTC clean predictions for all datasets
-    TTC_CLEAN_PREDS_SINGLE_DATASET = aom_dic["aom_single_clean"]
-    # TTC adversarial predictions for all datasets
-    TTC_ADV_PREDS_SINGLE_DATASET = aom_dic["aom_single_adv"]
-
-
-    # compute zero shot accuracy
-    def compute_accuracy(preds, labels):
-        preds = np.asarray(preds)
-        labels = np.asarray(labels)
-        return (preds == labels).mean() * 100.0
-
-    import numpy as np
-
-    datasets = list(TRUE_LABELS_DATASET.keys())
+    # Zero-Shot clean correct predictions for all datasets
+    ZS_CLEAN_CORRECT_DATASET = zero_shot_dic["zero_shot_clean_correct_preds"]
 
 
     root_diff_ratio = "../../Diffratio_Adv_gen_Results/vit_l_14_datacomp_1b"
@@ -831,6 +812,15 @@ if __name__ == "__main__":
                     for tau_type_key, tau_type_value in noise_param_value.items():
                         diff_ratio = tau_type_value.get("diff_ratio_after_counter_attack", None)
                         final_diff_ratio_dic[dataset_key][attack_name][noise_type_name][noise_param_key] = diff_ratio
+
+
+    aom_dic = get_aom_results(
+        model_name,
+
+    )
+
+
+
 
 
 
