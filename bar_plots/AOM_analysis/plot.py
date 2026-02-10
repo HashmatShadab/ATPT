@@ -838,6 +838,23 @@ if __name__ == "__main__":
         return (preds == labels).mean() * 100.0
 
 
+    def conservative_accuracy_from_mask(preds, labels, clean_correct_mask):
+        """
+        Compute accuracy ONLY on samples where clean prediction was correct.
+        """
+        preds = np.asarray(preds)
+        labels = np.asarray(labels)
+        mask = np.asarray(clean_correct_mask, dtype=bool)
+
+        assert len(preds) == len(labels) == len(mask)
+
+        if mask.sum() == 0:
+            return np.nan
+
+        correct = (preds[mask] == labels[mask]).mean()
+        return float(correct * 100.0)
+
+
     def alpha_sort_key(a: str):
         try:
             return float(a)
@@ -876,13 +893,15 @@ if __name__ == "__main__":
     # -------------------------
     # AOM aggregation
     # -------------------------
-    def aggregate_aom_accuracy(aom_dic, model_name, datasets):
+    def aggregate_aom_conservative_accuracy(aom_dic,
+                                            model_name,
+                                            datasets,
+                                            ZS_CLEAN_CORRECT_DATASET):
         """
         Returns:
         AOM_AVG[attack][noise_anchor][normalize] = {
             "alphas": [...],
-            "avg": [...],
-            "std": [...]
+            "avg": [...]
         }
         """
 
@@ -894,21 +913,22 @@ if __name__ == "__main__":
 
             AOM_AVG.setdefault(attack, {})
 
-            for dataset in datasets:
-                anchors = list(aom_dic[attack][model_name][dataset].keys())
+            # discover anchors
+            for d in datasets:
+                anchors = list(aom_dic[attack][model_name][d].keys())
                 break
 
             for noise_anchor in anchors:
                 AOM_AVG[attack].setdefault(noise_anchor, {})
 
-                normalize_keys = aom_dic[attack][model_name][dataset][noise_anchor].keys()
+                normalize_keys = aom_dic[attack][model_name][d][noise_anchor].keys()
 
                 for normalize in normalize_keys:
-                    # get alpha list
-                    for dataset in datasets:
+                    # discover alpha keys
+                    for d in datasets:
                         try:
                             alpha_keys = list(
-                                aom_dic[attack][model_name][dataset]
+                                aom_dic[attack][model_name][d]
                                 [noise_anchor][normalize]
                                 ["preds"]["single"].keys()
                             )
@@ -919,30 +939,32 @@ if __name__ == "__main__":
                     alpha_keys = sorted(alpha_keys, key=alpha_sort_key)
                     alphas = [float(a) for a in alpha_keys]
 
-                    avg_vals, std_vals = [], []
+                    avg_vals = []
 
                     for a in alpha_keys:
                         per_dataset_acc = []
 
-                        for dataset in datasets:
+                        for d in datasets:
                             entry = (
-                                aom_dic[attack][model_name][dataset]
+                                aom_dic[attack][model_name][d]
                                 [noise_anchor][normalize]
                                 ["preds"]["single"][a]
                             )
 
                             preds = entry["prediction"]
                             labels = entry["label"]
-                            acc = compute_accuracy(preds, labels)
+                            clean_mask = ZS_CLEAN_CORRECT_DATASET[d]
+
+                            acc = conservative_accuracy_from_mask(
+                                preds, labels, clean_mask
+                            )
                             per_dataset_acc.append(acc)
 
-                        avg_vals.append(float(np.mean(per_dataset_acc)))
-                        std_vals.append(float(np.std(per_dataset_acc)))
+                        avg_vals.append(float(np.nanmean(per_dataset_acc)))
 
                     AOM_AVG[attack][noise_anchor][normalize] = {
                         "alphas": alphas,
                         "avg": avg_vals,
-                        "std": std_vals,
                     }
 
         return AOM_AVG
@@ -951,18 +973,11 @@ if __name__ == "__main__":
     # -------------------------
     # Plotting
     # -------------------------
-    def plot_aom(alphas, avg, std, zs_clean, zs_adv, title, outpath):
+    def plot_aom(alphas, avg, zs_clean, zs_adv, title, outpath):
         ensure_dir(os.path.dirname(outpath))
 
         plt.figure(figsize=(7, 4))
-        plt.plot(alphas, avg, marker="o", label="AOM (avg across datasets)")
-        plt.fill_between(
-            alphas,
-            np.array(avg) - np.array(std),
-            np.array(avg) + np.array(std),
-            alpha=0.2,
-            label="±1 std"
-        )
+        plt.plot(alphas, avg, marker="o", label="AOM (conservative avg)")
 
         plt.axhline(zs_clean, linestyle="--", label=f"ZS Clean {zs_clean:.2f}")
         plt.axhline(zs_adv, linestyle=":", label=f"ZS Adv {zs_adv:.2f}")
@@ -983,18 +998,19 @@ if __name__ == "__main__":
     def run_all_plots(model_name, out_root="plots"):
         datasets = list(TRUE_LABELS_DATASET.keys())
 
-        # Zero-shot
+        # Zero-shot baselines
         zs = aggregate_zero_shot(
             TRUE_LABELS_DATASET,
             ZS_CLEAN_PREDS_DATASET,
             ZS_ADV_PREDS_DATASET
         )
 
-        # AOM
-        aom_avg = aggregate_aom_accuracy(
+        # AOM conservative aggregation
+        aom_avg = aggregate_aom_conservative_accuracy(
             aom_dic,
             model_name,
-            datasets
+            datasets,
+            ZS_CLEAN_CORRECT_DATASET
         )
 
         for attack, attack_obj in aom_avg.items():
@@ -1007,18 +1023,16 @@ if __name__ == "__main__":
                         noise_anchor,
                         f"normalize_{normalize}"
                     )
-
                     outpath = os.path.join(outdir, f"{attack}.png")
 
                     title = (
-                        f"AOM avg accuracy\n"
+                        f"AOM conservative accuracy\n"
                         f"attack={attack}, anchor={noise_anchor}, normalize={normalize}"
                     )
 
                     plot_aom(
                         series["alphas"],
                         series["avg"],
-                        series["std"],
                         zs["clean_avg"],
                         zs["adv_avg"],
                         title,
