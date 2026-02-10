@@ -819,7 +819,216 @@ if __name__ == "__main__":
 
     )
 
-    a=2
+    import os
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from typing import Dict, List
+
+
+    # -------------------------
+    # Utils
+    # -------------------------
+    def ensure_dir(path: str):
+        os.makedirs(path, exist_ok=True)
+
+
+    def compute_accuracy(preds, labels):
+        preds = np.asarray(preds)
+        labels = np.asarray(labels)
+        return (preds == labels).mean() * 100.0
+
+
+    def alpha_sort_key(a: str):
+        try:
+            return float(a)
+        except Exception:
+            return float("inf")
+
+
+    # -------------------------
+    # Zero-shot aggregation
+    # -------------------------
+    def aggregate_zero_shot(TRUE_LABELS_DATASET,
+                            ZS_CLEAN_PREDS_DATASET,
+                            ZS_ADV_PREDS_DATASET):
+
+        datasets = list(TRUE_LABELS_DATASET.keys())
+
+        clean_accs, adv_accs = [], []
+
+        for d in datasets:
+            labels = TRUE_LABELS_DATASET[d]
+            clean_accs.append(
+                compute_accuracy(ZS_CLEAN_PREDS_DATASET[d], labels)
+            )
+            adv_accs.append(
+                compute_accuracy(ZS_ADV_PREDS_DATASET[d], labels)
+            )
+
+        return {
+            "clean_avg": float(np.mean(clean_accs)),
+            "adv_avg": float(np.mean(adv_accs)),
+            "clean_std": float(np.std(clean_accs)),
+            "adv_std": float(np.std(adv_accs)),
+        }
+
+
+    # -------------------------
+    # AOM aggregation
+    # -------------------------
+    def aggregate_aom_accuracy(aom_dic, model_name, datasets):
+        """
+        Returns:
+        AOM_AVG[attack][noise_anchor][normalize] = {
+            "alphas": [...],
+            "avg": [...],
+            "std": [...]
+        }
+        """
+
+        AOM_AVG = {}
+
+        for attack in aom_dic.keys():
+            if model_name not in aom_dic[attack]:
+                continue
+
+            AOM_AVG.setdefault(attack, {})
+
+            for dataset in datasets:
+                anchors = list(aom_dic[attack][model_name][dataset].keys())
+                break
+
+            for noise_anchor in anchors:
+                AOM_AVG[attack].setdefault(noise_anchor, {})
+
+                normalize_keys = aom_dic[attack][model_name][dataset][noise_anchor].keys()
+
+                for normalize in normalize_keys:
+                    # get alpha list
+                    for dataset in datasets:
+                        try:
+                            alpha_keys = list(
+                                aom_dic[attack][model_name][dataset]
+                                [noise_anchor][normalize]
+                                ["preds"]["single"].keys()
+                            )
+                            break
+                        except Exception:
+                            continue
+
+                    alpha_keys = sorted(alpha_keys, key=alpha_sort_key)
+                    alphas = [float(a) for a in alpha_keys]
+
+                    avg_vals, std_vals = [], []
+
+                    for a in alpha_keys:
+                        per_dataset_acc = []
+
+                        for dataset in datasets:
+                            entry = (
+                                aom_dic[attack][model_name][dataset]
+                                [noise_anchor][normalize]
+                                ["preds"]["single"][a]
+                            )
+
+                            preds = entry["prediction"]
+                            labels = entry["label"]
+                            acc = compute_accuracy(preds, labels)
+                            per_dataset_acc.append(acc)
+
+                        avg_vals.append(float(np.mean(per_dataset_acc)))
+                        std_vals.append(float(np.std(per_dataset_acc)))
+
+                    AOM_AVG[attack][noise_anchor][normalize] = {
+                        "alphas": alphas,
+                        "avg": avg_vals,
+                        "std": std_vals,
+                    }
+
+        return AOM_AVG
+
+
+    # -------------------------
+    # Plotting
+    # -------------------------
+    def plot_aom(alphas, avg, std, zs_clean, zs_adv, title, outpath):
+        ensure_dir(os.path.dirname(outpath))
+
+        plt.figure(figsize=(7, 4))
+        plt.plot(alphas, avg, marker="o", label="AOM (avg across datasets)")
+        plt.fill_between(
+            alphas,
+            np.array(avg) - np.array(std),
+            np.array(avg) + np.array(std),
+            alpha=0.2,
+            label="±1 std"
+        )
+
+        plt.axhline(zs_clean, linestyle="--", label=f"ZS Clean {zs_clean:.2f}")
+        plt.axhline(zs_adv, linestyle=":", label=f"ZS Adv {zs_adv:.2f}")
+
+        plt.ylim(0, 100)
+        plt.xlabel("Alpha")
+        plt.ylabel("Accuracy (%)")
+        plt.title(title)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(outpath, dpi=200)
+        plt.close()
+
+
+    # -------------------------
+    # Main execution
+    # -------------------------
+    def run_all_plots(model_name, out_root="plots"):
+        datasets = list(TRUE_LABELS_DATASET.keys())
+
+        # Zero-shot
+        zs = aggregate_zero_shot(
+            TRUE_LABELS_DATASET,
+            ZS_CLEAN_PREDS_DATASET,
+            ZS_ADV_PREDS_DATASET
+        )
+
+        # AOM
+        aom_avg = aggregate_aom_accuracy(
+            aom_dic,
+            model_name,
+            datasets
+        )
+
+        for attack, attack_obj in aom_avg.items():
+            for noise_anchor, anchor_obj in attack_obj.items():
+                for normalize, series in anchor_obj.items():
+                    outdir = os.path.join(
+                        out_root,
+                        model_name,
+                        "AOM",
+                        noise_anchor,
+                        f"normalize_{normalize}"
+                    )
+
+                    outpath = os.path.join(outdir, f"{attack}.png")
+
+                    title = (
+                        f"AOM avg accuracy\n"
+                        f"attack={attack}, anchor={noise_anchor}, normalize={normalize}"
+                    )
+
+                    plot_aom(
+                        series["alphas"],
+                        series["avg"],
+                        series["std"],
+                        zs["clean_avg"],
+                        zs["adv_avg"],
+                        title,
+                        outpath
+                    )
+
+                    print(f"[Saved] {outpath}")
+
+
+    run_all_plots(model_name)
 
 
 
