@@ -840,7 +840,9 @@ if __name__ == "__main__":
 
     def conservative_accuracy_from_mask(preds, labels, clean_correct_mask):
         """
-        Compute accuracy ONLY on samples where clean prediction was correct.
+        Conservative accuracy:
+        - Evaluate correctness only on indices where clean ZS was correct
+        - Normalize by TOTAL number of samples
         """
         preds = np.asarray(preds)
         labels = np.asarray(labels)
@@ -848,11 +850,14 @@ if __name__ == "__main__":
 
         assert len(preds) == len(labels) == len(mask)
 
-        if mask.sum() == 0:
+        total = len(preds)
+        if total == 0:
             return np.nan
 
-        correct = (preds[mask] == labels[mask]).mean()
-        return float(correct * 100.0)
+        # Correct predictions ONLY where clean was correct
+        num_correct = (preds[mask] == labels[mask]).sum()
+
+        return float(num_correct / total * 100.0)
 
 
     def alpha_sort_key(a: str):
@@ -973,23 +978,101 @@ if __name__ == "__main__":
     # -------------------------
     # Plotting
     # -------------------------
-    def plot_aom(alphas, avg, zs_clean, zs_adv, title, outpath):
+    def plot_aom_bars(
+            alphas,
+            clean_avg,
+            adv_avg,
+            title,
+            outpath,
+            *,
+            note_alpha0_is_zs: bool = True,
+    ):
+        """Grouped bar plot: for each alpha show Clean vs Adversarial avg accuracy.
+
+        Important: `alpha == 0.0` corresponds to zero-shot results (not AOM), and should
+        be labeled accordingly.
+        """
+
         ensure_dir(os.path.dirname(outpath))
 
-        plt.figure(figsize=(7, 4))
-        plt.plot(alphas, avg, marker="o", label="AOM (conservative avg)")
+        alphas = [float(a) for a in alphas]
+        clean_avg = np.asarray(clean_avg, dtype=float)
+        adv_avg = np.asarray(adv_avg, dtype=float)
 
-        plt.axhline(zs_clean, linestyle="--", label=f"ZS Clean {zs_clean:.2f}")
-        plt.axhline(zs_adv, linestyle=":", label=f"ZS Adv {zs_adv:.2f}")
+        # --- style
+        plt.rcParams.update({
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "axes.grid": True,
+            "grid.alpha": 0.25,
+            "grid.linestyle": "-",
+            "axes.axisbelow": True,
+            "font.size": 11,
+        })
 
-        plt.ylim(0, 100)
-        plt.xlabel("Alpha")
-        plt.ylabel("Accuracy (%)")
-        plt.title(title)
-        plt.legend()
-        plt.tight_layout()
-        plt.savefig(outpath, dpi=200)
-        plt.close()
+        fig, ax = plt.subplots(figsize=(9.5, 4.8))
+
+        x = np.arange(len(alphas))
+        width = 0.38
+
+        # Colors chosen to be print-friendly and distinct
+        clean_color = "#4C72B0"
+        adv_color = "#DD8452"
+
+        clean_bars = ax.bar(x - width / 2, clean_avg, width=width, label="Clean", color=clean_color)
+        adv_bars = ax.bar(x + width / 2, adv_avg, width=width, label="Adversarial", color=adv_color)
+
+        # tick labels
+        tick_labels = []
+        for a in alphas:
+            if note_alpha0_is_zs and abs(a - 0.0) < 1e-12:
+                tick_labels.append("0.0\n(ZS)")
+            else:
+                tick_labels.append(f"{a:g}")
+        ax.set_xticks(x)
+        ax.set_xticklabels(tick_labels)
+
+        max_val = float(np.nanmax([np.nanmax(clean_avg), np.nanmax(adv_avg)]))
+        ax.set_ylim(0, max(100.0, max_val + 4.0))
+        ax.set_xlabel("Alpha")
+        ax.set_ylabel("Average accuracy across datasets (%)")
+        ax.set_title(title)
+        ax.legend(frameon=False)
+
+        # value labels above bars
+        def _add_bar_value_labels(bar_container):
+            for rect in bar_container:
+                h = rect.get_height()
+                if h is None or not np.isfinite(h):
+                    continue
+                ax.text(
+                    rect.get_x() + rect.get_width() / 2.0,
+                    h,
+                    f"{h:.1f}",
+                    ha="center",
+                    va="bottom",
+                    fontsize=10,
+                    color="#222222",
+                    clip_on=True,
+                )
+
+        _add_bar_value_labels(clean_bars)
+        _add_bar_value_labels(adv_bars)
+
+        if note_alpha0_is_zs:
+            fig.text(
+                0.995,
+                0.01,
+                "ZS = Zero-shot baseline (alpha = 0.0)",
+                ha="right",
+                va="bottom",
+                fontsize=10,
+                color="#444444",
+            )
+
+        fig.tight_layout(rect=(0, 0.03, 1, 1))
+        fig.savefig(outpath, dpi=250)
+        plt.close(fig)
 
 
     # -------------------------
@@ -1013,33 +1096,66 @@ if __name__ == "__main__":
             ZS_CLEAN_CORRECT_DATASET
         )
 
-        for attack, attack_obj in aom_avg.items():
-            for noise_anchor, anchor_obj in attack_obj.items():
-                for normalize, series in anchor_obj.items():
-                    outdir = os.path.join(
-                        out_root,
-                        model_name,
-                        "AOM",
-                        noise_anchor,
-                        f"normalize_{normalize}"
-                    )
-                    outpath = os.path.join(outdir, f"{attack}.png")
+        # We want a single plot per (noise_anchor, normalize) showing both conditions.
+        clean_key = "clean"
+        adv_key = "adversarial_eps4_steps100"
 
-                    title = (
-                        f"AOM conservative accuracy\n"
-                        f"attack={attack}, anchor={noise_anchor}, normalize={normalize}"
-                    )
+        if clean_key not in aom_avg or adv_key not in aom_avg:
+            raise KeyError(
+                f"Expected AOM results for both '{clean_key}' and '{adv_key}'. "
+                f"Found keys: {sorted(aom_avg.keys())}"
+            )
 
-                    plot_aom(
-                        series["alphas"],
-                        series["avg"],
-                        zs["clean_avg"],
-                        zs["adv_avg"],
-                        title,
-                        outpath
-                    )
+        for noise_anchor, anchor_obj in aom_avg[clean_key].items():
+            for normalize, clean_series in anchor_obj.items():
+                if noise_anchor not in aom_avg[adv_key] or normalize not in aom_avg[adv_key][noise_anchor]:
+                    continue
 
-                    print(f"[Saved] {outpath}")
+                adv_series = aom_avg[adv_key][noise_anchor][normalize]
+
+                # Build alpha -> avg maps
+                clean_map = {float(a): float(v) for a, v in zip(clean_series["alphas"], clean_series["avg"])}
+                adv_map = {float(a): float(v) for a, v in zip(adv_series["alphas"], adv_series["avg"])}
+
+                all_alphas = sorted(set(clean_map.keys()) | set(adv_map.keys()))
+                if 0.0 not in all_alphas:
+                    all_alphas = [0.0] + all_alphas
+
+                # alpha=0.0 is explicitly zero-shot baseline
+                clean_vals = []
+                adv_vals = []
+                for a in all_alphas:
+                    if abs(a - 0.0) < 1e-12:
+                        clean_vals.append(zs["clean_avg"])
+                        adv_vals.append(zs["adv_avg"])
+                    else:
+                        clean_vals.append(clean_map.get(a, np.nan))
+                        adv_vals.append(adv_map.get(a, np.nan))
+
+                outdir = os.path.join(
+                    out_root,
+                    model_name,
+                    "AOM",
+                    noise_anchor,
+                    f"normalize_{normalize}"
+                )
+                outpath = os.path.join(outdir, "clean_vs_adversarial_bars.png")
+
+                title = (
+                    "Average accuracy across datasets\n"
+                    f"anchor={noise_anchor}, normalize={normalize}"
+                )
+
+                plot_aom_bars(
+                    all_alphas,
+                    clean_vals,
+                    adv_vals,
+                    title,
+                    outpath,
+                    note_alpha0_is_zs=True,
+                )
+
+                print(f"[Saved] {outpath}")
 
 
     run_all_plots(model_name)
