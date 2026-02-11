@@ -460,44 +460,18 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     if args.counter_attack:
         # Create counter-attack with specified parameters
-        if args.counter_attack_type == "pgd":
-            counter_atk = torchattacks.PGDCounter(model, eps=args.counter_attack_eps / 255,
-                                                  alpha=args.counter_attack_alpha / 255,
-                                                  steps=args.counter_attack_steps,
-                                                  tau_thres=args.counter_attack_tau_thres,
-                                                  beta=args.counter_attack_beta,
-                                                  weighted_perturbation=args.counter_attack_weighted_perturbations,
-                                                  init_noise=args.counter_attack_init_noise,
-                                                  gaussian_sigma=args.counter_attack_gaussian_sigma,
-                                                  tau_type=args.counter_attack_tau,
-                                                  num_anchors=args.counter_attack_noisy_tau_num_anchors,
-                                                  )
-        elif args.counter_attack_type == "pgd_clip_pure_i":
-            if args.pgd_clip_pure_i_text_embeddings == "null":
-                embeddings = template_text_embeddings
-            elif args.pgd_clip_pure_i_text_embeddings == "class":
-                embeddings = class_text_embeddings
-            else:
-                raise ValueError(f"Unknown text embedding type: {args.pgd_clip_pure_i_text_embeddings}")
-            counter_atk = torchattacks.PGDClipPureImage(model, eps=args.counter_attack_eps / 255,
-                                                        alpha=args.counter_attack_alpha / 255,
-                                                        steps=args.counter_attack_steps, text_embeddings=embeddings
-                                                        )
-        elif args.counter_attack_type == "pgd_counter_and_clipure_i":
-            if args.pgd_clip_pure_i_text_embeddings == "null":
-                embeddings = template_text_embeddings
-            elif args.pgd_clip_pure_i_text_embeddings == "class":
-                embeddings = class_text_embeddings
-            else:
-                raise ValueError(f"Unknown text embedding type: {args.pgd_clip_pure_i_text_embeddings}")
-            counter_atk = torchattacks.PGDCounterClipPureImage(model, eps=args.counter_attack_eps / 255,
-                                                               alpha=args.counter_attack_alpha / 255,
-                                                               steps=args.counter_attack_steps,
-                                                               text_embeddings=embeddings,
-                                                               tau_thres=args.counter_attack_tau_thres,
-                                                               beta=args.counter_attack_beta,
-
-                                                               loss_lamda=args.pgd_counter_and_clipure_i_lamda)
+        # NOTE: Only PGD-style counter-attack is supported in this script.
+        counter_atk = torchattacks.PGDCounter(model, eps=args.counter_attack_eps / 255,
+                                              alpha=args.counter_attack_alpha / 255,
+                                              steps=args.counter_attack_steps,
+                                              tau_thres=args.counter_attack_tau_thres,
+                                              beta=args.counter_attack_beta,
+                                              weighted_perturbation=args.counter_attack_weighted_perturbations,
+                                              init_noise=args.counter_attack_init_noise,
+                                              gaussian_sigma=args.counter_attack_gaussian_sigma,
+                                              tau_type=args.counter_attack_tau,
+                                              num_anchors=args.counter_attack_noisy_tau_num_anchors,
+                                              )
         if logger:
             logger.info(
                 f"Using counter-attack with epsilon: {args.counter_attack_eps:.6f}, alpha: {args.counter_attack_alpha:.6f}, steps: {args.counter_attack_steps}")
@@ -619,24 +593,6 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         # Force garbage collection and clear GPU cache more frequently
         torch.cuda.empty_cache()
 
-        ############### Not working ###############################
-        # with torch.enable_grad():
-        #
-        #     image_embeddings, text_embeddings, logit_scale = model(adv_images, get_image_text_features=True)
-        #
-        #     image_embeddings_purify = purify_zi(image_embeddings, 10, 30, template_text_embeddings)
-        #
-        # adv_emb_logits = logit_scale * image_embeddings @ text_embeddings.t()
-        # adv_emb_probs = adv_emb_logits.softmax(dim=-1)
-        # _, adv_emb_pred = adv_emb_probs.max(1)
-        # adv_emb_correct += adv_emb_pred.eq(target).sum().item()
-        #
-        #
-        # purify_emb_logits = logit_scale * image_embeddings_purify @ text_embeddings.t()
-        # purify_emb_probs = purify_emb_logits.softmax(dim=-1)
-        # _, purify_emb_pred = purify_emb_probs.max(1)
-        # purify_emb_correct += purify_emb_pred.eq(target).sum().item()
-        ############### Not working ###############################
 
         if logger:
             if args.counter_attack:
@@ -786,7 +742,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--counter_attack', default=False, type=lambda x: (str(x).lower() == 'true'))
     parser.add_argument('--counter_attack_type', default='pgd',
-                        choices=["pgd", "pgd_clip_pure_i", "pgd_counter_and_clipure_i"], type=str)
+                        choices=["pgd"], type=str)
     parser.add_argument('--counter_attack_steps', default=2, type=int)
     parser.add_argument('--counter_attack_eps', default=4.0, type=float)
     parser.add_argument('--counter_attack_alpha', default=1.0, type=float)
@@ -799,9 +755,6 @@ if __name__ == '__main__':
     parser.add_argument('--counter_attack_noisy_tau_num_anchors', default=10, type=int)
     parser.add_argument('--counter_attack_tau', default='normal', choices=["normal", "noisy", "normal_anchors"],
                         type=str)
-
-    parser.add_argument('--pgd_clip_pure_i_text_embeddings', default='null', choices=["null", "class"], type=str)
-    parser.add_argument('--pgd_counter_and_clipure_i_lamda', default=1.0, type=float)
 
     # NOTE: image feature purification and plot-saving options were removed from this script.
 
