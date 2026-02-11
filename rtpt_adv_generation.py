@@ -146,9 +146,18 @@ def main():
         else:
             log_name = f"{log_name}_Added_Noise_{args.counter_attack_init_noise}"
             if args.counter_attack_init_noise == "uniform":
-                log_name = f"{log_name}_Eps_{args.counter_attack_eps}_Tau_Type_{args.counter_attack_tau}"
+                if args.counter_attack_tau == "normal":
+                    num_anchors = 1
+                else:
+                    num_anchors = args.counter_attack_noisy_tau_num_anchors
+
+                log_name = f"{log_name}_Eps_{args.counter_attack_eps}_Tau_Type_{args.counter_attack_tau}_num_anchors_{num_anchors}"
             elif args.counter_attack_init_noise == "gaussian":
-                log_name = f"{log_name}_Sigma_{args.counter_attack_gaussian_sigma}_Tau_Type_{args.counter_attack_tau}"
+                if args.counter_attack_tau == "normal":
+                    num_anchors = 1
+                else:
+                    num_anchors = args.counter_attack_noisy_tau_num_anchors
+                log_name = f"{log_name}_Sigma_{args.counter_attack_gaussian_sigma}_Tau_Type_{args.counter_attack_tau}_num_anchors_{num_anchors}"
             else:
                raise ValueError("Unknown init noise type")
 

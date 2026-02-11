@@ -44,6 +44,7 @@ COUNTER_ATTACK_INIT_NOISE=${24:-"uniform"}
 COUNTER_ATTACK_EPS=${25:-4.0}
 COUNTER_ATTACK_GAUSSIAN_SIGMA=${26:-0.03}
 COUNTER_ATTACK_TAU=${27:-"normal"}
+COUNTER_ATTACK_NUM_ANCHORS=${28:-10}
 
 
 # bash gen_adv.sh "F:\Code\datasets\downstream_datasets\downstream_datasets" 0 4 RN50 1.0 1 1 0.1 20 0.01 "F:\Code\datasets\atpt_results"
@@ -66,7 +67,7 @@ COUNTER_ATTACK_TAU=${27:-"normal"}
 
 # Common parameters for all runs
 COMMON_PARAMS="--gpu 0 --ctx_init a_photo_of_a --output_dir $OUTPUT_DIR --log_output_dir $LOG_OUTPUT_DIR --workers $NUM_WORKERS"
-COMMON_PARAMS+=" --eps $EPSILON --steps $ATTACK_STEPS --tta_steps $TTA_STEPS --image_only_attack $IMAGE_ONLY_ATTACK --image_only_attack_type $IMAGE_ONLY_ATTACK_TYPE --counter_attack $COUNTER_ATTACK --counter_attack_steps $COUNTER_ATTACK_STEPS --counter_attack_init_noise $COUNTER_ATTACK_INIT_NOISE --counter_attack_eps $COUNTER_ATTACK_EPS  --counter_attack_gaussian_sigma $COUNTER_ATTACK_GAUSSIAN_SIGMA --counter_attack_tau $COUNTER_ATTACK_TAU"
+COMMON_PARAMS+=" --eps $EPSILON --steps $ATTACK_STEPS --tta_steps $TTA_STEPS --image_only_attack $IMAGE_ONLY_ATTACK --image_only_attack_type $IMAGE_ONLY_ATTACK_TYPE --counter_attack $COUNTER_ATTACK --counter_attack_steps $COUNTER_ATTACK_STEPS --counter_attack_init_noise $COUNTER_ATTACK_INIT_NOISE --counter_attack_eps $COUNTER_ATTACK_EPS  --counter_attack_gaussian_sigma $COUNTER_ATTACK_GAUSSIAN_SIGMA --counter_attack_tau $COUNTER_ATTACK_TAU --counter_attack_noisy_tau_num_anchors $COUNTER_ATTACK_NUM_ANCHORS"
 COMMON_PARAMS+=" --selection_p $FRACTION_CONFIDENT_SAMPLES"
 COMMON_PARAMS+=" --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX"
 COMMON_PARAMS+=" --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING --print-freq 20 --image_feature_purify $IMAGE_PURIFY --image_feature_purify_type $PURIFY_TYPE --image_feature_purify_noisy_anchors $NOISY_ANCHORS --image_feature_purify_anchors_alpha $ANCHORS_ALPHA --image_feature_purify_noisy_sigma $NOISY_SIGMA --image_feature_purify_diff_threshold $DIFF_THRESHOLD"
