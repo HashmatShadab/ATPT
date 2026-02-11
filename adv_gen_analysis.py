@@ -495,12 +495,12 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     # Purification-related bookkeeping removed
 
-    diff_ratio_after_counter_attack = []
+    diff_ratio_after_add_noise = []
 
     all_true_labels = []
     all_clean_preds = []
     all_adv_preds = []
-    all_counter_attack_preds = []
+    all_add_noise_preds = []
 
     # Iterate through validation data
     for i, data in enumerate(val_loader):
@@ -526,7 +526,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             # If using noise addition, apply it to the generated image
             adv_images_counter, diff_ratio = noise_atk(adv_images, target)
             adv_images_counter = adv_images_counter.cuda(args.gpu, non_blocking=True)
-            diff_ratio_after_counter_attack.append(diff_ratio)
+            diff_ratio_after_add_noise.append(diff_ratio)
 
         # Pass adversarial images to the model
         adv_images = adv_images.cuda(args.gpu, non_blocking=True)
@@ -566,7 +566,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             all_clean_preds.extend(clean_pred.cpu().numpy().tolist())
             all_adv_preds.extend(adv_pred.cpu().numpy().tolist())
             if args.add_noise:
-                all_counter_attack_preds.extend(adv_pred_counter.cpu().numpy().tolist())
+                all_add_noise_preds.extend(adv_pred_counter.cpu().numpy().tolist())
 
         # Free memory
         del images, adv_images, target
@@ -599,8 +599,8 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     # Calculate final accuracy
     original_accuracy_orig = clean_correct_orig / total
     adv_accuracy_orig = adv_correct_orig / total
-    avg_diff_ratio_after_counter_attack = sum(diff_ratio_after_counter_attack) / len(
-        diff_ratio_after_counter_attack) if len(diff_ratio_after_counter_attack) > 0 else 0
+    avg_diff_ratio_after_add_noise = sum(diff_ratio_after_add_noise) / len(
+        diff_ratio_after_add_noise) if len(diff_ratio_after_add_noise) > 0 else 0
 
     if args.add_noise:
         adv_accuracy_counter = adv_correct_counter / total
@@ -626,8 +626,8 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         adv_accuracy_orig - adv_acc_calc) < 1e-6, f"Adversarial accuracy mismatch: {adv_accuracy_orig} vs {adv_acc_calc}"
 
     if args.add_noise:
-        all_counter_attack_preds_np = np.array(all_counter_attack_preds)
-        counter_acc_calc = (all_counter_attack_preds_np == all_true_labels_np).mean()
+        all_add_noise_preds_np = np.array(all_add_noise_preds)
+        counter_acc_calc = (all_add_noise_preds_np == all_true_labels_np).mean()
         if logger:
             logger.info(f"Verification - AddNoise Accuracy: {adv_accuracy_counter:.4f} vs {counter_acc_calc:.4f}")
         else:
@@ -650,19 +650,19 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             print(f"Original accuracy: {original_accuracy_orig:.4f}")
             print(f"Adversarial accuracy: {adv_accuracy_orig:.4f}")
 
-    # save the diff_ratio_after_counter_attack and avg_diff_ratio_after_counter_attack as a json in log directory
+    # save the diff_ratio_after_add_noise and avg_diff_ratio_after_add_noise as a json in log directory
     info = {
-        'diff_ratio_after_counter_attack': diff_ratio_after_counter_attack,
-        'avg_diff_ratio_after_counter_attack': avg_diff_ratio_after_counter_attack,
+        'diff_ratio_after_add_noise': diff_ratio_after_add_noise,
+        'avg_diff_ratio_after_add_noise': avg_diff_ratio_after_add_noise,
         'original_clean_accuracy': original_accuracy_orig,
         'adversarial_accuracy': adv_accuracy_orig,
-        "counter_attack_accuracy": adv_accuracy_counter if args.add_noise else None,
+        "add_noise_accuracy": adv_accuracy_counter if args.add_noise else None,
         'true_labels': all_true_labels,
         'original_clean_predictions': all_clean_preds,
         'adversarial_predictions': all_adv_preds,
-        'counter_attack_predictions': all_counter_attack_preds if args.add_noise else None,
+        'add_noise_predictions': all_add_noise_preds if args.add_noise else None,
     }
-    with open(os.path.join(args.log_output_dir, f'diff_ratio_after_counter_attack.json'), 'w') as f:
+    with open(os.path.join(args.log_output_dir, f'diff_ratio_after_add_noise.json'), 'w') as f:
         json.dump(info, f, indent=4)
 
 
