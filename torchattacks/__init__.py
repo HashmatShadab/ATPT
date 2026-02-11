@@ -28,6 +28,7 @@ from .attacks.spsa import SPSA
 from .attacks.pifgsm import PIFGSM
 from .attacks.pifgsmpp import PIFGSMPP
 from .attacks.pgd_counter_attack import PGDCounter
+from .attacks.add_noise import AddNoise
 from .attacks.pgd_counter_anchor import PGDCounterAnchor
 from .attacks.pgd_clipure_image import PGDClipPureImage
 from .attacks.pgd_counter_and_clipure_image import PGDCounterClipPureImage
@@ -68,6 +69,7 @@ __all__ = [
     "PGD_PRM",
     "PGD_PRM_ADAM",
     "PGDCounter",
+    "AddNoise",
     "PGDCounterAnchor",
     "EOTPGD",
     "FFGSM",

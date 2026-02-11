@@ -133,27 +133,24 @@ def main():
         log_name = log_name
     # NOTE: image feature purification logic removed from this script.
 
-    # Update log name if counter_attack is True
-    if args.counter_attack:
-        if args.counter_attack_steps:
-            log_name = f"{log_name}_counter_attack_eps_{args.counter_attack_eps}_steps_{args.counter_attack_steps}_alpha_{args.counter_attack_alpha}_tau_thres_{args.counter_attack_tau_thres}_beta_{args.counter_attack_beta}_weighted_perturbations_{args.counter_attack_weighted_perturbations}"
-        else:
-            log_name = f"{log_name}_Added_Noise_{args.counter_attack_init_noise}"
-            if args.counter_attack_init_noise == "uniform":
-                if args.counter_attack_tau == "normal":
-                    num_anchors = 1
-                else:
-                    num_anchors = args.counter_attack_noisy_tau_num_anchors
-
-                log_name = f"{log_name}_Eps_{args.counter_attack_eps}_Tau_Type_{args.counter_attack_tau}_num_anchors_{num_anchors}"
-            elif args.counter_attack_init_noise == "gaussian":
-                if args.counter_attack_tau == "normal":
-                    num_anchors = 1
-                else:
-                    num_anchors = args.counter_attack_noisy_tau_num_anchors
-                log_name = f"{log_name}_Sigma_{args.counter_attack_gaussian_sigma}_Tau_Type_{args.counter_attack_tau}_num_anchors_{num_anchors}"
+    # Update log name if noise-addition is enabled
+    if args.add_noise:
+        log_name = f"{log_name}_Added_Noise_{args.add_noise_init_noise}"
+        if args.add_noise_init_noise == "uniform":
+            if args.add_noise_tau == "normal":
+                num_anchors = 1
             else:
-                raise ValueError("Unknown init noise type")
+                num_anchors = args.add_noise_noisy_tau_num_anchors
+
+            log_name = f"{log_name}_Eps_{args.add_noise_eps}_Tau_Type_{args.add_noise_tau}_num_anchors_{num_anchors}"
+        elif args.add_noise_init_noise == "gaussian":
+            if args.add_noise_tau == "normal":
+                num_anchors = 1
+            else:
+                num_anchors = args.add_noise_noisy_tau_num_anchors
+            log_name = f"{log_name}_Sigma_{args.add_noise_gaussian_sigma}_Tau_Type_{args.add_noise_tau}_num_anchors_{num_anchors}"
+        else:
+            raise ValueError("Unknown init noise type")
 
         # Create output directory path with experiment parameters
     args.output_dir = os.path.join(args.output_dir, args.arch, args.test_sets)
@@ -440,12 +437,10 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         assert args.steps > 0
         # Create PGD attack with specified parameters
         if args.image_only_attack:
-            if args.image_only_attack_type == "prm":
-                atk = torchattacks.PGD_PRM(model, eps=args.eps / 255, alpha=args.alpha / 255, steps=args.steps)
-            elif args.image_only_attack_type == "prm_adam":
-                atk = torchattacks.PGD_PRM_ADAM(model, eps=args.eps / 255, alpha=args.alpha / 255, steps=args.steps)
-            else:
+            # NOTE: Only PRM image-only attack is supported in this script.
+            if args.image_only_attack_type != "prm":
                 raise ValueError(f"Unknown image only attack type: {args.image_only_attack_type}")
+            atk = torchattacks.PGD_PRM(model, eps=args.eps / 255, alpha=args.alpha / 255, steps=args.steps)
 
 
         else:
@@ -458,23 +453,19 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             logger.info(
                 f"Using PGD attack with epsilon: {args.eps / 255:.6f}, alpha: {args.alpha / 255:.6f}, steps: {args.steps} image only attack {args.image_only_attack} image only attack type  {args.image_only_attack_type} image predicted label attack {args.image_predicted_label_attack}")
 
-    if args.counter_attack:
-        # Create counter-attack with specified parameters
-        # NOTE: Only PGD-style counter-attack is supported in this script.
-        counter_atk = torchattacks.PGDCounter(model, eps=args.counter_attack_eps / 255,
-                                              alpha=args.counter_attack_alpha / 255,
-                                              steps=args.counter_attack_steps,
-                                              tau_thres=args.counter_attack_tau_thres,
-                                              beta=args.counter_attack_beta,
-                                              weighted_perturbation=args.counter_attack_weighted_perturbations,
-                                              init_noise=args.counter_attack_init_noise,
-                                              gaussian_sigma=args.counter_attack_gaussian_sigma,
-                                              tau_type=args.counter_attack_tau,
-                                              num_anchors=args.counter_attack_noisy_tau_num_anchors,
-                                              )
+    if args.add_noise:
+        noise_atk = torchattacks.AddNoise(
+            model,
+            eps=args.add_noise_eps / 255,
+            init_noise=args.add_noise_init_noise,
+            gaussian_sigma=args.add_noise_gaussian_sigma,
+            tau_type=args.add_noise_tau,
+            num_anchors=args.add_noise_noisy_tau_num_anchors,
+        )
         if logger:
             logger.info(
-                f"Using counter-attack with epsilon: {args.counter_attack_eps:.6f}, alpha: {args.counter_attack_alpha:.6f}, steps: {args.counter_attack_steps}")
+                f"Using AddNoise with eps={args.add_noise_eps:.6f}, init_noise={args.add_noise_init_noise}, tau_type={args.add_noise_tau}"
+            )
 
     end = time.time()
     # Create directory for saving adversarial images if needed
@@ -531,9 +522,9 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         else:
             adv_images = images.clone()
 
-        if args.counter_attack:
-            # If using counter-attack, apply it to the generated image
-            adv_images_counter, diff_ratio = counter_atk(adv_images, target)
+        if args.add_noise:
+            # If using noise addition, apply it to the generated image
+            adv_images_counter, diff_ratio = noise_atk(adv_images, target)
             adv_images_counter = adv_images_counter.cuda(args.gpu, non_blocking=True)
             diff_ratio_after_counter_attack.append(diff_ratio)
 
@@ -554,7 +545,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             adv_correct_orig += adv_pred.eq(target).sum().item()
 
             # If using counter-attack, pass the counter-attacked images to the model
-            if args.counter_attack:
+            if args.add_noise:
                 with torch.no_grad():
                     adv_logits_counter = model(adv_images_counter)
                     adv_probs_counter = adv_logits_counter.softmax(dim=-1)
@@ -574,7 +565,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             all_true_labels.extend(target.cpu().numpy().tolist())
             all_clean_preds.extend(clean_pred.cpu().numpy().tolist())
             all_adv_preds.extend(adv_pred.cpu().numpy().tolist())
-            if args.counter_attack:
+            if args.add_noise:
                 all_counter_attack_preds.extend(adv_pred_counter.cpu().numpy().tolist())
 
         # Free memory
@@ -587,7 +578,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         del adv_logits, adv_probs, adv_pred
         del clean_logits, clean_probs, clean_pred
 
-        if args.counter_attack:
+        if args.add_noise:
             del adv_images_counter, adv_logits_counter, adv_probs_counter, adv_pred_counter
 
         # Force garbage collection and clear GPU cache more frequently
@@ -595,7 +586,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
 
         if logger:
-            if args.counter_attack:
+            if args.add_noise:
                 logger.info(
                     f"Batch {i + 1}/{len(val_loader)}: Clean accuracy {clean_correct_orig / total:.4f} | Adv accuracy: {adv_correct_orig / total:.4f} | Counter-attack accuracy: {adv_correct_counter / total:.4f}")
             else:
@@ -611,7 +602,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     avg_diff_ratio_after_counter_attack = sum(diff_ratio_after_counter_attack) / len(
         diff_ratio_after_counter_attack) if len(diff_ratio_after_counter_attack) > 0 else 0
 
-    if args.counter_attack:
+    if args.add_noise:
         adv_accuracy_counter = adv_correct_counter / total
 
     # Verify the predictions list saved in the info give the correct accuracies
@@ -634,7 +625,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     assert abs(
         adv_accuracy_orig - adv_acc_calc) < 1e-6, f"Adversarial accuracy mismatch: {adv_accuracy_orig} vs {adv_acc_calc}"
 
-    if args.counter_attack:
+    if args.add_noise:
         all_counter_attack_preds_np = np.array(all_counter_attack_preds)
         counter_acc_calc = (all_counter_attack_preds_np == all_true_labels_np).mean()
         if logger:
@@ -645,14 +636,14 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             adv_accuracy_counter - counter_acc_calc) < 1e-6, f"Counter-attack accuracy mismatch: {adv_accuracy_counter} vs {counter_acc_calc}"
 
     if logger:
-        if args.counter_attack:
+        if args.add_noise:
             logger.info(
                 f"Final Clean accuracy: {original_accuracy_orig:.4f} | Adversarial accuracy: {adv_accuracy_orig:.4f} | Counter-attack accuracy: {adv_accuracy_counter:.4f}")
         else:
             logger.info(f"Original accuracy: {original_accuracy_orig:.4f}")
             logger.info(f"Adversarial accuracy: {adv_accuracy_orig:.4f}")
     else:
-        if args.counter_attack:
+        if args.add_noise:
             print(
                 f"Original accuracy: {original_accuracy_orig:.4f} | Adversarial accuracy: {adv_accuracy_orig:.4f} | Counter-attack accuracy: {adv_accuracy_counter:.4f}")
         else:
@@ -665,11 +656,11 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         'avg_diff_ratio_after_counter_attack': avg_diff_ratio_after_counter_attack,
         'original_clean_accuracy': original_accuracy_orig,
         'adversarial_accuracy': adv_accuracy_orig,
-        "counter_attack_accuracy": adv_accuracy_counter if args.counter_attack else None,
+        "counter_attack_accuracy": adv_accuracy_counter if args.add_noise else None,
         'true_labels': all_true_labels,
         'original_clean_predictions': all_clean_preds,
         'adversarial_predictions': all_adv_preds,
-        'counter_attack_predictions': all_counter_attack_preds if args.counter_attack else None,
+        'counter_attack_predictions': all_counter_attack_preds if args.add_noise else None,
     }
     with open(os.path.join(args.log_output_dir, f'diff_ratio_after_counter_attack.json'), 'w') as f:
         json.dump(info, f, indent=4)
@@ -728,7 +719,7 @@ if __name__ == '__main__':
 
     # Adversarial attack parameters
     parser.add_argument('--image_only_attack', default=False, type=lambda x: (str(x).lower() == 'true'))
-    parser.add_argument('--image_only_attack_type', default='prm', choices=["prm", "prm_adam"], type=str)
+    parser.add_argument('--image_only_attack_type', default='prm', choices=["prm"], type=str)
     parser.add_argument('--image_predicted_label_attack', default=False, type=lambda x: (str(x).lower() == 'true'))
 
     parser.add_argument('--eps', default=1.0, type=float,
@@ -740,20 +731,13 @@ if __name__ == '__main__':
     parser.add_argument('--steps', type=int, default=7,
                         help='Number of steps for adversarial attack')
 
-    parser.add_argument('--counter_attack', default=False, type=lambda x: (str(x).lower() == 'true'))
-    parser.add_argument('--counter_attack_type', default='pgd',
-                        choices=["pgd"], type=str)
-    parser.add_argument('--counter_attack_steps', default=2, type=int)
-    parser.add_argument('--counter_attack_eps', default=4.0, type=float)
-    parser.add_argument('--counter_attack_alpha', default=1.0, type=float)
-    parser.add_argument('--counter_attack_tau_thres', default=0.2, type=float)
-    parser.add_argument('--counter_attack_beta', default=2.0, type=float)
-    parser.add_argument('--counter_attack_weighted_perturbations', default=True,
-                        type=lambda x: (str(x).lower() == 'true'))
-    parser.add_argument('--counter_attack_init_noise', default='uniform', choices=["uniform", "gaussian"], type=str)
-    parser.add_argument('--counter_attack_gaussian_sigma', default=0.18, type=float)
-    parser.add_argument('--counter_attack_noisy_tau_num_anchors', default=10, type=int)
-    parser.add_argument('--counter_attack_tau', default='normal', choices=["normal", "noisy", "normal_anchors"],
+    # Noise-addition (was previously named "counter_attack" in this script)
+    parser.add_argument('--add_noise', default=False, type=lambda x: (str(x).lower() == 'true'))
+    parser.add_argument('--add_noise_eps', default=4.0, type=float)
+    parser.add_argument('--add_noise_init_noise', default='uniform', choices=["uniform", "gaussian"], type=str)
+    parser.add_argument('--add_noise_gaussian_sigma', default=0.18, type=float)
+    parser.add_argument('--add_noise_noisy_tau_num_anchors', default=10, type=int)
+    parser.add_argument('--add_noise_tau', default='normal', choices=["normal", "noisy", "normal_anchors"],
                         type=str)
 
     # NOTE: image feature purification and plot-saving options were removed from this script.
