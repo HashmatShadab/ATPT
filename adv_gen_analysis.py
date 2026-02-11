@@ -544,7 +544,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                 _, adv_pred = adv_probs.max(1)
             adv_correct_orig += adv_pred.eq(target).sum().item()
 
-            # If using counter-attack, pass the counter-attacked images to the model
+            # If using noise addition, pass the noise-added images to the model
             if args.add_noise:
                 with torch.no_grad():
                     adv_logits_counter = model(adv_images_counter)
@@ -588,7 +588,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         if logger:
             if args.add_noise:
                 logger.info(
-                    f"Batch {i + 1}/{len(val_loader)}: Clean accuracy {clean_correct_orig / total:.4f} | Adv accuracy: {adv_correct_orig / total:.4f} | Counter-attack accuracy: {adv_correct_counter / total:.4f}")
+                    f"Batch {i + 1}/{len(val_loader)}: Clean accuracy {clean_correct_orig / total:.4f} | Adv accuracy: {adv_correct_orig / total:.4f} | AddNoise accuracy: {adv_correct_counter / total:.4f}")
             else:
                 logger.info(
                     f"Batch {i + 1}/{len(val_loader)}: Clean accuracy {clean_correct_orig / total:.4f} | Adv accuracy: {adv_correct_orig / total:.4f} ")
@@ -629,23 +629,23 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         all_counter_attack_preds_np = np.array(all_counter_attack_preds)
         counter_acc_calc = (all_counter_attack_preds_np == all_true_labels_np).mean()
         if logger:
-            logger.info(f"Verification - Counter-attack Accuracy: {adv_accuracy_counter:.4f} vs {counter_acc_calc:.4f}")
+            logger.info(f"Verification - AddNoise Accuracy: {adv_accuracy_counter:.4f} vs {counter_acc_calc:.4f}")
         else:
-            print(f"Verification - Counter-attack Accuracy: {adv_accuracy_counter:.4f} vs {counter_acc_calc:.4f}")
+            print(f"Verification - AddNoise Accuracy: {adv_accuracy_counter:.4f} vs {counter_acc_calc:.4f}")
         assert abs(
-            adv_accuracy_counter - counter_acc_calc) < 1e-6, f"Counter-attack accuracy mismatch: {adv_accuracy_counter} vs {counter_acc_calc}"
+            adv_accuracy_counter - counter_acc_calc) < 1e-6, f"AddNoise accuracy mismatch: {adv_accuracy_counter} vs {counter_acc_calc}"
 
     if logger:
         if args.add_noise:
             logger.info(
-                f"Final Clean accuracy: {original_accuracy_orig:.4f} | Adversarial accuracy: {adv_accuracy_orig:.4f} | Counter-attack accuracy: {adv_accuracy_counter:.4f}")
+                f"Final Clean accuracy: {original_accuracy_orig:.4f} | Adversarial accuracy: {adv_accuracy_orig:.4f} | AddNoise accuracy: {adv_accuracy_counter:.4f}")
         else:
             logger.info(f"Original accuracy: {original_accuracy_orig:.4f}")
             logger.info(f"Adversarial accuracy: {adv_accuracy_orig:.4f}")
     else:
         if args.add_noise:
             print(
-                f"Original accuracy: {original_accuracy_orig:.4f} | Adversarial accuracy: {adv_accuracy_orig:.4f} | Counter-attack accuracy: {adv_accuracy_counter:.4f}")
+                f"Original accuracy: {original_accuracy_orig:.4f} | Adversarial accuracy: {adv_accuracy_orig:.4f} | AddNoise accuracy: {adv_accuracy_counter:.4f}")
         else:
             print(f"Original accuracy: {original_accuracy_orig:.4f}")
             print(f"Adversarial accuracy: {adv_accuracy_orig:.4f}")
