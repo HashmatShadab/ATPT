@@ -1239,30 +1239,37 @@ def exclude_noise_values(final_diff_ratio_dic, noise_type, exclude_list):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="AOM analysis plotting / aggregation")
-    parser.add_argument("--model-name", type=str, default="vit_l_14_datacomp_1b")
+    parser.add_argument("--model-name", type=str, default="fare4")
 
 
     args = parser.parse_args()
 
     model_name = args.model_name
 
-    zero_shot_dic = get_zs_results(model_name)
-    # True labels for all datasets
-    TRUE_LABELS_DATASET = zero_shot_dic["true_labels"]
-    # Zero-Shot clean predictions for all datasets
-    ZS_CLEAN_PREDS_DATASET = zero_shot_dic["zero_shot_clean"]
-    # Zero-Shot adversarial predictions for all datasets
-    ZS_ADV_PREDS_DATASET = zero_shot_dic["zero_shot_adv"]
-    # Zero-Shot clean correct predictions for all datasets
-    ZS_CLEAN_CORRECT_DATASET = zero_shot_dic["zero_shot_clean_correct_preds"]
+    # Zero-shot results are required for some of the later analyses in this file.
+    # For A.1 (mean τ / τ-gap curves) we can run purely from the diff-ratio dumps.
+    try:
+        zero_shot_dic = get_zs_results(model_name)
+        # True labels for all datasets
+        TRUE_LABELS_DATASET = zero_shot_dic["true_labels"]
+        # Zero-Shot clean predictions for all datasets
+        ZS_CLEAN_PREDS_DATASET = zero_shot_dic["zero_shot_clean"]
+        # Zero-Shot adversarial predictions for all datasets
+        ZS_ADV_PREDS_DATASET = zero_shot_dic["zero_shot_adv"]
+        # Zero-Shot clean correct predictions for all datasets
+        ZS_CLEAN_CORRECT_DATASET = zero_shot_dic["zero_shot_clean_correct_preds"]
+    except FileNotFoundError as e:
+        print(f"[WARN] Zero-shot result file not found; continuing without ZS data. ({e})")
+        zero_shot_dic = None
 
 
-    root_diff_ratio = "../../Diffratio_v3/vit_l_14_datacomp_1b"
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    root_diff_ratio = os.path.abspath(os.path.join(script_dir, "..", "..", "Diffratio_v3", model_name))
     selected_attacks = ['eps_0.0_steps_0', 'eps_4.0_steps_100']
     print(f"Loading diff ratio results from: {root_diff_ratio}")
     diff_ratio_dic = get_aggregated_results(root_diff_ratio, selected_attacks=selected_attacks)
 
-    diff_ratio_dic = diff_ratio_dic["results"]["vit_l_14_datacomp_1b"]
+    diff_ratio_dic = diff_ratio_dic["results"][model_name]
 
     final_diff_ratio_dic = {}
 
@@ -1298,12 +1305,21 @@ if __name__ == "__main__":
     # ]
 
     UNIFORM_NOISE_EXCLUDE = []
+    GAUSSIAN_NOISE_EXCLUDE = []
 
-    final_diff_ratio_dic = exclude_noise_values(
-        final_diff_ratio_dic,
-        noise_type="Uniform",
-        exclude_list=UNIFORM_NOISE_EXCLUDE
-    )
+    if UNIFORM_NOISE_EXCLUDE:
+        final_diff_ratio_dic = exclude_noise_values(
+            final_diff_ratio_dic,
+            noise_type="Uniform",
+            exclude_list=UNIFORM_NOISE_EXCLUDE
+        )
+
+    if GAUSSIAN_NOISE_EXCLUDE:
+        final_diff_ratio_dic = exclude_noise_values(
+            final_diff_ratio_dic,
+            noise_type="Gaussian",
+            exclude_list=GAUSSIAN_NOISE_EXCLUDE
+        )
 
 
     # A.1
@@ -1344,7 +1360,15 @@ if __name__ == "__main__":
 
 
     def eps_from_key(k):
-        return float(k.replace("Eps_", ""))
+        """Parse noise magnitude strings like 'Eps_4.0' or 'Sigma_0.06' into floats."""
+        if k.startswith("Eps_"):
+            return float(k.replace("Eps_", ""))
+        if k.startswith("Sigma_"):
+            return float(k.replace("Sigma_", ""))
+        m = re.search(r"([\d.]+)", k)
+        if not m:
+            raise ValueError(f"Could not parse noise magnitude from key: {k}")
+        return float(m.group(1))
 
 
     def compute_curve_std(all_results, noise_type):
@@ -1365,77 +1389,109 @@ if __name__ == "__main__":
         return std_clean, std_adv
 
 
-    all_results = compute_mean_tau_all_datasets("Uniform", final_diff_ratio_dic)
-    avg_results = aggregate_across_datasets(all_results)
-    sorted_keys = sorted(avg_results.keys(), key=eps_from_key)
+    def run_a1_and_save_plots(*, noise_type: str, dic: Dict[str, Any], model_name: str, analysis_name: str = "A1"):
+        # Guard: skip noise types not present
+        sample_dataset = next(iter(dic.keys()))
+        if noise_type not in dic[sample_dataset]["Clean"]:
+            print(f"[A1] Noise type '{noise_type}' not found in results. Skipping.")
+            return
 
-    eps = [eps_from_key(k) for k in sorted_keys]
+        out_dir = os.path.join("plots_output", analysis_name, model_name, noise_type)
+        os.makedirs(out_dir, exist_ok=True)
 
-    mean_clean = [avg_results[k]["mean_clean"] for k in sorted_keys]
-    mean_adv = [avg_results[k]["mean_adv"] for k in sorted_keys]
+        all_results = compute_mean_tau_all_datasets(noise_type, dic)
+        avg_results = aggregate_across_datasets(all_results)
+        sorted_keys = sorted(avg_results.keys(), key=eps_from_key)
 
-    std_gap = [avg_results[k]["std_gap"] for k in sorted_keys]
+        eps = [eps_from_key(k) for k in sorted_keys]
 
-    std_clean_dict, std_adv_dict = compute_curve_std(all_results, "Uniform")
+        mean_clean = [avg_results[k]["mean_clean"] for k in sorted_keys]
+        mean_adv = [avg_results[k]["mean_adv"] for k in sorted_keys]
 
-    std_clean = [std_clean_dict[k] for k in sorted_keys]
-    std_adv = [std_adv_dict[k] for k in sorted_keys]
+        std_clean_dict, std_adv_dict = compute_curve_std(all_results, noise_type)
+        std_clean = [std_clean_dict[k] for k in sorted_keys]
+        std_adv = [std_adv_dict[k] for k in sorted_keys]
 
-    import matplotlib.pyplot as plt
+        # Save aggregated stats
+        stats_out = {
+            "analysis": analysis_name,
+            "model": model_name,
+            "noise_type": noise_type,
+            "noise_keys_sorted": sorted_keys,
+            "eps": eps,
+            "avg_results": avg_results,
+            "per_dataset_results": all_results,
+        }
+        stats_path = os.path.join(out_dir, "a1_stats.json")
+        with open(stats_path, "w", encoding="utf-8") as f:
+            json.dump(stats_out, f, indent=2)
+        print(f"[A1] Saved stats: {stats_path}")
 
-    plt.figure(figsize=(7, 5))
+        # Plot: mean τ curves
+        fig = plt.figure(figsize=(7, 5))
+        plt.plot(
+            eps, mean_clean,
+            marker='o',
+            linewidth=2.5,
+            label='Clean'
+        )
+        plt.fill_between(
+            eps,
+            np.array(mean_clean) - np.array(std_clean),
+            np.array(mean_clean) + np.array(std_clean),
+            alpha=0.25
+        )
 
-    # Clean curve
-    plt.plot(
-        eps, mean_clean,
-        marker='o',
-        linewidth=2.5,
-        label='Clean'
-    )
-    plt.fill_between(
-        eps,
-        np.array(mean_clean) - np.array(std_clean),
-        np.array(mean_clean) + np.array(std_clean),
-        alpha=0.25
-    )
+        plt.plot(
+            eps, mean_adv,
+            marker='s',
+            linewidth=2.5,
+            label='Adversarial'
+        )
+        plt.fill_between(
+            eps,
+            np.array(mean_adv) - np.array(std_adv),
+            np.array(mean_adv) + np.array(std_adv),
+            alpha=0.25
+        )
 
-    # Adversarial curve
-    plt.plot(
-        eps, mean_adv,
-        marker='s',
-        linewidth=2.5,
-        label='Adversarial'
-    )
-    plt.fill_between(
-        eps,
-        np.array(mean_adv) - np.array(std_adv),
-        np.array(mean_adv) + np.array(std_adv),
-        alpha=0.25
-    )
+        if noise_type == "Gaussian":
+            plt.xlabel("Noise Strength σ", fontsize=12)
+        else:
+            plt.xlabel("Noise Strength ε (/255)", fontsize=12)
+        plt.ylabel("Mean Latent Drift τ", fontsize=12)
+        plt.title(f"A1: Average Noise–τ Response Across Datasets ({noise_type})", fontsize=13)
+        plt.legend()
+        plt.grid(True, linestyle="--", alpha=0.5)
+        plt.tight_layout()
 
-    plt.xlabel("Noise Strength ε (/255)", fontsize=12)
-    plt.ylabel("Mean Latent Drift τ", fontsize=12)
-    plt.title("Average Noise–τ Response Across Datasets", fontsize=13)
+        tau_curve_path = os.path.join(out_dir, "a1_mean_tau_curve.png")
+        fig.savefig(tau_curve_path, dpi=200)
+        plt.close(fig)
+        print(f"[A1] Saved plot: {tau_curve_path}")
 
-    plt.legend()
-    plt.grid(True, linestyle="--", alpha=0.5)
+        # Plot: mean τ gap
+        mean_gap = [avg_results[k]["mean_gap"] for k in sorted_keys]
+        fig = plt.figure(figsize=(7, 4))
+        plt.plot(eps, mean_gap, marker='d', linewidth=2.5)
+        plt.axhline(0, linestyle='--', linewidth=1)
 
-    plt.tight_layout()
-    plt.show()
+        if noise_type == "Gaussian":
+            plt.xlabel("Noise Strength σ")
+        else:
+            plt.xlabel("Noise Strength ε (/255)")
+        plt.ylabel("Δτ = τ_adv − τ_clean")
+        plt.title(f"A1: Adversarial–Clean τ Gap (Averaged Across Datasets) ({noise_type})")
+        plt.grid(True, linestyle="--", alpha=0.5)
+        plt.tight_layout()
 
-    mean_gap = [avg_results[k]["mean_gap"] for k in sorted_keys]
+        gap_curve_path = os.path.join(out_dir, "a1_tau_gap_curve.png")
+        fig.savefig(gap_curve_path, dpi=200)
+        plt.close(fig)
+        print(f"[A1] Saved plot: {gap_curve_path}")
 
-    plt.figure(figsize=(7, 4))
-    plt.plot(eps, mean_gap, marker='d', linewidth=2.5)
-    plt.axhline(0, linestyle='--', linewidth=1)
-
-    plt.xlabel("Noise Strength ε (/255)")
-    plt.ylabel("Δτ = τ_adv − τ_clean")
-    plt.title("Adversarial–Clean τ Gap (Averaged Across Datasets)")
-    plt.grid(True, linestyle="--", alpha=0.5)
-
-    plt.tight_layout()
-    plt.show()
+    for noise_type in ["Uniform", "Gaussian"]:
+        run_a1_and_save_plots(noise_type=noise_type, dic=final_diff_ratio_dic, model_name=model_name, analysis_name="A1")
 
 
 
