@@ -768,6 +768,447 @@ def get_aggregated_results(root: str, selected_attacks: Optional[List[str]] = No
 
     return aggregated
 
+######################################################################################
+import numpy as np
+from sklearn.metrics import roc_auc_score
+from scipy.stats import mannwhitneyu
+
+def get_tau(dataset, noise_type, noise_value, dic):
+    tau_clean = np.array(
+        dic[dataset]["Clean"][noise_type][noise_value]["diff_ratio"]
+    )
+    tau_adv = np.array(
+        dic[dataset]["Adversarial"][noise_type][noise_value]["diff_ratio"]
+    )
+    return tau_clean, tau_adv
+
+"""
+Analysis A.1 — Mean τ and τ-gap vs noise
+"""
+def compute_mean_tau_and_gap(dataset, noise_type, dic):
+    """
+    Compute the mean latent drift (τ) for clean and adversarial samples, and
+    their separation (gap), as a function of noise magnitude.
+
+    This analysis quantifies the *average* behavior of CLIP representations
+    under increasing random noise. For each noise value, it computes:
+        (i) the mean τ for clean inputs,
+        (ii) the mean τ for adversarial inputs, and
+        (iii) the gap Δτ = mean(τ_adv) − mean(τ_clean).
+
+    The goal is to identify noise regimes where adversarial samples exhibit
+    significantly higher latent instability than clean samples. A small or
+    negative gap indicates a "false stability" regime where noise fails to
+    expose adversarial vulnerability, while a large positive gap indicates
+    a regime where adversarial representations destabilize much more rapidly.
+
+    This analysis corresponds to the main trend plots shown in the paper and
+    motivates the existence of a critical noise threshold beyond which τ
+    becomes informative.
+
+    Args:
+        dataset (str): Dataset name (e.g., 'DTD', 'Cars', 'Flower102').
+        noise_type (str): Noise distribution type ('Uniform' or 'Gaussian').
+
+    Returns:
+        dict: Mapping from noise value (e.g., 'Eps_24.0') to a dictionary with:
+            - mean_clean (float): Mean τ for clean samples.
+            - mean_adv (float): Mean τ for adversarial samples.
+            - gap (float): mean_adv − mean_clean.
+            - std_clean (float): Standard deviation of clean τ.
+            - std_adv (float): Standard deviation of adversarial τ.
+    """
+
+    results = {}
+    noise_values = dic[dataset]["Clean"][noise_type].keys()
+
+    for nv in noise_values:
+        tau_c, tau_a = get_tau(dataset, noise_type, nv, dic)
+        print(noise_type, nv)
+        results[nv] = {
+            "mean_clean": tau_c.mean(),
+            "mean_adv": tau_a.mean(),
+            "gap": tau_a.mean() - tau_c.mean(),
+            "std_clean": tau_c.std(),
+            "std_adv": tau_a.std(),
+        }
+    return results
+
+"""
+Analysis A.2 — Distribution-level separation (stats test)
+"""
+
+def tau_distribution_stats(dataset, noise_type, noise_value):
+    """
+    Compare the full τ distributions of clean and adversarial samples at a
+    fixed noise magnitude using non-parametric statistics.
+
+    Rather than relying on averages, this analysis examines whether the τ
+    values of adversarial samples are systematically larger than those of
+    clean samples across the dataset. It reports robust statistics such as
+    medians and interquartile ranges (IQR), and performs a Mann–Whitney U
+    test to assess whether the two distributions differ significantly.
+
+    This analysis is critical for ruling out the possibility that observed
+    mean differences are driven by a small number of outliers. Strong and
+    consistent distributional separation supports the claim that τ captures
+    genuine representation instability at the per-sample level.
+
+    Args:
+        dataset (str): Dataset name.
+        noise_type (str): Noise distribution type ('Uniform' or 'Gaussian').
+        noise_value (str): Noise magnitude identifier (e.g., 'Eps_4.0').
+
+    Returns:
+        dict: Dictionary containing:
+            - median_clean (float): Median τ for clean samples.
+            - median_adv (float): Median τ for adversarial samples.
+            - iqr_clean (float): Interquartile range of clean τ.
+            - iqr_adv (float): Interquartile range of adversarial τ.
+            - p_value (float): Mann–Whitney U test p-value comparing distributions.
+    """
+
+    tau_c, tau_a = get_tau(dataset, noise_type, noise_value)
+
+    stat, pval = mannwhitneyu(tau_c, tau_a, alternative="two-sided")
+
+    return {
+        "median_clean": np.median(tau_c),
+        "median_adv": np.median(tau_a),
+        "iqr_clean": np.percentile(tau_c, 75) - np.percentile(tau_c, 25),
+        "iqr_adv": np.percentile(tau_a, 75) - np.percentile(tau_a, 25),
+        "p_value": pval,
+    }
+
+"""
+Analysis A.3 — ROC-AUC(τ) vs noise 
+"""
+def compute_auc_tau(dataset, noise_type):
+    """
+    Measure how well τ separates clean and adversarial samples using ROC–AUC
+    as a function of noise magnitude.
+
+    For each noise value, τ is treated as a scalar score, and the task is to
+    discriminate between clean (negative class) and adversarial (positive
+    class) samples. The ROC–AUC quantifies the probability that a randomly
+    chosen adversarial sample has a higher τ than a randomly chosen clean
+    sample.
+
+    An AUC near 0.5 indicates that τ provides no discriminative signal
+    (false-stability regime), while an AUC approaching 1.0 indicates strong
+    and reliable separation. Plotting AUC versus noise magnitude reveals
+    the noise threshold at which τ becomes an effective indicator of
+    adversarial instability.
+
+    This analysis provides the most principled justification for selecting
+    high probing noise when computing τ.
+
+    Args:
+        dataset (str): Dataset name.
+        noise_type (str): Noise distribution type ('Uniform' or 'Gaussian').
+
+    Returns:
+        dict: Mapping from noise value to ROC–AUC score.
+    """
+    aucs = {}
+    noise_values = final_diff_ratio_dic[dataset]["Clean"][noise_type].keys()
+
+    for nv in noise_values:
+        tau_c, tau_a = get_tau(dataset, noise_type, nv)
+
+        scores = np.concatenate([tau_c, tau_a])
+        labels = np.concatenate([
+            np.zeros(len(tau_c)),
+            np.ones(len(tau_a))
+        ])
+
+        aucs[nv] = roc_auc_score(labels, scores)
+
+    return aucs
+
+"""
+Analysis A.4 — Paired τ-gap and fraction(τ_adv > τ_clean)
+"""
+def paired_tau_gap(dataset, noise_type):
+    """
+    Perform a paired per-sample comparison of τ between clean and adversarial
+    inputs originating from the same image.
+
+    For each sample i, this analysis computes:
+        g_i = τ_adv_i − τ_clean_i
+
+    It then summarizes how often and by how much adversarial samples exhibit
+    larger latent drift than their clean counterparts. Because the comparison
+    is paired, this analysis is more sensitive and robust than pooled
+    distribution comparisons.
+
+    This analysis directly answers the question:
+        "For how many images does the adversarial representation become more
+         unstable than the clean one under noise?"
+
+    Args:
+        dataset (str): Dataset name.
+        noise_type (str): Noise distribution type.
+
+    Returns:
+        dict: Mapping from noise value to:
+            - median_gap (float): Median of τ_adv − τ_clean.
+            - mean_gap (float): Mean of τ_adv − τ_clean.
+            - fraction_adv_greater (float): Fraction of samples where τ_adv > τ_clean.
+    """
+    gaps = {}
+    noise_values = final_diff_ratio_dic[dataset]["Clean"][noise_type].keys()
+
+    for nv in noise_values:
+        tau_c, tau_a = get_tau(dataset, noise_type, nv)
+        gap = tau_a - tau_c
+
+        gaps[nv] = {
+            "median_gap": np.median(gap),
+            "mean_gap": gap.mean(),
+            "fraction_adv_greater": np.mean(gap > 0),
+        }
+
+    return gaps
+
+"""
+Analysis A.5 — τ-threshold gating statistics
+"""
+def tau_threshold_stats(dataset, noise_type, noise_value, quantile=0.95):
+    """
+    Evaluate τ-based thresholding as a discriminator between clean and
+    adversarial samples at a fixed noise magnitude.
+
+    A threshold τ* is defined as a high quantile (e.g., 95th percentile) of
+    the clean τ distribution. Samples with τ > τ* are flagged as unstable.
+
+    This analysis computes:
+        - False Positive Rate (FPR): fraction of clean samples exceeding τ*.
+        - True Positive Rate (TPR): fraction of adversarial samples exceeding τ*.
+
+    By fixing the acceptable clean false-positive rate, this analysis shows
+    how effectively adversarial samples can be detected at different noise
+    levels and directly informs the design of τ-gated test-time defenses.
+
+    Args:
+        dataset (str): Dataset name.
+        noise_type (str): Noise distribution type.
+        noise_value (str): Noise magnitude identifier.
+        quantile (float): Quantile of clean τ used to define τ*.
+
+    Returns:
+        dict: Dictionary with:
+            - tau_threshold (float): Selected τ* value.
+            - FPR_clean (float): False positive rate on clean samples.
+            - TPR_adv (float): True positive rate on adversarial samples.
+    """
+    tau_c, tau_a = get_tau(dataset, noise_type, noise_value)
+
+    tau_star = np.quantile(tau_c, quantile)
+
+    FPR = np.mean(tau_c > tau_star)
+    TPR = np.mean(tau_a > tau_star)
+
+    return {
+        "tau_threshold": tau_star,
+        "FPR_clean": FPR,
+        "TPR_adv": TPR,
+    }
+
+
+"""
+Analysis B.1 — Accuracy recovery vs noise (dataset-level)
+"""
+def accuracy_recovery(dataset, noise_type):
+    """
+    Measure dataset-level accuracy recovery of adversarial samples as a
+    function of noise magnitude.
+
+    This analysis compares the classification accuracy of adversarial inputs
+    before and after noise addition. It quantifies whether noise levels that
+    induce high τ (latent instability) also lead to improved prediction
+    accuracy, thereby linking representation-level behavior to task-level
+    robustness.
+
+    This serves as a sanity check that the identified noise regimes are not
+    only analytically meaningful but also practically beneficial.
+
+    Args:
+        dataset (str): Dataset name.
+        noise_type (str): Noise distribution type.
+
+    Returns:
+        dict: Mapping from noise value to:
+            - acc_before (float): Adversarial accuracy before noise.
+            - acc_after (float): Adversarial accuracy after noise.
+            - delta_acc (float): Accuracy improvement due to noise.
+    """
+    results = {}
+    noise_values = final_diff_ratio_dic[dataset]["Adversarial"][noise_type].keys()
+
+    for nv in noise_values:
+        info = final_diff_ratio_dic[dataset]["Adversarial"][noise_type][nv]
+
+        acc_before = info["accuracy_before_noise_addition"]
+        acc_after = info["accuracy_after_noise_addition"]
+
+        results[nv] = {
+            "acc_before": acc_before,
+            "acc_after": acc_after,
+            "delta_acc": acc_after - acc_before,
+        }
+
+    return results
+
+"""
+Analysis B.2 — Per-sample recovery vs τ (key new analysis)
+"""
+def tau_vs_recovery(dataset, noise_type, noise_value):
+    """
+    Analyze the relationship between τ and per-sample adversarial recovery
+    after noise addition.
+
+    Adversarial samples are split into two groups:
+        - recovered: prediction after noise matches the ground truth,
+        - not recovered: prediction remains incorrect.
+
+    The τ distributions of these two groups are compared to assess whether
+    recovered samples tend to exhibit higher latent instability under noise.
+
+    Importantly, this analysis does not claim that τ deterministically predicts
+    recovery; rather, it demonstrates a statistical association between large
+    τ values and successful robustness restoration.
+
+    Args:
+        dataset (str): Dataset name.
+        noise_type (str): Noise distribution type.
+        noise_value (str): Noise magnitude identifier.
+
+    Returns:
+        dict: Dictionary with:
+            - median_tau_recovered (float): Median τ for recovered samples.
+            - median_tau_not_recovered (float): Median τ for non-recovered samples.
+            - fraction_recovered (float): Fraction of adversarial samples recovered.
+    """
+    tau_adv = np.array(
+        final_diff_ratio_dic[dataset]["Adversarial"][noise_type][noise_value]["diff_ratio"]
+    )
+    preds_after = np.array(
+        final_diff_ratio_dic[dataset]["Adversarial"][noise_type][noise_value]["predictions_after_noise_addition"]
+    )
+
+    gt = np.array(TRUE_LABELS_DATASET[dataset])
+    recovered = preds_after == gt
+
+    return {
+        "median_tau_recovered": np.median(tau_adv[recovered]),
+        "median_tau_not_recovered": np.median(tau_adv[~recovered]),
+        "fraction_recovered": np.mean(recovered),
+    }
+
+"""
+Analysis B.3 — Recovery probability as function of τ (binned)
+"""
+def recovery_probability_vs_tau(dataset, noise_type, noise_value, n_bins=5):
+    """
+    Estimate the probability of adversarial recovery as a function of τ by
+    binning samples according to their latent drift.
+
+    Adversarial samples are partitioned into bins based on τ quantiles, and
+    the fraction of recovered samples is computed within each bin. This
+    analysis reveals whether higher τ values are associated with a greater
+    likelihood of correct prediction after noise.
+
+    The resulting monotonic trend (if present) provides further evidence that
+    τ captures meaningful representation instability relevant to robustness,
+    while avoiding any claim of hard thresholds or deterministic behavior.
+
+    Args:
+        dataset (str): Dataset name.
+        noise_type (str): Noise distribution type.
+        noise_value (str): Noise magnitude identifier.
+        n_bins (int): Number of τ bins.
+
+    Returns:
+        list: Recovery probabilities for each τ bin (ordered from low to high τ).
+    """
+    tau_adv = np.array(
+        final_diff_ratio_dic[dataset]["Adversarial"][noise_type][noise_value]["diff_ratio"]
+    )
+    preds_after = np.array(
+        final_diff_ratio_dic[dataset]["Adversarial"][noise_type][noise_value]["predictions_after_noise_addition"]
+    )
+    gt = np.array(TRUE_LABELS_DATASET[dataset])
+    recovered = preds_after == gt
+
+    bins = np.quantile(tau_adv, np.linspace(0, 1, n_bins + 1))
+    probs = []
+
+    for i in range(n_bins):
+        mask = (tau_adv >= bins[i]) & (tau_adv < bins[i + 1])
+        probs.append(np.mean(recovered[mask]) if mask.any() else np.nan)
+
+    return probs
+
+"""
+Analysis C.1 — Explicit τ-gated defense simulation
+"""
+def tau_gated_accuracy(dataset, noise_type, noise_value, quantile=0.95):
+    """
+    Simulate a τ-gated test-time defense and evaluate its impact on clean and
+    adversarial accuracy.
+
+    A τ threshold τ* is computed from the clean τ distribution. For adversarial
+    samples:
+        - if τ ≤ τ*, the original adversarial prediction is retained;
+        - if τ > τ*, the prediction after noise addition is used.
+
+    This analysis demonstrates how τ-based gating preserves clean accuracy
+    while selectively applying noise where it is most beneficial for
+    adversarial robustness. It directly mirrors the decision logic used in
+    the proposed defense.
+
+    Args:
+        dataset (str): Dataset name.
+        noise_type (str): Noise distribution type.
+        noise_value (str): Noise magnitude identifier.
+        quantile (float): Quantile of clean τ used to define τ*.
+
+    Returns:
+        dict: Dictionary with:
+            - clean_acc (float): Clean accuracy (zero-shot).
+            - adv_acc_before (float): Adversarial accuracy before noise.
+            - adv_acc_after_gated (float): Adversarial accuracy with τ-gated noise.
+            - adv_acc_after_always_noise (float): Adversarial accuracy if noise is
+              applied to all samples unconditionally.
+    """
+    tau_c = np.array(
+        final_diff_ratio_dic[dataset]["Clean"][noise_type][noise_value]["diff_ratio"]
+    )
+    tau_a = np.array(
+        final_diff_ratio_dic[dataset]["Adversarial"][noise_type][noise_value]["diff_ratio"]
+    )
+
+    tau_star = np.quantile(tau_c, quantile)
+
+    clean_preds = np.array(ZS_CLEAN_PREDS_DATASET[dataset])
+    adv_preds_before = np.array(ZS_ADV_PREDS_DATASET[dataset])
+    adv_preds_after = np.array(
+        final_diff_ratio_dic[dataset]["Adversarial"][noise_type][noise_value]["predictions_after_noise_addition"]
+    )
+    gt = np.array(TRUE_LABELS_DATASET[dataset])
+
+    # Gated predictions
+    gated_preds = adv_preds_before.copy()
+    gated_preds[tau_a > tau_star] = adv_preds_after[tau_a > tau_star]
+
+    return {
+        "clean_acc": np.mean(clean_preds == gt),
+        "adv_acc_before": np.mean(adv_preds_before == gt),
+        "adv_acc_after_gated": np.mean(gated_preds == gt),
+        "adv_acc_after_always_noise": np.mean(adv_preds_after == gt),
+    }
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="AOM analysis plotting / aggregation")
@@ -829,7 +1270,136 @@ if __name__ == "__main__":
 
 
 
+    # A.1
 
+    def compute_mean_tau_all_datasets(noise_type, dic):
+        all_results = {}
+
+        for D in dic.keys():
+            all_results[D] = compute_mean_tau_and_gap(D, noise_type, dic)
+
+        return all_results
+
+
+    def aggregate_across_datasets(all_results):
+        noise_values = list(next(iter(all_results.values())).keys())
+
+        aggregated = {}
+
+        for nv in noise_values:
+            clean_means = []
+            adv_means = []
+            gaps = []
+
+            for D in all_results:
+                stats = all_results[D][nv]
+                clean_means.append(stats["mean_clean"])
+                adv_means.append(stats["mean_adv"])
+                gaps.append(stats["gap"])
+
+            aggregated[nv] = {
+                "mean_clean": np.mean(clean_means),
+                "mean_adv": np.mean(adv_means),
+                "mean_gap": np.mean(gaps),
+                "std_gap": np.std(gaps),
+            }
+
+        return aggregated
+
+
+    def eps_from_key(k):
+        return float(k.replace("Eps_", ""))
+
+
+    def compute_curve_std(all_results, noise_type):
+        std_clean = {}
+        std_adv = {}
+
+        for nv in all_results[next(iter(all_results))]:
+            clean_vals = []
+            adv_vals = []
+
+            for D in all_results:
+                clean_vals.append(all_results[D][nv]["mean_clean"])
+                adv_vals.append(all_results[D][nv]["mean_adv"])
+
+            std_clean[nv] = np.std(clean_vals)
+            std_adv[nv] = np.std(adv_vals)
+
+        return std_clean, std_adv
+
+
+    all_results = compute_mean_tau_all_datasets("Uniform", final_diff_ratio_dic)
+    avg_results = aggregate_across_datasets(all_results)
+    sorted_keys = sorted(avg_results.keys(), key=eps_from_key)
+
+    eps = [eps_from_key(k) for k in sorted_keys]
+
+    mean_clean = [avg_results[k]["mean_clean"] for k in sorted_keys]
+    mean_adv = [avg_results[k]["mean_adv"] for k in sorted_keys]
+
+    std_gap = [avg_results[k]["std_gap"] for k in sorted_keys]
+
+    std_clean_dict, std_adv_dict = compute_curve_std(all_results, "Uniform")
+
+    std_clean = [std_clean_dict[k] for k in sorted_keys]
+    std_adv = [std_adv_dict[k] for k in sorted_keys]
+
+    import matplotlib.pyplot as plt
+
+    plt.figure(figsize=(7, 5))
+
+    # Clean curve
+    plt.plot(
+        eps, mean_clean,
+        marker='o',
+        linewidth=2.5,
+        label='Clean'
+    )
+    plt.fill_between(
+        eps,
+        np.array(mean_clean) - np.array(std_clean),
+        np.array(mean_clean) + np.array(std_clean),
+        alpha=0.25
+    )
+
+    # Adversarial curve
+    plt.plot(
+        eps, mean_adv,
+        marker='s',
+        linewidth=2.5,
+        label='Adversarial'
+    )
+    plt.fill_between(
+        eps,
+        np.array(mean_adv) - np.array(std_adv),
+        np.array(mean_adv) + np.array(std_adv),
+        alpha=0.25
+    )
+
+    plt.xlabel("Noise Strength ε (/255)", fontsize=12)
+    plt.ylabel("Mean Latent Drift τ", fontsize=12)
+    plt.title("Average Noise–τ Response Across Datasets", fontsize=13)
+
+    plt.legend()
+    plt.grid(True, linestyle="--", alpha=0.5)
+
+    plt.tight_layout()
+    plt.show()
+
+    mean_gap = [avg_results[k]["mean_gap"] for k in sorted_keys]
+
+    plt.figure(figsize=(7, 4))
+    plt.plot(eps, mean_gap, marker='d', linewidth=2.5)
+    plt.axhline(0, linestyle='--', linewidth=1)
+
+    plt.xlabel("Noise Strength ε (/255)")
+    plt.ylabel("Δτ = τ_adv − τ_clean")
+    plt.title("Adversarial–Clean τ Gap (Averaged Across Datasets)")
+    plt.grid(True, linestyle="--", alpha=0.5)
+
+    plt.tight_layout()
+    plt.show()
 
 
 
