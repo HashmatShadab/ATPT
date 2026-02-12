@@ -1209,6 +1209,33 @@ def tau_gated_accuracy(dataset, noise_type, noise_value, quantile=0.95):
         "adv_acc_after_always_noise": np.mean(adv_preds_after == gt),
     }
 
+def exclude_noise_values(final_diff_ratio_dic, noise_type, exclude_list):
+    """
+    Remove selected noise values from final_diff_ratio_dic while keeping
+    all other available noise magnitudes intact.
+
+    Args:
+        final_diff_ratio_dic (dict): Original diff-ratio dictionary.
+        noise_type (str): 'Uniform' or 'Gaussian'.
+        exclude_list (list[str]): Noise keys to remove (e.g., ['Eps_48.0']).
+
+    Returns:
+        dict: Filtered dictionary with the same structure.
+    """
+    filtered = {}
+
+    for dataset in final_diff_ratio_dic:
+        filtered[dataset] = {"Clean": {}, "Adversarial": {}}
+
+        for attack in ["Clean", "Adversarial"]:
+            filtered[dataset][attack][noise_type] = {}
+
+            for nv, content in final_diff_ratio_dic[dataset][attack][noise_type].items():
+                if nv not in exclude_list:
+                    filtered[dataset][attack][noise_type][nv] = content
+
+    return filtered
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="AOM analysis plotting / aggregation")
@@ -1265,9 +1292,18 @@ if __name__ == "__main__":
                                                                                                             "predictions_after_noise_addition": predictions_after_noise_addition,
                                                                                                             "predictions_before_noise_addition": predictions_before_noise_addition}
 
+    # UNIFORM_NOISE_EXCLUDE = [
+    #     "Eps_4.0",
+    #     "Eps_48.0",
+    # ]
 
+    UNIFORM_NOISE_EXCLUDE = []
 
-
+    final_diff_ratio_dic = exclude_noise_values(
+        final_diff_ratio_dic,
+        noise_type="Uniform",
+        exclude_list=UNIFORM_NOISE_EXCLUDE
+    )
 
 
     # A.1
