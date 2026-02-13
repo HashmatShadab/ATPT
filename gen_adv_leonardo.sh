@@ -187,6 +187,31 @@ elif [ "$DATASET_ID" = "all_2"   ]; then
 
   echo "Fine-grained datasets part 2 Adv Examples  complete"
 
+
+elif [ "$DATASET_ID" = "all_3"   ]; then
+  echo "Running tests on ImageNet datasets..."
+
+  echo "  [1/5] Adv Examples  ImageNet-A dataset..."
+  python rtpt_adv_generation.py $DATA_ROOT --test_sets A $MODEL $COMMON_PARAMS
+  echo "  ✓ ImageNet-A dataset Adv Examples  complete"
+
+  echo "  [2/5] Adv Examples  ImageNet-R dataset..."
+  python rtpt_adv_generation.py $DATA_ROOT --test_sets R $MODEL $COMMON_PARAMS
+  echo "  ✓ ImageNet-R dataset Adv Examples  complete"
+
+  echo "  [3/5] Adv Examples  ImageNet-S dataset..."
+  python rtpt_adv_generation.py $DATA_ROOT --test_sets K $MODEL $COMMON_PARAMS
+  echo "  ✓ ImageNet-S dataset Adv Examples  complete"
+
+  echo "  [4/5] Adv Examples  ImageNet-V dataset..."
+  python rtpt_adv_generation.py $DATA_ROOT --test_sets V $MODEL $COMMON_PARAMS
+  echo "  ✓ ImageNet-V dataset Adv Examples  complete"
+
+  echo "  [5/5] Adv Examples  ImageNet dataset..."
+  python rtpt_adv_generation.py $DATA_ROOT --test_sets I $MODEL $COMMON_PARAMS
+  echo "  ✓ ImageNet dataset Adv Examples  complete"
+
+
 elif [ "$DATASET_ID" = "dtd"   ]; then
   echo "  [1/8] Adv Examples  DTD dataset..."
   python rtpt_adv_generation.py $DATA_ROOT --test_sets DTD $MODEL $COMMON_PARAMS
