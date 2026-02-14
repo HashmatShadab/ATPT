@@ -1,0 +1,983 @@
+2026-02-14 20:39:41,448 - log - INFO - ==========================================
+data:/leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets
+test_sets:Aircraft
+dataset_mode:test
+arch:vit_l_14_datacomp_1b
+resolution:224
+transferability:False
+source_model:vit_l_14_datacomp_1b
+workers:4
+no_pin_memory:False
+batch_size:64
+print_freq:20
+gpu:0
+no_cudnn_benchmark:False
+n_ctx:4
+ctx_init:a_photo_of_a
+tpt_loss:tpt
+otpt_lambda_term:18.0
+anchor_lambda_term:18.0
+seed:0
+output_dir:/leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft
+log_output_dir:/leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results_corrected_ca_tau_tpt_aug_ablation/vit_l_14_datacomp_1b/Aircraft
+image_only_attack:False
+image_only_attack_type:prm
+image_predicted_label_attack:False
+eps:4.0
+alpha:1.0
+alpha_eps_ratio:4.0
+steps:100
+lr:0.005
+lr_reduction_factor:50.0
+selection_p:0.1
+tta_steps:1
+max_tta_steps:0
+augmentation_pool_ablation:True
+augmentation_pool:all
+ensemble_type:all
+top_k:20
+softmax_temp:0.01
+diffpure:False
+counter_attack:False
+counter_attack_type:pgd
+counter_attack_steps:0
+counter_attack_eps:12.0
+counter_attack_alpha:1.0
+counter_attack_tau:normal_anchors
+counter_attack_noisy_tau_num_anchors:10
+counter_attack_tau_thres:0.2
+counter_attack_beta:2.0
+counter_attack_weighted_perturbations:True
+counter_attack_init_noise:uniform
+counter_attack_gaussian_sigma:0.12
+pgd_clip_pure_i_text_embeddings:null
+pgd_counter_and_clipure_i_lamda:1.0
+image_feature_purify:False
+image_feature_purify_type:noisy_anchor
+image_feature_purify_noisy_anchors:10
+image_feature_purify_anchors_alpha:[1.2]
+image_feature_purify_noisy_sigma:0.18
+image_feature_purify_diff_threshold:0.0
+image_feature_purify_normalize_embeddings:False
+image_feature_purify_uniform_noise_eps:4.0
+image_feature_clipure_steps:10
+image_feature_clipure_step_size:10.0
+selected_id_name:selected_topk.json
+weighted_score_name:weighted_scores.json
+batch_entropy_name:entropies.json
+use_class_text_embeddings:False
+zs_template_path:zeroshot-templates.json
+log_dir:/leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results_corrected_ca_tau_tpt_aug_ablation/vit_l_14_datacomp_1b/Aircraft/Adversarial_Eps_4_0_Steps_100/No_Counter_Attack/TPT/Optimization_Loss_tpt_LR_0_005_Optimization_Steps_1_View_Selection_Fraction_0_1/Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01_augmentation_pool_all
+
+2026-02-14 20:39:41,450 - log - INFO - Use GPU: 0 for training
+2026-02-14 20:40:53,901 - log - INFO - Freezing all parameters except prompt learner
+2026-02-14 20:40:53,919 - log - INFO - => Model created: visual backbone vit_l_14_datacomp_1b
+2026-02-14 20:40:53,976 - log - INFO - Number of test samples: 3333
+2026-02-14 20:40:53,983 - log - INFO - Evaluating dataset: Aircraft
+2026-02-14 20:40:53,984 - log - INFO - Starting evaluation with batch size: 64, selection percentage: 0.1
+2026-02-14 20:40:53,984 - log - INFO - Test-time adaptation steps: 1, learning rate: 0.005
+2026-02-14 20:40:53,984 - log - INFO - Using PGD attack with epsilon: 0.015686, alpha: 0.003922, steps: 100 image only attack False image predicted label attack False
+2026-02-14 20:40:53,985 - log - INFO - Using directory for adversarial images: /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100
+2026-02-14 20:40:57,351 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1514522.pt
+2026-02-14 20:41:03,783 - log - INFO - Computing Diff Ratio TPT Noisy Anchors for Clean Image as well as Adversarial/Clean image
+2026-02-14 20:41:11,328 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0747566.pt
+2026-02-14 20:41:15,213 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1008575.pt
+2026-02-14 20:41:19,098 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0717480.pt
+2026-02-14 20:41:23,041 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0991569.pt
+2026-02-14 20:41:26,906 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1446335.pt
+2026-02-14 20:41:31,171 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1345732.pt
+2026-02-14 20:41:35,072 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0064932.pt
+2026-02-14 20:41:41,110 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1453508.pt
+2026-02-14 20:41:45,974 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0536515.pt
+2026-02-14 20:41:49,908 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0809560.pt
+2026-02-14 20:41:54,852 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0812092.pt
+2026-02-14 20:41:59,501 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0979377.pt
+2026-02-14 20:42:03,683 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0062765.pt
+2026-02-14 20:42:08,270 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1191359.pt
+2026-02-14 20:42:12,283 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0894381.pt
+2026-02-14 20:42:16,211 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0574359.pt
+2026-02-14 20:42:20,202 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0447936.pt
+2026-02-14 20:42:24,311 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0658110.pt
+2026-02-14 20:42:28,249 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0725155.pt
+2026-02-14 20:42:32,208 - log - INFO - iter:20/3333, Original Clean Acc@1: 70.00, Acc@5: 90.00
+2026-02-14 20:42:32,208 - log - INFO - iter:20/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:42:32,208 - log - INFO - iter:20/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:42:32,208 - log - INFO - iter:20/3333, Vanilla TTA Adv Acc@1: 35.00, Acc@5: 50.00
+2026-02-14 20:42:32,208 - log - INFO - iter:20/3333, Vanilla Topk TTA Adv Acc@1: 5.00, Acc@5: 30.00
+2026-02-14 20:42:32,208 - log - INFO - iter:20/3333, Weighted TTA Adv Acc@1: 25.00, Acc@5: 55.00
+2026-02-14 20:42:32,410 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0691159.pt
+2026-02-14 20:42:36,193 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1707891.pt
+2026-02-14 20:42:40,187 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1338874.pt
+2026-02-14 20:42:44,121 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0812908.pt
+2026-02-14 20:42:48,051 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1187784.pt
+2026-02-14 20:42:51,974 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0895165.pt
+2026-02-14 20:42:57,145 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0197342.pt
+2026-02-14 20:43:01,059 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0789828.pt
+2026-02-14 20:43:05,015 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0602227.pt
+2026-02-14 20:43:09,076 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2127935.pt
+2026-02-14 20:43:13,054 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0869739.pt
+2026-02-14 20:43:16,935 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0939480.pt
+2026-02-14 20:43:20,843 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0537688.pt
+2026-02-14 20:43:25,163 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0116175.pt
+2026-02-14 20:43:30,371 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0704269.pt
+2026-02-14 20:43:38,551 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1192237.pt
+2026-02-14 20:43:43,198 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1169900.pt
+2026-02-14 20:43:47,161 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0328235.pt
+2026-02-14 20:43:51,060 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0923507.pt
+2026-02-14 20:43:54,957 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0306187.pt
+2026-02-14 20:43:58,848 - log - INFO - iter:40/3333, Original Clean Acc@1: 72.50, Acc@5: 95.00
+2026-02-14 20:43:58,848 - log - INFO - iter:40/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:43:58,848 - log - INFO - iter:40/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:43:58,848 - log - INFO - iter:40/3333, Vanilla TTA Adv Acc@1: 27.50, Acc@5: 47.50
+2026-02-14 20:43:58,848 - log - INFO - iter:40/3333, Vanilla Topk TTA Adv Acc@1: 5.00, Acc@5: 25.00
+2026-02-14 20:43:58,848 - log - INFO - iter:40/3333, Weighted TTA Adv Acc@1: 20.00, Acc@5: 57.50
+2026-02-14 20:43:58,853 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0907384.pt
+2026-02-14 20:44:02,756 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0064005.pt
+2026-02-14 20:44:07,017 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0907370.pt
+2026-02-14 20:44:10,989 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1337431.pt
+2026-02-14 20:44:14,893 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0061581.pt
+2026-02-14 20:44:18,944 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1338360.pt
+2026-02-14 20:44:22,841 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2208641.pt
+2026-02-14 20:44:26,755 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0218041.pt
+2026-02-14 20:44:30,683 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0907433.pt
+2026-02-14 20:44:38,083 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0694478.pt
+2026-02-14 20:44:42,237 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0699286.pt
+2026-02-14 20:44:46,137 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1713236.pt
+2026-02-14 20:44:50,140 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1047756.pt
+2026-02-14 20:44:57,574 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0256039.pt
+2026-02-14 20:45:01,621 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2021695.pt
+2026-02-14 20:45:05,511 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0907405.pt
+2026-02-14 20:45:09,529 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0724783.pt
+2026-02-14 20:45:13,743 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1215395.pt
+2026-02-14 20:45:17,327 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0920409.pt
+2026-02-14 20:45:21,320 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1833887.pt
+2026-02-14 20:45:25,262 - log - INFO - iter:60/3333, Original Clean Acc@1: 68.33, Acc@5: 93.33
+2026-02-14 20:45:25,262 - log - INFO - iter:60/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:45:25,262 - log - INFO - iter:60/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:45:25,262 - log - INFO - iter:60/3333, Vanilla TTA Adv Acc@1: 30.00, Acc@5: 50.00
+2026-02-14 20:45:25,262 - log - INFO - iter:60/3333, Vanilla Topk TTA Adv Acc@1: 8.33, Acc@5: 31.67
+2026-02-14 20:45:25,263 - log - INFO - iter:60/3333, Weighted TTA Adv Acc@1: 26.67, Acc@5: 58.33
+2026-02-14 20:45:25,267 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0713927.pt
+2026-02-14 20:45:31,540 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0538261.pt
+2026-02-14 20:45:38,523 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0109655.pt
+2026-02-14 20:45:42,744 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1639641.pt
+2026-02-14 20:45:46,658 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0457894.pt
+2026-02-14 20:45:51,268 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0846103.pt
+2026-02-14 20:45:57,200 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0227058.pt
+2026-02-14 20:46:01,231 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0950275.pt
+2026-02-14 20:46:05,170 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0114122.pt
+2026-02-14 20:46:09,046 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1754503.pt
+2026-02-14 20:46:12,920 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0127648.pt
+2026-02-14 20:46:16,818 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0225218.pt
+2026-02-14 20:46:21,590 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1713238.pt
+2026-02-14 20:46:24,988 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1295799.pt
+2026-02-14 20:46:29,351 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1455998.pt
+2026-02-14 20:46:33,274 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1102089.pt
+2026-02-14 20:46:37,812 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0067619.pt
+2026-02-14 20:46:42,438 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0713752.pt
+2026-02-14 20:46:46,367 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1361876.pt
+2026-02-14 20:46:50,312 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0704268.pt
+2026-02-14 20:46:54,232 - log - INFO - iter:80/3333, Original Clean Acc@1: 68.75, Acc@5: 92.50
+2026-02-14 20:46:54,232 - log - INFO - iter:80/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:46:54,232 - log - INFO - iter:80/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:46:54,232 - log - INFO - iter:80/3333, Vanilla TTA Adv Acc@1: 30.00, Acc@5: 51.25
+2026-02-14 20:46:54,233 - log - INFO - iter:80/3333, Vanilla Topk TTA Adv Acc@1: 8.75, Acc@5: 31.25
+2026-02-14 20:46:54,233 - log - INFO - iter:80/3333, Weighted TTA Adv Acc@1: 27.50, Acc@5: 58.75
+2026-02-14 20:46:54,241 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0494478.pt
+2026-02-14 20:46:58,139 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1398436.pt
+2026-02-14 20:47:02,499 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0037512.pt
+2026-02-14 20:47:07,368 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0698787.pt
+2026-02-14 20:47:12,832 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0875303.pt
+2026-02-14 20:47:16,924 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1831096.pt
+2026-02-14 20:47:21,335 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1565290.pt
+2026-02-14 20:47:25,520 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1297843.pt
+2026-02-14 20:47:29,491 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0694480.pt
+2026-02-14 20:47:33,362 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2054409.pt
+2026-02-14 20:47:38,964 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1860176.pt
+2026-02-14 20:47:43,042 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0075050.pt
+2026-02-14 20:47:50,034 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1110805.pt
+2026-02-14 20:47:54,062 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0702845.pt
+2026-02-14 20:47:58,782 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1471735.pt
+2026-02-14 20:48:02,755 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1395798.pt
+2026-02-14 20:48:06,669 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0880593.pt
+2026-02-14 20:48:11,807 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0062679.pt
+2026-02-14 20:48:15,890 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0198440.pt
+2026-02-14 20:48:22,986 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1258401.pt
+2026-02-14 20:48:27,978 - log - INFO - iter:100/3333, Original Clean Acc@1: 68.00, Acc@5: 93.00
+2026-02-14 20:48:27,978 - log - INFO - iter:100/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:48:27,978 - log - INFO - iter:100/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:48:27,978 - log - INFO - iter:100/3333, Vanilla TTA Adv Acc@1: 25.00, Acc@5: 48.00
+2026-02-14 20:48:27,978 - log - INFO - iter:100/3333, Vanilla Topk TTA Adv Acc@1: 8.00, Acc@5: 26.00
+2026-02-14 20:48:27,978 - log - INFO - iter:100/3333, Weighted TTA Adv Acc@1: 24.00, Acc@5: 58.00
+2026-02-14 20:48:27,993 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0448049.pt
+2026-02-14 20:48:31,890 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0357873.pt
+2026-02-14 20:48:35,788 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1196360.pt
+2026-02-14 20:48:39,674 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0218033.pt
+2026-02-14 20:48:43,934 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0395652.pt
+2026-02-14 20:48:47,865 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1320676.pt
+2026-02-14 20:48:52,241 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1100234.pt
+2026-02-14 20:48:56,192 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2067870.pt
+2026-02-14 20:49:00,599 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0681541.pt
+2026-02-14 20:49:11,934 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0133440.pt
+2026-02-14 20:49:15,846 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0218801.pt
+2026-02-14 20:49:19,868 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1298958.pt
+2026-02-14 20:49:23,812 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0746112.pt
+2026-02-14 20:49:28,363 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0953559.pt
+2026-02-14 20:49:34,125 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0545210.pt
+2026-02-14 20:49:38,345 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1043473.pt
+2026-02-14 20:49:42,296 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0894189.pt
+2026-02-14 20:49:46,227 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0447745.pt
+2026-02-14 20:49:51,286 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1682001.pt
+2026-02-14 20:49:55,372 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0522856.pt
+2026-02-14 20:49:59,316 - log - INFO - iter:120/3333, Original Clean Acc@1: 56.67, Acc@5: 91.67
+2026-02-14 20:49:59,316 - log - INFO - iter:120/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:49:59,316 - log - INFO - iter:120/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:49:59,316 - log - INFO - iter:120/3333, Vanilla TTA Adv Acc@1: 20.83, Acc@5: 49.17
+2026-02-14 20:49:59,316 - log - INFO - iter:120/3333, Vanilla Topk TTA Adv Acc@1: 6.67, Acc@5: 23.33
+2026-02-14 20:49:59,316 - log - INFO - iter:120/3333, Weighted TTA Adv Acc@1: 20.00, Acc@5: 60.00
+2026-02-14 20:49:59,320 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1456004.pt
+2026-02-14 20:50:03,298 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0460770.pt
+2026-02-14 20:50:07,279 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1115297.pt
+2026-02-14 20:50:11,531 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0653804.pt
+2026-02-14 20:50:15,518 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2221342.pt
+2026-02-14 20:50:19,418 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1363673.pt
+2026-02-14 20:50:23,423 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1352205.pt
+2026-02-14 20:50:27,310 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0882609.pt
+2026-02-14 20:50:31,215 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1446516.pt
+2026-02-14 20:50:35,179 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1615914.pt
+2026-02-14 20:50:39,246 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1958758.pt
+2026-02-14 20:50:43,156 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1810855.pt
+2026-02-14 20:50:47,064 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2126017.pt
+2026-02-14 20:50:50,964 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1891967.pt
+2026-02-14 20:50:56,590 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0076843.pt
+2026-02-14 20:50:59,972 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1119094.pt
+2026-02-14 20:51:03,849 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1606542.pt
+2026-02-14 20:51:09,410 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0923504.pt
+2026-02-14 20:51:13,483 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1080160.pt
+2026-02-14 20:51:17,542 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0979665.pt
+2026-02-14 20:51:22,525 - log - INFO - iter:140/3333, Original Clean Acc@1: 49.29, Acc@5: 88.57
+2026-02-14 20:51:22,525 - log - INFO - iter:140/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:51:22,526 - log - INFO - iter:140/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:51:22,526 - log - INFO - iter:140/3333, Vanilla TTA Adv Acc@1: 17.86, Acc@5: 47.14
+2026-02-14 20:51:22,526 - log - INFO - iter:140/3333, Vanilla Topk TTA Adv Acc@1: 5.71, Acc@5: 21.43
+2026-02-14 20:51:22,526 - log - INFO - iter:140/3333, Weighted TTA Adv Acc@1: 17.14, Acc@5: 57.86
+2026-02-14 20:51:22,535 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1483195.pt
+2026-02-14 20:51:27,105 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2217839.pt
+2026-02-14 20:51:30,476 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0075752.pt
+2026-02-14 20:51:34,909 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0807961.pt
+2026-02-14 20:51:38,927 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0195013.pt
+2026-02-14 20:51:42,852 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0682201.pt
+2026-02-14 20:51:46,730 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1163484.pt
+2026-02-14 20:51:50,682 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0063284.pt
+2026-02-14 20:51:59,229 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1506226.pt
+2026-02-14 20:52:03,096 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0973082.pt
+2026-02-14 20:52:07,007 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0176136.pt
+2026-02-14 20:52:11,438 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1163792.pt
+2026-02-14 20:52:15,678 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0237107.pt
+2026-02-14 20:52:19,749 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0523207.pt
+2026-02-14 20:52:23,721 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2007890.pt
+2026-02-14 20:52:28,415 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0066410.pt
+2026-02-14 20:52:38,131 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0558343.pt
+2026-02-14 20:52:42,736 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0218042.pt
+2026-02-14 20:52:46,659 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1382601.pt
+2026-02-14 20:52:50,581 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0482804.pt
+2026-02-14 20:52:57,910 - log - INFO - iter:160/3333, Original Clean Acc@1: 45.00, Acc@5: 86.88
+2026-02-14 20:52:57,910 - log - INFO - iter:160/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:52:57,910 - log - INFO - iter:160/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:52:57,910 - log - INFO - iter:160/3333, Vanilla TTA Adv Acc@1: 15.62, Acc@5: 43.12
+2026-02-14 20:52:57,910 - log - INFO - iter:160/3333, Vanilla Topk TTA Adv Acc@1: 5.00, Acc@5: 18.75
+2026-02-14 20:52:57,910 - log - INFO - iter:160/3333, Weighted TTA Adv Acc@1: 15.00, Acc@5: 55.00
+2026-02-14 20:52:57,914 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1115400.pt
+2026-02-14 20:53:02,093 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1696061.pt
+2026-02-14 20:53:06,055 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1559372.pt
+2026-02-14 20:53:10,038 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1879889.pt
+2026-02-14 20:53:13,947 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1237623.pt
+2026-02-14 20:53:18,470 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0851302.pt
+2026-02-14 20:53:22,998 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0072369.pt
+2026-02-14 20:53:26,471 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1783685.pt
+2026-02-14 20:53:30,921 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1149871.pt
+2026-02-14 20:53:34,802 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1110779.pt
+2026-02-14 20:53:39,316 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1267074.pt
+2026-02-14 20:53:42,705 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1224910.pt
+2026-02-14 20:53:46,650 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0361471.pt
+2026-02-14 20:53:50,668 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0944257.pt
+2026-02-14 20:54:03,112 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1336460.pt
+2026-02-14 20:54:07,920 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1736209.pt
+2026-02-14 20:54:15,031 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2002331.pt
+2026-02-14 20:54:25,585 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0876440.pt
+2026-02-14 20:54:29,917 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0522417.pt
+2026-02-14 20:54:33,814 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0894188.pt
+2026-02-14 20:54:37,722 - log - INFO - iter:180/3333, Original Clean Acc@1: 40.00, Acc@5: 84.44
+2026-02-14 20:54:37,722 - log - INFO - iter:180/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:54:37,723 - log - INFO - iter:180/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:54:37,723 - log - INFO - iter:180/3333, Vanilla TTA Adv Acc@1: 13.89, Acc@5: 41.67
+2026-02-14 20:54:37,723 - log - INFO - iter:180/3333, Vanilla Topk TTA Adv Acc@1: 4.44, Acc@5: 16.67
+2026-02-14 20:54:37,723 - log - INFO - iter:180/3333, Weighted TTA Adv Acc@1: 13.33, Acc@5: 53.33
+2026-02-14 20:54:37,727 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1599381.pt
+2026-02-14 20:54:41,621 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0097111.pt
+2026-02-14 20:54:45,508 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0974734.pt
+2026-02-14 20:54:49,481 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1572350.pt
+2026-02-14 20:54:53,966 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1548404.pt
+2026-02-14 20:54:57,954 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1377012.pt
+2026-02-14 20:55:11,546 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0175746.pt
+2026-02-14 20:55:17,917 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1372809.pt
+2026-02-14 20:55:21,934 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1358066.pt
+2026-02-14 20:55:26,197 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1545325.pt
+2026-02-14 20:55:30,103 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2031384.pt
+2026-02-14 20:55:34,259 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1842045.pt
+2026-02-14 20:55:38,254 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1577681.pt
+2026-02-14 20:55:42,130 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1340279.pt
+2026-02-14 20:55:47,980 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1163793.pt
+2026-02-14 20:55:52,051 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0944247.pt
+2026-02-14 20:55:56,108 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2132361.pt
+2026-02-14 20:56:00,125 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1476642.pt
+2026-02-14 20:56:03,988 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1376842.pt
+2026-02-14 20:56:08,116 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1423426.pt
+2026-02-14 20:56:12,533 - log - INFO - iter:200/3333, Original Clean Acc@1: 36.00, Acc@5: 79.00
+2026-02-14 20:56:12,533 - log - INFO - iter:200/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:56:12,533 - log - INFO - iter:200/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:56:12,533 - log - INFO - iter:200/3333, Vanilla TTA Adv Acc@1: 12.50, Acc@5: 40.00
+2026-02-14 20:56:12,533 - log - INFO - iter:200/3333, Vanilla Topk TTA Adv Acc@1: 4.00, Acc@5: 15.00
+2026-02-14 20:56:12,533 - log - INFO - iter:200/3333, Weighted TTA Adv Acc@1: 12.00, Acc@5: 51.50
+2026-02-14 20:56:12,558 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0890396.pt
+2026-02-14 20:56:16,696 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0259167.pt
+2026-02-14 20:56:20,525 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1078482.pt
+2026-02-14 20:56:24,487 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1129244.pt
+2026-02-14 20:56:32,703 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1268068.pt
+2026-02-14 20:56:37,062 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2128746.pt
+2026-02-14 20:56:44,516 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0755282.pt
+2026-02-14 20:56:52,500 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1398987.pt
+2026-02-14 20:56:56,597 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0675711.pt
+2026-02-14 20:57:00,781 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0104601.pt
+2026-02-14 20:57:04,717 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1650662.pt
+2026-02-14 20:57:08,625 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1087920.pt
+2026-02-14 20:57:12,682 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0669870.pt
+2026-02-14 20:57:16,648 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1244625.pt
+2026-02-14 20:57:20,698 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2031421.pt
+2026-02-14 20:57:24,912 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0192625.pt
+2026-02-14 20:57:28,934 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1418231.pt
+2026-02-14 20:57:32,856 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1561990.pt
+2026-02-14 20:57:36,764 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0097578.pt
+2026-02-14 20:57:42,468 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0931601.pt
+2026-02-14 20:57:46,027 - log - INFO - iter:220/3333, Original Clean Acc@1: 32.73, Acc@5: 75.00
+2026-02-14 20:57:46,027 - log - INFO - iter:220/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:57:46,028 - log - INFO - iter:220/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:57:46,028 - log - INFO - iter:220/3333, Vanilla TTA Adv Acc@1: 11.36, Acc@5: 36.36
+2026-02-14 20:57:46,028 - log - INFO - iter:220/3333, Vanilla Topk TTA Adv Acc@1: 3.64, Acc@5: 13.64
+2026-02-14 20:57:46,028 - log - INFO - iter:220/3333, Weighted TTA Adv Acc@1: 10.91, Acc@5: 46.82
+2026-02-14 20:57:46,032 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1237650.pt
+2026-02-14 20:57:49,947 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1857204.pt
+2026-02-14 20:57:55,406 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1361693.pt
+2026-02-14 20:58:03,103 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0450740.pt
+2026-02-14 20:58:07,107 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1429846.pt
+2026-02-14 20:58:11,671 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2260617.pt
+2026-02-14 20:58:20,157 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1842040.pt
+2026-02-14 20:58:25,386 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0730798.pt
+2026-02-14 20:58:29,639 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2263029.pt
+2026-02-14 20:58:33,594 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1212753.pt
+2026-02-14 20:58:37,549 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0635825.pt
+2026-02-14 20:58:41,759 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1758619.pt
+2026-02-14 20:58:45,796 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2094229.pt
+2026-02-14 20:58:49,767 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1950707.pt
+2026-02-14 20:58:53,812 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0681537.pt
+2026-02-14 20:59:00,928 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1927317.pt
+2026-02-14 20:59:11,551 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0618966.pt
+2026-02-14 20:59:15,909 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1454446.pt
+2026-02-14 20:59:19,778 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0225227.pt
+2026-02-14 20:59:25,391 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2227525.pt
+2026-02-14 20:59:29,281 - log - INFO - iter:240/3333, Original Clean Acc@1: 30.00, Acc@5: 71.25
+2026-02-14 20:59:29,282 - log - INFO - iter:240/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:59:29,282 - log - INFO - iter:240/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 20:59:29,282 - log - INFO - iter:240/3333, Vanilla TTA Adv Acc@1: 10.42, Acc@5: 33.33
+2026-02-14 20:59:29,282 - log - INFO - iter:240/3333, Vanilla Topk TTA Adv Acc@1: 3.33, Acc@5: 12.50
+2026-02-14 20:59:29,282 - log - INFO - iter:240/3333, Weighted TTA Adv Acc@1: 10.00, Acc@5: 42.92
+2026-02-14 20:59:29,286 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1876022.pt
+2026-02-14 20:59:33,202 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1551279.pt
+2026-02-14 20:59:37,118 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1709124.pt
+2026-02-14 20:59:41,023 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1143441.pt
+2026-02-14 20:59:45,202 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2223909.pt
+2026-02-14 20:59:49,104 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1192642.pt
+2026-02-14 20:59:53,084 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1139751.pt
+2026-02-14 20:59:57,402 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0336540.pt
+2026-02-14 21:00:01,429 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1238449.pt
+2026-02-14 21:00:05,412 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1393634.pt
+2026-02-14 21:00:10,548 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1790921.pt
+2026-02-14 21:00:14,560 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2054442.pt
+2026-02-14 21:00:18,539 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0522857.pt
+2026-02-14 21:00:23,776 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0673596.pt
+2026-02-14 21:00:27,741 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1736223.pt
+2026-02-14 21:00:31,690 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1548400.pt
+2026-02-14 21:00:36,455 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0308863.pt
+2026-02-14 21:00:42,661 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2038532.pt
+2026-02-14 21:00:49,037 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2106086.pt
+2026-02-14 21:00:53,041 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1510253.pt
+2026-02-14 21:00:56,935 - log - INFO - iter:260/3333, Original Clean Acc@1: 27.69, Acc@5: 67.31
+2026-02-14 21:00:56,935 - log - INFO - iter:260/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:00:56,935 - log - INFO - iter:260/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:00:56,935 - log - INFO - iter:260/3333, Vanilla TTA Adv Acc@1: 9.62, Acc@5: 30.77
+2026-02-14 21:00:56,935 - log - INFO - iter:260/3333, Vanilla Topk TTA Adv Acc@1: 3.08, Acc@5: 11.54
+2026-02-14 21:00:56,935 - log - INFO - iter:260/3333, Weighted TTA Adv Acc@1: 9.23, Acc@5: 39.62
+2026-02-14 21:00:56,939 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0770474.pt
+2026-02-14 21:01:01,311 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1550106.pt
+2026-02-14 21:01:05,329 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2250798.pt
+2026-02-14 21:01:10,399 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1852007.pt
+2026-02-14 21:01:14,316 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1884738.pt
+2026-02-14 21:01:18,321 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1946040.pt
+2026-02-14 21:01:22,339 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2236183.pt
+2026-02-14 21:01:26,283 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1261350.pt
+2026-02-14 21:01:30,218 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1085719.pt
+2026-02-14 21:01:34,088 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0257552.pt
+2026-02-14 21:01:38,748 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1142906.pt
+2026-02-14 21:01:42,646 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1318450.pt
+2026-02-14 21:01:47,538 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2229397.pt
+2026-02-14 21:01:51,531 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0391437.pt
+2026-02-14 21:01:55,425 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0325574.pt
+2026-02-14 21:01:59,510 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0147057.pt
+2026-02-14 21:02:03,439 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1931271.pt
+2026-02-14 21:02:07,451 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1899099.pt
+2026-02-14 21:02:11,448 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1935750.pt
+2026-02-14 21:02:15,936 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0457841.pt
+2026-02-14 21:02:19,765 - log - INFO - iter:280/3333, Original Clean Acc@1: 27.14, Acc@5: 66.07
+2026-02-14 21:02:19,765 - log - INFO - iter:280/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:02:19,765 - log - INFO - iter:280/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:02:19,765 - log - INFO - iter:280/3333, Vanilla TTA Adv Acc@1: 8.93, Acc@5: 29.29
+2026-02-14 21:02:19,765 - log - INFO - iter:280/3333, Vanilla Topk TTA Adv Acc@1: 2.86, Acc@5: 10.71
+2026-02-14 21:02:19,765 - log - INFO - iter:280/3333, Weighted TTA Adv Acc@1: 8.93, Acc@5: 37.86
+2026-02-14 21:02:19,769 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1337849.pt
+2026-02-14 21:02:24,310 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2195493.pt
+2026-02-14 21:02:28,234 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2147231.pt
+2026-02-14 21:02:35,105 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1616720.pt
+2026-02-14 21:02:42,086 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2067982.pt
+2026-02-14 21:02:45,946 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1459210.pt
+2026-02-14 21:02:49,894 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1403158.pt
+2026-02-14 21:02:53,952 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0074246.pt
+2026-02-14 21:02:57,903 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1355815.pt
+2026-02-14 21:03:01,920 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1146021.pt
+2026-02-14 21:03:06,353 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1538844.pt
+2026-02-14 21:03:10,268 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2236964.pt
+2026-02-14 21:03:14,163 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1421021.pt
+2026-02-14 21:03:18,185 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0973167.pt
+2026-02-14 21:03:22,085 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2198761.pt
+2026-02-14 21:03:26,821 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2207626.pt
+2026-02-14 21:03:30,788 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1881962.pt
+2026-02-14 21:03:35,454 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1535044.pt
+2026-02-14 21:03:39,439 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1016570.pt
+2026-02-14 21:03:46,926 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0857549.pt
+2026-02-14 21:03:50,857 - log - INFO - iter:300/3333, Original Clean Acc@1: 27.33, Acc@5: 66.67
+2026-02-14 21:03:50,857 - log - INFO - iter:300/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:03:50,857 - log - INFO - iter:300/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:03:50,857 - log - INFO - iter:300/3333, Vanilla TTA Adv Acc@1: 8.33, Acc@5: 27.67
+2026-02-14 21:03:50,857 - log - INFO - iter:300/3333, Vanilla Topk TTA Adv Acc@1: 2.67, Acc@5: 10.00
+2026-02-14 21:03:50,857 - log - INFO - iter:300/3333, Weighted TTA Adv Acc@1: 8.33, Acc@5: 36.67
+2026-02-14 21:03:50,861 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1398526.pt
+2026-02-14 21:03:54,799 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1668558.pt
+2026-02-14 21:03:58,923 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1291783.pt
+2026-02-14 21:04:02,990 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0987802.pt
+2026-02-14 21:04:06,884 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0305545.pt
+2026-02-14 21:04:10,853 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1879110.pt
+2026-02-14 21:04:14,756 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0218852.pt
+2026-02-14 21:04:19,355 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0582863.pt
+2026-02-14 21:04:23,347 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1356890.pt
+2026-02-14 21:04:27,236 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1771959.pt
+2026-02-14 21:04:31,135 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1768538.pt
+2026-02-14 21:04:35,712 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0701628.pt
+2026-02-14 21:04:46,117 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2191957.pt
+2026-02-14 21:04:51,488 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0522819.pt
+2026-02-14 21:04:55,442 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1251519.pt
+2026-02-14 21:04:59,368 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1577934.pt
+2026-02-14 21:05:05,163 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1419049.pt
+2026-02-14 21:05:09,066 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0174054.pt
+2026-02-14 21:05:13,063 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0514744.pt
+2026-02-14 21:05:16,956 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1354835.pt
+2026-02-14 21:05:20,858 - log - INFO - iter:320/3333, Original Clean Acc@1: 26.56, Acc@5: 68.44
+2026-02-14 21:05:20,859 - log - INFO - iter:320/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:05:20,859 - log - INFO - iter:320/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:05:20,859 - log - INFO - iter:320/3333, Vanilla TTA Adv Acc@1: 7.81, Acc@5: 26.56
+2026-02-14 21:05:20,859 - log - INFO - iter:320/3333, Vanilla Topk TTA Adv Acc@1: 2.50, Acc@5: 9.38
+2026-02-14 21:05:20,859 - log - INFO - iter:320/3333, Weighted TTA Adv Acc@1: 7.81, Acc@5: 35.31
+2026-02-14 21:05:21,243 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2238661.pt
+2026-02-14 21:05:24,853 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1795553.pt
+2026-02-14 21:05:29,321 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0275806.pt
+2026-02-14 21:05:33,230 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1529574.pt
+2026-02-14 21:05:37,189 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0496901.pt
+2026-02-14 21:05:41,297 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1133684.pt
+2026-02-14 21:05:45,330 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1662032.pt
+2026-02-14 21:05:49,757 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0467798.pt
+2026-02-14 21:05:53,648 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1365786.pt
+2026-02-14 21:05:57,622 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2145082.pt
+2026-02-14 21:06:03,780 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2218546.pt
+2026-02-14 21:06:07,678 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2133249.pt
+2026-02-14 21:06:11,715 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2230427.pt
+2026-02-14 21:06:22,114 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2217964.pt
+2026-02-14 21:06:27,471 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1821602.pt
+2026-02-14 21:06:31,388 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0136486.pt
+2026-02-14 21:06:35,780 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0338531.pt
+2026-02-14 21:06:39,803 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1626629.pt
+2026-02-14 21:06:43,740 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1415611.pt
+2026-02-14 21:06:47,600 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1013534.pt
+2026-02-14 21:06:53,785 - log - INFO - iter:340/3333, Original Clean Acc@1: 26.47, Acc@5: 69.71
+2026-02-14 21:06:53,786 - log - INFO - iter:340/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:06:53,786 - log - INFO - iter:340/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:06:53,786 - log - INFO - iter:340/3333, Vanilla TTA Adv Acc@1: 8.24, Acc@5: 27.06
+2026-02-14 21:06:53,786 - log - INFO - iter:340/3333, Vanilla Topk TTA Adv Acc@1: 3.24, Acc@5: 9.71
+2026-02-14 21:06:53,786 - log - INFO - iter:340/3333, Weighted TTA Adv Acc@1: 8.24, Acc@5: 35.29
+2026-02-14 21:06:53,794 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0851311.pt
+2026-02-14 21:07:01,080 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1041645.pt
+2026-02-14 21:07:05,780 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0814397.pt
+2026-02-14 21:07:14,403 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1292533.pt
+2026-02-14 21:07:19,648 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1009765.pt
+2026-02-14 21:07:23,608 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0705084.pt
+2026-02-14 21:07:27,501 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0062223.pt
+2026-02-14 21:07:31,611 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1427673.pt
+2026-02-14 21:07:35,576 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0127505.pt
+2026-02-14 21:07:39,480 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0149352.pt
+2026-02-14 21:07:43,450 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0188405.pt
+2026-02-14 21:07:47,338 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2162684.pt
+2026-02-14 21:07:51,621 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0540389.pt
+2026-02-14 21:07:55,477 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0485231.pt
+2026-02-14 21:07:59,360 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0980549.pt
+2026-02-14 21:08:03,283 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0641196.pt
+2026-02-14 21:08:07,183 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0901513.pt
+2026-02-14 21:08:11,427 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0677586.pt
+2026-02-14 21:08:15,391 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0155579.pt
+2026-02-14 21:08:19,286 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0396525.pt
+2026-02-14 21:08:24,255 - log - INFO - iter:360/3333, Original Clean Acc@1: 28.33, Acc@5: 71.11
+2026-02-14 21:08:24,255 - log - INFO - iter:360/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:08:24,255 - log - INFO - iter:360/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:08:24,255 - log - INFO - iter:360/3333, Vanilla TTA Adv Acc@1: 10.00, Acc@5: 30.83
+2026-02-14 21:08:24,256 - log - INFO - iter:360/3333, Vanilla Topk TTA Adv Acc@1: 4.17, Acc@5: 12.78
+2026-02-14 21:08:24,256 - log - INFO - iter:360/3333, Weighted TTA Adv Acc@1: 10.28, Acc@5: 38.61
+2026-02-14 21:08:24,260 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0598112.pt
+2026-02-14 21:08:28,738 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0783900.pt
+2026-02-14 21:08:34,382 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1231746.pt
+2026-02-14 21:08:38,468 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2167150.pt
+2026-02-14 21:08:47,737 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0104828.pt
+2026-02-14 21:08:52,184 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0733462.pt
+2026-02-14 21:08:56,091 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0618964.pt
+2026-02-14 21:09:00,004 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2226313.pt
+2026-02-14 21:09:04,018 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1237674.pt
+2026-02-14 21:09:07,966 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1707900.pt
+2026-02-14 21:09:14,158 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1320257.pt
+2026-02-14 21:09:18,080 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0687392.pt
+2026-02-14 21:09:22,035 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0869743.pt
+2026-02-14 21:09:25,971 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1645747.pt
+2026-02-14 21:09:29,881 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1340195.pt
+2026-02-14 21:09:33,762 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1292378.pt
+2026-02-14 21:09:38,082 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0836147.pt
+2026-02-14 21:09:42,542 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0812094.pt
+2026-02-14 21:09:46,559 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0540023.pt
+2026-02-14 21:09:50,465 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0115565.pt
+2026-02-14 21:09:54,437 - log - INFO - iter:380/3333, Original Clean Acc@1: 29.21, Acc@5: 72.63
+2026-02-14 21:09:54,437 - log - INFO - iter:380/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:09:54,438 - log - INFO - iter:380/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:09:54,438 - log - INFO - iter:380/3333, Vanilla TTA Adv Acc@1: 10.26, Acc@5: 33.95
+2026-02-14 21:09:54,438 - log - INFO - iter:380/3333, Vanilla Topk TTA Adv Acc@1: 4.21, Acc@5: 14.74
+2026-02-14 21:09:54,438 - log - INFO - iter:380/3333, Weighted TTA Adv Acc@1: 10.79, Acc@5: 41.32
+2026-02-14 21:09:54,446 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0636590.pt
+2026-02-14 21:09:58,404 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0989831.pt
+2026-02-14 21:10:02,338 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1739526.pt
+2026-02-14 21:10:06,262 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1402021.pt
+2026-02-14 21:10:10,234 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1627935.pt
+2026-02-14 21:10:15,349 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0064890.pt
+2026-02-14 21:10:19,320 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1513616.pt
+2026-02-14 21:10:24,021 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0702839.pt
+2026-02-14 21:10:27,923 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1519194.pt
+2026-02-14 21:10:32,405 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1624193.pt
+2026-02-14 21:10:37,413 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1116410.pt
+2026-02-14 21:10:41,140 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0964344.pt
+2026-02-14 21:10:45,683 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0396535.pt
+2026-02-14 21:10:53,355 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1351594.pt
+2026-02-14 21:10:58,468 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0885277.pt
+2026-02-14 21:11:02,579 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0065286.pt
+2026-02-14 21:11:06,725 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1896036.pt
+2026-02-14 21:11:13,094 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0725997.pt
+2026-02-14 21:11:18,062 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0482823.pt
+2026-02-14 21:11:22,007 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0939547.pt
+2026-02-14 21:11:26,481 - log - INFO - iter:400/3333, Original Clean Acc@1: 28.00, Acc@5: 73.50
+2026-02-14 21:11:26,481 - log - INFO - iter:400/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:11:26,481 - log - INFO - iter:400/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:11:26,481 - log - INFO - iter:400/3333, Vanilla TTA Adv Acc@1: 10.00, Acc@5: 36.25
+2026-02-14 21:11:26,481 - log - INFO - iter:400/3333, Vanilla Topk TTA Adv Acc@1: 4.25, Acc@5: 17.00
+2026-02-14 21:11:26,481 - log - INFO - iter:400/3333, Weighted TTA Adv Acc@1: 11.00, Acc@5: 43.75
+2026-02-14 21:11:27,052 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0143388.pt
+2026-02-14 21:11:30,532 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0183641.pt
+2026-02-14 21:11:34,457 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0487369.pt
+2026-02-14 21:11:38,403 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1161004.pt
+2026-02-14 21:11:42,306 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0894166.pt
+2026-02-14 21:11:46,209 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1137626.pt
+2026-02-14 21:11:50,660 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1409250.pt
+2026-02-14 21:11:54,714 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0727357.pt
+2026-02-14 21:12:02,073 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0426810.pt
+2026-02-14 21:12:09,963 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0946798.pt
+2026-02-14 21:12:13,907 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0693511.pt
+2026-02-14 21:12:18,333 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1469918.pt
+2026-02-14 21:12:22,276 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0751008.pt
+2026-02-14 21:12:30,157 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1329664.pt
+2026-02-14 21:12:35,260 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0880576.pt
+2026-02-14 21:12:39,155 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1663953.pt
+2026-02-14 21:12:43,336 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0181737.pt
+2026-02-14 21:12:47,191 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0894385.pt
+2026-02-14 21:12:51,071 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0063295.pt
+2026-02-14 21:12:55,058 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0959346.pt
+2026-02-14 21:12:58,977 - log - INFO - iter:420/3333, Original Clean Acc@1: 27.14, Acc@5: 74.76
+2026-02-14 21:12:58,977 - log - INFO - iter:420/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:12:58,978 - log - INFO - iter:420/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:12:58,978 - log - INFO - iter:420/3333, Vanilla TTA Adv Acc@1: 10.00, Acc@5: 38.81
+2026-02-14 21:12:58,978 - log - INFO - iter:420/3333, Vanilla Topk TTA Adv Acc@1: 4.05, Acc@5: 18.33
+2026-02-14 21:12:58,978 - log - INFO - iter:420/3333, Weighted TTA Adv Acc@1: 10.95, Acc@5: 46.19
+2026-02-14 21:12:58,982 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1106454.pt
+2026-02-14 21:13:03,813 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0066420.pt
+2026-02-14 21:13:07,768 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1145204.pt
+2026-02-14 21:13:11,745 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1305520.pt
+2026-02-14 21:13:16,711 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0064924.pt
+2026-02-14 21:13:20,615 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1864991.pt
+2026-02-14 21:13:24,526 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0948344.pt
+2026-02-14 21:13:28,407 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1149068.pt
+2026-02-14 21:13:34,397 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1619901.pt
+2026-02-14 21:13:38,278 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1124247.pt
+2026-02-14 21:13:42,135 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1647303.pt
+2026-02-14 21:13:46,119 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1836113.pt
+2026-02-14 21:13:50,103 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0181726.pt
+2026-02-14 21:13:54,024 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1922915.pt
+2026-02-14 21:13:57,947 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1572354.pt
+2026-02-14 21:14:02,201 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1375148.pt
+2026-02-14 21:14:06,122 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1244348.pt
+2026-02-14 21:14:10,537 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2233262.pt
+2026-02-14 21:14:14,638 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0946093.pt
+2026-02-14 21:14:18,536 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1527503.pt
+2026-02-14 21:14:23,957 - log - INFO - iter:440/3333, Original Clean Acc@1: 26.36, Acc@5: 75.91
+2026-02-14 21:14:23,958 - log - INFO - iter:440/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:14:23,958 - log - INFO - iter:440/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:14:23,958 - log - INFO - iter:440/3333, Vanilla TTA Adv Acc@1: 9.55, Acc@5: 40.45
+2026-02-14 21:14:23,958 - log - INFO - iter:440/3333, Vanilla Topk TTA Adv Acc@1: 3.86, Acc@5: 18.41
+2026-02-14 21:14:23,958 - log - INFO - iter:440/3333, Weighted TTA Adv Acc@1: 10.45, Acc@5: 47.95
+2026-02-14 21:14:24,429 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0062769.pt
+2026-02-14 21:14:32,867 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0929568.pt
+2026-02-14 21:14:38,590 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0458628.pt
+2026-02-14 21:14:43,147 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1860132.pt
+2026-02-14 21:14:47,093 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1663372.pt
+2026-02-14 21:14:51,471 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1336043.pt
+2026-02-14 21:14:55,473 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0688083.pt
+2026-02-14 21:15:03,953 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0989281.pt
+2026-02-14 21:15:08,189 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0062672.pt
+2026-02-14 21:15:13,335 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2102584.pt
+2026-02-14 21:15:17,229 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1564952.pt
+2026-02-14 21:15:21,557 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0894240.pt
+2026-02-14 21:15:27,604 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1796764.pt
+2026-02-14 21:15:31,488 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2230119.pt
+2026-02-14 21:15:35,382 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1450008.pt
+2026-02-14 21:15:39,801 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1650652.pt
+2026-02-14 21:15:44,066 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1818227.pt
+2026-02-14 21:15:47,995 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2094829.pt
+2026-02-14 21:15:51,913 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1505652.pt
+2026-02-14 21:15:58,577 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2119978.pt
+2026-02-14 21:16:02,670 - log - INFO - iter:460/3333, Original Clean Acc@1: 25.65, Acc@5: 76.74
+2026-02-14 21:16:02,670 - log - INFO - iter:460/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:16:02,670 - log - INFO - iter:460/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:16:02,670 - log - INFO - iter:460/3333, Vanilla TTA Adv Acc@1: 9.35, Acc@5: 42.39
+2026-02-14 21:16:02,670 - log - INFO - iter:460/3333, Vanilla Topk TTA Adv Acc@1: 3.70, Acc@5: 18.91
+2026-02-14 21:16:02,670 - log - INFO - iter:460/3333, Weighted TTA Adv Acc@1: 10.22, Acc@5: 49.57
+2026-02-14 21:16:02,674 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1237717.pt
+2026-02-14 21:16:06,762 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0967862.pt
+2026-02-14 21:16:12,404 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0175817.pt
+2026-02-14 21:16:16,505 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1623096.pt
+2026-02-14 21:16:20,557 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1313993.pt
+2026-02-14 21:16:24,558 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0973263.pt
+2026-02-14 21:16:28,449 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1160955.pt
+2026-02-14 21:16:32,582 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0678976.pt
+2026-02-14 21:16:36,532 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1124487.pt
+2026-02-14 21:16:40,549 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0973098.pt
+2026-02-14 21:16:44,470 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1704745.pt
+2026-02-14 21:16:48,492 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1298901.pt
+2026-02-14 21:16:52,922 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2263603.pt
+2026-02-14 21:16:56,862 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1237861.pt
+2026-02-14 21:17:00,800 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0740882.pt
+2026-02-14 21:17:10,430 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0488869.pt
+2026-02-14 21:17:14,912 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1000413.pt
+2026-02-14 21:17:18,953 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0174942.pt
+2026-02-14 21:17:22,900 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0166974.pt
+2026-02-14 21:17:27,086 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1017810.pt
+2026-02-14 21:17:31,217 - log - INFO - iter:480/3333, Original Clean Acc@1: 25.83, Acc@5: 77.71
+2026-02-14 21:17:31,217 - log - INFO - iter:480/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:17:31,217 - log - INFO - iter:480/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:17:31,217 - log - INFO - iter:480/3333, Vanilla TTA Adv Acc@1: 10.00, Acc@5: 43.54
+2026-02-14 21:17:31,217 - log - INFO - iter:480/3333, Vanilla Topk TTA Adv Acc@1: 4.17, Acc@5: 19.79
+2026-02-14 21:17:31,217 - log - INFO - iter:480/3333, Weighted TTA Adv Acc@1: 10.83, Acc@5: 50.42
+2026-02-14 21:17:31,221 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0075760.pt
+2026-02-14 21:17:35,304 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0376937.pt
+2026-02-14 21:17:39,604 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1447274.pt
+2026-02-14 21:17:43,160 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1673067.pt
+2026-02-14 21:17:47,636 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0056323.pt
+2026-02-14 21:17:51,072 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1380492.pt
+2026-02-14 21:17:57,723 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1123364.pt
+2026-02-14 21:18:01,254 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0749479.pt
+2026-02-14 21:18:05,538 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0990829.pt
+2026-02-14 21:18:09,666 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0296937.pt
+2026-02-14 21:18:13,672 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1366112.pt
+2026-02-14 21:18:17,667 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2119983.pt
+2026-02-14 21:18:21,575 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1815692.pt
+2026-02-14 21:18:27,903 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0325676.pt
+2026-02-14 21:18:32,836 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1365500.pt
+2026-02-14 21:18:36,736 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1200651.pt
+2026-02-14 21:18:41,458 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1173016.pt
+2026-02-14 21:18:45,350 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1623903.pt
+2026-02-14 21:18:49,389 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2031403.pt
+2026-02-14 21:18:53,611 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0134598.pt
+2026-02-14 21:18:57,524 - log - INFO - iter:500/3333, Original Clean Acc@1: 26.60, Acc@5: 78.20
+2026-02-14 21:18:57,524 - log - INFO - iter:500/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:18:57,524 - log - INFO - iter:500/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:18:57,524 - log - INFO - iter:500/3333, Vanilla TTA Adv Acc@1: 10.40, Acc@5: 44.00
+2026-02-14 21:18:57,525 - log - INFO - iter:500/3333, Vanilla Topk TTA Adv Acc@1: 4.60, Acc@5: 20.60
+2026-02-14 21:18:57,525 - log - INFO - iter:500/3333, Weighted TTA Adv Acc@1: 11.60, Acc@5: 50.80
+2026-02-14 21:18:57,529 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1550890.pt
+2026-02-14 21:19:03,324 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2137126.pt
+2026-02-14 21:19:07,458 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1338255.pt
+2026-02-14 21:19:11,347 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0957893.pt
+2026-02-14 21:19:15,294 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2199948.pt
+2026-02-14 21:19:19,262 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0709566.pt
+2026-02-14 21:19:23,191 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0914475.pt
+2026-02-14 21:19:33,097 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1375987.pt
+2026-02-14 21:19:36,981 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1471690.pt
+2026-02-14 21:19:41,136 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2140530.pt
+2026-02-14 21:19:45,272 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1630526.pt
+2026-02-14 21:19:49,144 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1938051.pt
+2026-02-14 21:19:53,105 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1519381.pt
+2026-02-14 21:19:58,272 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1152153.pt
+2026-02-14 21:20:02,119 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1568750.pt
+2026-02-14 21:20:07,212 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0594827.pt
+2026-02-14 21:20:11,056 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1463774.pt
+2026-02-14 21:20:15,099 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0469653.pt
+2026-02-14 21:20:19,083 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0950442.pt
+2026-02-14 21:20:24,571 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2127992.pt
+2026-02-14 21:20:29,096 - log - INFO - iter:520/3333, Original Clean Acc@1: 27.69, Acc@5: 79.04
+2026-02-14 21:20:29,096 - log - INFO - iter:520/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:20:29,097 - log - INFO - iter:520/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:20:29,097 - log - INFO - iter:520/3333, Vanilla TTA Adv Acc@1: 11.35, Acc@5: 45.38
+2026-02-14 21:20:29,097 - log - INFO - iter:520/3333, Vanilla Topk TTA Adv Acc@1: 5.19, Acc@5: 22.12
+2026-02-14 21:20:29,097 - log - INFO - iter:520/3333, Weighted TTA Adv Acc@1: 12.31, Acc@5: 51.73
+2026-02-14 21:20:29,101 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1416312.pt
+2026-02-14 21:20:37,571 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0158891.pt
+2026-02-14 21:20:41,512 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0522873.pt
+2026-02-14 21:20:46,158 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0257029.pt
+2026-02-14 21:20:50,065 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1892614.pt
+2026-02-14 21:20:53,969 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0386937.pt
+2026-02-14 21:21:02,080 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0130597.pt
+2026-02-14 21:21:09,214 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2002363.pt
+2026-02-14 21:21:13,226 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0708642.pt
+2026-02-14 21:21:17,098 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0477671.pt
+2026-02-14 21:21:21,045 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1774577.pt
+2026-02-14 21:21:24,984 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0205784.pt
+2026-02-14 21:21:28,993 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1245209.pt
+2026-02-14 21:21:33,548 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0744907.pt
+2026-02-14 21:21:39,708 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2026733.pt
+2026-02-14 21:21:44,218 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1935709.pt
+2026-02-14 21:21:48,100 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0487319.pt
+2026-02-14 21:21:51,999 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1798594.pt
+2026-02-14 21:21:56,006 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0147029.pt
+2026-02-14 21:22:00,011 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0658065.pt
+2026-02-14 21:22:09,213 - log - INFO - iter:540/3333, Original Clean Acc@1: 28.52, Acc@5: 79.63
+2026-02-14 21:22:09,213 - log - INFO - iter:540/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:22:09,213 - log - INFO - iter:540/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:22:09,214 - log - INFO - iter:540/3333, Vanilla TTA Adv Acc@1: 11.30, Acc@5: 45.56
+2026-02-14 21:22:09,214 - log - INFO - iter:540/3333, Vanilla Topk TTA Adv Acc@1: 5.00, Acc@5: 22.78
+2026-02-14 21:22:09,214 - log - INFO - iter:540/3333, Weighted TTA Adv Acc@1: 12.22, Acc@5: 52.22
+2026-02-14 21:22:09,256 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0237109.pt
+2026-02-14 21:22:13,896 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0907375.pt
+2026-02-14 21:22:17,770 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0955450.pt
+2026-02-14 21:22:22,394 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0115066.pt
+2026-02-14 21:22:26,350 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0457808.pt
+2026-02-14 21:22:30,288 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1736099.pt
+2026-02-14 21:22:35,067 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0311183.pt
+2026-02-14 21:22:39,242 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1375367.pt
+2026-02-14 21:22:43,224 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0529781.pt
+2026-02-14 21:22:47,281 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0063055.pt
+2026-02-14 21:22:51,145 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0730739.pt
+2026-02-14 21:22:55,463 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1355824.pt
+2026-02-14 21:23:02,967 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0476348.pt
+2026-02-14 21:23:09,782 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1292174.pt
+2026-02-14 21:23:16,502 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1355224.pt
+2026-02-14 21:23:20,399 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1318171.pt
+2026-02-14 21:23:24,335 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1564408.pt
+2026-02-14 21:23:28,278 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0187247.pt
+2026-02-14 21:23:32,960 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1230274.pt
+2026-02-14 21:23:37,592 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1381995.pt
+2026-02-14 21:23:41,582 - log - INFO - iter:560/3333, Original Clean Acc@1: 29.46, Acc@5: 80.18
+2026-02-14 21:23:41,582 - log - INFO - iter:560/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:23:41,582 - log - INFO - iter:560/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:23:41,582 - log - INFO - iter:560/3333, Vanilla TTA Adv Acc@1: 11.25, Acc@5: 44.82
+2026-02-14 21:23:41,582 - log - INFO - iter:560/3333, Vanilla Topk TTA Adv Acc@1: 4.82, Acc@5: 22.32
+2026-02-14 21:23:41,582 - log - INFO - iter:560/3333, Weighted TTA Adv Acc@1: 12.50, Acc@5: 51.61
+2026-02-14 21:23:41,586 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0894313.pt
+2026-02-14 21:23:46,728 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1564822.pt
+2026-02-14 21:23:53,498 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0907407.pt
+2026-02-14 21:23:57,457 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0490174.pt
+2026-02-14 21:24:01,354 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2221715.pt
+2026-02-14 21:24:05,390 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0204622.pt
+2026-02-14 21:24:09,297 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0492495.pt
+2026-02-14 21:24:15,143 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0127496.pt
+2026-02-14 21:24:19,089 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1876024.pt
+2026-02-14 21:24:23,137 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0901358.pt
+2026-02-14 21:24:27,037 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0939563.pt
+2026-02-14 21:24:30,952 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0570746.pt
+2026-02-14 21:24:34,912 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1191062.pt
+2026-02-14 21:24:38,862 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1112644.pt
+2026-02-14 21:24:43,553 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1313184.pt
+2026-02-14 21:24:47,854 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1662018.pt
+2026-02-14 21:24:52,164 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1561406.pt
+2026-02-14 21:24:56,065 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2066993.pt
+2026-02-14 21:25:13,301 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1530082.pt
+2026-02-14 21:25:17,334 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1856979.pt
+2026-02-14 21:25:21,372 - log - INFO - iter:580/3333, Original Clean Acc@1: 29.83, Acc@5: 80.34
+2026-02-14 21:25:21,372 - log - INFO - iter:580/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:25:21,372 - log - INFO - iter:580/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:25:21,372 - log - INFO - iter:580/3333, Vanilla TTA Adv Acc@1: 11.03, Acc@5: 44.31
+2026-02-14 21:25:21,372 - log - INFO - iter:580/3333, Vanilla Topk TTA Adv Acc@1: 4.66, Acc@5: 21.72
+2026-02-14 21:25:21,373 - log - INFO - iter:580/3333, Weighted TTA Adv Acc@1: 12.41, Acc@5: 51.38
+2026-02-14 21:25:21,377 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1665263.pt
+2026-02-14 21:25:25,779 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1876023.pt
+2026-02-14 21:25:29,910 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0783932.pt
+2026-02-14 21:25:33,767 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0985425.pt
+2026-02-14 21:25:37,666 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0558232.pt
+2026-02-14 21:25:41,567 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1634276.pt
+2026-02-14 21:25:45,666 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0367941.pt
+2026-02-14 21:25:49,598 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1992339.pt
+2026-02-14 21:25:53,770 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1366758.pt
+2026-02-14 21:25:57,674 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2101703.pt
+2026-02-14 21:26:02,270 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0256997.pt
+2026-02-14 21:26:06,986 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0066423.pt
+2026-02-14 21:26:11,034 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1146228.pt
+2026-02-14 21:26:14,951 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0851325.pt
+2026-02-14 21:26:18,988 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1474094.pt
+2026-02-14 21:26:23,222 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0863693.pt
+2026-02-14 21:26:31,528 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1364162.pt
+2026-02-14 21:26:35,028 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1053316.pt
+2026-02-14 21:26:38,967 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1298911.pt
+2026-02-14 21:26:44,367 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1636534.pt
+2026-02-14 21:26:48,665 - log - INFO - iter:600/3333, Original Clean Acc@1: 30.17, Acc@5: 81.00
+2026-02-14 21:26:48,665 - log - INFO - iter:600/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:26:48,665 - log - INFO - iter:600/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:26:48,665 - log - INFO - iter:600/3333, Vanilla TTA Adv Acc@1: 10.67, Acc@5: 45.17
+2026-02-14 21:26:48,665 - log - INFO - iter:600/3333, Vanilla Topk TTA Adv Acc@1: 4.83, Acc@5: 22.33
+2026-02-14 21:26:48,665 - log - INFO - iter:600/3333, Weighted TTA Adv Acc@1: 12.00, Acc@5: 51.67
+2026-02-14 21:26:48,669 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0985290.pt
+2026-02-14 21:26:53,143 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2243382.pt
+2026-02-14 21:26:57,170 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0127032.pt
+2026-02-14 21:27:01,605 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0176131.pt
+2026-02-14 21:27:05,192 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1506812.pt
+2026-02-14 21:27:09,673 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2026511.pt
+2026-02-14 21:27:13,283 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0467448.pt
+2026-02-14 21:27:17,277 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2024757.pt
+2026-02-14 21:27:21,184 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2131508.pt
+2026-02-14 21:27:25,077 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2171175.pt
+2026-02-14 21:27:29,147 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1232270.pt
+2026-02-14 21:27:33,629 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1363578.pt
+2026-02-14 21:27:38,569 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1349689.pt
+2026-02-14 21:27:42,453 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1906071.pt
+2026-02-14 21:27:46,352 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2082475.pt
+2026-02-14 21:27:50,216 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1635235.pt
+2026-02-14 21:27:54,288 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0255294.pt
+2026-02-14 21:27:58,284 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1861593.pt
+2026-02-14 21:28:02,263 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1539768.pt
+2026-02-14 21:28:06,515 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1520426.pt
+2026-02-14 21:28:10,424 - log - INFO - iter:620/3333, Original Clean Acc@1: 29.19, Acc@5: 81.29
+2026-02-14 21:28:10,424 - log - INFO - iter:620/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:28:10,424 - log - INFO - iter:620/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:28:10,424 - log - INFO - iter:620/3333, Vanilla TTA Adv Acc@1: 10.32, Acc@5: 44.52
+2026-02-14 21:28:10,424 - log - INFO - iter:620/3333, Vanilla Topk TTA Adv Acc@1: 4.68, Acc@5: 21.61
+2026-02-14 21:28:10,425 - log - INFO - iter:620/3333, Weighted TTA Adv Acc@1: 11.61, Acc@5: 50.97
+2026-02-14 21:28:10,428 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1127995.pt
+2026-02-14 21:28:14,653 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0225221.pt
+2026-02-14 21:28:18,547 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1271552.pt
+2026-02-14 21:28:28,594 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0981955.pt
+2026-02-14 21:28:32,650 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0087248.pt
+2026-02-14 21:28:36,508 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0940358.pt
+2026-02-14 21:28:41,403 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2259027.pt
+2026-02-14 21:28:44,757 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2021838.pt
+2026-02-14 21:28:51,145 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0905077.pt
+2026-02-14 21:28:59,298 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0867007.pt
+2026-02-14 21:29:03,703 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2054456.pt
+2026-02-14 21:29:07,807 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2209439.pt
+2026-02-14 21:29:11,886 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0097107.pt
+2026-02-14 21:29:15,788 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1921655.pt
+2026-02-14 21:29:19,677 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0174925.pt
+2026-02-14 21:29:23,580 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2080693.pt
+2026-02-14 21:29:28,285 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2215391.pt
+2026-02-14 21:29:32,346 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1587526.pt
+2026-02-14 21:29:36,204 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0894406.pt
+2026-02-14 21:29:40,578 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0305715.pt
+2026-02-14 21:29:44,533 - log - INFO - iter:640/3333, Original Clean Acc@1: 29.06, Acc@5: 81.25
+2026-02-14 21:29:44,533 - log - INFO - iter:640/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:29:44,533 - log - INFO - iter:640/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:29:44,533 - log - INFO - iter:640/3333, Vanilla TTA Adv Acc@1: 10.31, Acc@5: 44.38
+2026-02-14 21:29:44,534 - log - INFO - iter:640/3333, Vanilla Topk TTA Adv Acc@1: 4.69, Acc@5: 21.41
+2026-02-14 21:29:44,534 - log - INFO - iter:640/3333, Weighted TTA Adv Acc@1: 11.56, Acc@5: 51.09
+2026-02-14 21:29:44,538 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0543862.pt
+2026-02-14 21:29:48,469 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1258139.pt
+2026-02-14 21:29:52,386 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1088532.pt
+2026-02-14 21:29:56,449 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1458705.pt
+2026-02-14 21:30:00,981 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1145215.pt
+2026-02-14 21:30:04,339 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1325459.pt
+2026-02-14 21:30:08,317 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1700645.pt
+2026-02-14 21:30:12,549 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1930685.pt
+2026-02-14 21:30:16,508 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0894021.pt
+2026-02-14 21:30:20,365 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0275909.pt
+2026-02-14 21:30:24,268 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1448175.pt
+2026-02-14 21:30:28,473 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2221641.pt
+2026-02-14 21:30:33,057 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0890198.pt
+2026-02-14 21:30:36,976 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1472187.pt
+2026-02-14 21:30:50,424 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1692543.pt
+2026-02-14 21:30:54,537 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1842168.pt
+2026-02-14 21:30:58,469 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0136489.pt
+2026-02-14 21:31:02,984 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1615623.pt
+2026-02-14 21:31:06,367 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0846180.pt
+2026-02-14 21:31:10,376 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0445392.pt
+2026-02-14 21:31:14,431 - log - INFO - iter:660/3333, Original Clean Acc@1: 30.00, Acc@5: 81.67
+2026-02-14 21:31:14,431 - log - INFO - iter:660/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:31:14,431 - log - INFO - iter:660/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:31:14,431 - log - INFO - iter:660/3333, Vanilla TTA Adv Acc@1: 10.30, Acc@5: 43.79
+2026-02-14 21:31:14,431 - log - INFO - iter:660/3333, Vanilla Topk TTA Adv Acc@1: 4.70, Acc@5: 21.52
+2026-02-14 21:31:14,431 - log - INFO - iter:660/3333, Weighted TTA Adv Acc@1: 11.52, Acc@5: 50.61
+2026-02-14 21:31:14,436 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1530788.pt
+2026-02-14 21:31:18,986 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0361566.pt
+2026-02-14 21:31:22,934 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1534012.pt
+2026-02-14 21:31:26,838 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0941858.pt
+2026-02-14 21:31:30,801 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1956397.pt
+2026-02-14 21:31:34,862 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1376815.pt
+2026-02-14 21:31:47,116 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2060563.pt
+2026-02-14 21:31:52,032 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0637452.pt
+2026-02-14 21:31:56,121 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1823530.pt
+2026-02-14 21:32:00,026 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0885092.pt
+2026-02-14 21:32:04,021 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2083822.pt
+2026-02-14 21:32:08,382 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2226247.pt
+2026-02-14 21:32:11,799 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1860127.pt
+2026-02-14 21:32:16,221 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1551732.pt
+2026-02-14 21:32:20,843 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2094475.pt
+2026-02-14 21:32:24,807 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1398649.pt
+2026-02-14 21:32:28,690 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2251121.pt
+2026-02-14 21:32:32,689 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1418226.pt
+2026-02-14 21:32:36,477 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1379395.pt
+2026-02-14 21:32:40,597 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1179713.pt
+2026-02-14 21:32:44,769 - log - INFO - iter:680/3333, Original Clean Acc@1: 30.44, Acc@5: 82.21
+2026-02-14 21:32:44,769 - log - INFO - iter:680/3333, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:32:44,769 - log - INFO - iter:680/3333, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 21:32:44,769 - log - INFO - iter:680/3333, Vanilla TTA Adv Acc@1: 11.32, Acc@5: 44.26
+2026-02-14 21:32:44,769 - log - INFO - iter:680/3333, Vanilla Topk TTA Adv Acc@1: 5.59, Acc@5: 22.79
+2026-02-14 21:32:44,769 - log - INFO - iter:680/3333, Weighted TTA Adv Acc@1: 12.65, Acc@5: 50.88
+2026-02-14 21:32:44,985 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2243952.pt
+2026-02-14 21:32:48,881 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1997314.pt
+2026-02-14 21:32:52,729 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1718901.pt
+2026-02-14 21:32:56,708 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1818832.pt
+2026-02-14 21:33:02,510 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1728005.pt
+2026-02-14 21:33:06,559 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1870557.pt
+2026-02-14 21:33:11,415 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1105732.pt
+2026-02-14 21:33:15,355 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_0846636.pt
+2026-02-14 21:33:19,418 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1914684.pt
+2026-02-14 21:33:26,642 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1700930.pt
+2026-02-14 21:33:32,695 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2035598.pt
+2026-02-14 21:33:36,720 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1630525.pt
+2026-02-14 21:33:40,917 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1984373.pt
+2026-02-14 21:33:44,683 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1230443.pt
+2026-02-14 21:33:49,044 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1603124.pt
+2026-02-14 21:33:53,376 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2225263.pt
+2026-02-14 21:33:57,363 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_2026614.pt
+2026-02-14 21:34:01,743 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Aircraft/adv_images_eps_4.0_alpha_1.0_steps_100/images_1919891.pt
