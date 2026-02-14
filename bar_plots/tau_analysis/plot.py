@@ -1293,7 +1293,7 @@ if __name__ == "__main__":
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     root_diff_ratio = os.path.abspath(os.path.join(script_dir, "..", "..", "Diffratio_v3", model_name))
-    selected_attacks = ['eps_0.0_steps_0', 'eps_8.0_steps_100']
+    selected_attacks = ['eps_0.0_steps_0', 'eps_4.0_steps_100']
 
     # The analysis code below compares exactly two conditions:
     #   - Clean (eps_0.0_steps_0)
@@ -1745,72 +1745,188 @@ if __name__ == "__main__":
     #         attack_key=selected_adv_attack_key,
     #     )
 
-    #   A.2-(i): τ Distribution Overlay (Histogram / KDE)
-    def collect_tau_across_datasets(final_diff_ratio_dic, noise_type, noise_value, attack):
-        taus = []
-        for D in final_diff_ratio_dic:
-            taus.extend(
-                final_diff_ratio_dic[D][attack][noise_type][noise_value]["diff_ratio"]
+    # ------------------------------------------------------------------
+    # A.2: Distribution plots for different noise types + strengths
+    # ------------------------------------------------------------------
+    def run_a2_and_save_plots(
+        *,
+        noise_type: str,
+        dic: Dict[str, Any],
+        model_name: str,
+        analysis_name: str = "A2",
+        attack_key: str = "",
+        bins: int = 70,
+    ):
+        # Guard: skip noise types not present
+        sample_dataset = next(iter(dic.keys()))
+        if noise_type not in dic[sample_dataset]["Clean"]:
+            print(f"[A2] Noise type '{noise_type}' not found in results. Skipping.")
+            return
+
+        out_dir = os.path.join("plots_output", analysis_name, model_name, noise_type)
+        os.makedirs(out_dir, exist_ok=True)
+
+        # Human-readable label for the selected adversarial setting
+        if attack_key:
+            adv_label = ATTACK_KEY_LEGEND_MAPPING.get(attack_key, f"Adversarial ({attack_key})")
+        else:
+            adv_label = "Adversarial"
+
+        def _collect_tau_across_datasets(final_diff_ratio_dic, noise_value: str, attack: str) -> np.ndarray:
+            taus: List[float] = []
+            for dset in final_diff_ratio_dic:
+                taus.extend(final_diff_ratio_dic[dset][attack][noise_type][noise_value]["diff_ratio"])
+            return np.asarray(taus, dtype=float)
+
+        def _compute_delta_tau(final_diff_ratio_dic, noise_value: str) -> np.ndarray:
+            delta_tau_all: List[float] = []
+            for dset in final_diff_ratio_dic:
+                tau_clean = np.asarray(final_diff_ratio_dic[dset]["Clean"][noise_type][noise_value]["diff_ratio"], dtype=float)
+                tau_adv = np.asarray(final_diff_ratio_dic[dset]["Adversarial"][noise_type][noise_value]["diff_ratio"], dtype=float)
+                # Safety: skip if shapes mismatch (should not happen, but protects downstream plotting)
+                if tau_clean.shape != tau_adv.shape:
+                    continue
+                delta_tau_all.extend((tau_adv - tau_clean).tolist())
+            return np.asarray(delta_tau_all, dtype=float)
+
+        def _summarize(arr: np.ndarray) -> Dict[str, Any]:
+            arr = np.asarray(arr, dtype=float)
+            arr = arr[np.isfinite(arr)]
+            if arr.size == 0:
+                return {"count": 0}
+            q = np.quantile(arr, [0.05, 0.25, 0.50, 0.75, 0.95]).tolist()
+            return {
+                "count": int(arr.size),
+                "mean": float(np.mean(arr)),
+                "std": float(np.std(arr)),
+                "min": float(np.min(arr)),
+                "max": float(np.max(arr)),
+                "quantiles": {"q05": q[0], "q25": q[1], "q50": q[2], "q75": q[3], "q95": q[4]},
+            }
+
+        noise_values = sorted(dic[sample_dataset]["Clean"][noise_type].keys(), key=eps_from_key)
+        if not noise_values:
+            print(f"[A2] No noise magnitudes found for noise_type='{noise_type}'.")
+            return
+
+        overlay_paths: List[str] = []
+        delta_paths: List[str] = []
+
+        a2_stats: Dict[str, Any] = {
+            "analysis": analysis_name,
+            "model": model_name,
+            "noise_type": noise_type,
+            "attack_key": attack_key,
+            "bins": bins,
+            "noise_values_sorted": noise_values,
+            "per_noise_value": {},
+        }
+
+        for noise_value in noise_values:
+            # Collect taus
+            tau_clean = _collect_tau_across_datasets(dic, noise_value, "Clean")
+            tau_adv = _collect_tau_across_datasets(dic, noise_value, "Adversarial")
+            delta_tau = _compute_delta_tau(dic, noise_value)
+
+            # Choose a shared binning range for overlay histograms
+            combined = np.concatenate([tau_clean[np.isfinite(tau_clean)], tau_adv[np.isfinite(tau_adv)]])
+            if combined.size == 0:
+                print(f"[A2] Empty τ arrays for {noise_type} {noise_value}; skipping plots.")
+                continue
+            x_min = float(np.min(combined))
+            x_max = float(np.max(combined))
+            if not np.isfinite(x_min) or not np.isfinite(x_max) or x_min == x_max:
+                # Fallback to matplotlib auto-binning
+                hist_range = None
+            else:
+                # Pad slightly so bars don't clip at extremes
+                span = x_max - x_min
+                hist_range = (x_min - 0.02 * span, x_max + 0.02 * span)
+
+            # X-axis label for noise strength
+            if noise_type == "Gaussian":
+                strength_label = f"σ = {noise_value.replace('Sigma_', '')}"
+            else:
+                strength_label = f"ε = {noise_value.replace('Eps_', '')}/255"
+
+            # (i) τ Distribution Overlay
+            fig = plt.figure(figsize=(6.5, 4.5))
+            plt.hist(tau_clean, bins=bins, range=hist_range, alpha=0.60, density=True, label="Clean")
+            plt.hist(tau_adv, bins=bins, range=hist_range, alpha=0.60, density=True, label=adv_label)
+            plt.xlabel("Latent Drift τ")
+            plt.ylabel("Density")
+            plt.title(f"A2: τ Distribution Overlay ({noise_type}, {strength_label})")
+            plt.legend()
+            plt.grid(True, linestyle="--", alpha=0.5)
+            plt.tight_layout()
+
+            overlay_name = (
+                f"a2_tau_distribution_overlay_{noise_value}_{attack_key}.png"
+                if attack_key else f"a2_tau_distribution_overlay_{noise_value}.png"
             )
-        return np.array(taus)
+            overlay_path = os.path.join(out_dir, overlay_name)
+            fig.savefig(overlay_path, dpi=200)
+            plt.close(fig)
+            overlay_paths.append(overlay_path)
 
+            # (ii) Sample-wise Δτ Distribution
+            fig = plt.figure(figsize=(6.5, 4.5))
+            plt.hist(delta_tau, bins=bins, alpha=0.80)
+            plt.axvline(0, color="black", linestyle="--", linewidth=1)
+            plt.xlabel("Δτ = τ_adv − τ_clean")
+            plt.ylabel("Count")
+            plt.title(f"A2: Sample-wise τ Separation ({noise_type}, {strength_label})")
+            plt.grid(True, linestyle="--", alpha=0.5)
+            plt.tight_layout()
 
-    noise_type = "Uniform"
-    noise_value = "Eps_24.0"
-
-    tau_clean = collect_tau_across_datasets(
-        final_diff_ratio_dic, noise_type, noise_value, "Clean"
-    )
-    tau_adv = collect_tau_across_datasets(
-        final_diff_ratio_dic, noise_type, noise_value, "Adversarial"
-    )
-
-    import matplotlib.pyplot as plt
-
-    plt.figure(figsize=(6, 4))
-
-    plt.hist(tau_clean, bins=70, alpha=0.6, density=True, label="Clean")
-    plt.hist(tau_adv, bins=70, alpha=0.6, density=True, label="Adversarial")
-
-    plt.xlabel("Latent Drift τ")
-    plt.ylabel("Density")
-    plt.title(f"τ Distribution at ε = {noise_value.replace('Eps_', '')}/255")
-    plt.legend()
-    plt.grid(True, linestyle="--", alpha=0.5)
-
-    plt.tight_layout()
-    plt.show()
-
-    # A.2-(ii): Sample-wise Δτ Distribution
-    def compute_delta_tau(final_diff_ratio_dic, noise_type, noise_value):
-        delta_tau_all = []
-
-        for D in final_diff_ratio_dic:
-            tau_clean = np.array(
-                final_diff_ratio_dic[D]["Clean"][noise_type][noise_value]["diff_ratio"]
+            delta_name = (
+                f"a2_delta_tau_distribution_{noise_value}_{attack_key}.png"
+                if attack_key else f"a2_delta_tau_distribution_{noise_value}.png"
             )
-            tau_adv = np.array(
-                final_diff_ratio_dic[D]["Adversarial"][noise_type][noise_value]["diff_ratio"]
-            )
+            delta_path = os.path.join(out_dir, delta_name)
+            fig.savefig(delta_path, dpi=200)
+            plt.close(fig)
+            delta_paths.append(delta_path)
 
-            delta_tau_all.extend(tau_adv - tau_clean)
+            a2_stats["per_noise_value"][noise_value] = {
+                "strength": eps_from_key(noise_value),
+                "tau_clean": _summarize(tau_clean),
+                "tau_adv": _summarize(tau_adv),
+                "delta_tau": _summarize(delta_tau),
+                "overlay_plot": os.path.basename(overlay_path),
+                "delta_plot": os.path.basename(delta_path),
+            }
 
-        return np.array(delta_tau_all)
+        # Save aggregated A2 stats
+        stats_name = f"a2_stats_{attack_key}.json" if attack_key else "a2_stats.json"
+        stats_path = os.path.join(out_dir, stats_name)
+        with open(stats_path, "w", encoding="utf-8") as f:
+            json.dump(a2_stats, f, indent=2)
+        print(f"[A2] Saved stats: {stats_path}")
 
+        # Create grids across noise magnitudes
+        GRID_COLS = 5
+        GRID_SCALE = 1.5
 
-    delta_tau = compute_delta_tau(
-        final_diff_ratio_dic, "Uniform", "Eps_24.0"
-    )
+        if overlay_paths:
+            grid_name = f"a2_tau_distribution_overlay_grid_{attack_key}.png" if attack_key else "a2_tau_distribution_overlay_grid.png"
+            grid_path = os.path.join(out_dir, grid_name)
+            create_image_grid(overlay_paths, grid_path, cols=GRID_COLS, scale=GRID_SCALE)
+            print(f"[A2] Saved grid: {grid_path}")
 
-    plt.figure(figsize=(6, 4))
-    plt.hist(delta_tau, bins=70, alpha=0.75)
+        if delta_paths:
+            grid_name = f"a2_delta_tau_distribution_grid_{attack_key}.png" if attack_key else "a2_delta_tau_distribution_grid.png"
+            grid_path = os.path.join(out_dir, grid_name)
+            create_image_grid(delta_paths, grid_path, cols=GRID_COLS, scale=GRID_SCALE)
+            print(f"[A2] Saved grid: {grid_path}")
 
-    plt.axvline(0, color="black", linestyle="--", linewidth=1)
-
-    plt.xlabel("Δτ = τ_adv − τ_clean")
-    plt.ylabel("Count")
-    plt.title("Sample-wise τ Separation")
-
-    plt.grid(True, linestyle="--", alpha=0.5)
-    plt.tight_layout()
-    plt.show()
+    # Run A.2
+    for noise_type in ["Uniform", "Gaussian"]:
+        run_a2_and_save_plots(
+            noise_type=noise_type,
+            dic=final_diff_ratio_dic,
+            model_name=model_name,
+            analysis_name="A2",
+            attack_key=selected_adv_attack_key,
+            bins=70,
+        )
