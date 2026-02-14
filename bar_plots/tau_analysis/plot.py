@@ -23,6 +23,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 
+# Map adversarial `attack_key` identifiers to human-readable legend labels.
+# (Used for plots where we compare Clean vs a single adversarial setting.)
+ATTACK_KEY_LEGEND_MAPPING = {
+    "eps_4.0_steps_100": "PGD 4/255 (100 steps)",
+    "eps_8.0_steps_100": "PGD 8/255 (100 steps)",
+}
+
 def create_image_grid(image_paths, output_path, cols=3):
     """
     Creates a grid of images.
@@ -1266,6 +1273,21 @@ if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
     root_diff_ratio = os.path.abspath(os.path.join(script_dir, "..", "..", "Diffratio_v3", model_name))
     selected_attacks = ['eps_0.0_steps_0', 'eps_4.0_steps_100']
+
+    # The analysis code below compares exactly two conditions:
+    #   - Clean (eps_0.0_steps_0)
+    #   - A single adversarial setting (one of the eps_*_steps_* keys)
+    # We keep internal dictionary keys stable as {"Clean", "Adversarial"} so that
+    # downstream analysis functions work, but we also preserve the selected
+    # adversarial `attack_key` for clarity in saved figure filenames.
+    clean_attack_key = 'eps_0.0_steps_0'
+    adv_attack_keys = [k for k in selected_attacks if k != clean_attack_key]
+    if len(adv_attack_keys) != 1:
+        raise ValueError(
+            f"Expected exactly one adversarial attack_key in selected_attacks (besides '{clean_attack_key}'), "
+            f"but got: {adv_attack_keys}"
+        )
+    selected_adv_attack_key = adv_attack_keys[0]
     print(f"Loading diff ratio results from: {root_diff_ratio}")
     diff_ratio_dic = get_aggregated_results(root_diff_ratio, selected_attacks=selected_attacks)
 
@@ -1276,9 +1298,12 @@ if __name__ == "__main__":
     for dataset_key, dataset_value in diff_ratio_dic.items():
         final_diff_ratio_dic[dataset_key] = {}
         for attack_key, attack_value in dataset_value.items():
-            if attack_key == 'eps_0.0_steps_0':
+            if attack_key == clean_attack_key:
                 attack_name = "Clean"
             else:
+                # Treat the (single) selected adversarial setting as "Adversarial"
+                # so that the analysis utilities (which assume a clean-vs-adv split)
+                # remain consistent.
                 attack_name = "Adversarial"
             final_diff_ratio_dic[dataset_key][attack_name] = {}
             for noise_type_key, noise_type_value in attack_value.items():
@@ -1389,7 +1414,7 @@ if __name__ == "__main__":
         return std_clean, std_adv
 
 
-    def run_a1_and_save_plots(*, noise_type: str, dic: Dict[str, Any], model_name: str, analysis_name: str = "A1"):
+    def run_a1_and_save_plots(*, noise_type: str, dic: Dict[str, Any], model_name: str, analysis_name: str = "A1", attack_key: str = ""):
         # Guard: skip noise types not present
         sample_dataset = next(iter(dic.keys()))
         if noise_type not in dic[sample_dataset]["Clean"]:
@@ -1417,12 +1442,14 @@ if __name__ == "__main__":
             "analysis": analysis_name,
             "model": model_name,
             "noise_type": noise_type,
+            "attack_key": attack_key,
             "noise_keys_sorted": sorted_keys,
             "eps": eps,
             "avg_results": avg_results,
             "per_dataset_results": all_results,
         }
-        stats_path = os.path.join(out_dir, "a1_stats.json")
+        stats_name = f"a1_stats_{attack_key}.json" if attack_key else "a1_stats.json"
+        stats_path = os.path.join(out_dir, stats_name)
         with open(stats_path, "w", encoding="utf-8") as f:
             json.dump(stats_out, f, indent=2)
         print(f"[A1] Saved stats: {stats_path}")
@@ -1475,11 +1502,17 @@ if __name__ == "__main__":
             alpha=0.25
         )
 
+        # Use a human-readable legend label for the selected adversarial setting.
+        # Fall back to the raw key if we don't have an explicit mapping.
+        if attack_key:
+            adv_label = ATTACK_KEY_LEGEND_MAPPING.get(attack_key, f"Adversarial ({attack_key})")
+        else:
+            adv_label = "Adversarial"
         plt.plot(
             eps, mean_adv,
             marker='s',
             linewidth=2.5,
-            label='Adversarial'
+            label=adv_label,
         )
         plt.fill_between(
             eps,
@@ -1512,7 +1545,8 @@ if __name__ == "__main__":
         )
         plt.tight_layout()
 
-        tau_curve_path = os.path.join(out_dir, "a1_mean_tau_curve.png")
+        tau_curve_name = f"a1_mean_tau_curve_{attack_key}.png" if attack_key else "a1_mean_tau_curve.png"
+        tau_curve_path = os.path.join(out_dir, tau_curve_name)
         fig.savefig(tau_curve_path, dpi=200)
         plt.close(fig)
         print(f"[A1] Saved plot: {tau_curve_path}")
@@ -1542,13 +1576,20 @@ if __name__ == "__main__":
         )
         plt.tight_layout()
 
-        gap_curve_path = os.path.join(out_dir, "a1_tau_gap_curve.png")
+        gap_curve_name = f"a1_tau_gap_curve_{attack_key}.png" if attack_key else "a1_tau_gap_curve.png"
+        gap_curve_path = os.path.join(out_dir, gap_curve_name)
         fig.savefig(gap_curve_path, dpi=200)
         plt.close(fig)
         print(f"[A1] Saved plot: {gap_curve_path}")
 
     for noise_type in ["Uniform", "Gaussian"]:
-        run_a1_and_save_plots(noise_type=noise_type, dic=final_diff_ratio_dic, model_name=model_name, analysis_name="A1")
+        run_a1_and_save_plots(
+            noise_type=noise_type,
+            dic=final_diff_ratio_dic,
+            model_name=model_name,
+            analysis_name="A1",
+            attack_key=selected_adv_attack_key,
+        )
 
 
 
