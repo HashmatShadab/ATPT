@@ -474,12 +474,149 @@ def aggregate_avg_diff_ratio_across_datasets(zs_aug_dic):
     return avg_diff
 
 
+def _combine_predictions_by_diff_ratio_threshold(
+    original_preds: List[int],
+    modified_preds: List[int],
+    diff_ratios: List[float],
+    threshold: float,
+) -> List[int]:
+    """Per-sample routing based on diff ratio.
+
+    For each sample i:
+      - if diff_ratios[i] < threshold: use original_preds[i]
+      - else: use modified_preds[i]
+
+    This matches the requested behavior for vanilla/weighted predictions.
+    """
+    if len(original_preds) != len(modified_preds) or len(original_preds) != len(diff_ratios):
+        raise ValueError(
+            "Length mismatch for threshold routing: "
+            f"original={len(original_preds)} modified={len(modified_preds)} diff_ratios={len(diff_ratios)}"
+        )
+
+    # Ensure we can compare diff ratios even if they were loaded as strings.
+    dr = np.asarray(diff_ratios, dtype=float)
+    out = []
+    for i in range(len(original_preds)):
+        out.append(original_preds[i] if dr[i] < threshold else modified_preds[i])
+    return out
+
+
+def aggregate_thresholded_accuracy_across_datasets(
+    zs_aug_dic: Dict[str, Any],
+    thresholds: List[float],
+) -> Dict[str, Dict[str, Dict[float, float]]]:
+    """Compute average accuracy across datasets under per-sample diff-ratio threshold routing.
+
+    Returns:
+        avg_acc_thr[augment][setting][threshold] = average accuracy over datasets
+
+        setting ∈ {
+            clean_original,
+            adv_original,
+            clean_vanilla_thr,
+            clean_weighted_thr,
+            adv_vanilla_thr,
+            adv_weighted_thr,
+        }
+    """
+    datasets = list(zs_aug_dic["true_labels"].keys())
+    augmentations = list(zs_aug_dic["zero_shot_aug_clean"].keys())
+
+    out: Dict[str, Dict[str, Dict[float, float]]] = {}
+
+    for aug in augmentations:
+        out[aug] = {
+            "clean_original": {},
+            "adv_original": {},
+            "clean_vanilla_thr": {},
+            "clean_weighted_thr": {},
+            "adv_vanilla_thr": {},
+            "adv_weighted_thr": {},
+        }
+
+        # Pre-compute per-dataset baselines for stability.
+        clean_original_accs = []
+        adv_original_accs = []
+        for dset in datasets:
+            labels = zs_aug_dic["true_labels"][dset]
+            clean_orig = zs_aug_dic["zero_shot_aug_clean"][aug][dset]
+            adv_orig = zs_aug_dic["zero_shot_aug_adv"][aug][dset]
+            clean_original_accs.append(compute_accuracy(clean_orig, labels))
+            adv_original_accs.append(compute_accuracy(adv_orig, labels))
+
+        out[aug]["clean_original"]["_mean"] = float(np.mean(clean_original_accs))
+        out[aug]["adv_original"]["_mean"] = float(np.mean(adv_original_accs))
+
+        # Thresholded routing for vanilla/weighted.
+        for thr in thresholds:
+            clean_vanilla_accs = []
+            clean_weighted_accs = []
+            adv_vanilla_accs = []
+            adv_weighted_accs = []
+
+            for dset in datasets:
+                labels = zs_aug_dic["true_labels"][dset]
+
+                # ---- CLEAN ----
+                clean_orig = zs_aug_dic["zero_shot_aug_clean"][aug][dset]
+                clean_vanilla = zs_aug_dic["zero_shot_aug_vanilla_clean"][aug][dset]
+                clean_weighted = zs_aug_dic["zero_shot_aug_weighted_clean"][aug][dset]
+                dr_clean = zs_aug_dic.get("diff_ratio_per_sample_clean", {}).get(aug, {}).get(dset)
+                if dr_clean is None:
+                    raise KeyError(f"Missing diff ratios for clean: aug={aug} dataset={dset}")
+
+                clean_vanilla_routed = _combine_predictions_by_diff_ratio_threshold(
+                    clean_orig, clean_vanilla, dr_clean, thr
+                )
+                clean_weighted_routed = _combine_predictions_by_diff_ratio_threshold(
+                    clean_orig, clean_weighted, dr_clean, thr
+                )
+
+                clean_vanilla_accs.append(compute_accuracy(clean_vanilla_routed, labels))
+                clean_weighted_accs.append(compute_accuracy(clean_weighted_routed, labels))
+
+                # ---- ADVERSARIAL ----
+                adv_orig = zs_aug_dic["zero_shot_aug_adv"][aug][dset]
+                adv_vanilla = zs_aug_dic["zero_shot_aug_vanilla_adv"][aug][dset]
+                adv_weighted = zs_aug_dic["zero_shot_aug_weighted_adv"][aug][dset]
+                dr_adv = zs_aug_dic.get("diff_ratio_per_sample_adv", {}).get(aug, {}).get(dset)
+                if dr_adv is None:
+                    raise KeyError(f"Missing diff ratios for adv: aug={aug} dataset={dset}")
+
+                adv_vanilla_routed = _combine_predictions_by_diff_ratio_threshold(
+                    adv_orig, adv_vanilla, dr_adv, thr
+                )
+                adv_weighted_routed = _combine_predictions_by_diff_ratio_threshold(
+                    adv_orig, adv_weighted, dr_adv, thr
+                )
+
+                adv_vanilla_accs.append(compute_accuracy(adv_vanilla_routed, labels))
+                adv_weighted_accs.append(compute_accuracy(adv_weighted_routed, labels))
+
+            out[aug]["clean_vanilla_thr"][thr] = float(np.mean(clean_vanilla_accs))
+            out[aug]["clean_weighted_thr"][thr] = float(np.mean(clean_weighted_accs))
+            out[aug]["adv_vanilla_thr"][thr] = float(np.mean(adv_vanilla_accs))
+            out[aug]["adv_weighted_thr"][thr] = float(np.mean(adv_weighted_accs))
+
+    return out
+
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="TPT augmentaation analysis plotting / aggregation")
     parser.add_argument("--model-name", type=str, default="vit_l_14_datacomp_1b")
     parser.add_argument("--out-dir", type=str, default=os.path.join("plots_output", "tpt_aug_ablation"))
     parser.add_argument("--show", action="store_true", help="Show plots interactively")
+    parser.add_argument(
+        "--diff-ratio-thresholds",
+        type=str,
+        default="0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.85,0.9,1.0",
+        help=(
+            "Comma-separated diff-ratio thresholds. For each sample: if diff_ratio < threshold, "
+            "use original prediction; else use vanilla/weighted prediction."
+        ),
+    )
 
 
     args = parser.parse_args()
@@ -685,3 +822,131 @@ if __name__ == "__main__":
         out_dir=args.out_dir,
         model_name=model_name,
     )
+
+    def plot_accuracy_vs_diff_ratio_threshold(avg_acc_thr, thresholds, out_dir, model_name):
+        """Bar plots: accuracy under per-sample diff-ratio routing across thresholds.
+
+        NOTE on which diff ratio is used:
+          - For CLEAN plots we use `diff_ratio_per_sample_clean[aug][dataset]`
+          - For ADV plots we use `diff_ratio_per_sample_adv[aug][dataset]`
+
+        These per-sample diff ratios are loaded from `results_images_diff_ratio_tpt_noisy_anchors.json`
+        under each augmentation pool folder.
+        """
+        os.makedirs(out_dir, exist_ok=True)
+        plt.style.use("seaborn-v0_8-whitegrid")
+
+        augmentations = list(avg_acc_thr.keys())
+        thr_vals = [float(t) for t in thresholds]
+        x = np.arange(len(thr_vals))
+
+        colors = {
+            "clean_vanilla_thr": "#4C72B0",
+            "clean_weighted_thr": "#2F5597",
+            "adv_vanilla_thr": "#DD8452",
+            "adv_weighted_thr": "#C44E52",
+        }
+
+        settings = [
+            ("clean_vanilla_thr", "Clean – Vanilla (routed)"),
+            ("clean_weighted_thr", "Clean – Weighted (routed)"),
+            ("adv_vanilla_thr", "Adv – Vanilla (routed)"),
+            ("adv_weighted_thr", "Adv – Weighted (routed)"),
+        ]
+
+        def _add_value_labels(ax, bars, *, fmt: str = "{:.1f}", fontsize: int = 7):
+            for b in bars:
+                h = b.get_height()
+                if not np.isfinite(h):
+                    continue
+                ax.text(
+                    b.get_x() + b.get_width() / 2.0,
+                    h + 0.15,
+                    fmt.format(h),
+                    ha="center",
+                    va="bottom",
+                    fontsize=fontsize,
+                    color="#222222",
+                    rotation=90,
+                    clip_on=False,
+                )
+
+        for aug in augmentations:
+            # Wider figure since threshold list can be long.
+            fig, ax = plt.subplots(figsize=(max(12.0, 0.65 * len(thr_vals)), 6.4))
+
+            width = 0.18
+
+            # Baselines (horizontal lines)
+            clean_orig = float(avg_acc_thr[aug]["clean_original"]["_mean"])
+            adv_orig = float(avg_acc_thr[aug]["adv_original"]["_mean"])
+            ax.axhline(
+                clean_orig,
+                color="#9AB6DF",
+                linestyle="--",
+                linewidth=1.2,
+                label="Clean – Original (baseline)",
+                zorder=1,
+            )
+            ax.axhline(
+                adv_orig,
+                color="#F0B38C",
+                linestyle="--",
+                linewidth=1.2,
+                label="Adv – Original (baseline)",
+                zorder=1,
+            )
+
+            for i, (key, label) in enumerate(settings):
+                y = [float(avg_acc_thr[aug][key][t]) for t in thr_vals]
+                bars = ax.bar(
+                    x + (i - 1.5) * width,
+                    y,
+                    width=width,
+                    color=colors[key],
+                    edgecolor="white",
+                    linewidth=0.6,
+                    label=label,
+                    zorder=2,
+                )
+                # Labeling every bar can be too dense with many thresholds.
+                if len(thr_vals) <= 12:
+                    _add_value_labels(ax, bars)
+
+            ax.set_xlabel(
+                "Diff-ratio threshold (per-sample routing)",
+                fontsize=12,
+            )
+            ax.set_ylabel("Average accuracy across datasets (%)", fontsize=12)
+            ax.set_title(
+                "Threshold routing using per-sample diff ratios\n"
+                f"Augmentation pool: {aug} | Model: {model_name}\n"
+                "Diff-ratio source: results_images_diff_ratio_tpt_noisy_anchors.json",
+                fontsize=12,
+                pad=14,
+            )
+
+            ax.set_xticks(x)
+            ax.set_xticklabels([f"{t:g}" for t in thr_vals], rotation=0)
+            ax.grid(axis="y", linestyle="--", alpha=0.35)
+            ax.grid(axis="x", visible=False)
+            ax.legend(ncol=2, fontsize=9, frameon=True)
+            ax.margins(x=0.01)
+            for spine in ["top", "right"]:
+                ax.spines[spine].set_visible(False)
+
+            plt.tight_layout()
+            out_path = os.path.join(
+                out_dir,
+                f"accuracy_vs_diff_ratio_threshold_bar_{sanitize_for_path(aug)}_{model_name}.png",
+            )
+            plt.savefig(out_path, dpi=300, bbox_inches="tight")
+            print(f"[SAVED] {out_path}")
+            if args.show:
+                plt.show()
+            plt.close(fig)
+
+    # --- NEW: threshold routing plots for vanilla/weighted using per-sample diff ratios ---
+    thresholds = [float(x.strip()) for x in args.diff_ratio_thresholds.split(",") if x.strip()]
+    avg_acc_thr = aggregate_thresholded_accuracy_across_datasets(zero_shot_aug_dic, thresholds)
+    plot_accuracy_vs_diff_ratio_threshold(avg_acc_thr, thresholds, out_dir=args.out_dir, model_name=model_name)
