@@ -1,0 +1,505 @@
+2026-02-14 15:10:49,010 - log - INFO - ==========================================
+data:/leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets
+test_sets:V
+dataset_mode:test
+arch:vit_l_14_datacomp_1b
+resolution:224
+transferability:False
+source_model:vit_l_14_datacomp_1b
+workers:4
+no_pin_memory:False
+batch_size:64
+print_freq:20
+gpu:0
+no_cudnn_benchmark:False
+n_ctx:4
+ctx_init:a_photo_of_a
+tpt_loss:rtpt
+otpt_lambda_term:18.0
+anchor_lambda_term:18.0
+seed:0
+output_dir:/leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V
+log_output_dir:/leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results_corrected_ca_tau_I/vit_l_14_datacomp_1b/V
+image_only_attack:False
+image_only_attack_type:prm
+image_predicted_label_attack:False
+eps:4.0
+alpha:1.0
+alpha_eps_ratio:4.0
+steps:100
+lr:0.005
+lr_reduction_factor:50.0
+selection_p:0.1
+tta_steps:1
+max_tta_steps:0
+augmentation_pool_ablation:False
+augmentation_pool:tpt
+ensemble_type:all
+top_k:20
+softmax_temp:0.01
+diffpure:False
+counter_attack:False
+counter_attack_type:pgd
+counter_attack_steps:0
+counter_attack_eps:12.0
+counter_attack_alpha:1.0
+counter_attack_tau:normal_anchors
+counter_attack_noisy_tau_num_anchors:10
+counter_attack_tau_thres:0.2
+counter_attack_beta:2.0
+counter_attack_weighted_perturbations:True
+counter_attack_init_noise:uniform
+counter_attack_gaussian_sigma:0.12
+pgd_clip_pure_i_text_embeddings:null
+pgd_counter_and_clipure_i_lamda:1.0
+image_feature_purify:False
+image_feature_purify_type:noisy_anchor
+image_feature_purify_noisy_anchors:10
+image_feature_purify_anchors_alpha:[1.2]
+image_feature_purify_noisy_sigma:0.18
+image_feature_purify_diff_threshold:0.0
+image_feature_purify_normalize_embeddings:False
+image_feature_purify_uniform_noise_eps:4.0
+image_feature_clipure_steps:10
+image_feature_clipure_step_size:10.0
+selected_id_name:selected_topk.json
+weighted_score_name:weighted_scores.json
+batch_entropy_name:entropies.json
+use_class_text_embeddings:False
+zs_template_path:zeroshot-templates.json
+log_dir:/leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results_corrected_ca_tau_I/vit_l_14_datacomp_1b/V/Adversarial_Eps_4_0_Steps_100/No_Counter_Attack/TPT/Optimization_Loss_rtpt_LR_0_005_Optimization_Steps_1_View_Selection_Fraction_0_1/Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01
+
+2026-02-14 15:10:49,011 - log - INFO - Use GPU: 0 for training
+2026-02-14 15:12:32,619 - log - INFO - Freezing all parameters except prompt learner
+2026-02-14 15:12:32,621 - log - INFO - => Model created: visual backbone vit_l_14_datacomp_1b
+2026-02-14 15:12:33,546 - log - INFO - Number of test samples: 5000
+2026-02-14 15:12:33,546 - log - INFO - Evaluating dataset: V
+2026-02-14 15:12:33,547 - log - INFO - Starting evaluation with batch size: 64, selection percentage: 0.1
+2026-02-14 15:12:33,547 - log - INFO - Test-time adaptation steps: 1, learning rate: 0.005
+2026-02-14 15:12:33,548 - log - INFO - Using PGD attack with epsilon: 0.015686, alpha: 0.003922, steps: 100 image only attack False image predicted label attack False
+2026-02-14 15:12:33,548 - log - INFO - Using directory for adversarial images: /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100
+2026-02-14 15:12:34,499 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/0_58fbc3e79ef15162b7726de04e98c90bb91a3055.pt
+2026-02-14 15:12:46,595 - log - INFO - Computing Diff Ratio TPT Noisy Anchors for Clean Image as well as Adversarial/Clean image
+2026-02-14 15:12:53,352 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/0_64f661b97cfd6db73bd6c30325597cf7c7b322d5.pt
+2026-02-14 15:12:58,495 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/0_66123ec1b806abff544bb89e11653ef5185af4be.pt
+2026-02-14 15:13:03,662 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/0_7e4a8987a9a330189cc38c4098b1c57ac301713f.pt
+2026-02-14 15:13:08,806 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/0_8e1374a4e20d7af22665b7749158b7eb9fa3826e.pt
+2026-02-14 15:13:13,983 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/1_2fb7561b81c4e57499123d88ca1b3dfb90c12b04.pt
+2026-02-14 15:13:19,111 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/1_410be3396e37d22abeeb2117140570a27ca059d7.pt
+2026-02-14 15:13:24,245 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/1_4bfc25951f1f2f8568aaed8be30920b187674d0a.pt
+2026-02-14 15:13:29,378 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/1_6c8a2fdab07e64c8ac68c1d6914469a517127710.pt
+2026-02-14 15:13:34,546 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/1_6c8b66e303801b018d86b8ed7ca897d5ed563b75.pt
+2026-02-14 15:13:39,664 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/10_0615b841d58ea66d72093e4d135a710fee1c0eb2.pt
+2026-02-14 15:13:44,823 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/10_2a91d912f82f9c8047fc9ab634c58e7499ad1d8d.pt
+2026-02-14 15:13:50,000 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/10_367d70ba1eef798b7b6cb32e6666675a3322cd1d.pt
+2026-02-14 15:13:55,078 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/10_3b12f8a9e0fca07246affdd805e7a8c13ef22136.pt
+2026-02-14 15:14:00,226 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/10_3fe41c41741768fbec3f765d165c8caf88f3b7dd.pt
+2026-02-14 15:14:05,356 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/100_0f3db9e0ae5b586c8ab726e73359494d4d2a5624.pt
+2026-02-14 15:14:10,497 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/100_5523ed69c2e759e49baf87f991660d8d51d001c7.pt
+2026-02-14 15:14:15,705 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/100_57b0106c9206a631cc90d0408e69c765bf9fe722.pt
+2026-02-14 15:14:20,915 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/100_6012078dc1f6302fbc92c63627f81bc2dc636453.pt
+2026-02-14 15:14:26,074 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/100_660dd14eb2a517fdbec75e044507d5bb051903ce.pt
+2026-02-14 15:14:31,210 - log - INFO - iter:20/5000, Original Clean Acc@1: 95.00, Acc@5: 100.00
+2026-02-14 15:14:31,210 - log - INFO - iter:20/5000, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:14:31,211 - log - INFO - iter:20/5000, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:14:31,211 - log - INFO - iter:20/5000, Vanilla TTA Adv Acc@1: 85.00, Acc@5: 100.00
+2026-02-14 15:14:31,211 - log - INFO - iter:20/5000, Vanilla Topk TTA Adv Acc@1: 75.00, Acc@5: 85.00
+2026-02-14 15:14:31,211 - log - INFO - iter:20/5000, Weighted TTA Adv Acc@1: 85.00, Acc@5: 100.00
+2026-02-14 15:14:31,216 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/101_00c789d97ef61ba76238d7ee410233a3b3ad5413.pt
+2026-02-14 15:14:36,354 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/101_111592e3943671afffe4fd13cb3f4fc0fd50868c.pt
+2026-02-14 15:14:41,499 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/101_36bee9fc744cd83d927376454edb29ac4eaf60a2.pt
+2026-02-14 15:14:46,643 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/101_72c3950382ef2573dab549fdc2926314cf24c2fa.pt
+2026-02-14 15:14:52,110 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/101_aa2d6f636aaaa31aa8fe8e8b1bed43db42eae9ea.pt
+2026-02-14 15:14:57,247 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/102_324b792e6dc4e1831369aec05307526cbfdd82cd.pt
+2026-02-14 15:15:02,410 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/102_404bf3b2d1860642bd6c19d6ffcf99b485dcc6c0.pt
+2026-02-14 15:15:07,589 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/102_5e92b62321f1d64123babec06f552f5c8bb168d5.pt
+2026-02-14 15:15:12,708 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/102_8f5421de909f9b01bdd0f31961096bed0f689638.pt
+2026-02-14 15:15:17,849 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/102_8f858f2614ea5e7931e0117e25e0f8a59596bd50.pt
+2026-02-14 15:15:22,993 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/103_18e16df23c987b13e7926624a32078116d7f3709.pt
+2026-02-14 15:15:28,320 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/103_21da7640652edda9c48c86279693cc90fe358d85.pt
+2026-02-14 15:15:33,353 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/103_3545ba741115a30139b7cb31a9ce5328659015cc.pt
+2026-02-14 15:15:38,485 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/103_4bd02179a7a796eff25fc9f8d0a22ee14e914018.pt
+2026-02-14 15:15:43,633 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/103_5296a7d02ab3a1de39ff47d8aee52a8491018454.pt
+2026-02-14 15:15:48,769 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/104_125de72b04bc84bfc59b2225ae714c15826d9cc5.pt
+2026-02-14 15:15:53,908 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/104_3703a47ff1a606a63b18f2c1acd0f71ce0279924.pt
+2026-02-14 15:15:59,096 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/104_50d241b5c6dde89c6c963b9ee673213f0a8313d2.pt
+2026-02-14 15:16:04,286 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/104_7060c4c92690cfdd37b42fa324e46138d4e0bdd8.pt
+2026-02-14 15:16:09,476 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/104_7a91892decfa2531e6c264ff71d7ec15b0a9fe95.pt
+2026-02-14 15:16:14,617 - log - INFO - iter:40/5000, Original Clean Acc@1: 90.00, Acc@5: 97.50
+2026-02-14 15:16:14,617 - log - INFO - iter:40/5000, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:16:14,617 - log - INFO - iter:40/5000, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:16:14,617 - log - INFO - iter:40/5000, Vanilla TTA Adv Acc@1: 65.00, Acc@5: 95.00
+2026-02-14 15:16:14,617 - log - INFO - iter:40/5000, Vanilla Topk TTA Adv Acc@1: 60.00, Acc@5: 75.00
+2026-02-14 15:16:14,618 - log - INFO - iter:40/5000, Weighted TTA Adv Acc@1: 70.00, Acc@5: 95.00
+2026-02-14 15:16:14,628 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/105_092d1de5481eb60ed2430cac2c825b1623415bdf.pt
+2026-02-14 15:16:19,835 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/105_381ee2ca3c7993332f546e3dc407b33772724a3a.pt
+2026-02-14 15:16:24,929 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/105_5fc0ad3623df6281226002b770baf0687b3e9e06.pt
+2026-02-14 15:16:30,088 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/105_6673da3e6d633d1f361abaa8662996140ba2f12b.pt
+2026-02-14 15:16:35,255 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/105_71a4d263bc5cf0f8cc065a4d74a159ca8bb9e117.pt
+2026-02-14 15:16:40,422 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/106_457c0eaf36a2771a79630539e5a75944442e20a9.pt
+2026-02-14 15:16:45,743 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/106_4b11c77bd502aba3a746c917c083da54ac066bc4.pt
+2026-02-14 15:16:50,785 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/106_6dff3335d08b9b4341363964a9ef9bbcaab1afdb.pt
+2026-02-14 15:16:55,941 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/106_7e07cd928de35c9333c10fd5bc5e6a23733d9ea5.pt
+2026-02-14 15:17:01,099 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/106_7fb24c1c6e4f994afab1c4e07300097b17d06d34.pt
+2026-02-14 15:17:06,267 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/107_43afe1e01c2eb1726fd392ef2181195717c842f7.pt
+2026-02-14 15:17:11,421 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/107_59d38d9c6b1e1033f191c710e8e6ccc6b5445cc1.pt
+2026-02-14 15:17:16,633 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/107_5a08285c0ad2ff530cf5e9c3caf4695ce1ef0fdc.pt
+2026-02-14 15:17:21,782 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/107_64c71b211434a239df99a9cbde0ae4f3feabead4.pt
+2026-02-14 15:17:26,950 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/107_7617951f288d9a38351e0caefdb9341a45995fc7.pt
+2026-02-14 15:17:32,120 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/108_0a2487bfd07ca7caa9765868503dd6c9a65f241a.pt
+2026-02-14 15:17:37,279 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/108_0e95a0fdcc90e223f1e28fad3e53c71ea7ab8cfc.pt
+2026-02-14 15:17:42,474 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/108_54dc3457f584651f25731257c7be97cc3568ff88.pt
+2026-02-14 15:17:47,631 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/108_6fc794c81a411c07ce8ec71a96bacd2ef3e2a5ea.pt
+2026-02-14 15:17:52,808 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/108_a6ff5cd3320d054d8f5efe313d7ae8362164a747.pt
+2026-02-14 15:17:57,959 - log - INFO - iter:60/5000, Original Clean Acc@1: 90.00, Acc@5: 96.67
+2026-02-14 15:17:57,959 - log - INFO - iter:60/5000, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:17:57,959 - log - INFO - iter:60/5000, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:17:57,959 - log - INFO - iter:60/5000, Vanilla TTA Adv Acc@1: 68.33, Acc@5: 95.00
+2026-02-14 15:17:57,959 - log - INFO - iter:60/5000, Vanilla Topk TTA Adv Acc@1: 61.67, Acc@5: 80.00
+2026-02-14 15:17:57,959 - log - INFO - iter:60/5000, Weighted TTA Adv Acc@1: 71.67, Acc@5: 95.00
+2026-02-14 15:17:57,963 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/109_0f20eacd4dceb48ca85fcf5bcad34569425385ef.pt
+2026-02-14 15:18:03,122 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/109_19c6e5051c2228087fd94ce86c9a491054517812.pt
+2026-02-14 15:18:08,287 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/109_2cdc486d802c3e1ce33cb4362b9f95b896175271.pt
+2026-02-14 15:18:13,435 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/109_34e2ea26202a4c5a0361ff3f2f6a967716af504d.pt
+2026-02-14 15:18:18,597 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/109_95b537ee279c301461d0175567b2ec35b958d489.pt
+2026-02-14 15:18:23,690 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/11_0af0de0605e7faf09b88338d8acc32e1876242c6.pt
+2026-02-14 15:18:28,770 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/11_116a75905d0f510c443f682c21cda9ee05ef8b1f.pt
+2026-02-14 15:18:33,917 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/11_14b640dc7a0d04ed1a8e3611b25de2785d7899f3.pt
+2026-02-14 15:18:39,068 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/11_247114ab8ab33036f7a8aa2ed604c0376f318a4d.pt
+2026-02-14 15:18:44,254 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/11_2ad2b65dc1d945e85547fb9cf9e43bd07f5e8381.pt
+2026-02-14 15:18:49,381 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/110_3c7687ae17faa2d4ffca9ae17876e4750e719d81.pt
+2026-02-14 15:18:54,532 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/110_3d6f9fc4b6d3f75ac474cc16d20f894492182704.pt
+2026-02-14 15:18:59,697 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/110_4346092bb0a96d55439cd744186040413b9c621d.pt
+2026-02-14 15:19:04,873 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/110_7b3b46d33c923f7b93f4a6d94167c65e615bf113.pt
+2026-02-14 15:19:10,195 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/110_819c8cd6d3e99bfe9c61e7e141a8bfdd1a99d9ca.pt
+2026-02-14 15:19:15,231 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/111_10b3106552ea0f3716c5a4312952e8681f9a2000.pt
+2026-02-14 15:19:20,467 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/111_294b357be007744a67ead1ca04d1392e7f7c22d1.pt
+2026-02-14 15:19:25,623 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/111_29abbfe97bf7e12a1398bc5bfca0c03d4378daa5.pt
+2026-02-14 15:19:30,791 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/111_3c5b4f4c5dedc7d79154d23e090562920cc53dc0.pt
+2026-02-14 15:19:36,097 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/111_7203532889fe1e15ffee233dec21898b62b56420.pt
+2026-02-14 15:19:41,235 - log - INFO - iter:80/5000, Original Clean Acc@1: 87.50, Acc@5: 95.00
+2026-02-14 15:19:41,235 - log - INFO - iter:80/5000, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:19:41,235 - log - INFO - iter:80/5000, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:19:41,236 - log - INFO - iter:80/5000, Vanilla TTA Adv Acc@1: 68.75, Acc@5: 92.50
+2026-02-14 15:19:41,236 - log - INFO - iter:80/5000, Vanilla Topk TTA Adv Acc@1: 61.25, Acc@5: 78.75
+2026-02-14 15:19:41,236 - log - INFO - iter:80/5000, Weighted TTA Adv Acc@1: 72.50, Acc@5: 93.75
+2026-02-14 15:19:41,239 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/112_32b79769e76d8bcf419656b930c9e3ea345fc0bb.pt
+2026-02-14 15:19:46,404 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/112_6cc736945b308703db504b699ad007aa2c70a3f4.pt
+2026-02-14 15:19:51,563 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/112_6ccd9202183e59389fe3127ec276fdb2d097c347.pt
+2026-02-14 15:19:56,725 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/112_70cda0bfc56de04ad841540f86d20559c5c9d4c3.pt
+2026-02-14 15:20:01,911 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/112_8fc0c399f592d777eaba9dd50d4f580cf3dd62d7.pt
+2026-02-14 15:20:07,097 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/113_047596b1dd219f72e86ce981521b1fea79155fbb.pt
+2026-02-14 15:20:12,267 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/113_13d4e31164b359fb1fa1ac526b178b0eb30054a2.pt
+2026-02-14 15:20:17,442 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/113_36392a7b2ac19b9e5d6b8bc1083304fef1f5e068.pt
+2026-02-14 15:20:22,593 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/113_694928d6763a03615d633a975e5fa7f4d1156f53.pt
+2026-02-14 15:20:27,740 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/113_6a9667f14678324d8d0f3fffdb413061e0aae3ec.pt
+2026-02-14 15:20:32,900 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/114_0c4c4164e7624e4f565fbee0ebf7f5a3c71f5a22.pt
+2026-02-14 15:20:38,043 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/114_7a969e41e30e444b70b49f88004be94a9409bdd4.pt
+2026-02-14 15:20:43,211 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/114_943447233bb9d3c2fb45a0b738d5eb042262612b.pt
+2026-02-14 15:20:48,345 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/114_a336c19605b8d0e9e802d32a39cf484f26f5373b.pt
+2026-02-14 15:20:53,491 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/114_b578d7c4c2627c8dc0eb658724e50364a1cd98be.pt
+2026-02-14 15:20:58,636 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/115_28a208be59ec32cc5d69d479faa8ee29e6e7734c.pt
+2026-02-14 15:21:03,822 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/115_2ed64bdcb5af18bda161b6de593e6d697ef35eaa.pt
+2026-02-14 15:21:08,979 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/115_4790f82e43a92ca29482a651774a9627b4301deb.pt
+2026-02-14 15:21:14,131 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/115_4df9d99ed64d3cd2f7e18a352ad608a2621fcd77.pt
+2026-02-14 15:21:19,278 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/115_64691f6b00e6de3ee82723998c1e34282fb6d40d.pt
+2026-02-14 15:21:24,427 - log - INFO - iter:100/5000, Original Clean Acc@1: 83.00, Acc@5: 93.00
+2026-02-14 15:21:24,427 - log - INFO - iter:100/5000, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:21:24,427 - log - INFO - iter:100/5000, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:21:24,427 - log - INFO - iter:100/5000, Vanilla TTA Adv Acc@1: 66.00, Acc@5: 89.00
+2026-02-14 15:21:24,427 - log - INFO - iter:100/5000, Vanilla Topk TTA Adv Acc@1: 58.00, Acc@5: 76.00
+2026-02-14 15:21:24,427 - log - INFO - iter:100/5000, Weighted TTA Adv Acc@1: 69.00, Acc@5: 90.00
+2026-02-14 15:21:24,432 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/116_1b5b2765df79a19df581f69e8dbea56d9ba5ee31.pt
+2026-02-14 15:21:29,602 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/116_33106da498df6aa5bfdca55c56deeac556661082.pt
+2026-02-14 15:21:34,794 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/116_60e63e05190b43f74769b44f4de409a16cdf99a8.pt
+2026-02-14 15:21:39,928 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/116_65633fcedfe1c40f09e2b37cd33b0c6efc7045c9.pt
+2026-02-14 15:21:45,120 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/116_8df838e91dbad44c0902a360054681f62e9af1ce.pt
+2026-02-14 15:21:50,274 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/117_1d45888d725b9c35bb92e61c57199f3b9810ba3c.pt
+2026-02-14 15:21:55,440 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/117_2e4980a06976a1c740fe9099d405d47fc9b8ef31.pt
+2026-02-14 15:22:00,612 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/117_44b62eaa480b33ec53fc393fa14b7bc032b5a651.pt
+2026-02-14 15:22:05,751 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/117_67f66413f57e2e8847da5dc0fc828b5678cdfa06.pt
+2026-02-14 15:22:10,902 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/117_694d3fcf80af66b75634ce5036b4b34a557bd1d6.pt
+2026-02-14 15:22:16,037 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/118_133f8811dc99bd9e22176d9f9e8d91ea3a1a1609.pt
+2026-02-14 15:22:21,215 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/118_147311b4c4045fabafb9f5be30d5ddc9ff1eabd9.pt
+2026-02-14 15:22:26,366 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/118_1eb626d08279aa8ea9031f673552853075b2ecd9.pt
+2026-02-14 15:22:31,589 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/118_20196e6499f6119783b31767189eb3dee06f05dc.pt
+2026-02-14 15:22:36,718 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/118_4d5c77a81ab70dcf094a564f1c87f165d0aabfa2.pt
+2026-02-14 15:22:41,911 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/119_3d7e0dc8151ca7ead9c05d21c9a664c23d461348.pt
+2026-02-14 15:22:47,039 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/119_3ef89a77eae65d40c061fc42e5c6b2cbdb6558d0.pt
+2026-02-14 15:22:52,397 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/119_439a910101a348954eba0e58288356b9ad6f1774.pt
+2026-02-14 15:22:57,548 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/119_623111e51760c43528da9cfb1ca651563aba63da.pt
+2026-02-14 15:23:02,638 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/119_9feb690701cb7b11ccc7861dcd8711be4e4918e2.pt
+2026-02-14 15:23:07,826 - log - INFO - iter:120/5000, Original Clean Acc@1: 80.83, Acc@5: 94.17
+2026-02-14 15:23:07,826 - log - INFO - iter:120/5000, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:23:07,826 - log - INFO - iter:120/5000, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:23:07,826 - log - INFO - iter:120/5000, Vanilla TTA Adv Acc@1: 63.33, Acc@5: 86.67
+2026-02-14 15:23:07,827 - log - INFO - iter:120/5000, Vanilla Topk TTA Adv Acc@1: 55.00, Acc@5: 73.33
+2026-02-14 15:23:07,827 - log - INFO - iter:120/5000, Weighted TTA Adv Acc@1: 65.83, Acc@5: 88.33
+2026-02-14 15:23:07,831 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/12_0ab7e9ebb324f16f75e8a07127dd514ecfe675f6.pt
+2026-02-14 15:23:12,984 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/12_3d18d8462d07e9d37c35dad8450d9db1e7e07b7d.pt
+2026-02-14 15:23:18,161 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/12_43237e403bf5905b371e08c2e3eb8caf50276af5.pt
+2026-02-14 15:23:23,273 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/12_47e5f58d11063555eeeb976763405fb739a0c5e5.pt
+2026-02-14 15:23:28,466 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/12_49056be9a12806595c1b8c6a0d6a0589653ff937.pt
+2026-02-14 15:23:33,502 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/120_018dc21ba61d3c655ca761bf062c3b31843100f8.pt
+2026-02-14 15:23:38,685 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/120_2a12319dffaba39a1c3b96663bf1e38a3ada78a5.pt
+2026-02-14 15:23:43,999 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/120_3ad77454e1d7fd8df539ca5df50fab882a6979b8.pt
+2026-02-14 15:23:49,029 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/120_5bfcf5a23172de7bde957c0b5eef65069b8092db.pt
+2026-02-14 15:23:54,175 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/120_5ddd7b594ddbf1c28b23281b9c4609a51f816e21.pt
+2026-02-14 15:23:59,351 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/121_0b1c085b17461e2cc8bebf1fbdd2166509b442f0.pt
+2026-02-14 15:24:04,519 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/121_1b3e85a0bdf876e714c80ee79b43e9c18bf60a61.pt
+2026-02-14 15:24:09,667 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/121_2549bb3dbb9116ab4d5838e4f6d670d4e3ff1349.pt
+2026-02-14 15:24:14,845 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/121_53b8433803475d4ddeea334b02a98d0e87ecc1e8.pt
+2026-02-14 15:24:20,000 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/121_64ddd279b681283b1c14f939d87ce0d1d1e64937.pt
+2026-02-14 15:24:25,180 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/122_068cbba6530eff37b124aae60f5f66f47d628d21.pt
+2026-02-14 15:24:30,387 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/122_0bd104bcf0cc41689d5bf2d36d67760604d6d92d.pt
+2026-02-14 15:24:35,576 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/122_2409c810f410a44e68a07f4539e99fa1de1fa008.pt
+2026-02-14 15:24:40,739 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/122_6a9103615d9a3309c918ef4384d501815b2f06ee.pt
+2026-02-14 15:24:45,917 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/122_6f6974e6cb5b9bde648da2bc944e474970002c0f.pt
+2026-02-14 15:24:51,063 - log - INFO - iter:140/5000, Original Clean Acc@1: 79.29, Acc@5: 93.57
+2026-02-14 15:24:51,063 - log - INFO - iter:140/5000, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:24:51,063 - log - INFO - iter:140/5000, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:24:51,063 - log - INFO - iter:140/5000, Vanilla TTA Adv Acc@1: 60.00, Acc@5: 86.43
+2026-02-14 15:24:51,063 - log - INFO - iter:140/5000, Vanilla Topk TTA Adv Acc@1: 50.00, Acc@5: 70.71
+2026-02-14 15:24:51,063 - log - INFO - iter:140/5000, Weighted TTA Adv Acc@1: 61.43, Acc@5: 88.57
+2026-02-14 15:24:51,067 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/123_1b24dea28ad6b4196f82a328f2c2385a1428ea48.pt
+2026-02-14 15:24:56,221 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/123_52623aeff7f3c1ab206452649ea534f13c9b5a4b.pt
+2026-02-14 15:25:01,391 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/123_87a52fbaad03e7d03424a0b02fae121cce85bc28.pt
+2026-02-14 15:25:06,559 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/123_95098efda1796d215fd8b92f0cf355d0ad55517e.pt
+2026-02-14 15:25:11,727 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/123_a118865f42f7563d30fe06b4cae462d059d17457.pt
+2026-02-14 15:25:16,877 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/124_265fc73080d8263df5d9932bddec3c55e59ad765.pt
+2026-02-14 15:25:22,026 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/124_275391ee3fc4e99729d73058b70823c4bf25bd4a.pt
+2026-02-14 15:25:27,194 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/124_38487a259c90c3d51ddc7e9d080e3416fbaa5dc4.pt
+2026-02-14 15:25:32,337 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/124_6f1a5f9a3e8f4d2ac796333c68b74de80b9ca280.pt
+2026-02-14 15:25:37,521 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/124_a01244da83b3eb64735efdc89a78119982486c35.pt
+2026-02-14 15:25:42,681 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/125_2c01587c1eff66904d251f0e93fe071f900897a3.pt
+2026-02-14 15:25:47,827 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/125_2cb1bfe2fb14d796d042e85cbbfaed7dd4653f34.pt
+2026-02-14 15:25:52,975 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/125_3bd71c2d4b0b504ddf4c6fbc4ce060444a21b63e.pt
+2026-02-14 15:25:58,162 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/125_459b9152c249435b390c43129f26d99a53892758.pt
+2026-02-14 15:26:03,299 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/125_6ae02d2c6e2f77b4f447124efe536049017b7154.pt
+2026-02-14 15:26:08,425 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/126_1f93c964576ecdbd82a12143c847c0928060de27.pt
+2026-02-14 15:26:13,450 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/126_220871bfad022f7007cafd7cf559116630bd1935.pt
+2026-02-14 15:26:18,595 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/126_304d301022dee6ea6a7c44aab852eb582d6c5162.pt
+2026-02-14 15:26:23,747 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/126_5a495bb16025e8ddc2c148e2c0e131a727a4ea1f.pt
+2026-02-14 15:26:28,898 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/126_74c28ff1487f1c1d795af84128d2b875db306897.pt
+2026-02-14 15:26:34,062 - log - INFO - iter:160/5000, Original Clean Acc@1: 78.12, Acc@5: 93.12
+2026-02-14 15:26:34,062 - log - INFO - iter:160/5000, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:26:34,062 - log - INFO - iter:160/5000, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:26:34,062 - log - INFO - iter:160/5000, Vanilla TTA Adv Acc@1: 60.00, Acc@5: 86.25
+2026-02-14 15:26:34,062 - log - INFO - iter:160/5000, Vanilla Topk TTA Adv Acc@1: 50.00, Acc@5: 70.62
+2026-02-14 15:26:34,062 - log - INFO - iter:160/5000, Weighted TTA Adv Acc@1: 61.25, Acc@5: 88.75
+2026-02-14 15:26:34,066 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/127_1bf0f96d7db41a40cf33cff00899037d175217a8.pt
+2026-02-14 15:26:39,273 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/127_1bfcf600aeb674878516bb3e64f8d7ae6d8934f0.pt
+2026-02-14 15:26:44,410 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/127_1f49035aa70c96be913a111f44336a90906a73aa.pt
+2026-02-14 15:26:49,557 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/127_50393a64ed4e6d3dbc47a083c422ef9476120b86.pt
+2026-02-14 15:26:54,709 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/127_584ea7c6420451f50f1b56b3dca3633012017b63.pt
+2026-02-14 15:26:59,843 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/128_1638edbe0310ffcb21f50c28b452c69c4b4f66ad.pt
+2026-02-14 15:27:05,014 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/128_5ce99be7d4dbd1bb33898247d0f32c9e1c1c6ada.pt
+2026-02-14 15:27:10,178 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/128_6a52505af3fe3f5e16c08557a58dc75fa7f2154d.pt
+2026-02-14 15:27:15,661 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/128_70fa0f442a2874f5b7acc7f905462efc9c9c09a2.pt
+2026-02-14 15:27:20,818 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/128_7565ad918d063974b7fc5e316e0cf58ad1597c69.pt
+2026-02-14 15:27:26,000 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/129_026c1862c471f4e0282c9ba32cf69b75803876bb.pt
+2026-02-14 15:27:31,390 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/129_05168cbe382c052af4192f590c4b2958a33d861b.pt
+2026-02-14 15:27:36,439 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/129_0a54f1b9ac87387c09eb707644338f78c929e861.pt
+2026-02-14 15:27:41,606 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/129_0b9adc90b34b8844db8432a3d3883126ed97d919.pt
+2026-02-14 15:27:46,723 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/129_220661417df8bb5e70df54b2d9bea25bf46d396c.pt
+2026-02-14 15:27:51,885 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/13_1c423e39de8c269e75bd2691ad3f3a1253f2f023.pt
+2026-02-14 15:27:57,048 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/13_1fc2a62a195b7e36bf8ccc9be96941a2c21619be.pt
+2026-02-14 15:28:02,217 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/13_21f7405d64f7b255f71141ebbc0f88bd25ce75c3.pt
+2026-02-14 15:28:07,379 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/13_4a4fb928c0f2382a200dbcf45adf08000ef186f5.pt
+2026-02-14 15:28:12,543 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/13_946014b676e6f5dc1b0b3d581192da9bd368673e.pt
+2026-02-14 15:28:17,703 - log - INFO - iter:180/5000, Original Clean Acc@1: 80.00, Acc@5: 93.89
+2026-02-14 15:28:17,703 - log - INFO - iter:180/5000, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:28:17,703 - log - INFO - iter:180/5000, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:28:17,703 - log - INFO - iter:180/5000, Vanilla TTA Adv Acc@1: 62.78, Acc@5: 87.78
+2026-02-14 15:28:17,703 - log - INFO - iter:180/5000, Vanilla Topk TTA Adv Acc@1: 52.78, Acc@5: 72.22
+2026-02-14 15:28:17,703 - log - INFO - iter:180/5000, Weighted TTA Adv Acc@1: 63.89, Acc@5: 90.00
+2026-02-14 15:28:17,707 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/130_1180d5f1722efdb8e20f35474ebb669e2dbd875b.pt
+2026-02-14 15:28:22,843 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/130_1d30d8aa29c1a921cede144812e47e28a3526d45.pt
+2026-02-14 15:28:28,060 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/130_28f90ae2dc3e68d5b1ae5119ba7ec5a593be50f9.pt
+2026-02-14 15:28:33,223 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/130_648c489f24edabb1a9232c58e4012de4ef7e5d41.pt
+2026-02-14 15:28:38,424 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/130_958ed0d2df3c2fe2b8202300d45cd5b958b30189.pt
+2026-02-14 15:28:43,723 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/131_25864cb6ab86317815daac3043f76b691b67d95d.pt
+2026-02-14 15:28:48,753 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/131_274d0aa77e810f745f7cc2d7c0863125b169f626.pt
+2026-02-14 15:28:53,929 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/131_53972b5b0df8cd221a31a189527da62b70f44bdd.pt
+2026-02-14 15:28:59,077 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/131_5588c890ab6ce1663fa2849dc81c92f0860f0184.pt
+2026-02-14 15:29:04,242 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/131_6479f5307ed47ac6ea0f244a4c301b3fc572a0e1.pt
+2026-02-14 15:29:09,405 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/132_11f3a22306bb3f2f1d698d9093a93f07cdd0c25f.pt
+2026-02-14 15:29:14,735 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/132_20e84003a7ea1c7360898252c4ced0e239ff9015.pt
+2026-02-14 15:29:19,763 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/132_31db0fa6f185274f931513e51e834e90ed796945.pt
+2026-02-14 15:29:24,898 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/132_31f13a0a24c52a0129fc3d0089be90fadf33cbdb.pt
+2026-02-14 15:29:30,058 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/132_4bf902ef70d34c9a0440c34c88ceb39a7bc8f4a6.pt
+2026-02-14 15:29:35,260 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/133_06e3e8e39f69d4117bb1bf4c848043156709978b.pt
+2026-02-14 15:29:40,412 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/133_24a8ed0b6fd39b7a311dab2edaa792231d7f7b1a.pt
+2026-02-14 15:29:45,575 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/133_46a401a06d6bc70dcec1f9c62ebe37531bb023a7.pt
+2026-02-14 15:29:50,754 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/133_5b90a2f0d027eb5cf80a79867c309716975a13e1.pt
+2026-02-14 15:29:55,902 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/133_73983fe06eab44446b49e3f283689bb4cec23e12.pt
+2026-02-14 15:30:01,044 - log - INFO - iter:200/5000, Original Clean Acc@1: 80.00, Acc@5: 94.50
+2026-02-14 15:30:01,044 - log - INFO - iter:200/5000, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:30:01,044 - log - INFO - iter:200/5000, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:30:01,044 - log - INFO - iter:200/5000, Vanilla TTA Adv Acc@1: 62.50, Acc@5: 88.50
+2026-02-14 15:30:01,045 - log - INFO - iter:200/5000, Vanilla Topk TTA Adv Acc@1: 52.50, Acc@5: 72.00
+2026-02-14 15:30:01,045 - log - INFO - iter:200/5000, Weighted TTA Adv Acc@1: 63.50, Acc@5: 90.50
+2026-02-14 15:30:01,048 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/134_0096f41d831a1c4b83f30b9b09c62d2a3282c230.pt
+2026-02-14 15:30:06,187 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/134_043b0354bac9a48f9729924d68e4289ad79b8bd9.pt
+2026-02-14 15:30:11,345 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/134_045b3155c0ae4a9cc0bc178239e0bdff732980b7.pt
+2026-02-14 15:30:16,504 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/134_7098e827f5c8dbd1ff7700e165efad0995bde35d.pt
+2026-02-14 15:30:21,644 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/134_9cb12831c815977d5d50a7e7029c6d9086764f6c.pt
+2026-02-14 15:30:26,804 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/135_1f8bc151fc7d975ac8ac1e9d39b2e3737f8eba41.pt
+2026-02-14 15:30:31,971 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/135_29efc317b14c6fd53b291c2adafb9dc71089afcd.pt
+2026-02-14 15:30:37,133 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/135_2ccf0f9665d1ad953fa0af58cf610c3c1cbc39ff.pt
+2026-02-14 15:30:42,336 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/135_581e2ecc81f263e5b0d90174eef79c7cca11882c.pt
+2026-02-14 15:30:47,493 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/135_6fb52840fbf35e91749400a0f2f0b7c39cae5388.pt
+2026-02-14 15:30:52,661 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/136_0ca37996e3b8decc48ea0b60eedc6993a4dca581.pt
+2026-02-14 15:30:57,826 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/136_0eea36319fae661c36bc468fceed5baba4763d87.pt
+2026-02-14 15:31:02,983 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/136_30d2b813e15433a9e5c00645d09923ee7db34f57.pt
+2026-02-14 15:31:08,140 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/136_5be1e844f0b4f96194585a781840fcb8495d999a.pt
+2026-02-14 15:31:13,287 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/136_6661473d85337216ffa0e918e9fd171893811170.pt
+2026-02-14 15:31:18,426 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/137_0ee6d9da4d124bbc97d1747f4da4c018950417c8.pt
+2026-02-14 15:31:23,585 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/137_1f8222b1762ae650dbf232b8fe2b650420cc0069.pt
+2026-02-14 15:31:28,764 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/137_5b144a648154da5597928b2dabe7c5bdc8abd6a0.pt
+2026-02-14 15:31:33,908 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/137_70e777d984c77b821bd9d204739c04a98ccc8764.pt
+2026-02-14 15:31:39,062 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/137_85e742d62e417d0f0146b1015a29375ce5255292.pt
+2026-02-14 15:31:44,248 - log - INFO - iter:220/5000, Original Clean Acc@1: 79.09, Acc@5: 94.55
+2026-02-14 15:31:44,248 - log - INFO - iter:220/5000, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:31:44,248 - log - INFO - iter:220/5000, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:31:44,249 - log - INFO - iter:220/5000, Vanilla TTA Adv Acc@1: 60.91, Acc@5: 87.73
+2026-02-14 15:31:44,249 - log - INFO - iter:220/5000, Vanilla Topk TTA Adv Acc@1: 50.91, Acc@5: 70.00
+2026-02-14 15:31:44,249 - log - INFO - iter:220/5000, Weighted TTA Adv Acc@1: 61.82, Acc@5: 90.00
+2026-02-14 15:31:44,253 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/138_00013b50faad3edb4cc55844e883dbe44352b2cd.pt
+2026-02-14 15:31:49,415 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/138_04dc7eb0c26dcf950b99e20c0623567b217de9e1.pt
+2026-02-14 15:31:54,619 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/138_0dc6b50a4207ae0b11597fd7a3551966d095ae82.pt
+2026-02-14 15:31:59,776 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/138_44d6b84120361ee079f517d4aab13efd56d5d16c.pt
+2026-02-14 15:32:04,937 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/138_6846118e4e36b0dde95ee3d2e7c1622f921314dd.pt
+2026-02-14 15:32:10,069 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/139_29d083c426e3f6b1b2a6ba0bf57fc91d37ad68db.pt
+2026-02-14 15:32:15,234 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/139_32689aaf5ef25f4f5799ebdb981d9ce2e32bf4bd.pt
+2026-02-14 15:32:20,384 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/139_3da8f4d0e7cf70a9ebc457eb6ff2c7e6c2752ba3.pt
+2026-02-14 15:32:25,548 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/139_4c70552602e22a6c3e80eadd9d07c07e8dddeb63.pt
+2026-02-14 15:32:30,699 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/139_67bacde1d177375bf2e8a2ee05cc08679e257678.pt
+2026-02-14 15:32:35,855 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/14_061336f23bc9f4b8666253418c9f06a7cf46029f.pt
+2026-02-14 15:32:41,012 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/14_31dcb2ffb27f168cd6fd5dda44d04ba5b3df1fda.pt
+2026-02-14 15:32:46,247 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/14_8d77a436c91a15bc51e9346e4490d169bed70f56.pt
+2026-02-14 15:32:51,374 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/14_9a58f0df6d46947b65dc3d3e604871f1276ef6e1.pt
+2026-02-14 15:32:56,556 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/14_a1aa0c476adeef0be93238e96ed48587be24a1fc.pt
+2026-02-14 15:33:01,737 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/140_0ee6c0266a563004374ef020549ee6f58cb6b539.pt
+2026-02-14 15:33:06,894 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/140_3163638025c7dd7afb2aa9ac17f93a45e0acff59.pt
+2026-02-14 15:33:12,249 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/140_40c41f0a986a3475ba213e62cd3d30e22b6bad21.pt
+2026-02-14 15:33:17,278 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/140_65257a5607139d2da5712e75e6802641f5cec740.pt
+2026-02-14 15:33:22,415 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/140_6bf82b9275c08cf88d965947c3b59d8681b3ac8d.pt
+2026-02-14 15:33:27,598 - log - INFO - iter:240/5000, Original Clean Acc@1: 80.42, Acc@5: 94.58
+2026-02-14 15:33:27,599 - log - INFO - iter:240/5000, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:33:27,599 - log - INFO - iter:240/5000, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:33:27,599 - log - INFO - iter:240/5000, Vanilla TTA Adv Acc@1: 62.08, Acc@5: 88.33
+2026-02-14 15:33:27,599 - log - INFO - iter:240/5000, Vanilla Topk TTA Adv Acc@1: 51.67, Acc@5: 70.83
+2026-02-14 15:33:27,599 - log - INFO - iter:240/5000, Weighted TTA Adv Acc@1: 62.92, Acc@5: 90.42
+2026-02-14 15:33:27,603 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/141_03ad895d28f43c5f0f943bb092c4d57a2a61f8d8.pt
+2026-02-14 15:33:32,763 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/141_24f35ab43b986b485bff159f92af0ee6295812d2.pt
+2026-02-14 15:33:37,897 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/141_7a3f823122c44ab1b50dd61567f881ccf685d059.pt
+2026-02-14 15:33:43,046 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/141_8c62b6a50790f003818f13049d61d246a11b863f.pt
+2026-02-14 15:33:48,758 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/141_8f567fcb130776af20b4f4bfac554b8dbc52ee80.pt
+2026-02-14 15:33:53,936 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/142_0b244a2cd5393edee46155303929224002977184.pt
+2026-02-14 15:33:59,089 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/142_500bb20e54053dfa2fffb8e6c51bd5c0097d2feb.pt
+2026-02-14 15:34:04,241 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/142_5e971fb5c4cc4432c42a12358b9ae0b1be8ea75a.pt
+2026-02-14 15:34:09,410 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/142_6355072038019afed183c55a9c6d826cf04a37a4.pt
+2026-02-14 15:34:14,607 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/142_707d094d8832d579f7138ab56300ae6603ccec88.pt
+2026-02-14 15:34:19,736 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/143_2a6caeb2ac201db26188a6fc4e79b8e1f90bf564.pt
+2026-02-14 15:34:24,890 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/143_2ff33f4c524997c0f6394c366dcb4b7279da7d4d.pt
+2026-02-14 15:34:30,036 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/143_3b6b8e374ffa2cf7e82ab12d0c6ef1be3cd374ee.pt
+2026-02-14 15:34:35,233 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/143_54bc76d9e3b7eec0294901f61fc85c0cdc0a6191.pt
+2026-02-14 15:34:40,403 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/143_6490e04fc0bc391e61467993a5d94060b81e0e55.pt
+2026-02-14 15:34:45,555 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/144_214ac853c913ba9d5b0cedbbe0b2a8053f56daaf.pt
+2026-02-14 15:34:50,713 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/144_8201ae4789e339b39c18234dbf88e4fbd1d10943.pt
+2026-02-14 15:34:56,000 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/144_a3632c5596046dd7350dd3bcc2407c17bfc3b722.pt
+2026-02-14 15:35:01,032 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/144_ad9b25fa5e799e6961e74cf5e33250c3e92d8875.pt
+2026-02-14 15:35:06,207 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/144_b803884a65eec7c12445ee1afd7231ba87f8bce2.pt
+2026-02-14 15:35:11,345 - log - INFO - iter:260/5000, Original Clean Acc@1: 81.15, Acc@5: 94.62
+2026-02-14 15:35:11,346 - log - INFO - iter:260/5000, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:35:11,346 - log - INFO - iter:260/5000, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:35:11,346 - log - INFO - iter:260/5000, Vanilla TTA Adv Acc@1: 62.69, Acc@5: 88.46
+2026-02-14 15:35:11,346 - log - INFO - iter:260/5000, Vanilla Topk TTA Adv Acc@1: 51.54, Acc@5: 71.54
+2026-02-14 15:35:11,346 - log - INFO - iter:260/5000, Weighted TTA Adv Acc@1: 63.46, Acc@5: 90.77
+2026-02-14 15:35:11,350 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/145_0426f6d7c3bed2ef2f2fe1e6a428cb17dd6f76b6.pt
+2026-02-14 15:35:16,437 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/145_10bbcb6adfcde76ec44d7e6d751fec53a5d95118.pt
+2026-02-14 15:35:21,581 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/145_1126d88701772ef7c2d2562eb9dec082b487e14a.pt
+2026-02-14 15:35:26,735 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/145_1952635698a165bb0f0fdb9145bc1627291f6de6.pt
+2026-02-14 15:35:31,887 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/145_267bbe8615a18b4e332e6900d7ee2d714851f542.pt
+2026-02-14 15:35:37,073 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/146_207d959ce9448573590216c5e1d5aa36c91ad2e3.pt
+2026-02-14 15:35:42,229 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/146_2968fdd1beb16ca856417fdbc0fe6d781f9f9e5d.pt
+2026-02-14 15:35:47,565 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/146_83b4deda0d2d209460c8c3102fe877a040b42e12.pt
+2026-02-14 15:35:52,703 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/146_ac564a5aaea4c8a9442be4820118475c1052924a.pt
+2026-02-14 15:35:57,854 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/146_ba1b504d9f1f38395c556614e4c9cee6b392b01c.pt
+2026-02-14 15:36:03,011 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/147_12f8c4212233db51ae2941dc84f9e9cea17476d7.pt
+2026-02-14 15:36:08,172 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/147_19c6b51e0571cb9ffcfcdb4f5804dd5d4da4ae1f.pt
+2026-02-14 15:36:13,483 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/147_2aad46fd2567584e254674523822584dd2367040.pt
+2026-02-14 15:36:18,514 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/147_7f20223e778ccfa0421bab4f68411eb146cda3f4.pt
+2026-02-14 15:36:23,672 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/147_90f869c1829a2415ff6549e6936b4fa519ea00db.pt
+2026-02-14 15:36:28,813 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/148_2209ccaff77d92ce7c41798c7466f88e7d06f6a8.pt
+2026-02-14 15:36:33,974 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/148_314f84580739b9c5fcdb25196e4c33a99df077e2.pt
+2026-02-14 15:36:39,299 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/148_353d62b5f44c9c1d3100300a2cab661cd57c7b04.pt
+2026-02-14 15:36:44,332 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/148_41d0a8f50618546295e47744bd561253665df612.pt
+2026-02-14 15:36:49,470 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/148_80e6ede75a52be6de5863e49ca8f7d3782b11124.pt
+2026-02-14 15:36:54,615 - log - INFO - iter:280/5000, Original Clean Acc@1: 81.79, Acc@5: 95.00
+2026-02-14 15:36:54,615 - log - INFO - iter:280/5000, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:36:54,615 - log - INFO - iter:280/5000, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:36:54,615 - log - INFO - iter:280/5000, Vanilla TTA Adv Acc@1: 63.57, Acc@5: 88.93
+2026-02-14 15:36:54,615 - log - INFO - iter:280/5000, Vanilla Topk TTA Adv Acc@1: 52.14, Acc@5: 71.79
+2026-02-14 15:36:54,615 - log - INFO - iter:280/5000, Weighted TTA Adv Acc@1: 64.64, Acc@5: 91.07
+2026-02-14 15:36:54,619 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/149_30cef4b693f13205561c7b1e0a3e90b64a202d2d.pt
+2026-02-14 15:36:59,733 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/149_52de6d72ee72771c98bd3ff84a7e63eb90bc966e.pt
+2026-02-14 15:37:05,042 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/149_74e6a26a7d1ca5abae374aaec2c2931d4694b804.pt
+2026-02-14 15:37:10,082 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/149_b92e261f7d4fc91c3a7f6d469e203511cc09320e.pt
+2026-02-14 15:37:15,232 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/149_b93bc8e93f03844323f12d521399f682f125d0fe.pt
+2026-02-14 15:37:20,385 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/15_1c306821e9b92db7918a0caf2d8e66e9513eb912.pt
+2026-02-14 15:37:25,551 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/15_3f1534492f79ad0381cbcde4886d798bc6ac4064.pt
+2026-02-14 15:37:30,817 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/15_4d6c67ae23afeb41af423c3578f738b0f34762a3.pt
+2026-02-14 15:37:35,843 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/15_4e923a0e0c9f64b9f4ccdcad11673bcca7e17866.pt
+2026-02-14 15:37:41,032 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/15_50c9fbd306bf245e0525bb4b630ad41b1d367bdd.pt
+2026-02-14 15:37:46,338 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/150_091c58bc4ded29cb0e3dcd873228dcb9ee2f2443.pt
+2026-02-14 15:37:51,373 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/150_1ff88d85b53164720de114ca3b9e5d0202c55a21.pt
+2026-02-14 15:37:56,532 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/150_2e5baa445ade409da9dfab3bc6b247771eca723f.pt
+2026-02-14 15:38:01,619 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/150_3bbfdb65e1907cd06f120e999e996b0ae1eb7b25.pt
+2026-02-14 15:38:06,781 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/150_6ee88913ef55e3e4b376663832a971db2dd56fee.pt
+2026-02-14 15:38:12,052 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/151_0cb5ad9aa88182b6d641787b74a0f579fa06285a.pt
+2026-02-14 15:38:17,139 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/151_14813c256ee2bfd2cee8652f4a2bccbb6a313246.pt
+2026-02-14 15:38:22,369 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/151_1a48c2cf3799b8c5efd92f35283650b078b2b3ef.pt
+2026-02-14 15:38:27,472 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/151_48af66375c32b48340c7db381aeeb0827c4cf869.pt
+2026-02-14 15:38:32,669 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/151_505cf9d6f37a875a72d86af5094fe664721436c1.pt
+2026-02-14 15:38:37,810 - log - INFO - iter:300/5000, Original Clean Acc@1: 82.33, Acc@5: 94.67
+2026-02-14 15:38:37,810 - log - INFO - iter:300/5000, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:38:37,810 - log - INFO - iter:300/5000, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:38:37,810 - log - INFO - iter:300/5000, Vanilla TTA Adv Acc@1: 63.33, Acc@5: 87.67
+2026-02-14 15:38:37,810 - log - INFO - iter:300/5000, Vanilla Topk TTA Adv Acc@1: 51.67, Acc@5: 71.00
+2026-02-14 15:38:37,810 - log - INFO - iter:300/5000, Weighted TTA Adv Acc@1: 64.33, Acc@5: 90.00
+2026-02-14 15:38:37,814 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/152_17cf5e7d07267b590e9ae7981c093d11b29c97a0.pt
+2026-02-14 15:38:42,961 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/152_1da555d1ac258e1932a93940a428cee5df5b08ee.pt
+2026-02-14 15:38:48,170 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/152_1ed199b76a74790544cfab23d73f490688bb820e.pt
+2026-02-14 15:38:53,345 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/152_4a68d6a2cdfbcf6fe49c51f43b3f5479840318a0.pt
+2026-02-14 15:38:58,681 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/152_4e9cfbd3d2b13931b4005a26cb73f699fc8cc7ec.pt
+2026-02-14 15:39:03,833 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/153_0697c3ee63b4e1314f3a2c812a2df230388e1901.pt
+2026-02-14 15:39:08,993 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/153_124b2f098f993dbaf44568b2bfe8b1d7d37556a5.pt
+2026-02-14 15:39:14,140 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/153_3862307faadb84ee3b48a56249aa4b102d659565.pt
+2026-02-14 15:39:19,330 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/153_46c568fea961425ba8f834fc0d3a049a6209a2ad.pt
+2026-02-14 15:39:24,497 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/153_71fc03339840ec5fb5ba628117e4306b9523238b.pt
+2026-02-14 15:39:29,661 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/154_231cdde5c4e06ee2e76345b3e780a867cc7560dc.pt
+2026-02-14 15:39:34,774 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/154_35cd7128305ed016bc54e2d96cb112d9a35d68e5.pt
+2026-02-14 15:39:39,961 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/154_592d63df6e347d5d65fc0cf6faaaf8eccb0eddaf.pt
+2026-02-14 15:39:45,116 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/154_7c9688a977ef7ada62a8ae93110897f5d4c5dae6.pt
+2026-02-14 15:39:50,346 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/154_b2ce92ffc9fd937f18b318a9a254e6075c51b6ef.pt
+2026-02-14 15:39:55,443 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/155_2e0ce1cab31e6f368fefb12ae1612b2eb6f44f2e.pt
+2026-02-14 15:40:00,618 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/155_2f4dc00aa9d669717c12d2fce6808764cd28b947.pt
+2026-02-14 15:40:05,814 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/155_32a3f2b738503044deee105d0a1dfd90075306ac.pt
+2026-02-14 15:40:10,947 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/155_3484fb5c345672760ba8fd88187849f0cf1256e9.pt
+2026-02-14 15:40:16,092 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/155_a5952aecfe3ba7ef201eb29897eca1a26f5ffc81.pt
+2026-02-14 15:40:21,247 - log - INFO - iter:320/5000, Original Clean Acc@1: 82.19, Acc@5: 94.38
+2026-02-14 15:40:21,247 - log - INFO - iter:320/5000, Original Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:40:21,247 - log - INFO - iter:320/5000, Single TTA Adv Acc@1: 0.00, Acc@5: 0.00
+2026-02-14 15:40:21,247 - log - INFO - iter:320/5000, Vanilla TTA Adv Acc@1: 61.88, Acc@5: 86.56
+2026-02-14 15:40:21,247 - log - INFO - iter:320/5000, Vanilla Topk TTA Adv Acc@1: 50.00, Acc@5: 69.38
+2026-02-14 15:40:21,247 - log - INFO - iter:320/5000, Weighted TTA Adv Acc@1: 63.12, Acc@5: 88.75
+2026-02-14 15:40:21,423 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/156_03986d0c8148d92fac967529ac8d294d64455274.pt
+2026-02-14 15:40:26,458 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/156_14b05c2ce85a33e02301e0d8571ddb5f3abf99fd.pt
+2026-02-14 15:40:31,615 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/156_4407dede43fb601bc590da7d21550f9e5df9230f.pt
+2026-02-14 15:40:36,793 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/156_4cf7149a49c436ab40cf81e91295e899043ac505.pt
+2026-02-14 15:40:41,962 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/156_4f3c4033049321c7bec6a58623da1e1ca6b06cb1.pt
+2026-02-14 15:40:47,365 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/157_26d3980c1530831fa558b885477a00411858cdb1.pt
+2026-02-14 15:40:52,413 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/157_44d625919ae9c4d3bf154c839c054b176bd2774f.pt
+2026-02-14 15:40:57,571 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/V/adv_images_eps_4.0_alpha_1.0_steps_100/157_476372a5d3050de09f8eb13c0e4f5d05f1b62f42.pt
