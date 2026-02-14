@@ -1239,7 +1239,7 @@ def exclude_noise_values(final_diff_ratio_dic, noise_type, exclude_list):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="AOM analysis plotting / aggregation")
-    parser.add_argument("--model-name", type=str, default="fare4")
+    parser.add_argument("--model-name", type=str, default="vit_l_14_datacomp_1b")
 
 
     args = parser.parse_args()
@@ -1427,6 +1427,39 @@ if __name__ == "__main__":
             json.dump(stats_out, f, indent=2)
         print(f"[A1] Saved stats: {stats_path}")
 
+        def _set_reasonable_ylim(ax, *, y_values, include_zero: bool, symmetric_about_zero: bool = False, min_span: float = 0.1):
+            """Make y-axis limits stable/legible (avoid overly tight autoscale)."""
+            y = np.asarray(y_values, dtype=float)
+            y = y[np.isfinite(y)]
+            if y.size == 0:
+                return
+
+            y_min = float(np.min(y))
+            y_max = float(np.max(y))
+
+            if include_zero:
+                y_min = min(y_min, 0.0)
+                y_max = max(y_max, 0.0)
+
+            span = y_max - y_min
+            if span < min_span:
+                center = (y_max + y_min) / 2.0
+                half = min_span / 2.0
+                y_min = center - half
+                y_max = center + half
+                span = y_max - y_min
+
+            pad = 0.08 * span
+            y_min -= pad
+            y_max += pad
+
+            if symmetric_about_zero:
+                max_abs = max(abs(y_min), abs(y_max), min_span / 2.0)
+                y_min = -max_abs
+                y_max = max_abs
+
+            ax.set_ylim(y_min, y_max)
+
         # Plot: mean τ curves
         fig = plt.figure(figsize=(7, 5))
         plt.plot(
@@ -1463,6 +1496,20 @@ if __name__ == "__main__":
         plt.title(f"A1: Average Noise–τ Response Across Datasets ({noise_type})", fontsize=13)
         plt.legend()
         plt.grid(True, linestyle="--", alpha=0.5)
+
+        # Keep y-axis range from becoming overly tight (more consistent across runs)
+        ax = plt.gca()
+        y_upper_clean = np.array(mean_clean) + np.array(std_clean)
+        y_upper_adv = np.array(mean_adv) + np.array(std_adv)
+        y_lower_clean = np.array(mean_clean) - np.array(std_clean)
+        y_lower_adv = np.array(mean_adv) - np.array(std_adv)
+        _set_reasonable_ylim(
+            ax,
+            y_values=np.concatenate([y_upper_clean, y_upper_adv, y_lower_clean, y_lower_adv]),
+            include_zero=True,
+            symmetric_about_zero=False,
+            min_span=0.1,
+        )
         plt.tight_layout()
 
         tau_curve_path = os.path.join(out_dir, "a1_mean_tau_curve.png")
@@ -1483,6 +1530,16 @@ if __name__ == "__main__":
         plt.ylabel("Δτ = τ_adv − τ_clean")
         plt.title(f"A1: Adversarial–Clean τ Gap (Averaged Across Datasets) ({noise_type})")
         plt.grid(True, linestyle="--", alpha=0.5)
+
+        # Keep y-axis range stable and always centered around 0 for gap plots
+        ax = plt.gca()
+        _set_reasonable_ylim(
+            ax,
+            y_values=np.asarray(mean_gap, dtype=float),
+            include_zero=True,
+            symmetric_about_zero=True,
+            min_span=0.1,
+        )
         plt.tight_layout()
 
         gap_curve_path = os.path.join(out_dir, "a1_tau_gap_curve.png")
