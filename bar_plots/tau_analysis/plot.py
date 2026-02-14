@@ -1267,7 +1267,7 @@ def exclude_noise_values(final_diff_ratio_dic, noise_type, exclude_list):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="AOM analysis plotting / aggregation")
-    parser.add_argument("--model-name", type=str, default="vit_l_14_datacomp_1b")
+    parser.add_argument("--model-name", type=str, default="fare4")
 
 
     args = parser.parse_args()
@@ -1736,14 +1736,14 @@ if __name__ == "__main__":
             print(f"[A1] Saved per-dataset grid: {gap_grid_path}")
 
     # Run A.1
-    # for noise_type in ["Uniform", "Gaussian"]:
-    #     run_a1_and_save_plots(
-    #         noise_type=noise_type,
-    #         dic=final_diff_ratio_dic,
-    #         model_name=model_name,
-    #         analysis_name="A1",
-    #         attack_key=selected_adv_attack_key,
-    #     )
+    for noise_type in ["Uniform", "Gaussian"]:
+        run_a1_and_save_plots(
+            noise_type=noise_type,
+            dic=final_diff_ratio_dic,
+            model_name=model_name,
+            analysis_name="A1",
+            attack_key=selected_adv_attack_key,
+        )
 
     # ------------------------------------------------------------------
     # A.2: Distribution plots for different noise types + strengths
@@ -1920,7 +1920,7 @@ if __name__ == "__main__":
             create_image_grid(delta_paths, grid_path, cols=GRID_COLS, scale=GRID_SCALE)
             print(f"[A2] Saved grid: {grid_path}")
 
-    # Run A.2
+    #Run A.2
     for noise_type in ["Uniform", "Gaussian"]:
         run_a2_and_save_plots(
             noise_type=noise_type,
@@ -1930,3 +1930,4 @@ if __name__ == "__main__":
             attack_key=selected_adv_attack_key,
             bins=70,
         )
+
