@@ -1735,15 +1735,82 @@ if __name__ == "__main__":
             create_image_grid(per_dataset_gap_paths, gap_grid_path, cols=GRID_COLS, scale=GRID_SCALE)
             print(f"[A1] Saved per-dataset grid: {gap_grid_path}")
 
-    for noise_type in ["Uniform", "Gaussian"]:
-        run_a1_and_save_plots(
-            noise_type=noise_type,
-            dic=final_diff_ratio_dic,
-            model_name=model_name,
-            analysis_name="A1",
-            attack_key=selected_adv_attack_key,
-        )
+    # Run A.1
+    # for noise_type in ["Uniform", "Gaussian"]:
+    #     run_a1_and_save_plots(
+    #         noise_type=noise_type,
+    #         dic=final_diff_ratio_dic,
+    #         model_name=model_name,
+    #         analysis_name="A1",
+    #         attack_key=selected_adv_attack_key,
+    #     )
+
+    #   A.2-(i): τ Distribution Overlay (Histogram / KDE)
+    def collect_tau_across_datasets(final_diff_ratio_dic, noise_type, noise_value, attack):
+        taus = []
+        for D in final_diff_ratio_dic:
+            taus.extend(
+                final_diff_ratio_dic[D][attack][noise_type][noise_value]["diff_ratio"]
+            )
+        return np.array(taus)
 
 
+    noise_type = "Uniform"
+    noise_value = "Eps_24.0"
+
+    tau_clean = collect_tau_across_datasets(
+        final_diff_ratio_dic, noise_type, noise_value, "Clean"
+    )
+    tau_adv = collect_tau_across_datasets(
+        final_diff_ratio_dic, noise_type, noise_value, "Adversarial"
+    )
+
+    import matplotlib.pyplot as plt
+
+    plt.figure(figsize=(6, 4))
+
+    plt.hist(tau_clean, bins=70, alpha=0.6, density=True, label="Clean")
+    plt.hist(tau_adv, bins=70, alpha=0.6, density=True, label="Adversarial")
+
+    plt.xlabel("Latent Drift τ")
+    plt.ylabel("Density")
+    plt.title(f"τ Distribution at ε = {noise_value.replace('Eps_', '')}/255")
+    plt.legend()
+    plt.grid(True, linestyle="--", alpha=0.5)
+
+    plt.tight_layout()
+    plt.show()
+
+    # A.2-(ii): Sample-wise Δτ Distribution
+    def compute_delta_tau(final_diff_ratio_dic, noise_type, noise_value):
+        delta_tau_all = []
+
+        for D in final_diff_ratio_dic:
+            tau_clean = np.array(
+                final_diff_ratio_dic[D]["Clean"][noise_type][noise_value]["diff_ratio"]
+            )
+            tau_adv = np.array(
+                final_diff_ratio_dic[D]["Adversarial"][noise_type][noise_value]["diff_ratio"]
+            )
+
+            delta_tau_all.extend(tau_adv - tau_clean)
+
+        return np.array(delta_tau_all)
 
 
+    delta_tau = compute_delta_tau(
+        final_diff_ratio_dic, "Uniform", "Eps_24.0"
+    )
+
+    plt.figure(figsize=(6, 4))
+    plt.hist(delta_tau, bins=70, alpha=0.75)
+
+    plt.axvline(0, color="black", linestyle="--", linewidth=1)
+
+    plt.xlabel("Δτ = τ_adv − τ_clean")
+    plt.ylabel("Count")
+    plt.title("Sample-wise τ Separation")
+
+    plt.grid(True, linestyle="--", alpha=0.5)
+    plt.tight_layout()
+    plt.show()
