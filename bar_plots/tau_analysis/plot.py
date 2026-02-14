@@ -18,6 +18,7 @@ import argparse
 import json
 import os
 import re
+import math
 from typing import Any, Dict, Optional, List
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,14 +31,34 @@ ATTACK_KEY_LEGEND_MAPPING = {
     "eps_8.0_steps_100": "PGD 8/255 (100 steps)",
 }
 
-def create_image_grid(image_paths, output_path, cols=3):
-    """
-    Creates a grid of images.
+
+def sanitize_for_path(name: str) -> str:
+    """Make a string safe to use as a Windows folder/file name component."""
+    # Windows invalid chars: < > : " / \ | ? *  plus control chars
+    safe = re.sub(r"[<>:\"/\\|?*]", "_", str(name))
+    safe = re.sub(r"\s+", "_", safe).strip("._ ")
+    return safe or "unnamed"
+
+def create_image_grid(image_paths, output_path, cols=4, scale: float = 1.0):
+    """Creates a grid of images.
+
+    Args:
+        image_paths: List of image file paths.
+        output_path: Output path for the grid image.
+        cols: Number of columns in the grid.
+        scale: Optional upscaling factor applied to each tile to improve readability.
     """
     if not image_paths:
         return
 
     images = [Image.open(x) for x in image_paths]
+    if scale and scale != 1.0:
+        scaled = []
+        for im in images:
+            w, h = im.size
+            new_size = (max(1, int(round(w * scale))), max(1, int(round(h * scale))))
+            scaled.append(im.resize(new_size, resample=Image.Resampling.LANCZOS))
+        images = scaled
     widths, heights = zip(*(i.size for i in images))
 
     max_width = max(widths)
@@ -1272,7 +1293,7 @@ if __name__ == "__main__":
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     root_diff_ratio = os.path.abspath(os.path.join(script_dir, "..", "..", "Diffratio_v3", model_name))
-    selected_attacks = ['eps_0.0_steps_0', 'eps_4.0_steps_100']
+    selected_attacks = ['eps_0.0_steps_0', 'eps_8.0_steps_100']
 
     # The analysis code below compares exactly two conditions:
     #   - Clean (eps_0.0_steps_0)
@@ -1581,6 +1602,138 @@ if __name__ == "__main__":
         fig.savefig(gap_curve_path, dpi=200)
         plt.close(fig)
         print(f"[A1] Saved plot: {gap_curve_path}")
+
+        # ------------------------------------------------------------------
+        # Per-dataset plots + grids
+        # ------------------------------------------------------------------
+        per_dataset_root = os.path.join(out_dir, "per_dataset")
+        os.makedirs(per_dataset_root, exist_ok=True)
+
+        per_dataset_tau_paths: List[str] = []
+        per_dataset_gap_paths: List[str] = []
+
+        GRID_COLS = 4
+        GRID_SCALE = 1.5
+
+        # Preserve deterministic ordering in grids
+        for dataset_name in sorted(all_results.keys()):
+            dataset_stats = all_results[dataset_name]
+            dataset_sorted_keys = sorted(dataset_stats.keys(), key=eps_from_key)
+            dataset_eps = [eps_from_key(k) for k in dataset_sorted_keys]
+
+            ds_mean_clean = [dataset_stats[k]["mean_clean"] for k in dataset_sorted_keys]
+            ds_mean_adv = [dataset_stats[k]["mean_adv"] for k in dataset_sorted_keys]
+            ds_std_clean = [dataset_stats[k]["std_clean"] for k in dataset_sorted_keys]
+            ds_std_adv = [dataset_stats[k]["std_adv"] for k in dataset_sorted_keys]
+            ds_gap = [dataset_stats[k]["gap"] for k in dataset_sorted_keys]
+
+            dataset_dir = os.path.join(per_dataset_root, sanitize_for_path(dataset_name))
+            os.makedirs(dataset_dir, exist_ok=True)
+
+            # Per-dataset: mean τ curves
+            fig = plt.figure(figsize=(7, 5))
+            plt.plot(
+                dataset_eps,
+                ds_mean_clean,
+                marker='o',
+                linewidth=2.5,
+                label='Clean',
+            )
+            plt.fill_between(
+                dataset_eps,
+                np.array(ds_mean_clean) - np.array(ds_std_clean),
+                np.array(ds_mean_clean) + np.array(ds_std_clean),
+                alpha=0.25,
+            )
+
+            if attack_key:
+                adv_label = ATTACK_KEY_LEGEND_MAPPING.get(attack_key, f"Adversarial ({attack_key})")
+            else:
+                adv_label = "Adversarial"
+            plt.plot(
+                dataset_eps,
+                ds_mean_adv,
+                marker='s',
+                linewidth=2.5,
+                label=adv_label,
+            )
+            plt.fill_between(
+                dataset_eps,
+                np.array(ds_mean_adv) - np.array(ds_std_adv),
+                np.array(ds_mean_adv) + np.array(ds_std_adv),
+                alpha=0.25,
+            )
+
+            if noise_type == "Gaussian":
+                plt.xlabel("Noise Strength σ", fontsize=12)
+            else:
+                plt.xlabel("Noise Strength ε (/255)", fontsize=12)
+            plt.ylabel("Mean Latent Drift τ", fontsize=12)
+            plt.title(f"A1: Noise–τ Curve ({dataset_name}) ({noise_type})", fontsize=13)
+            plt.legend()
+            plt.grid(True, linestyle="--", alpha=0.5)
+
+            ax = plt.gca()
+            y_upper_clean = np.array(ds_mean_clean) + np.array(ds_std_clean)
+            y_upper_adv = np.array(ds_mean_adv) + np.array(ds_std_adv)
+            y_lower_clean = np.array(ds_mean_clean) - np.array(ds_std_clean)
+            y_lower_adv = np.array(ds_mean_adv) - np.array(ds_std_adv)
+            _set_reasonable_ylim(
+                ax,
+                y_values=np.concatenate([y_upper_clean, y_upper_adv, y_lower_clean, y_lower_adv]),
+                include_zero=True,
+                symmetric_about_zero=False,
+                min_span=0.1,
+            )
+            plt.tight_layout()
+
+            ds_tau_name = f"a1_mean_tau_curve_{sanitize_for_path(dataset_name)}_{attack_key}.png" if attack_key else f"a1_mean_tau_curve_{sanitize_for_path(dataset_name)}.png"
+            ds_tau_path = os.path.join(dataset_dir, ds_tau_name)
+            fig.savefig(ds_tau_path, dpi=200)
+            plt.close(fig)
+            per_dataset_tau_paths.append(ds_tau_path)
+
+            # Per-dataset: τ gap
+            fig = plt.figure(figsize=(7, 4))
+            plt.plot(dataset_eps, ds_gap, marker='d', linewidth=2.5)
+            plt.axhline(0, linestyle='--', linewidth=1)
+
+            if noise_type == "Gaussian":
+                plt.xlabel("Noise Strength σ")
+            else:
+                plt.xlabel("Noise Strength ε (/255)")
+            plt.ylabel("Δτ = τ_adv − τ_clean")
+            plt.title(f"A1: Adversarial–Clean τ Gap ({dataset_name}) ({noise_type})")
+            plt.grid(True, linestyle="--", alpha=0.5)
+
+            ax = plt.gca()
+            _set_reasonable_ylim(
+                ax,
+                y_values=np.asarray(ds_gap, dtype=float),
+                include_zero=True,
+                symmetric_about_zero=True,
+                min_span=0.1,
+            )
+            plt.tight_layout()
+
+            ds_gap_name = f"a1_tau_gap_curve_{sanitize_for_path(dataset_name)}_{attack_key}.png" if attack_key else f"a1_tau_gap_curve_{sanitize_for_path(dataset_name)}.png"
+            ds_gap_path = os.path.join(dataset_dir, ds_gap_name)
+            fig.savefig(ds_gap_path, dpi=200)
+            plt.close(fig)
+            per_dataset_gap_paths.append(ds_gap_path)
+
+        # Grid images across datasets (one for τ curve, one for τ gap)
+        if per_dataset_tau_paths:
+            tau_grid_name = f"a1_mean_tau_curve_grid_{attack_key}.png" if attack_key else "a1_mean_tau_curve_grid.png"
+            tau_grid_path = os.path.join(out_dir, tau_grid_name)
+            create_image_grid(per_dataset_tau_paths, tau_grid_path, cols=GRID_COLS, scale=GRID_SCALE)
+            print(f"[A1] Saved per-dataset grid: {tau_grid_path}")
+
+        if per_dataset_gap_paths:
+            gap_grid_name = f"a1_tau_gap_curve_grid_{attack_key}.png" if attack_key else "a1_tau_gap_curve_grid.png"
+            gap_grid_path = os.path.join(out_dir, gap_grid_name)
+            create_image_grid(per_dataset_gap_paths, gap_grid_path, cols=GRID_COLS, scale=GRID_SCALE)
+            print(f"[A1] Saved per-dataset grid: {gap_grid_path}")
 
     for noise_type in ["Uniform", "Gaussian"]:
         run_a1_and_save_plots(
