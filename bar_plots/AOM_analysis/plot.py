@@ -1215,7 +1215,7 @@ if __name__ == "__main__":
 
         apply_plot_style()
 
-        fig, ax = plt.subplots(figsize=(11.5, 5.1))
+        fig, ax = plt.subplots(figsize=(13, 6))
 
         thresholds = [float(t) for t in thresholds]
         x = np.arange(len(thresholds))
@@ -1247,7 +1247,7 @@ if __name__ == "__main__":
                     f"{h:.1f}",
                     ha="center",
                     va="bottom",
-                    fontsize=8,
+                    fontsize=10,
                     color="#222222",
                     clip_on=True,
                 )
@@ -1280,10 +1280,10 @@ if __name__ == "__main__":
                 tick_labels.append("0.0\n(AOM)")
             else:
                 tick_labels.append(f"{t:.2f}".rstrip("0").rstrip("."))
-        ax.set_xticklabels(tick_labels)
+        ax.set_xticklabels(tick_labels, fontsize=16)
         ax.set_xlabel(r"$\tau_{\mathrm{threshold}}$", fontsize=20)
         ax.set_ylabel(ylabel.replace("(%)", r"(%)"), fontsize=18)
-        ax.set_title(title, pad=20)
+        ax.set_title(title, pad=30)
 
         # Corner note clarifying that \tau-threshold=0.0 corresponds to original AOM (no thresholding).
         note_text = r"$\tau_{\mathrm{threshold}}=0.0$ corresponds to original AOM (no thresholding)"
@@ -1293,14 +1293,14 @@ if __name__ == "__main__":
             note_text,
             ha="right",
             va="bottom",
-            fontsize=10,
+            fontsize=16,
             color="#000000",
             alpha=0.35,
         )
         ax.legend(
             frameon=True,
             loc="upper center",
-            bbox_to_anchor=(0.5, 1.08),
+            bbox_to_anchor=(0.5, 1.12),
             ncol=min(4, n_series),
             columnspacing=1.0,
             handlelength=1.3,
@@ -1400,7 +1400,7 @@ if __name__ == "__main__":
         # Settings requested: normalize=True and anchors {Sigma_0.06, uniform eps32}
         # ------------------------------------------------------------------
         target_normalize = "True"
-        target_anchors = ["noisy_Sigma_0_06", "uniform_Eps_32_0"]
+        target_anchors = ["noisy_Sigma_0_06", "noisy_Sigma_0_12", "noisy_Sigma_0_18", "uniform_Eps_32_0", "uniform_Eps_40_0", "uniform_Eps_48_0"]
 
         # Attack mapping between AOM keys and diff-ratio keys / ZS predictions
         attack_specs = [
@@ -1432,9 +1432,21 @@ if __name__ == "__main__":
             if anchor_key == "noisy_Sigma_0_06":
                 noise_type = "Gaussian"
                 name, value = "Sigma", 0.06
+            elif anchor_key == "noisy_Sigma_0_12":
+                noise_type = "Gaussian"
+                name, value = "Sigma", 0.12
+            elif anchor_key == "noisy_Sigma_0_18":
+                noise_type = "Gaussian"
+                name, value = "Sigma", 0.18
             elif anchor_key == "uniform_Eps_32_0":
                 noise_type = "Uniform"
                 name, value = "Eps", 32.0
+            elif anchor_key == "uniform_Eps_40_0":
+                noise_type = "Uniform"
+                name, value = "Eps", 40.0
+            elif anchor_key == "uniform_Eps_48_0":
+                noise_type = "Uniform"
+                name, value = "Eps", 48.0
             else:
                 return None
 
@@ -1536,8 +1548,16 @@ if __name__ == "__main__":
                 # Short, presentation-friendly title text
                 if anchor_key == "noisy_Sigma_0_06":
                     anchor_desc = r"Gaussian ($\sigma=0.06$)"
+                elif anchor_key == "noisy_Sigma_0_12":
+                    anchor_desc = r"Gaussian ($\sigma=0.12$)"
+                elif anchor_key == "noisy_Sigma_0_18":
+                    anchor_desc = r"Gaussian ($\sigma=0.18$)"
                 elif anchor_key == "uniform_Eps_32_0":
                     anchor_desc = r"Uniform ($\epsilon=32/255$)"
+                elif anchor_key == "uniform_Eps_40_0":
+                    anchor_desc = r"Uniform ($\epsilon=40/255$)"
+                elif anchor_key == "uniform_Eps_48_0":
+                    anchor_desc = r"Uniform ($\epsilon=48/255$)"
                 else:
                     anchor_desc = str(anchor_key)
 
