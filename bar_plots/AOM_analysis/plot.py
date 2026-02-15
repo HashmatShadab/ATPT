@@ -1402,6 +1402,14 @@ if __name__ == "__main__":
         target_normalize = "True"
         target_anchors = ["noisy_Sigma_0_06", "noisy_Sigma_0_12", "noisy_Sigma_0_18", "uniform_Eps_32_0", "uniform_Eps_40_0", "uniform_Eps_48_0"]
 
+        # Collect per-anchor threshold plots so we can generate grids at the end.
+        # Structure: plots_for_grid[diff_attack]["standard"|"conservative"] -> [image paths]
+        plots_for_grid = {
+            "Clean": {"standard": [], "conservative": []},
+            "Adversarial": {"standard": [], "conservative": []},
+            "Average": {"standard": [], "conservative": []},
+        }
+
         # Attack mapping between AOM keys and diff-ratio keys / ZS predictions
         attack_specs = [
             {
@@ -1457,6 +1465,25 @@ if __name__ == "__main__":
             return noise_obj.get(key, None)
 
         for anchor_key in target_anchors:
+            # Short, presentation-friendly anchor description (used in titles).
+            if anchor_key == "noisy_Sigma_0_06":
+                anchor_desc = r"Gaussian ($\sigma=0.06$)"
+            elif anchor_key == "noisy_Sigma_0_12":
+                anchor_desc = r"Gaussian ($\sigma=0.12$)"
+            elif anchor_key == "noisy_Sigma_0_18":
+                anchor_desc = r"Gaussian ($\sigma=0.18$)"
+            elif anchor_key == "uniform_Eps_32_0":
+                anchor_desc = r"Uniform ($\epsilon=32/255$)"
+            elif anchor_key == "uniform_Eps_40_0":
+                anchor_desc = r"Uniform ($\epsilon=40/255$)"
+            elif anchor_key == "uniform_Eps_48_0":
+                anchor_desc = r"Uniform ($\epsilon=48/255$)"
+            else:
+                anchor_desc = str(anchor_key)
+
+            # Keep computed series so we can optionally plot the Clean/Adversarial average.
+            computed_by_attack = {}
+
             for spec in attack_specs:
                 aom_attack = spec["aom_attack"]
                 diff_attack = spec["diff_attack"]
@@ -1533,6 +1560,11 @@ if __name__ == "__main__":
                             float(np.nanmean(per_dataset_cons_acc)) if per_dataset_cons_acc else np.nan
                         )
 
+                computed_by_attack[diff_attack] = {
+                    "alpha_to_acc": alpha_to_acc,
+                    "alpha_to_cons_acc": alpha_to_cons_acc,
+                }
+
                 outdir = os.path.join(
                     out_root,
                     model_name,
@@ -1544,22 +1576,6 @@ if __name__ == "__main__":
                 )
                 outpath = os.path.join(outdir, "accuracy_vs_threshold.png")
                 outpath_cons = os.path.join(outdir, "conservative_accuracy_vs_threshold.png")
-
-                # Short, presentation-friendly title text
-                if anchor_key == "noisy_Sigma_0_06":
-                    anchor_desc = r"Gaussian ($\sigma=0.06$)"
-                elif anchor_key == "noisy_Sigma_0_12":
-                    anchor_desc = r"Gaussian ($\sigma=0.12$)"
-                elif anchor_key == "noisy_Sigma_0_18":
-                    anchor_desc = r"Gaussian ($\sigma=0.18$)"
-                elif anchor_key == "uniform_Eps_32_0":
-                    anchor_desc = r"Uniform ($\epsilon=32/255$)"
-                elif anchor_key == "uniform_Eps_40_0":
-                    anchor_desc = r"Uniform ($\epsilon=40/255$)"
-                elif anchor_key == "uniform_Eps_48_0":
-                    anchor_desc = r"Uniform ($\epsilon=48/255$)"
-                else:
-                    anchor_desc = str(anchor_key)
 
                 # NOTE: Avoid raw strings for the newline; in a raw string, "\n" is literal.
                 title = (
@@ -1589,8 +1605,114 @@ if __name__ == "__main__":
                     ylabel="Average accuracy across datasets (%)",
                 )
 
+                # Add to grid lists (keep anchor order as in `target_anchors`).
+                if diff_attack in plots_for_grid:
+                    if os.path.exists(outpath):
+                        plots_for_grid[diff_attack]["standard"].append(outpath)
+                    if os.path.exists(outpath_cons):
+                        plots_for_grid[diff_attack]["conservative"].append(outpath_cons)
+
                 print(f"[Saved] {outpath}")
                 print(f"[Saved] {outpath_cons}")
+
+            # NEW: Clean/Adversarial average plots (single plot rather than separate).
+            if "Clean" in computed_by_attack and "Adversarial" in computed_by_attack:
+                clean_std = computed_by_attack["Clean"]["alpha_to_acc"]
+                adv_std = computed_by_attack["Adversarial"]["alpha_to_acc"]
+                clean_cons = computed_by_attack["Clean"]["alpha_to_cons_acc"]
+                adv_cons = computed_by_attack["Adversarial"]["alpha_to_cons_acc"]
+
+                common_alphas = sorted(set(clean_std.keys()) & set(adv_std.keys()))
+                if common_alphas:
+                    alpha_to_acc_avg = {}
+                    alpha_to_cons_acc_avg = {}
+
+                    for a in common_alphas:
+                        c = np.asarray(clean_std[a], dtype=float)
+                        v = np.asarray(adv_std[a], dtype=float)
+                        alpha_to_acc_avg[float(a)] = list(((c + v) / 2.0).astype(float))
+
+                        c2 = np.asarray(clean_cons[a], dtype=float)
+                        v2 = np.asarray(adv_cons[a], dtype=float)
+                        alpha_to_cons_acc_avg[float(a)] = list(((c2 + v2) / 2.0).astype(float))
+
+                    avg_attack = "Average"
+                    outdir_avg = os.path.join(
+                        out_root,
+                        model_name,
+                        "AOM",
+                        "threshold_mixing",
+                        anchor_key,
+                        f"normalize_{target_normalize}",
+                        avg_attack,
+                    )
+                    outpath_avg = os.path.join(outdir_avg, "accuracy_vs_threshold.png")
+                    outpath_avg_cons = os.path.join(outdir_avg, "conservative_accuracy_vs_threshold.png")
+
+                    title_avg = (
+                        r"$\tau$-thresholded AOM (Avg. Clean/Adv.): use AOM if $\tau > \tau_{\mathrm{threshold}}$ else Zero-shot"
+                        "\n"
+                        rf"Anchor: {anchor_desc}"
+                    )
+                    title_avg_cons = (
+                        r"$\tau$-thresholded AOM (Conservative, Avg. Clean/Adv.): use AOM if $\tau > \tau_{\mathrm{threshold}}$ else Zero-shot"
+                        "\n"
+                        rf"Anchor: {anchor_desc}"
+                    )
+
+                    plot_threshold_mixing_bars(
+                        thresholds=thresholds,
+                        alpha_to_acc=alpha_to_acc_avg,
+                        title=title_avg,
+                        outpath=outpath_avg,
+                    )
+                    plot_threshold_mixing_bars(
+                        thresholds=thresholds,
+                        alpha_to_acc=alpha_to_cons_acc_avg,
+                        title=title_avg_cons,
+                        outpath=outpath_avg_cons,
+                        ylabel="Average accuracy across datasets (%)",
+                    )
+
+                    if os.path.exists(outpath_avg):
+                        plots_for_grid[avg_attack]["standard"].append(outpath_avg)
+                    if os.path.exists(outpath_avg_cons):
+                        plots_for_grid[avg_attack]["conservative"].append(outpath_avg_cons)
+
+                    print(f"[Saved] {outpath_avg}")
+                    print(f"[Saved] {outpath_avg_cons}")
+
+        # -------------------------
+        # NEW: Create grids for threshold-mixing plots
+        # -------------------------
+        for diff_attack in ["Clean", "Adversarial", "Average"]:
+            std_paths = plots_for_grid.get(diff_attack, {}).get("standard", [])
+            cons_paths = plots_for_grid.get(diff_attack, {}).get("conservative", [])
+
+            if not std_paths and not cons_paths:
+                continue
+
+            grid_dir = os.path.join(
+                out_root,
+                model_name,
+                "AOM",
+                "threshold_mixing",
+                "grids",
+                f"normalize_{target_normalize}",
+                diff_attack,
+            )
+            ensure_dir(grid_dir)
+
+            # Use 3 columns by default (works well for 6 anchors).
+            grid_cols = 3
+
+            if std_paths:
+                grid_out = os.path.join(grid_dir, "accuracy_vs_threshold_grid.png")
+                create_image_grid(std_paths, grid_out, cols=grid_cols)
+
+            if cons_paths:
+                grid_out_cons = os.path.join(grid_dir, "conservative_accuracy_vs_threshold_grid.png")
+                create_image_grid(cons_paths, grid_out_cons, cols=grid_cols)
 
 
     run_all_plots(model_name)
