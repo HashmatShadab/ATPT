@@ -23,32 +23,55 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 
-def create_image_grid(image_paths, output_path, cols=3):
-    """
-    Creates a grid of images.
+def create_image_grid(image_paths, output_path, cols=4, scale: float = 1.0):
+    """Creates a grid of images.
+
+    Args:
+        image_paths: List of image file paths.
+        output_path: Output path for the grid image.
+        cols: Number of columns in the grid.
+        scale: Optional upscaling factor applied to each tile to improve readability.
     """
     if not image_paths:
         return
 
-    images = [Image.open(x) for x in image_paths]
-    widths, heights = zip(*(i.size for i in images))
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
 
-    max_width = max(widths)
-    max_height = max(heights)
+    images = []
+    try:
+        images = [Image.open(x) for x in image_paths]
+        if scale and scale != 1.0:
+            scaled = []
+            for im in images:
+                w, h = im.size
+                new_size = (max(1, int(round(w * scale))), max(1, int(round(h * scale))))
+                scaled.append(im.resize(new_size, resample=Image.Resampling.LANCZOS))
+            images = scaled
 
-    rows = (len(images) + cols - 1) // cols
-    grid_width = cols * max_width
-    grid_height = rows * max_height
+        widths, heights = zip(*(i.size for i in images))
 
-    new_im = Image.new('RGB', (grid_width, grid_height), (255, 255, 255))
+        max_width = max(widths)
+        max_height = max(heights)
 
-    for i, im in enumerate(images):
-        row = i // cols
-        col = i % cols
-        new_im.paste(im, (col * max_width, row * max_height))
+        rows = (len(images) + cols - 1) // cols
+        grid_width = cols * max_width
+        grid_height = rows * max_height
 
-    new_im.save(output_path)
-    print(f"Saved grid to: {output_path}")
+        new_im = Image.new("RGB", (grid_width, grid_height), (255, 255, 255))
+
+        for i, im in enumerate(images):
+            row = i // cols
+            col = i % cols
+            new_im.paste(im, (col * max_width, row * max_height))
+
+        new_im.save(output_path)
+        print(f"Saved grid to: {output_path}")
+    finally:
+        for im in images:
+            try:
+                im.close()
+            except Exception:
+                pass
 
 def get_zs_results(model_name):
     from pathlib import Path
@@ -768,6 +791,13 @@ def get_aggregated_results(root: str, selected_attacks: Optional[List[str]] = No
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="AOM analysis plotting / aggregation")
     parser.add_argument("--model-name", type=str, default="vit_l_14_datacomp_1b")
+    parser.add_argument(
+        "--grid-normalize",
+        type=str,
+        default="true",
+        choices=["both", "true", "false"],
+        help="Which normalize setting(s) to include in the final grid image.",
+    )
 
 
     args = parser.parse_args()
@@ -1022,6 +1052,19 @@ if __name__ == "__main__":
         clean_bars = ax.bar(x - width / 2, clean_avg, width=width, label="Clean", color=clean_color)
         adv_bars = ax.bar(x + width / 2, adv_avg, width=width, label="Adversarial", color=adv_color)
 
+        # Average accuracy line (centered between the two bars)
+        avg_acc = 0.5 * (clean_avg + adv_avg)
+        ax.plot(
+            x,
+            avg_acc,
+            color="#333333",
+            linewidth=2.0,
+            marker="o",
+            markersize=5,
+            label="Average (Clean+Adv)/2",
+            zorder=3,
+        )
+
         # tick labels
         tick_labels = []
         for a in alphas:
@@ -1032,12 +1075,27 @@ if __name__ == "__main__":
         ax.set_xticks(x)
         ax.set_xticklabels(tick_labels)
 
-        max_val = float(np.nanmax([np.nanmax(clean_avg), np.nanmax(adv_avg)]))
+        max_val = float(np.nanmax([np.nanmax(clean_avg), np.nanmax(adv_avg), np.nanmax(avg_acc)]))
         ax.set_ylim(0, max(100.0, max_val + 4.0))
         ax.set_xlabel("Alpha")
         ax.set_ylabel("Average accuracy across datasets (%)")
-        ax.set_title(title)
-        ax.legend(frameon=False)
+
+        # Best average accuracy + alpha (finite values only)
+        best_suffix = ""
+        finite_mask = np.isfinite(avg_acc)
+        if np.any(finite_mask):
+            best_idx = int(np.nanargmax(np.where(finite_mask, avg_acc, -np.inf)))
+            best_alpha = float(alphas[best_idx])
+            best_val = float(avg_acc[best_idx])
+            best_suffix = f"\nBest average = {best_val:.1f}% @ alpha = {best_alpha:g}"
+
+        ax.set_title(f"{title}{best_suffix}")
+        ax.legend(
+            frameon=False,
+            ncol=3,
+            loc="upper center",
+            bbox_to_anchor=(0.5, 1.02),
+        )
 
         # value labels above bars
         def _add_bar_value_labels(bar_container):
@@ -1078,8 +1136,47 @@ if __name__ == "__main__":
     # -------------------------
     # Main execution
     # -------------------------
-    def run_all_plots(model_name, out_root="plots"):
+    def _format_anchor_label(noise_anchor: str) -> str:
+        # noise_anchor examples: "noisy_Sigma_0_06", "uniform_Eps_16_0"
+        dist = None
+        rest = noise_anchor
+        if "_" in noise_anchor:
+            prefix, maybe_rest = noise_anchor.split("_", 1)
+            if prefix in {"noisy", "uniform"}:
+                dist = prefix
+                rest = maybe_rest
+
+        dist_label = {"noisy": "Gaussian", "uniform": "Uniform"}.get(dist, "")
+
+        if rest.startswith("Sigma_"):
+            val = rest[len("Sigma_"):].replace("_", ".")
+            core = rf"$\sigma={val}$"
+        elif rest.startswith("Eps_"):
+            val = rest[len("Eps_"):].replace("_", ".")
+            core = rf"$\epsilon={val}$"
+        else:
+            core = rest
+
+        if dist_label:
+            return f"{dist_label} ({core})"
+        return str(core)
+
+
+    def _format_normalize_label(normalize: str) -> str:
+        if str(normalize).lower() == "true":
+            return r"$z/\|z\|_2$"
+        return "None"
+
+
+
+
+
+    def run_all_plots(model_name, out_root="plots", *, grid_normalize: str = "both"):
         datasets = list(TRUE_LABELS_DATASET.keys())
+
+        grid_normalize = str(grid_normalize).lower().strip()
+        if grid_normalize not in {"both", "true", "false"}:
+            raise ValueError("grid_normalize must be one of: 'both', 'true', 'false'")
 
         # Zero-shot baselines
         zs = aggregate_zero_shot(
@@ -1105,6 +1202,8 @@ if __name__ == "__main__":
                 f"Expected AOM results for both '{clean_key}' and '{adv_key}'. "
                 f"Found keys: {sorted(aom_avg.keys())}"
             )
+
+        saved_paths_by_anchor = {}
 
         for noise_anchor, anchor_obj in aom_avg[clean_key].items():
             for normalize, clean_series in anchor_obj.items():
@@ -1143,7 +1242,7 @@ if __name__ == "__main__":
 
                 title = (
                     "Average accuracy across datasets\n"
-                    f"anchor={noise_anchor}, normalize={normalize}"
+                    rf"Anchor: {_format_anchor_label(noise_anchor)}   |   Normalize: {_format_normalize_label(normalize)}"
                 )
 
                 plot_aom_bars(
@@ -1157,8 +1256,39 @@ if __name__ == "__main__":
 
                 print(f"[Saved] {outpath}")
 
+                saved_paths_by_anchor.setdefault(noise_anchor, {})[str(normalize)] = outpath
 
-    run_all_plots(model_name)
+        # --- Create a single grid:
+        # - If grid_normalize == 'both': 4 columns (two anchors per row)
+        #   [A False, A True, B False, B True]
+        # - If grid_normalize == 'false' or 'true': 2 columns (two anchors per row)
+        #   [A False, B False]  or  [A True, B True]
+        anchors_sorted = sorted(saved_paths_by_anchor.keys())
+        grid_paths = []
+        for i in range(0, len(anchors_sorted), 2):
+            row_anchors = anchors_sorted[i:i + 2]
+            for a in row_anchors:
+                per_norm = saved_paths_by_anchor.get(a, {})
+                if grid_normalize in {"both", "false"}:
+                    p_false = per_norm.get("False")
+                    if p_false is not None:
+                        grid_paths.append(p_false)
+                if grid_normalize in {"both", "true"}:
+                    p_true = per_norm.get("True")
+                    if p_true is not None:
+                        grid_paths.append(p_true)
+
+        if grid_paths:
+            cols = 4 if grid_normalize == "both" else 2
+            if grid_normalize == "both":
+                grid_name = "grid_all_noise_anchors_normalize.png"
+            else:
+                grid_name = f"grid_all_noise_anchors_normalize_{grid_normalize}.png"
+            grid_out = os.path.join(out_root, model_name, "AOM", grid_name)
+            create_image_grid(grid_paths, grid_out, cols=cols, scale=1.0)
+
+
+    run_all_plots(model_name, grid_normalize=args.grid_normalize)
 
 
 
