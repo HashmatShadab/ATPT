@@ -23,55 +23,32 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 
-def create_image_grid(image_paths, output_path, cols=4, scale: float = 1.0):
-    """Creates a grid of images.
-
-    Args:
-        image_paths: List of image file paths.
-        output_path: Output path for the grid image.
-        cols: Number of columns in the grid.
-        scale: Optional upscaling factor applied to each tile to improve readability.
+def create_image_grid(image_paths, output_path, cols=3):
+    """
+    Creates a grid of images.
     """
     if not image_paths:
         return
 
-    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+    images = [Image.open(x) for x in image_paths]
+    widths, heights = zip(*(i.size for i in images))
 
-    images = []
-    try:
-        images = [Image.open(x) for x in image_paths]
-        if scale and scale != 1.0:
-            scaled = []
-            for im in images:
-                w, h = im.size
-                new_size = (max(1, int(round(w * scale))), max(1, int(round(h * scale))))
-                scaled.append(im.resize(new_size, resample=Image.Resampling.LANCZOS))
-            images = scaled
+    max_width = max(widths)
+    max_height = max(heights)
 
-        widths, heights = zip(*(i.size for i in images))
+    rows = (len(images) + cols - 1) // cols
+    grid_width = cols * max_width
+    grid_height = rows * max_height
 
-        max_width = max(widths)
-        max_height = max(heights)
+    new_im = Image.new('RGB', (grid_width, grid_height), (255, 255, 255))
 
-        rows = (len(images) + cols - 1) // cols
-        grid_width = cols * max_width
-        grid_height = rows * max_height
+    for i, im in enumerate(images):
+        row = i // cols
+        col = i % cols
+        new_im.paste(im, (col * max_width, row * max_height))
 
-        new_im = Image.new("RGB", (grid_width, grid_height), (255, 255, 255))
-
-        for i, im in enumerate(images):
-            row = i // cols
-            col = i % cols
-            new_im.paste(im, (col * max_width, row * max_height))
-
-        new_im.save(output_path)
-        print(f"Saved grid to: {output_path}")
-    finally:
-        for im in images:
-            try:
-                im.close()
-            except Exception:
-                pass
+    new_im.save(output_path)
+    print(f"Saved grid to: {output_path}")
 
 def get_zs_results(model_name):
     from pathlib import Path
@@ -791,13 +768,6 @@ def get_aggregated_results(root: str, selected_attacks: Optional[List[str]] = No
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="AOM analysis plotting / aggregation")
     parser.add_argument("--model-name", type=str, default="vit_l_14_datacomp_1b")
-    parser.add_argument(
-        "--grid-normalize",
-        type=str,
-        default="true",
-        choices=["both", "true", "false"],
-        help="Which normalize setting(s) to include in the final grid image.",
-    )
 
 
     args = parser.parse_args()
@@ -853,6 +823,29 @@ if __name__ == "__main__":
     import numpy as np
     import matplotlib.pyplot as plt
     from typing import Dict, List
+
+
+    # -------------------------
+    # Plot styling
+    # -------------------------
+    def apply_plot_style():
+        """Apply a consistent, publication-friendly Matplotlib style."""
+        plt.rcParams.update({
+            "figure.dpi": 120,
+            "savefig.dpi": 300,
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "axes.grid": True,
+            "grid.alpha": 0.25,
+            "grid.linestyle": "-",
+            "axes.axisbelow": True,
+            "axes.titlesize": 13,
+            "axes.labelsize": 12,
+            "xtick.labelsize": 11,
+            "ytick.labelsize": 11,
+            "legend.fontsize": 10,
+            "font.size": 11,
+        })
 
 
     # -------------------------
@@ -1029,40 +1022,34 @@ if __name__ == "__main__":
         clean_avg = np.asarray(clean_avg, dtype=float)
         adv_avg = np.asarray(adv_avg, dtype=float)
 
-        # --- style
-        plt.rcParams.update({
-            "axes.spines.top": False,
-            "axes.spines.right": False,
-            "axes.grid": True,
-            "grid.alpha": 0.25,
-            "grid.linestyle": "-",
-            "axes.axisbelow": True,
-            "font.size": 11,
-        })
+        apply_plot_style()
 
-        fig, ax = plt.subplots(figsize=(9.5, 4.8))
+        fig, ax = plt.subplots(figsize=(10.2, 4.9))
 
         x = np.arange(len(alphas))
         width = 0.38
 
-        # Colors chosen to be print-friendly and distinct
-        clean_color = "#4C72B0"
-        adv_color = "#DD8452"
+        # Colorblind-friendly palette (Okabe-Ito)
+        clean_color = "#0072B2"  # blue
+        adv_color = "#D55E00"    # vermillion
 
-        clean_bars = ax.bar(x - width / 2, clean_avg, width=width, label="Clean", color=clean_color)
-        adv_bars = ax.bar(x + width / 2, adv_avg, width=width, label="Adversarial", color=adv_color)
-
-        # Average accuracy line (centered between the two bars)
-        avg_acc = 0.5 * (clean_avg + adv_avg)
-        ax.plot(
-            x,
-            avg_acc,
-            color="#333333",
-            linewidth=2.0,
-            marker="o",
-            markersize=5,
-            label="Average (Clean+Adv)/2",
-            zorder=3,
+        clean_bars = ax.bar(
+            x - width / 2,
+            clean_avg,
+            width=width,
+            label="Clean",
+            color=clean_color,
+            edgecolor="black",
+            linewidth=0.6,
+        )
+        adv_bars = ax.bar(
+            x + width / 2,
+            adv_avg,
+            width=width,
+            label="Adversarial",
+            color=adv_color,
+            edgecolor="black",
+            linewidth=0.6,
         )
 
         # tick labels
@@ -1075,26 +1062,19 @@ if __name__ == "__main__":
         ax.set_xticks(x)
         ax.set_xticklabels(tick_labels)
 
-        max_val = float(np.nanmax([np.nanmax(clean_avg), np.nanmax(adv_avg), np.nanmax(avg_acc)]))
+        max_val = float(np.nanmax([np.nanmax(clean_avg), np.nanmax(adv_avg)]))
         ax.set_ylim(0, max(100.0, max_val + 4.0))
-        ax.set_xlabel("Alpha")
-        ax.set_ylabel("Average accuracy across datasets (%)")
+        ax.set_xlabel(r"$\alpha$")
+        ax.set_ylabel(r"Average accuracy across datasets (\%)")
+        ax.set_title(title)
 
-        # Best average accuracy + alpha (finite values only)
-        best_suffix = ""
-        finite_mask = np.isfinite(avg_acc)
-        if np.any(finite_mask):
-            best_idx = int(np.nanargmax(np.where(finite_mask, avg_acc, -np.inf)))
-            best_alpha = float(alphas[best_idx])
-            best_val = float(avg_acc[best_idx])
-            best_suffix = f"\nBest average = {best_val:.1f}% @ alpha = {best_alpha:g}"
-
-        ax.set_title(f"{title}{best_suffix}")
         ax.legend(
             frameon=False,
-            ncol=3,
             loc="upper center",
-            bbox_to_anchor=(0.5, 1.02),
+            bbox_to_anchor=(0.5, 1.12),
+            ncol=2,
+            handlelength=1.4,
+            columnspacing=1.2,
         )
 
         # value labels above bars
@@ -1105,7 +1085,7 @@ if __name__ == "__main__":
                     continue
                 ax.text(
                     rect.get_x() + rect.get_width() / 2.0,
-                    h,
+                    h + 0.25,
                     f"{h:.1f}",
                     ha="center",
                     va="bottom",
@@ -1128,7 +1108,207 @@ if __name__ == "__main__":
                 color="#444444",
             )
 
-        fig.tight_layout(rect=(0, 0.03, 1, 1))
+        fig.tight_layout(rect=(0, 0.03, 1, 0.98))
+        fig.savefig(outpath, dpi=250)
+        plt.close(fig)
+
+
+    def _parse_noise_param_key(k: str) -> Optional[Dict[str, float]]:
+        """Parse keys like 'Sigma_0.06' or 'Eps_32.0' into {'name': 'Sigma', 'value': 0.06}."""
+        if not isinstance(k, str) or "_" not in k:
+            return None
+        name, rest = k.split("_", 1)
+        try:
+            val = float(rest)
+        except Exception:
+            return None
+        return {"name": name, "value": val}
+
+
+    def _find_noise_param_key(keys, *, name: str, value: float, tol: float = 1e-9) -> Optional[str]:
+        """Find a matching noise-param key in `final_diff_ratio_dic` robustly (float formatting differs)."""
+        best = None
+        best_dist = float("inf")
+        for k in keys:
+            parsed = _parse_noise_param_key(k)
+            if not parsed:
+                continue
+            if parsed["name"] != name:
+                continue
+            dist = abs(parsed["value"] - float(value))
+            if dist < best_dist:
+                best = k
+                best_dist = dist
+        if best is None:
+            return None
+        if best_dist <= tol:
+            return best
+        # still allow a close match (e.g., 32.0 vs 32)
+        if best_dist <= 1e-3:
+            return best
+        return None
+
+
+    def compute_threshold_mixed_accuracy(
+            *,
+            aom_preds: List[int],
+            zs_preds: List[int],
+            labels: List[int],
+            diff_ratio: List[float],
+            threshold: float,
+    ) -> float:
+        """Accuracy when selecting between AOM and ZS prediction per-sample by diff-ratio threshold."""
+        aom_preds = np.asarray(aom_preds)
+        zs_preds = np.asarray(zs_preds)
+        labels = np.asarray(labels)
+        diff_ratio = np.asarray(diff_ratio, dtype=float)
+
+        assert len(aom_preds) == len(zs_preds) == len(labels) == len(diff_ratio), (
+            f"Length mismatch: aom={len(aom_preds)} zs={len(zs_preds)} labels={len(labels)} diff={len(diff_ratio)}"
+        )
+
+        use_aom = diff_ratio > float(threshold)
+        mixed = np.where(use_aom, aom_preds, zs_preds)
+        return float((mixed == labels).mean() * 100.0)
+
+
+    def compute_threshold_mixed_conservative_accuracy(
+            *,
+            aom_preds: List[int],
+            zs_preds: List[int],
+            labels: List[int],
+            diff_ratio: List[float],
+            threshold: float,
+            clean_correct_mask: List[bool],
+    ) -> float:
+        """Conservative accuracy for threshold mixing.
+
+        Conservative accuracy definition used elsewhere in this script:
+        - Evaluate correctness only on indices where clean ZS was correct
+        - Normalize by TOTAL number of samples
+        """
+        aom_preds = np.asarray(aom_preds)
+        zs_preds = np.asarray(zs_preds)
+        labels = np.asarray(labels)
+        diff_ratio = np.asarray(diff_ratio, dtype=float)
+
+        assert len(aom_preds) == len(zs_preds) == len(labels) == len(diff_ratio), (
+            f"Length mismatch: aom={len(aom_preds)} zs={len(zs_preds)} labels={len(labels)} diff={len(diff_ratio)}"
+        )
+
+        use_aom = diff_ratio > float(threshold)
+        mixed = np.where(use_aom, aom_preds, zs_preds)
+
+        return conservative_accuracy_from_mask(mixed, labels, clean_correct_mask)
+
+
+    def plot_threshold_mixing_bars(
+            *,
+            thresholds: List[float],
+            alpha_to_acc: Dict[float, List[float]],
+            title: str,
+            outpath: str,
+            ylabel: str = "Average accuracy across datasets (%)",
+    ):
+        """Grouped bar plot: x-axis = $\tau$ thresholds, bars = different $\alpha$ values."""
+        ensure_dir(os.path.dirname(outpath))
+
+        apply_plot_style()
+
+        fig, ax = plt.subplots(figsize=(11.5, 5.1))
+
+        thresholds = [float(t) for t in thresholds]
+        x = np.arange(len(thresholds))
+
+        alphas_sorted = sorted(alpha_to_acc.keys())
+        n_series = max(1, len(alphas_sorted))
+
+        group_width = 0.82
+        bar_width = group_width / n_series
+
+        # Colorblind-friendly cycle for multiple series
+        series_colors = [
+            "#0072B2",  # blue
+            "#D55E00",  # vermillion
+            "#009E73",  # bluish green
+            "#CC79A7",  # reddish purple
+            "#F0E442",  # yellow
+            "#56B4E9",  # sky blue
+        ]
+
+        def _add_bar_value_labels(bar_container):
+            for rect in bar_container:
+                h = rect.get_height()
+                if h is None or not np.isfinite(h):
+                    continue
+                ax.text(
+                    rect.get_x() + rect.get_width() / 2.0,
+                    h + 0.20,
+                    f"{h:.1f}",
+                    ha="center",
+                    va="bottom",
+                    fontsize=8,
+                    color="#222222",
+                    clip_on=True,
+                )
+
+        for i, alpha in enumerate(alphas_sorted):
+            y = np.asarray(alpha_to_acc[alpha], dtype=float)
+            if y.shape[0] != len(thresholds):
+                raise ValueError(
+                    f"alpha_to_acc length mismatch for alpha={alpha}: "
+                    f"got {y.shape[0]} values but {len(thresholds)} thresholds"
+                )
+            offset = -group_width / 2 + (i + 0.5) * bar_width
+            color = series_colors[i % len(series_colors)]
+            bars = ax.bar(
+                x + offset,
+                y,
+                width=bar_width,
+                label=rf"$\alpha={float(alpha):g}$",
+                color=color,
+                edgecolor="black",
+                linewidth=0.55,
+            )
+            _add_bar_value_labels(bars)
+
+        ax.set_xticks(x)
+        # Mark \tau-threshold=0.0 explicitly as the original AOM setting (no thresholding).
+        tick_labels = []
+        for t in thresholds:
+            if abs(float(t) - 0.0) < 1e-12:
+                tick_labels.append("0.0\n(AOM)")
+            else:
+                tick_labels.append(f"{t:.2f}".rstrip("0").rstrip("."))
+        ax.set_xticklabels(tick_labels)
+        ax.set_xlabel(r"$\tau_{\mathrm{threshold}}$", fontsize=20)
+        ax.set_ylabel(ylabel.replace("(%)", r"(%)"), fontsize=18)
+        ax.set_title(title, pad=20)
+
+        # Corner note clarifying that \tau-threshold=0.0 corresponds to original AOM (no thresholding).
+        note_text = r"$\tau_{\mathrm{threshold}}=0.0$ corresponds to original AOM (no thresholding)"
+        fig.text(
+            0.995,
+            0.01,
+            note_text,
+            ha="right",
+            va="bottom",
+            fontsize=10,
+            color="#000000",
+            alpha=0.35,
+        )
+        ax.legend(
+            frameon=True,
+            loc="upper center",
+            bbox_to_anchor=(0.5, 1.08),
+            ncol=min(4, n_series),
+            columnspacing=1.0,
+            handlelength=1.3,
+            fontsize=10,
+        )
+
+        # Extra bottom margin for the explanatory note.
+        fig.tight_layout(rect=(0, 0.06, 1, 0.97))
         fig.savefig(outpath, dpi=250)
         plt.close(fig)
 
@@ -1136,47 +1316,8 @@ if __name__ == "__main__":
     # -------------------------
     # Main execution
     # -------------------------
-    def _format_anchor_label(noise_anchor: str) -> str:
-        # noise_anchor examples: "noisy_Sigma_0_06", "uniform_Eps_16_0"
-        dist = None
-        rest = noise_anchor
-        if "_" in noise_anchor:
-            prefix, maybe_rest = noise_anchor.split("_", 1)
-            if prefix in {"noisy", "uniform"}:
-                dist = prefix
-                rest = maybe_rest
-
-        dist_label = {"noisy": "Gaussian", "uniform": "Uniform"}.get(dist, "")
-
-        if rest.startswith("Sigma_"):
-            val = rest[len("Sigma_"):].replace("_", ".")
-            core = rf"$\sigma={val}$"
-        elif rest.startswith("Eps_"):
-            val = rest[len("Eps_"):].replace("_", ".")
-            core = rf"$\epsilon={val}$"
-        else:
-            core = rest
-
-        if dist_label:
-            return f"{dist_label} ({core})"
-        return str(core)
-
-
-    def _format_normalize_label(normalize: str) -> str:
-        if str(normalize).lower() == "true":
-            return r"$z/\|z\|_2$"
-        return "None"
-
-
-
-
-
-    def run_all_plots(model_name, out_root="plots", *, grid_normalize: str = "both"):
+    def run_all_plots(model_name, out_root="plots"):
         datasets = list(TRUE_LABELS_DATASET.keys())
-
-        grid_normalize = str(grid_normalize).lower().strip()
-        if grid_normalize not in {"both", "true", "false"}:
-            raise ValueError("grid_normalize must be one of: 'both', 'true', 'false'")
 
         # Zero-shot baselines
         zs = aggregate_zero_shot(
@@ -1202,8 +1343,6 @@ if __name__ == "__main__":
                 f"Expected AOM results for both '{clean_key}' and '{adv_key}'. "
                 f"Found keys: {sorted(aom_avg.keys())}"
             )
-
-        saved_paths_by_anchor = {}
 
         for noise_anchor, anchor_obj in aom_avg[clean_key].items():
             for normalize, clean_series in anchor_obj.items():
@@ -1241,8 +1380,8 @@ if __name__ == "__main__":
                 outpath = os.path.join(outdir, "clean_vs_adversarial_bars.png")
 
                 title = (
-                    "Average accuracy across datasets\n"
-                    rf"Anchor: {_format_anchor_label(noise_anchor)}   |   Normalize: {_format_normalize_label(normalize)}"
+                    "Average accuracy across Datasets\n"
+                    f"Anchor={noise_anchor}, Normalize={normalize}"
                 )
 
                 plot_aom_bars(
@@ -1256,39 +1395,185 @@ if __name__ == "__main__":
 
                 print(f"[Saved] {outpath}")
 
-                saved_paths_by_anchor.setdefault(noise_anchor, {})[str(normalize)] = outpath
+        # ------------------------------------------------------------------
+        # NEW: Thresholded mixing analysis (AOM vs ZS) using diff-ratio per sample
+        # Settings requested: normalize=True and anchors {Sigma_0.06, uniform eps32}
+        # ------------------------------------------------------------------
+        target_normalize = "True"
+        target_anchors = ["noisy_Sigma_0_06", "uniform_Eps_32_0"]
 
-        # --- Create a single grid:
-        # - If grid_normalize == 'both': 4 columns (two anchors per row)
-        #   [A False, A True, B False, B True]
-        # - If grid_normalize == 'false' or 'true': 2 columns (two anchors per row)
-        #   [A False, B False]  or  [A True, B True]
-        anchors_sorted = sorted(saved_paths_by_anchor.keys())
-        grid_paths = []
-        for i in range(0, len(anchors_sorted), 2):
-            row_anchors = anchors_sorted[i:i + 2]
-            for a in row_anchors:
-                per_norm = saved_paths_by_anchor.get(a, {})
-                if grid_normalize in {"both", "false"}:
-                    p_false = per_norm.get("False")
-                    if p_false is not None:
-                        grid_paths.append(p_false)
-                if grid_normalize in {"both", "true"}:
-                    p_true = per_norm.get("True")
-                    if p_true is not None:
-                        grid_paths.append(p_true)
+        # Attack mapping between AOM keys and diff-ratio keys / ZS predictions
+        attack_specs = [
+            {
+                "aom_attack": "clean",
+                "diff_attack": "Clean",
+                "zs_preds": ZS_CLEAN_PREDS_DATASET,
+            },
+            {
+                "aom_attack": "adversarial_eps4_steps100",
+                "diff_attack": "Adversarial",
+                "zs_preds": ZS_ADV_PREDS_DATASET,
+            },
+        ]
 
-        if grid_paths:
-            cols = 4 if grid_normalize == "both" else 2
-            if grid_normalize == "both":
-                grid_name = "grid_all_noise_anchors_normalize.png"
+        # Thresholds requested (fixed)
+        thresholds = [0.0, 0.2, 0.40, 0.60, 0.80, 0.85, 0.90, 0.95,  1.0]
+
+        # Only evaluate these alpha values for threshold plots (requested)
+        target_threshold_alphas = [1.0, 1.2, 1.4]
+
+        # Helper: get diff-ratio vector for a dataset + anchor selection
+        def _get_diff_ratio_vector(dataset: str, *, diff_attack: str, anchor_key: str) -> Optional[List[float]]:
+            if dataset not in final_diff_ratio_dic:
+                return None
+            if diff_attack not in final_diff_ratio_dic[dataset]:
+                return None
+
+            if anchor_key == "noisy_Sigma_0_06":
+                noise_type = "Gaussian"
+                name, value = "Sigma", 0.06
+            elif anchor_key == "uniform_Eps_32_0":
+                noise_type = "Uniform"
+                name, value = "Eps", 32.0
             else:
-                grid_name = f"grid_all_noise_anchors_normalize_{grid_normalize}.png"
-            grid_out = os.path.join(out_root, model_name, "AOM", grid_name)
-            create_image_grid(grid_paths, grid_out, cols=cols, scale=1.0)
+                return None
+
+            noise_obj = final_diff_ratio_dic[dataset][diff_attack].get(noise_type, {})
+            key = _find_noise_param_key(noise_obj.keys(), name=name, value=value)
+            if key is None:
+                return None
+            return noise_obj.get(key, None)
+
+        for anchor_key in target_anchors:
+            for spec in attack_specs:
+                aom_attack = spec["aom_attack"]
+                diff_attack = spec["diff_attack"]
+                zs_preds_by_dataset = spec["zs_preds"]
+
+                # Build alpha list from AOM predictions for this anchor/normalize
+                alpha_keys = None
+                for d in datasets:
+                    try:
+                        alpha_keys = list(
+                            aom_dic[aom_attack][model_name][d][anchor_key][target_normalize]
+                            ["preds"]["single"].keys()
+                        )
+                        break
+                    except Exception:
+                        continue
+                if not alpha_keys:
+                    continue
+
+                # Restrict to requested alphas only
+                alpha_keys = [a for a in alpha_keys if float(a) in set(target_threshold_alphas)]
+                if not alpha_keys:
+                    continue
+                alpha_keys = sorted(alpha_keys, key=alpha_sort_key)
+                alphas = [float(a) for a in alpha_keys]
+
+                alpha_to_acc = {float(a): [] for a in alphas}
+                alpha_to_cons_acc = {float(a): [] for a in alphas}
+
+                for t in thresholds:
+                    for a in alpha_keys:
+                        per_dataset_acc = []
+                        per_dataset_cons_acc = []
+                        for d in datasets:
+                            try:
+                                entry = (
+                                    aom_dic[aom_attack][model_name][d][anchor_key][target_normalize]
+                                    ["preds"]["single"][a]
+                                )
+                            except Exception:
+                                continue
+
+                            aom_preds = entry["prediction"]
+                            labels = TRUE_LABELS_DATASET[d]
+                            zs_preds = zs_preds_by_dataset[d]
+
+                            clean_mask = ZS_CLEAN_CORRECT_DATASET[d]
+
+                            dr = _get_diff_ratio_vector(d, diff_attack=diff_attack, anchor_key=anchor_key)
+                            if dr is None:
+                                continue
+
+                            acc = compute_threshold_mixed_accuracy(
+                                aom_preds=aom_preds,
+                                zs_preds=zs_preds,
+                                labels=labels,
+                                diff_ratio=dr,
+                                threshold=float(t),
+                            )
+                            per_dataset_acc.append(acc)
+
+                            cons_acc = compute_threshold_mixed_conservative_accuracy(
+                                aom_preds=aom_preds,
+                                zs_preds=zs_preds,
+                                labels=labels,
+                                diff_ratio=dr,
+                                threshold=float(t),
+                                clean_correct_mask=clean_mask,
+                            )
+                            per_dataset_cons_acc.append(cons_acc)
+
+                        alpha_to_acc[float(a)].append(float(np.nanmean(per_dataset_acc)) if per_dataset_acc else np.nan)
+                        alpha_to_cons_acc[float(a)].append(
+                            float(np.nanmean(per_dataset_cons_acc)) if per_dataset_cons_acc else np.nan
+                        )
+
+                outdir = os.path.join(
+                    out_root,
+                    model_name,
+                    "AOM",
+                    "threshold_mixing",
+                    anchor_key,
+                    f"normalize_{target_normalize}",
+                    diff_attack,
+                )
+                outpath = os.path.join(outdir, "accuracy_vs_threshold.png")
+                outpath_cons = os.path.join(outdir, "conservative_accuracy_vs_threshold.png")
+
+                # Short, presentation-friendly title text
+                if anchor_key == "noisy_Sigma_0_06":
+                    anchor_desc = r"Gaussian ($\sigma=0.06$)"
+                elif anchor_key == "uniform_Eps_32_0":
+                    anchor_desc = r"Uniform ($\epsilon=32/255$)"
+                else:
+                    anchor_desc = str(anchor_key)
+
+                # NOTE: Avoid raw strings for the newline; in a raw string, "\n" is literal.
+                title = (
+                    r"$\tau$-thresholded AOM (Label Leakage): use AOM if $\tau > \tau_{\mathrm{threshold}}$ else Zero-shot"
+                    "\n"
+                    rf"Anchor: {anchor_desc}"
+                )
+
+                title_cons = (
+                    r"$\tau$-thresholded AOM: use AOM if $\tau > \tau_{\mathrm{threshold}}$ else Zero-shot"
+                    "\n"
+                    rf"Anchor: {anchor_desc}"
+                )
+
+                plot_threshold_mixing_bars(
+                    thresholds=thresholds,
+                    alpha_to_acc=alpha_to_acc,
+                    title=title,
+                    outpath=outpath,
+                )
+
+                plot_threshold_mixing_bars(
+                    thresholds=thresholds,
+                    alpha_to_acc=alpha_to_cons_acc,
+                    title=title_cons,
+                    outpath=outpath_cons,
+                    ylabel="Average accuracy across datasets (%)",
+                )
+
+                print(f"[Saved] {outpath}")
+                print(f"[Saved] {outpath_cons}")
 
 
-    run_all_plots(model_name, grid_normalize=args.grid_normalize)
+    run_all_plots(model_name)
 
 
 
