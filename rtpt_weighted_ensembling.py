@@ -194,6 +194,11 @@ def create_log_dir(args):
             image_feature_purify_part = [f"Image_Feature_Purify",
                                          f"Type_{args.image_feature_purify_type}_Anchors_{args.image_feature_purify_noisy_anchors}_Alpha_{args.image_feature_purify_anchors_alpha[0] if len(args.image_feature_purify_anchors_alpha)==1 else 'ablation'}_Eps_{args.image_feature_purify_uniform_noise_eps}_threshold_{args.image_feature_purify_diff_threshold}_normalize_embeddings_{args.image_feature_purify_normalize_embeddings}"]
 
+        elif args.image_feature_purify_type == "tpt_anchor":
+            image_feature_purify_part = [f"Image_Feature_Purify",
+                                         f"Type_{args.image_feature_purify_type}_views_aug_{args.augmentation_pool}_Alpha_{args.image_feature_purify_anchors_alpha[0] if len(args.image_feature_purify_anchors_alpha)==1 else 'ablation'}_threshold_{args.image_feature_purify_diff_threshold}_normalize_embeddings_{args.image_feature_purify_normalize_embeddings}"]
+
+
         elif args.image_feature_purify_type == 'clip_pure':
             image_feature_purify_part = [f"Image_Feature_Purify",
                                          f"Type_{args.image_feature_purify_type}_steps_{args.image_feature_clipure_steps}_step_size_{args.image_feature_clipure_step_size}"]
@@ -1240,6 +1245,28 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                         }
                         # Compute adversarial accuracy with purification
                         tuned_outputs_first, diff_ratio = model(images[0].unsqueeze(0), move_image_features_noisy_anchor=True,
+                                                              purify_params=purify_params)
+                        tuned_outputs_remaining = model(images[1:])
+                        #tuned_outputs is tuned_outputs_first + tuned_outputs_remaining
+                        # tuned_outputs is tuned_outputs_first +
+                        if isinstance(tuned_outputs_first, dict):
+                            tuned_outputs = {k: torch.cat([tuned_outputs_first[k], tuned_outputs_remaining], dim=0) for
+                                             k in tuned_outputs_first.keys()}
+                        else:
+                            tuned_outputs = torch.cat([tuned_outputs_first, tuned_outputs_remaining], dim=0)
+                        # tuned_outputs = torch.cat([tuned_outputs_first, tuned_outputs_remaining], dim=0)
+
+                        diff_ratio_list_aom.append(diff_ratio)
+                        del tuned_outputs_first, tuned_outputs_remaining
+                    elif args.image_feature_purify_type == "tpt_anchor":
+                        purify_params = {
+                            'noise_type': "tpt",
+                            'alpha': args.image_feature_purify_anchors_alpha[0] if len(args.image_feature_purify_anchors_alpha)==1 else args.image_feature_purify_anchors_alpha,
+                            'diff_threshold': args.image_feature_purify_diff_threshold,
+                            "normalize_embeddings": args.image_feature_purify_normalize_embeddings,
+                        }
+                        # Compute adversarial accuracy with purification
+                        tuned_outputs_first, diff_ratio = model(images, move_image_features_noisy_anchor=True,
                                                               purify_params=purify_params)
                         tuned_outputs_remaining = model(images[1:])
                         #tuned_outputs is tuned_outputs_first + tuned_outputs_remaining
@@ -2418,7 +2445,7 @@ if __name__ == '__main__':
 
     # Image feature Purification
     parser.add_argument('--image_feature_purify', default=False, type=lambda x: (str(x).lower() == 'true'))
-    parser.add_argument('--image_feature_purify_type', default='noisy_anchor', choices=["noisy_anchor", "clip_pure", "uniform_anchor"], type=str)
+    parser.add_argument('--image_feature_purify_type', default='noisy_anchor', choices=["noisy_anchor", "clip_pure", "uniform_anchor", "tpt_anchor"], type=str)
     parser.add_argument('--image_feature_purify_noisy_anchors', default=10, type=int)
     # parser.add_argument('--image_feature_purify_anchors_alpha', default=1.2, type=float)
     parser.add_argument(

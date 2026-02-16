@@ -2354,7 +2354,7 @@ fi
 if [ $EXP_NUM -eq 168 ]; then
 
 
-      echo "$MODEL_NAME Counter Attack on adv samples with counter attack epsilon 4.0, steps 5, alpha 1.0, tau_threshold 100, beta 2.0"
+  echo "$MODEL_NAME Counter Attack on adv samples with counter attack epsilon 4.0, steps 5, alpha 1.0, tau_threshold 100, beta 2.0"
   bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 $MODEL_NAME 8.0 100 0 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 5 4.0 1.0 100 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results_corrected_ca_tau_Counter_Attack dtd false $MODEL_NAME false prm false noisy_anchor 10 1.2 0.18 0.0 false uniform 0.12 normal
   bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 $MODEL_NAME 8.0 100 0 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 5 4.0 1.0 100 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results_corrected_ca_tau_Counter_Attack caltech101 false $MODEL_NAME false prm false noisy_anchor 10 1.2 0.18 0.0 false uniform 0.12 normal
   bash scripts/train_cluster_fg.sh /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets  0 4 $MODEL_NAME 8.0 100 0 0.1 20 0.01 rtpt all /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data true pgd 5 4.0 1.0 100 2.0 true /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results_corrected_ca_tau_Counter_Attack cars false $MODEL_NAME false prm false noisy_anchor 10 1.2 0.18 0.0 false uniform 0.12 normal

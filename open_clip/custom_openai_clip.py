@@ -433,6 +433,10 @@ class ClipTestTimeTuning(nn.Module):
         alpha: interpolation factor or list of interpolation factors
         """
         # Step 1: Encode source feature (adversarial or clean)
+        if noise_type.lower() == "tpt":
+            anchors_image = image[1:]
+            image = image[:1]
+            n_anchors = anchors_image.size(0)
         image_input = self.normalize(image.type(self.dtype))
         f_source = self.encode_image(image_input)
         f_source_norm = f_source.norm(dim=-1, keepdim=True)
@@ -451,12 +455,17 @@ class ClipTestTimeTuning(nn.Module):
             noise_batch = torch.empty(
                 n_anchors, batch_size, *image.shape[1:], device=image.device
             ).uniform_(-eps, eps)
+        elif noise_type.lower() == "tpt":
+            noise_batch = anchors_image.unsqueeze(1)
         else:
             raise ValueError("Noise type not supported: {}".format(noise_type))
 
-        noisy_images = image.unsqueeze(0) + noise_batch  # [n_anchors, batch_size, C, H, W]
-        # (Optional but often helpful) keep valid pixel range
-        noisy_images = noisy_images.clamp(0.0, 1.0)
+        if noise_type.lower() == "tpt":
+            noisy_images = noise_batch
+        else:
+            noisy_images = image.unsqueeze(0) + noise_batch  # [n_anchors, batch_size, C, H, W]
+            # (Optional but often helpful) keep valid pixel range
+            noisy_images = noisy_images.clamp(0.0, 1.0)
 
         # Reshape to [n_anchors*batch_size, C, H, W] in order to pass through the network in a single batch
         noisy_images = noisy_images.view(n_anchors * batch_size, *image.shape[1:])  # [n_anchors*batch_size, C, H, W]
