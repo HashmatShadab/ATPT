@@ -1,0 +1,503 @@
+2026-02-18 03:27:23,950 - log - INFO - ==========================================
+data:/leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/downstream_datasets
+test_sets:Flower102
+dataset_mode:test
+arch:vit_l_14_datacomp_1b
+resolution:224
+transferability:False
+source_model:vit_l_14_datacomp_1b
+workers:4
+no_pin_memory:False
+batch_size:64
+print_freq:20
+gpu:0
+no_cudnn_benchmark:False
+n_ctx:4
+ctx_init:a_photo_of_a
+tpt_loss:tpt
+otpt_lambda_term:18.0
+anchor_lambda_term:18.0
+seed:0
+output_dir:/leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102
+log_output_dir:/leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results_corrected_ca_tau_Noise_then_TPT/vit_l_14_datacomp_1b/Flower102
+image_only_attack:False
+image_only_attack_type:prm
+image_predicted_label_attack:False
+eps:4.0
+alpha:1.0
+alpha_eps_ratio:4.0
+steps:100
+lr:0.005
+lr_reduction_factor:50.0
+selection_p:0.1
+tta_steps:1
+max_tta_steps:0
+augmentation_pool_ablation:False
+augmentation_pool:tpt
+ensemble_type:all
+top_k:20
+softmax_temp:0.01
+diffpure:False
+counter_attack:True
+counter_attack_type:pgd
+counter_attack_steps:0
+counter_attack_eps:48.0
+counter_attack_alpha:1.0
+counter_attack_tau:noisy
+counter_attack_noisy_tau_num_anchors:10
+counter_attack_tau_thres:100.0
+counter_attack_beta:2.0
+counter_attack_weighted_perturbations:True
+counter_attack_init_noise:gaussian
+counter_attack_gaussian_sigma:0.06
+pgd_clip_pure_i_text_embeddings:null
+pgd_counter_and_clipure_i_lamda:1.0
+image_feature_purify:False
+image_feature_purify_type:noisy_anchor
+image_feature_purify_noisy_anchors:10
+image_feature_purify_anchors_alpha:[1.2]
+image_feature_purify_noisy_sigma:0.18
+image_feature_purify_diff_threshold:0.0
+image_feature_purify_normalize_embeddings:False
+image_feature_purify_uniform_noise_eps:4.0
+image_feature_clipure_steps:10
+image_feature_clipure_step_size:10.0
+selected_id_name:selected_topk.json
+weighted_score_name:weighted_scores.json
+batch_entropy_name:entropies.json
+use_class_text_embeddings:False
+zs_template_path:zeroshot-templates.json
+log_dir:/leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/ATPT/Final_Results_corrected_ca_tau_Noise_then_TPT/vit_l_14_datacomp_1b/Flower102/Adversarial_Eps_4_0_Steps_100/Counter_Attack/Init_Sigma_0_06_Eps_48_0_Steps_0_Alpha_1_0/Tau_noisy_num_anchors_10_tauthresh_100_0_beta_2_0_weighted_pertrubation_True/TPT/Optimization_Loss_tpt_LR_0_005_Optimization_Steps_1_View_Selection_Fraction_0_1/Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01
+
+2026-02-18 03:27:23,951 - log - INFO - Use GPU: 0 for training
+2026-02-18 03:28:24,453 - log - INFO - Freezing all parameters except prompt learner
+2026-02-18 03:28:24,454 - log - INFO - => Model created: visual backbone vit_l_14_datacomp_1b
+2026-02-18 03:28:24,497 - log - INFO - Number of test samples: 2463
+2026-02-18 03:28:24,497 - log - INFO - Evaluating dataset: Flower102
+2026-02-18 03:28:24,498 - log - INFO - Starting evaluation with batch size: 64, selection percentage: 0.1
+2026-02-18 03:28:24,499 - log - INFO - Test-time adaptation steps: 1, learning rate: 0.005
+2026-02-18 03:28:24,499 - log - INFO - Using PGD attack with epsilon: 0.015686, alpha: 0.003922, steps: 100 image only attack False image predicted label attack False
+2026-02-18 03:28:24,499 - log - INFO - Using counter-attack with epsilon: 48.000000, alpha: 1.000000, steps: 0, Tau Type noisy tau_thres: 100.0, beta: 2.0, weighted perturbation: True
+2026-02-18 03:28:24,500 - log - INFO - Using directory for adversarial images: /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100
+2026-02-18 03:28:27,067 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00172.pt
+2026-02-18 03:28:42,952 - log - INFO - Computing Diff Ratio TPT Noisy Anchors for Clean Image as well as Adversarial/Clean image
+2026-02-18 03:28:51,634 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00130.pt
+2026-02-18 03:28:55,328 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00220.pt
+2026-02-18 03:28:59,253 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00129.pt
+2026-02-18 03:29:03,160 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00086.pt
+2026-02-18 03:29:07,110 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00244.pt
+2026-02-18 03:29:11,085 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00076.pt
+2026-02-18 03:29:14,993 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00162.pt
+2026-02-18 03:29:18,863 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00048.pt
+2026-02-18 03:29:22,763 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00026.pt
+2026-02-18 03:29:26,692 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00165.pt
+2026-02-18 03:29:30,585 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00143.pt
+2026-02-18 03:29:34,473 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00107.pt
+2026-02-18 03:29:38,406 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00231.pt
+2026-02-18 03:29:42,294 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00075.pt
+2026-02-18 03:29:46,248 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00118.pt
+2026-02-18 03:29:50,119 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00237.pt
+2026-02-18 03:29:54,040 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00174.pt
+2026-02-18 03:29:57,925 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00226.pt
+2026-02-18 03:30:01,854 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00089.pt
+2026-02-18 03:30:05,753 - log - INFO - iter:20/2463, Original Clean Acc@1: 100.00, Acc@5: 100.00
+2026-02-18 03:30:05,754 - log - INFO - iter:20/2463, Original Adv Acc@1: 95.00, Acc@5: 100.00
+2026-02-18 03:30:05,754 - log - INFO - iter:20/2463, Single TTA Adv Acc@1: 95.00, Acc@5: 100.00
+2026-02-18 03:30:05,754 - log - INFO - iter:20/2463, Vanilla TTA Adv Acc@1: 100.00, Acc@5: 100.00
+2026-02-18 03:30:05,754 - log - INFO - iter:20/2463, Vanilla Topk TTA Adv Acc@1: 100.00, Acc@5: 100.00
+2026-02-18 03:30:05,754 - log - INFO - iter:20/2463, Weighted TTA Adv Acc@1: 100.00, Acc@5: 100.00
+2026-02-18 03:30:05,758 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00060.pt
+2026-02-18 03:30:09,632 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00142.pt
+2026-02-18 03:30:13,546 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00243.pt
+2026-02-18 03:30:17,468 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00113.pt
+2026-02-18 03:30:21,397 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00227.pt
+2026-02-18 03:30:25,292 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00057.pt
+2026-02-18 03:30:29,206 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00136.pt
+2026-02-18 03:30:33,138 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00215.pt
+2026-02-18 03:30:37,057 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00186.pt
+2026-02-18 03:30:40,963 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00109.pt
+2026-02-18 03:30:44,837 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00056.pt
+2026-02-18 03:30:48,946 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00176.pt
+2026-02-18 03:30:52,662 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00238.pt
+2026-02-18 03:30:56,560 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00003.pt
+2026-02-18 03:31:00,450 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00139.pt
+2026-02-18 03:31:04,357 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00239.pt
+2026-02-18 03:31:08,214 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00007.pt
+2026-02-18 03:31:12,099 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00006.pt
+2026-02-18 03:31:16,031 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00233.pt
+2026-02-18 03:31:19,920 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00082.pt
+2026-02-18 03:31:23,822 - log - INFO - iter:40/2463, Original Clean Acc@1: 100.00, Acc@5: 100.00
+2026-02-18 03:31:23,822 - log - INFO - iter:40/2463, Original Adv Acc@1: 95.00, Acc@5: 100.00
+2026-02-18 03:31:23,822 - log - INFO - iter:40/2463, Single TTA Adv Acc@1: 95.00, Acc@5: 100.00
+2026-02-18 03:31:23,822 - log - INFO - iter:40/2463, Vanilla TTA Adv Acc@1: 100.00, Acc@5: 100.00
+2026-02-18 03:31:23,822 - log - INFO - iter:40/2463, Vanilla Topk TTA Adv Acc@1: 100.00, Acc@5: 100.00
+2026-02-18 03:31:23,822 - log - INFO - iter:40/2463, Weighted TTA Adv Acc@1: 100.00, Acc@5: 100.00
+2026-02-18 03:31:23,826 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00027.pt
+2026-02-18 03:31:27,743 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00152.pt
+2026-02-18 03:31:31,597 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00059.pt
+2026-02-18 03:31:35,451 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00248.pt
+2026-02-18 03:31:39,352 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00185.pt
+2026-02-18 03:31:43,251 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00069.pt
+2026-02-18 03:31:47,137 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00115.pt
+2026-02-18 03:31:51,040 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00179.pt
+2026-02-18 03:31:54,944 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00001.pt
+2026-02-18 03:31:58,867 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00197.pt
+2026-02-18 03:32:02,808 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00247.pt
+2026-02-18 03:32:06,724 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00156.pt
+2026-02-18 03:32:10,608 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00111.pt
+2026-02-18 03:32:14,510 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00100.pt
+2026-02-18 03:32:18,417 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00214.pt
+2026-02-18 03:32:22,308 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00229.pt
+2026-02-18 03:32:26,176 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00008.pt
+2026-02-18 03:32:30,029 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00125.pt
+2026-02-18 03:32:33,930 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00025.pt
+2026-02-18 03:32:37,832 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00054.pt
+2026-02-18 03:32:41,687 - log - INFO - iter:60/2463, Original Clean Acc@1: 100.00, Acc@5: 100.00
+2026-02-18 03:32:41,687 - log - INFO - iter:60/2463, Original Adv Acc@1: 95.00, Acc@5: 100.00
+2026-02-18 03:32:41,687 - log - INFO - iter:60/2463, Single TTA Adv Acc@1: 96.67, Acc@5: 100.00
+2026-02-18 03:32:41,687 - log - INFO - iter:60/2463, Vanilla TTA Adv Acc@1: 100.00, Acc@5: 100.00
+2026-02-18 03:32:41,687 - log - INFO - iter:60/2463, Vanilla Topk TTA Adv Acc@1: 100.00, Acc@5: 100.00
+2026-02-18 03:32:41,687 - log - INFO - iter:60/2463, Weighted TTA Adv Acc@1: 100.00, Acc@5: 100.00
+2026-02-18 03:32:41,691 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00202.pt
+2026-02-18 03:32:45,613 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00098.pt
+2026-02-18 03:32:49,506 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00167.pt
+2026-02-18 03:32:53,428 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00121.pt
+2026-02-18 03:32:57,296 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00116.pt
+2026-02-18 03:33:01,175 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00195.pt
+2026-02-18 03:33:05,093 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00127.pt
+2026-02-18 03:33:08,981 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00031.pt
+2026-02-18 03:33:12,869 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00066.pt
+2026-02-18 03:33:16,772 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00017.pt
+2026-02-18 03:33:20,640 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00196.pt
+2026-02-18 03:33:24,539 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00206.pt
+2026-02-18 03:33:28,439 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00217.pt
+2026-02-18 03:33:32,315 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00146.pt
+2026-02-18 03:33:36,200 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00035.pt
+2026-02-18 03:33:40,084 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00346.pt
+2026-02-18 03:33:43,991 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00317.pt
+2026-02-18 03:33:47,876 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00425.pt
+2026-02-18 03:33:51,770 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00337.pt
+2026-02-18 03:33:55,673 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00409.pt
+2026-02-18 03:33:59,571 - log - INFO - iter:80/2463, Original Clean Acc@1: 100.00, Acc@5: 100.00
+2026-02-18 03:33:59,572 - log - INFO - iter:80/2463, Original Adv Acc@1: 96.25, Acc@5: 100.00
+2026-02-18 03:33:59,572 - log - INFO - iter:80/2463, Single TTA Adv Acc@1: 97.50, Acc@5: 100.00
+2026-02-18 03:33:59,572 - log - INFO - iter:80/2463, Vanilla TTA Adv Acc@1: 100.00, Acc@5: 100.00
+2026-02-18 03:33:59,572 - log - INFO - iter:80/2463, Vanilla Topk TTA Adv Acc@1: 100.00, Acc@5: 100.00
+2026-02-18 03:33:59,572 - log - INFO - iter:80/2463, Weighted TTA Adv Acc@1: 100.00, Acc@5: 100.00
+2026-02-18 03:33:59,580 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00410.pt
+2026-02-18 03:34:03,451 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00389.pt
+2026-02-18 03:34:07,383 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00294.pt
+2026-02-18 03:34:11,286 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00445.pt
+2026-02-18 03:34:15,171 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00413.pt
+2026-02-18 03:34:19,138 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00273.pt
+2026-02-18 03:34:23,025 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00262.pt
+2026-02-18 03:34:26,905 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00268.pt
+2026-02-18 03:34:30,786 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00312.pt
+2026-02-18 03:34:34,678 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00404.pt
+2026-02-18 03:34:38,599 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00376.pt
+2026-02-18 03:34:42,485 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00388.pt
+2026-02-18 03:34:46,413 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00438.pt
+2026-02-18 03:34:50,314 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00392.pt
+2026-02-18 03:34:54,191 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00349.pt
+2026-02-18 03:34:58,077 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00276.pt
+2026-02-18 03:35:02,000 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00320.pt
+2026-02-18 03:35:05,922 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00306.pt
+2026-02-18 03:35:09,858 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00361.pt
+2026-02-18 03:35:13,746 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00338.pt
+2026-02-18 03:35:17,647 - log - INFO - iter:100/2463, Original Clean Acc@1: 100.00, Acc@5: 100.00
+2026-02-18 03:35:17,647 - log - INFO - iter:100/2463, Original Adv Acc@1: 95.00, Acc@5: 100.00
+2026-02-18 03:35:17,647 - log - INFO - iter:100/2463, Single TTA Adv Acc@1: 97.00, Acc@5: 100.00
+2026-02-18 03:35:17,647 - log - INFO - iter:100/2463, Vanilla TTA Adv Acc@1: 99.00, Acc@5: 100.00
+2026-02-18 03:35:17,648 - log - INFO - iter:100/2463, Vanilla Topk TTA Adv Acc@1: 99.00, Acc@5: 100.00
+2026-02-18 03:35:17,648 - log - INFO - iter:100/2463, Weighted TTA Adv Acc@1: 99.00, Acc@5: 100.00
+2026-02-18 03:35:17,651 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00286.pt
+2026-02-18 03:35:21,564 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00396.pt
+2026-02-18 03:35:25,486 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00428.pt
+2026-02-18 03:35:29,391 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00439.pt
+2026-02-18 03:35:33,323 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00292.pt
+2026-02-18 03:35:37,222 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00423.pt
+2026-02-18 03:35:41,161 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00324.pt
+2026-02-18 03:35:45,079 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00354.pt
+2026-02-18 03:35:48,994 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00408.pt
+2026-02-18 03:35:52,914 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00335.pt
+2026-02-18 03:35:56,827 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00256.pt
+2026-02-18 03:36:00,713 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00379.pt
+2026-02-18 03:36:04,615 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00381.pt
+2026-02-18 03:36:08,523 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00327.pt
+2026-02-18 03:36:12,422 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00351.pt
+2026-02-18 03:36:16,314 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00422.pt
+2026-02-18 03:36:20,230 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00278.pt
+2026-02-18 03:36:24,146 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00378.pt
+2026-02-18 03:36:28,031 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00301.pt
+2026-02-18 03:36:31,928 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00403.pt
+2026-02-18 03:36:35,850 - log - INFO - iter:120/2463, Original Clean Acc@1: 100.00, Acc@5: 100.00
+2026-02-18 03:36:35,850 - log - INFO - iter:120/2463, Original Adv Acc@1: 95.83, Acc@5: 100.00
+2026-02-18 03:36:35,850 - log - INFO - iter:120/2463, Single TTA Adv Acc@1: 97.50, Acc@5: 100.00
+2026-02-18 03:36:35,851 - log - INFO - iter:120/2463, Vanilla TTA Adv Acc@1: 99.17, Acc@5: 100.00
+2026-02-18 03:36:35,851 - log - INFO - iter:120/2463, Vanilla Topk TTA Adv Acc@1: 99.17, Acc@5: 100.00
+2026-02-18 03:36:35,851 - log - INFO - iter:120/2463, Weighted TTA Adv Acc@1: 99.17, Acc@5: 100.00
+2026-02-18 03:36:35,855 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00362.pt
+2026-02-18 03:36:39,790 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00424.pt
+2026-02-18 03:36:43,689 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00398.pt
+2026-02-18 03:36:47,583 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00304.pt
+2026-02-18 03:36:51,469 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00277.pt
+2026-02-18 03:36:55,409 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00340.pt
+2026-02-18 03:36:59,345 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00303.pt
+2026-02-18 03:37:03,260 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00348.pt
+2026-02-18 03:37:07,157 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00261.pt
+2026-02-18 03:37:11,065 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00382.pt
+2026-02-18 03:37:14,944 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00411.pt
+2026-02-18 03:37:18,830 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00432.pt
+2026-02-18 03:37:22,783 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00295.pt
+2026-02-18 03:37:26,710 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00501.pt
+2026-02-18 03:37:30,604 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00581.pt
+2026-02-18 03:37:34,511 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00468.pt
+2026-02-18 03:37:38,400 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00472.pt
+2026-02-18 03:37:42,289 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00534.pt
+2026-02-18 03:37:46,192 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00541.pt
+2026-02-18 03:37:50,088 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00553.pt
+2026-02-18 03:37:54,044 - log - INFO - iter:140/2463, Original Clean Acc@1: 100.00, Acc@5: 100.00
+2026-02-18 03:37:54,044 - log - INFO - iter:140/2463, Original Adv Acc@1: 95.00, Acc@5: 100.00
+2026-02-18 03:37:54,045 - log - INFO - iter:140/2463, Single TTA Adv Acc@1: 96.43, Acc@5: 100.00
+2026-02-18 03:37:54,045 - log - INFO - iter:140/2463, Vanilla TTA Adv Acc@1: 97.86, Acc@5: 100.00
+2026-02-18 03:37:54,045 - log - INFO - iter:140/2463, Vanilla Topk TTA Adv Acc@1: 97.86, Acc@5: 100.00
+2026-02-18 03:37:54,045 - log - INFO - iter:140/2463, Weighted TTA Adv Acc@1: 97.86, Acc@5: 100.00
+2026-02-18 03:37:54,049 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00516.pt
+2026-02-18 03:37:57,960 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00532.pt
+2026-02-18 03:38:01,875 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00548.pt
+2026-02-18 03:38:05,822 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00525.pt
+2026-02-18 03:38:09,731 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00561.pt
+2026-02-18 03:38:13,626 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00551.pt
+2026-02-18 03:38:17,545 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00486.pt
+2026-02-18 03:38:21,454 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00545.pt
+2026-02-18 03:38:25,397 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00450.pt
+2026-02-18 03:38:29,675 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00538.pt
+2026-02-18 03:38:33,222 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00562.pt
+2026-02-18 03:38:37,141 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00515.pt
+2026-02-18 03:38:41,018 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00580.pt
+2026-02-18 03:38:44,911 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00498.pt
+2026-02-18 03:38:48,757 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00478.pt
+2026-02-18 03:38:52,666 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00521.pt
+2026-02-18 03:38:56,592 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00473.pt
+2026-02-18 03:39:00,476 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00524.pt
+2026-02-18 03:39:04,351 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00527.pt
+2026-02-18 03:39:08,237 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00482.pt
+2026-02-18 03:39:12,138 - log - INFO - iter:160/2463, Original Clean Acc@1: 100.00, Acc@5: 100.00
+2026-02-18 03:39:12,138 - log - INFO - iter:160/2463, Original Adv Acc@1: 94.38, Acc@5: 100.00
+2026-02-18 03:39:12,138 - log - INFO - iter:160/2463, Single TTA Adv Acc@1: 96.88, Acc@5: 100.00
+2026-02-18 03:39:12,138 - log - INFO - iter:160/2463, Vanilla TTA Adv Acc@1: 97.50, Acc@5: 100.00
+2026-02-18 03:39:12,138 - log - INFO - iter:160/2463, Vanilla Topk TTA Adv Acc@1: 98.12, Acc@5: 100.00
+2026-02-18 03:39:12,138 - log - INFO - iter:160/2463, Weighted TTA Adv Acc@1: 98.12, Acc@5: 100.00
+2026-02-18 03:39:12,142 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00484.pt
+2026-02-18 03:39:16,018 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00491.pt
+2026-02-18 03:39:19,910 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00490.pt
+2026-02-18 03:39:23,815 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00576.pt
+2026-02-18 03:39:27,733 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00596.pt
+2026-02-18 03:39:31,619 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00529.pt
+2026-02-18 03:39:35,513 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00574.pt
+2026-02-18 03:39:39,438 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00471.pt
+2026-02-18 03:39:43,386 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00485.pt
+2026-02-18 03:39:47,305 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00566.pt
+2026-02-18 03:39:51,232 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00572.pt
+2026-02-18 03:39:55,109 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00537.pt
+2026-02-18 03:39:59,057 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00520.pt
+2026-02-18 03:40:02,929 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00448.pt
+2026-02-18 03:40:06,832 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00451.pt
+2026-02-18 03:40:10,740 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00465.pt
+2026-02-18 03:40:14,589 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00464.pt
+2026-02-18 03:40:18,531 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00587.pt
+2026-02-18 03:40:22,876 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00514.pt
+2026-02-18 03:40:26,383 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00689.pt
+2026-02-18 03:40:30,293 - log - INFO - iter:180/2463, Original Clean Acc@1: 99.44, Acc@5: 99.44
+2026-02-18 03:40:30,294 - log - INFO - iter:180/2463, Original Adv Acc@1: 93.89, Acc@5: 99.44
+2026-02-18 03:40:30,294 - log - INFO - iter:180/2463, Single TTA Adv Acc@1: 96.11, Acc@5: 99.44
+2026-02-18 03:40:30,294 - log - INFO - iter:180/2463, Vanilla TTA Adv Acc@1: 96.67, Acc@5: 99.44
+2026-02-18 03:40:30,294 - log - INFO - iter:180/2463, Vanilla Topk TTA Adv Acc@1: 97.22, Acc@5: 99.44
+2026-02-18 03:40:30,294 - log - INFO - iter:180/2463, Weighted TTA Adv Acc@1: 97.22, Acc@5: 99.44
+2026-02-18 03:40:30,298 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00641.pt
+2026-02-18 03:40:34,167 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00712.pt
+2026-02-18 03:40:38,093 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00662.pt
+2026-02-18 03:40:41,974 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00677.pt
+2026-02-18 03:40:45,890 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00667.pt
+2026-02-18 03:40:49,785 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00649.pt
+2026-02-18 03:40:53,659 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00635.pt
+2026-02-18 03:40:57,579 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00670.pt
+2026-02-18 03:41:01,505 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00642.pt
+2026-02-18 03:41:05,455 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00650.pt
+2026-02-18 03:41:09,333 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00664.pt
+2026-02-18 03:41:13,264 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00660.pt
+2026-02-18 03:41:17,154 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00605.pt
+2026-02-18 03:41:21,063 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00603.pt
+2026-02-18 03:41:24,956 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00761.pt
+2026-02-18 03:41:28,859 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00733.pt
+2026-02-18 03:41:32,727 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00646.pt
+2026-02-18 03:41:36,644 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00599.pt
+2026-02-18 03:41:40,527 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00741.pt
+2026-02-18 03:41:44,419 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00694.pt
+2026-02-18 03:41:48,311 - log - INFO - iter:200/2463, Original Clean Acc@1: 89.50, Acc@5: 89.50
+2026-02-18 03:41:48,311 - log - INFO - iter:200/2463, Original Adv Acc@1: 84.50, Acc@5: 89.50
+2026-02-18 03:41:48,311 - log - INFO - iter:200/2463, Single TTA Adv Acc@1: 86.50, Acc@5: 89.50
+2026-02-18 03:41:48,311 - log - INFO - iter:200/2463, Vanilla TTA Adv Acc@1: 87.00, Acc@5: 89.50
+2026-02-18 03:41:48,311 - log - INFO - iter:200/2463, Vanilla Topk TTA Adv Acc@1: 87.50, Acc@5: 89.50
+2026-02-18 03:41:48,311 - log - INFO - iter:200/2463, Weighted TTA Adv Acc@1: 87.50, Acc@5: 89.50
+2026-02-18 03:41:48,315 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00661.pt
+2026-02-18 03:41:52,230 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00669.pt
+2026-02-18 03:41:56,152 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00673.pt
+2026-02-18 03:42:00,068 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00756.pt
+2026-02-18 03:42:03,969 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00702.pt
+2026-02-18 03:42:07,862 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00734.pt
+2026-02-18 03:42:11,784 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00751.pt
+2026-02-18 03:42:15,683 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00765.pt
+2026-02-18 03:42:19,629 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00628.pt
+2026-02-18 03:42:23,523 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00652.pt
+2026-02-18 03:42:27,420 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00722.pt
+2026-02-18 03:42:31,350 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00757.pt
+2026-02-18 03:42:35,213 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00630.pt
+2026-02-18 03:42:39,094 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00710.pt
+2026-02-18 03:42:42,986 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00681.pt
+2026-02-18 03:42:46,884 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00640.pt
+2026-02-18 03:42:50,802 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00699.pt
+2026-02-18 03:42:54,682 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00708.pt
+2026-02-18 03:42:58,552 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00695.pt
+2026-02-18 03:43:02,493 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00659.pt
+2026-02-18 03:43:06,405 - log - INFO - iter:220/2463, Original Clean Acc@1: 81.36, Acc@5: 81.36
+2026-02-18 03:43:06,405 - log - INFO - iter:220/2463, Original Adv Acc@1: 76.82, Acc@5: 81.36
+2026-02-18 03:43:06,406 - log - INFO - iter:220/2463, Single TTA Adv Acc@1: 78.64, Acc@5: 81.36
+2026-02-18 03:43:06,406 - log - INFO - iter:220/2463, Vanilla TTA Adv Acc@1: 79.09, Acc@5: 81.36
+2026-02-18 03:43:06,406 - log - INFO - iter:220/2463, Vanilla Topk TTA Adv Acc@1: 79.55, Acc@5: 81.36
+2026-02-18 03:43:06,406 - log - INFO - iter:220/2463, Weighted TTA Adv Acc@1: 79.55, Acc@5: 81.36
+2026-02-18 03:43:06,409 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00711.pt
+2026-02-18 03:43:10,295 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00618.pt
+2026-02-18 03:43:14,200 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00766.pt
+2026-02-18 03:43:18,116 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00755.pt
+2026-02-18 03:43:22,004 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00633.pt
+2026-02-18 03:43:25,883 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00619.pt
+2026-02-18 03:43:29,795 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00666.pt
+2026-02-18 03:43:33,669 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00623.pt
+2026-02-18 03:43:37,596 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00758.pt
+2026-02-18 03:43:41,486 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00663.pt
+2026-02-18 03:43:45,378 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00621.pt
+2026-02-18 03:43:49,262 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00732.pt
+2026-02-18 03:43:53,145 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00608.pt
+2026-02-18 03:43:57,032 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00737.pt
+2026-02-18 03:44:00,878 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00814.pt
+2026-02-18 03:44:04,775 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00858.pt
+2026-02-18 03:44:08,701 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00909.pt
+2026-02-18 03:44:12,640 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00874.pt
+2026-02-18 03:44:16,527 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00936.pt
+2026-02-18 03:44:20,415 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00897.pt
+2026-02-18 03:44:24,330 - log - INFO - iter:240/2463, Original Clean Acc@1: 77.08, Acc@5: 77.08
+2026-02-18 03:44:24,330 - log - INFO - iter:240/2463, Original Adv Acc@1: 72.92, Acc@5: 77.08
+2026-02-18 03:44:24,330 - log - INFO - iter:240/2463, Single TTA Adv Acc@1: 74.58, Acc@5: 77.08
+2026-02-18 03:44:24,330 - log - INFO - iter:240/2463, Vanilla TTA Adv Acc@1: 75.00, Acc@5: 77.08
+2026-02-18 03:44:24,330 - log - INFO - iter:240/2463, Vanilla Topk TTA Adv Acc@1: 75.42, Acc@5: 77.08
+2026-02-18 03:44:24,330 - log - INFO - iter:240/2463, Weighted TTA Adv Acc@1: 75.42, Acc@5: 77.08
+2026-02-18 03:44:24,334 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00906.pt
+2026-02-18 03:44:28,216 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00919.pt
+2026-02-18 03:44:32,127 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00855.pt
+2026-02-18 03:44:36,020 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00905.pt
+2026-02-18 03:44:39,932 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00892.pt
+2026-02-18 03:44:43,855 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00823.pt
+2026-02-18 03:44:47,752 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00799.pt
+2026-02-18 03:44:51,635 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00829.pt
+2026-02-18 03:44:55,541 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00941.pt
+2026-02-18 03:44:59,423 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00844.pt
+2026-02-18 03:45:03,311 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00891.pt
+2026-02-18 03:45:07,209 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00862.pt
+2026-02-18 03:45:11,096 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00884.pt
+2026-02-18 03:45:15,509 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00788.pt
+2026-02-18 03:45:19,017 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00843.pt
+2026-02-18 03:45:22,927 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00921.pt
+2026-02-18 03:45:26,850 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00837.pt
+2026-02-18 03:45:30,743 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00865.pt
+2026-02-18 03:45:34,645 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00847.pt
+2026-02-18 03:45:38,562 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00904.pt
+2026-02-18 03:45:42,441 - log - INFO - iter:260/2463, Original Clean Acc@1: 78.85, Acc@5: 78.85
+2026-02-18 03:45:42,441 - log - INFO - iter:260/2463, Original Adv Acc@1: 75.00, Acc@5: 78.85
+2026-02-18 03:45:42,441 - log - INFO - iter:260/2463, Single TTA Adv Acc@1: 76.54, Acc@5: 78.85
+2026-02-18 03:45:42,441 - log - INFO - iter:260/2463, Vanilla TTA Adv Acc@1: 76.92, Acc@5: 78.85
+2026-02-18 03:45:42,441 - log - INFO - iter:260/2463, Vanilla Topk TTA Adv Acc@1: 77.31, Acc@5: 78.85
+2026-02-18 03:45:42,441 - log - INFO - iter:260/2463, Weighted TTA Adv Acc@1: 77.31, Acc@5: 78.85
+2026-02-18 03:45:42,445 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00825.pt
+2026-02-18 03:45:46,347 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00883.pt
+2026-02-18 03:45:50,272 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00924.pt
+2026-02-18 03:45:54,197 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00881.pt
+2026-02-18 03:45:58,099 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00840.pt
+2026-02-18 03:46:01,993 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00872.pt
+2026-02-18 03:46:05,924 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00850.pt
+2026-02-18 03:46:09,791 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00934.pt
+2026-02-18 03:46:13,654 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00857.pt
+2026-02-18 03:46:17,524 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00824.pt
+2026-02-18 03:46:21,474 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00793.pt
+2026-02-18 03:46:25,377 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00923.pt
+2026-02-18 03:46:29,265 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00911.pt
+2026-02-18 03:46:33,203 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00900.pt
+2026-02-18 03:46:37,068 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00875.pt
+2026-02-18 03:46:40,973 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00914.pt
+2026-02-18 03:46:44,912 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00800.pt
+2026-02-18 03:46:48,831 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00798.pt
+2026-02-18 03:46:52,735 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00849.pt
+2026-02-18 03:46:56,645 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00866.pt
+2026-02-18 03:47:00,573 - log - INFO - iter:280/2463, Original Clean Acc@1: 80.36, Acc@5: 80.36
+2026-02-18 03:47:00,573 - log - INFO - iter:280/2463, Original Adv Acc@1: 76.79, Acc@5: 80.36
+2026-02-18 03:47:00,573 - log - INFO - iter:280/2463, Single TTA Adv Acc@1: 78.21, Acc@5: 80.36
+2026-02-18 03:47:00,573 - log - INFO - iter:280/2463, Vanilla TTA Adv Acc@1: 78.57, Acc@5: 80.36
+2026-02-18 03:47:00,573 - log - INFO - iter:280/2463, Vanilla Topk TTA Adv Acc@1: 78.93, Acc@5: 80.36
+2026-02-18 03:47:00,573 - log - INFO - iter:280/2463, Weighted TTA Adv Acc@1: 78.93, Acc@5: 80.36
+2026-02-18 03:47:00,577 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00841.pt
+2026-02-18 03:47:04,442 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00946.pt
+2026-02-18 03:47:08,352 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00916.pt
+2026-02-18 03:47:12,267 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00834.pt
+2026-02-18 03:47:16,170 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01030.pt
+2026-02-18 03:47:20,056 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01113.pt
+2026-02-18 03:47:23,958 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01104.pt
+2026-02-18 03:47:27,865 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01016.pt
+2026-02-18 03:47:31,762 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01081.pt
+2026-02-18 03:47:35,686 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00953.pt
+2026-02-18 03:47:39,562 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01061.pt
+2026-02-18 03:47:43,486 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01048.pt
+2026-02-18 03:47:47,377 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01096.pt
+2026-02-18 03:47:51,278 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01060.pt
+2026-02-18 03:47:55,199 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00955.pt
+2026-02-18 03:47:59,082 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01083.pt
+2026-02-18 03:48:02,968 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00979.pt
+2026-02-18 03:48:06,922 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00957.pt
+2026-02-18 03:48:10,815 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01027.pt
+2026-02-18 03:48:14,726 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00972.pt
+2026-02-18 03:48:18,599 - log - INFO - iter:300/2463, Original Clean Acc@1: 81.67, Acc@5: 81.67
+2026-02-18 03:48:18,599 - log - INFO - iter:300/2463, Original Adv Acc@1: 78.00, Acc@5: 81.67
+2026-02-18 03:48:18,599 - log - INFO - iter:300/2463, Single TTA Adv Acc@1: 79.67, Acc@5: 81.67
+2026-02-18 03:48:18,599 - log - INFO - iter:300/2463, Vanilla TTA Adv Acc@1: 80.00, Acc@5: 81.67
+2026-02-18 03:48:18,599 - log - INFO - iter:300/2463, Vanilla Topk TTA Adv Acc@1: 80.33, Acc@5: 81.67
+2026-02-18 03:48:18,599 - log - INFO - iter:300/2463, Weighted TTA Adv Acc@1: 80.33, Acc@5: 81.67
+2026-02-18 03:48:18,603 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01041.pt
+2026-02-18 03:48:22,503 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01075.pt
+2026-02-18 03:48:26,382 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01067.pt
+2026-02-18 03:48:30,290 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01078.pt
+2026-02-18 03:48:34,196 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00970.pt
+2026-02-18 03:48:38,086 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00960.pt
+2026-02-18 03:48:41,999 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00958.pt
+2026-02-18 03:48:45,942 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01132.pt
+2026-02-18 03:48:49,830 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00999.pt
+2026-02-18 03:48:53,749 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01126.pt
+2026-02-18 03:48:57,647 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00985.pt
+2026-02-18 03:49:01,556 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00971.pt
+2026-02-18 03:49:05,441 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00992.pt
+2026-02-18 03:49:09,331 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01011.pt
+2026-02-18 03:49:13,258 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00965.pt
+2026-02-18 03:49:17,142 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01103.pt
+2026-02-18 03:49:21,042 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01015.pt
+2026-02-18 03:49:24,959 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00964.pt
+2026-02-18 03:49:28,854 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01116.pt
+2026-02-18 03:49:32,744 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01055.pt
+2026-02-18 03:49:36,607 - log - INFO - iter:320/2463, Original Clean Acc@1: 82.81, Acc@5: 82.81
+2026-02-18 03:49:36,607 - log - INFO - iter:320/2463, Original Adv Acc@1: 79.38, Acc@5: 82.81
+2026-02-18 03:49:36,607 - log - INFO - iter:320/2463, Single TTA Adv Acc@1: 80.94, Acc@5: 82.81
+2026-02-18 03:49:36,607 - log - INFO - iter:320/2463, Vanilla TTA Adv Acc@1: 81.25, Acc@5: 82.81
+2026-02-18 03:49:36,607 - log - INFO - iter:320/2463, Vanilla Topk TTA Adv Acc@1: 81.56, Acc@5: 82.81
+2026-02-18 03:49:36,607 - log - INFO - iter:320/2463, Weighted TTA Adv Acc@1: 81.56, Acc@5: 82.81
+2026-02-18 03:49:36,611 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01122.pt
+2026-02-18 03:49:40,546 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_00998.pt
+2026-02-18 03:49:44,438 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01084.pt
+2026-02-18 03:49:48,323 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01052.pt
+2026-02-18 03:49:52,256 - log - INFO - Loading existing adversarial image from /leonardo_work/EUHPC_R04_192/fmohamma/Adversarial_Robust_Clip/atpt_data/vit_l_14_datacomp_1b/Flower102/adv_images_eps_4.0_alpha_1.0_steps_100/jpg_image_01087.pt
