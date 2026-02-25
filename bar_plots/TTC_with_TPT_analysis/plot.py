@@ -1624,10 +1624,38 @@ if __name__ == "__main__":
                         raise KeyError(f"Missing dataset '{ds}' under tpt_dic['{attack}']['{model}'].")
 
                 tpt_types = list(tpt_dic[attack][model][datasets[0]].keys())
+                # Put *all* thresholding-related artifacts under a dedicated subfolder.
+                # This keeps the main Results/<model>/<attack>/ directory clean.
                 tpt_root = model_root / attack
-                tpt_root.mkdir(parents=True, exist_ok=True)
+                thresholding_root = tpt_root / "thresholding"
+                thresholding_root.mkdir(parents=True, exist_ok=True)
 
                 variants = ["single", "vanilla", "weighted"]
+
+                # ------------------------------------------------------------
+                # Diff-ratio configurations
+                # ------------------------------------------------------------
+                # Automatically evaluate all available diff-ratio configs.
+                # We take an intersection across datasets to avoid missing-key failures.
+                dr_attack_name = _attack_to_diff_ratio_attack_name(attack)
+                configs_by_ds = []
+                for ds in datasets:
+                    ds_attack_dic = final_diff_ratio_dic.get(ds, {}).get(dr_attack_name, {})
+                    ds_configs = set()
+                    for noise_type_name, noise_vals in ds_attack_dic.items():
+                        for noise_value_name in noise_vals.keys():
+                            ds_configs.add((str(noise_type_name), str(noise_value_name)))
+                    configs_by_ds.append(ds_configs)
+
+                common_configs = set.intersection(*configs_by_ds) if configs_by_ds else set()
+                if not common_configs:
+                    raise KeyError(
+                        f"No common diff-ratio configs found for attack='{attack}' (diff-ratio attack='{dr_attack_name}') "
+                        f"across datasets={datasets}."
+                    )
+
+                # Stable order for output folders.
+                diff_ratio_configs = sorted(common_configs, key=lambda x: (x[0], x[1]))
                 tpt_type_to_name = {
                     "tpt": "TPT",
                     "rtpt": "R-TPT",
@@ -1662,7 +1690,7 @@ if __name__ == "__main__":
 
                     save_grouped_bar_plot(
                         out_dir / f"avg_acc_across_datasets_thresholded_thr_{diff_ratio_threshold}.png",
-                        f"Thresholded avg acc across Datasets (thr={diff_ratio_threshold}, Uniform/Eps_24.0)",
+                        f"Thresholded avg acc across Datasets (thr={diff_ratio_threshold}, {diff_ratio_noise_type}/{diff_ratio_noise_value})",
                         x_labels=x_labels_local,
                         series=thr_series_local,
                         ylabel="Average Accuracy (%)",
@@ -1715,8 +1743,8 @@ if __name__ == "__main__":
                                     diff_ratio_per_sample = _get_diff_ratio_per_sample(
                                         dataset=ds,
                                         attack=attack,
-                                        noise_type="Uniform",
-                                        noise_value="Eps_24.0",
+                                        noise_type=diff_ratio_noise_type,
+                                        noise_value=diff_ratio_noise_value,
                                     )
                                     mixed = _mix_preds_by_diff_ratio(
                                         diff_ratio_per_sample=diff_ratio_per_sample,
@@ -1737,7 +1765,7 @@ if __name__ == "__main__":
 
                         save_line_plot(
                             out_dir / f"threshold_sweep_{v}.png",
-                            f"Threshold sweep ({attack}, {v})",
+                            f"Threshold sweep ({attack}, {v}, {diff_ratio_noise_type}_{diff_ratio_noise_value})",
                             x=thresholds,
                             series=series_curves,
                             xlabel="tau threshold",
@@ -1753,7 +1781,7 @@ if __name__ == "__main__":
                         ]
                         save_threshold_sweep_bar_plot(
                             out_dir / f"threshold_sweep_bar_{v}.png",
-                            f"Threshold sweep (bars) ({attack}, {v})",
+                            f"Threshold sweep (bars) ({attack}, {v}, {diff_ratio_noise_type}_{diff_ratio_noise_value})",
                             thresholds=thresholds_bar,
                             series=series_bars,
                             xlabel="tau threshold",
@@ -1763,24 +1791,15 @@ if __name__ == "__main__":
                             grid_alpha=0.25,
                         )
 
-                summary = {
-                    "attack": attack,
-                    "model": model,
-                    "tpt_types": tpt_types,
-                    "datasets": datasets,
-                    "x_variants": variants,
-                    "thresholding": {
-                        "enabled": True,
-                        "diff_ratio_threshold": diff_ratio_threshold,
-                        "diff_ratio_source": {
-                            "noise_type": "Uniform",
-                            "noise_value": "Eps_24.0",
-                        },
-                    },
-                    "per_pred_variant": {},
-                }
+                def _compute_threshold_sweep_series(*, v: str, noise_type: str, noise_value: str):
+                    """Compute sweep series for a given prediction variant + diff-ratio config.
 
-                for v in variants:
+                    Returns:
+                      (thresholds: np.ndarray, series_curves: list[dict], best_text: str)
+                    """
+                    thresholds = np.asarray([0.0, 0.1, 0.4, 0.6, 0.8, 0.85, 0.9, 1.0], dtype=float)
+
+                    # Zero-shot is independent of threshold
                     zs_per_ds = {}
                     for ds in datasets:
                         labels = TRUE_LABELS_DATASET[ds]
@@ -1792,17 +1811,25 @@ if __name__ == "__main__":
                         _ensure_same_len(zs_preds, labels, name=f"{attack}/{model}/{ds}/zero-shot/{v}")
                         zs_per_ds[ds] = accuracy_percent(zs_preds, labels)
                     zs_avg = avg_across_datasets(zs_per_ds, datasets)
+                    zs_curve = [zs_avg for _ in thresholds]
 
-                    per_variant = {
-                        "zero_shot": {
-                            "avg_acc_across_datasets": zs_avg,
-                            "per_dataset": zs_per_ds,
-                        }
-                    }
+                    series_curves = [
+                        {"name": "Zero-shot", "y": zs_curve},
+                    ]
 
-                    for t in tpt_types:
-                        thr_per_ds = {}
-                        if v in pred_variants_by_type.get(t, set()):
+                    best_acc = -float("inf")
+                    best_thr = None
+                    best_name = None
+
+                    for t in ["tpt", "rtpt"]:
+                        if t not in tpt_types:
+                            continue
+                        if v not in pred_variants_by_type.get(t, set()):
+                            continue
+
+                        y_vals = []
+                        for thr in thresholds:
+                            thr_per_ds = {}
                             for ds in datasets:
                                 labels = TRUE_LABELS_DATASET[ds]
                                 zs_preds = _get_zero_shot_preds_for_variant(
@@ -1814,30 +1841,233 @@ if __name__ == "__main__":
                                 diff_ratio_per_sample = _get_diff_ratio_per_sample(
                                     dataset=ds,
                                     attack=attack,
-                                    noise_type="Uniform",
-                                    noise_value="Eps_24.0",
+                                    noise_type=noise_type,
+                                    noise_value=noise_value,
                                 )
                                 mixed = _mix_preds_by_diff_ratio(
                                     diff_ratio_per_sample=diff_ratio_per_sample,
-                                    threshold=diff_ratio_threshold,
+                                    threshold=float(thr),
                                     zs_preds=zs_preds,
                                     tpt_preds=tpt_preds,
                                 )
-                                _ensure_same_len(mixed, labels, name=f"{attack}/{model}/{ds}/thresholded/{t}/{v}")
+                                _ensure_same_len(mixed, labels, name=f"{attack}/{model}/{ds}/threshold_sweep/{t}/{v}")
                                 thr_per_ds[ds] = accuracy_percent(mixed, labels)
-                            thr_avg = avg_across_datasets(thr_per_ds, datasets)
-                        else:
-                            thr_avg = float("nan")
+                            y_vals.append(avg_across_datasets(thr_per_ds, datasets))
 
-                        per_variant.setdefault("thresholded", {})[t] = {
-                            "avg_acc_across_datasets": thr_avg,
-                            "per_dataset": thr_per_ds,
+                        display_name = tpt_type_to_name.get(t, str(t))
+                        series_curves.append(
+                            {
+                                "name": display_name,
+                                "y": y_vals,
+                            }
+                        )
+
+                        # best over thresholds for this method
+                        y_arr = np.asarray(y_vals, dtype=float)
+                        if np.all(np.isnan(y_arr)):
+                            continue
+                        idx = int(np.nanargmax(y_arr))
+                        if float(y_arr[idx]) > best_acc:
+                            best_acc = float(y_arr[idx])
+                            best_thr = float(thresholds[idx])
+                            best_name = display_name
+
+                    if best_name is None:
+                        best_text = "best: n/a"
+                    else:
+                        best_text = f"best: {best_name} {best_acc:.2f}% @ thr={best_thr:g}"
+
+                    return thresholds, series_curves, best_text
+
+                def plot_threshold_sweep_grid(*, out_dir: Path):
+                    """Grid plot: one figure per variant, each subplot = one noise config.
+
+                    NOTE: Subplots are BAR plots (grouped bars over the threshold grid).
+                    """
+                    n = len(diff_ratio_configs)
+                    if n <= 0:
+                        return
+
+                    ncols = 3
+                    nrows = int(np.ceil(n / float(ncols)))
+
+                    for v in variants:
+                        fig, axes = plt.subplots(
+                            nrows=nrows,
+                            ncols=ncols,
+                            figsize=(5.0 * ncols, 3.6 * nrows),
+                            sharex=True,
+                            sharey=True,
+                        )
+                        axes = np.asarray(axes).reshape(-1)
+
+                        legend_handles = None
+                        legend_labels = None
+
+                        def _plot_threshold_sweep_bars_on_ax(*, ax, thresholds, series_curves):
+                            # Convert to grouped-bar inputs.
+                            thresholds = [float(x) for x in thresholds]
+                            # Adaptive tick labels so values like 0.85 don't show as 0.8.
+                            x_labels = [f"{x:.1f}" if np.isclose(x, round(x, 1)) else f"{x:.2f}" for x in thresholds]
+
+                            # We plot bars on integer x positions.
+                            x = np.arange(len(thresholds), dtype=float)
+                            n_series = max(1, len(series_curves))
+                            group_width = 0.82
+                            bar_w = group_width / float(n_series)
+                            offsets = (np.arange(n_series) - (n_series - 1) / 2.0) * bar_w
+
+                            name_to_color = {
+                                "Zero-shot": "#4D4D4D",
+                                "TPT": "#0072B2",
+                                "R-TPT": "#D55E00",
+                            }
+
+                            handles = []
+                            labels = []
+                            for si, s in enumerate(series_curves):
+                                name = str(s["name"])
+                                y = np.asarray(s["y"], dtype=float)
+                                h = ax.bar(
+                                    x + offsets[si],
+                                    y,
+                                    width=bar_w,
+                                    label=name,
+                                    color=name_to_color.get(name, None),
+                                )
+                                handles.append(h)
+                                labels.append(name)
+
+                            ax.set_xticks(x)
+                            ax.set_xticklabels(x_labels)
+                            ax.grid(True, axis="y", alpha=0.25, linestyle="-")
+                            return handles, labels
+
+                        for i, (nt, nv) in enumerate(diff_ratio_configs):
+                            ax = axes[i]
+                            thresholds, series_curves, best_text = _compute_threshold_sweep_series(
+                                v=v,
+                                noise_type=nt,
+                                noise_value=nv,
+                            )
+
+                            _plot_threshold_sweep_bars_on_ax(
+                                ax=ax,
+                                thresholds=thresholds,
+                                series_curves=series_curves,
+                            )
+
+                            ax.set_title(f"{nt}_{nv} | {best_text}")
+                            ax.set_ylim(0, 100)
+
+                            if legend_handles is None:
+                                legend_handles, legend_labels = ax.get_legend_handles_labels()
+
+                        # Hide unused axes
+                        for j in range(n, len(axes)):
+                            axes[j].axis("off")
+
+                        fig.suptitle(f"Threshold sweep grid (bars) ({attack}, {model}, {v})", y=0.995)
+                        fig.text(0.5, 0.04, "tau threshold", ha="center")
+                        fig.text(0.04, 0.5, "Average Accuracy (%) across datasets", va="center", rotation="vertical")
+
+                        if legend_handles is not None:
+                            fig.legend(
+                                legend_handles,
+                                legend_labels,
+                                loc="upper center",
+                                ncol=min(len(legend_labels), 4),
+                                bbox_to_anchor=(0.5, 0.98),
+                            )
+
+                        fig.tight_layout(rect=[0.05, 0.06, 0.995, 0.94])
+                        out_path = out_dir / f"threshold_sweep_grid_{v}.png"
+                        fig.savefig(out_path, dpi=180)
+                        plt.close(fig)
+
+                for diff_ratio_noise_type, diff_ratio_noise_value in diff_ratio_configs:
+                    # Single folder: <noise_type>_<noise_value>
+                    diff_ratio_out_dir = thresholding_root / f"{diff_ratio_noise_type}_{diff_ratio_noise_value}"
+                    diff_ratio_out_dir.mkdir(parents=True, exist_ok=True)
+
+                    summary = {
+                        "attack": attack,
+                        "model": model,
+                        "tpt_types": tpt_types,
+                        "datasets": datasets,
+                        "x_variants": variants,
+                        "thresholding": {
+                            "enabled": True,
+                            "diff_ratio_threshold": diff_ratio_threshold,
+                            "diff_ratio_source": {
+                                "noise_type": diff_ratio_noise_type,
+                                "noise_value": diff_ratio_noise_value,
+                            },
+                        },
+                        "per_pred_variant": {},
+                    }
+
+                    for v in variants:
+                        zs_per_ds = {}
+                        for ds in datasets:
+                            labels = TRUE_LABELS_DATASET[ds]
+                            zs_preds = _get_zero_shot_preds_for_variant(
+                                attack=attack,
+                                dataset=ds,
+                                zs_variant=v,
+                            )
+                            _ensure_same_len(zs_preds, labels, name=f"{attack}/{model}/{ds}/zero-shot/{v}")
+                            zs_per_ds[ds] = accuracy_percent(zs_preds, labels)
+                        zs_avg = avg_across_datasets(zs_per_ds, datasets)
+
+                        per_variant = {
+                            "zero_shot": {
+                                "avg_acc_across_datasets": zs_avg,
+                                "per_dataset": zs_per_ds,
+                            }
                         }
 
-                    summary["per_pred_variant"][v] = per_variant
+                        for t in tpt_types:
+                            thr_per_ds = {}
+                            if v in pred_variants_by_type.get(t, set()):
+                                for ds in datasets:
+                                    labels = TRUE_LABELS_DATASET[ds]
+                                    zs_preds = _get_zero_shot_preds_for_variant(
+                                        attack=attack,
+                                        dataset=ds,
+                                        zs_variant=v,
+                                    )
+                                    tpt_preds = tpt_dic[attack][model][ds][t]["preds"][v]["prediction"]
+                                    diff_ratio_per_sample = _get_diff_ratio_per_sample(
+                                        dataset=ds,
+                                        attack=attack,
+                                        noise_type=diff_ratio_noise_type,
+                                        noise_value=diff_ratio_noise_value,
+                                    )
+                                    mixed = _mix_preds_by_diff_ratio(
+                                        diff_ratio_per_sample=diff_ratio_per_sample,
+                                        threshold=diff_ratio_threshold,
+                                        zs_preds=zs_preds,
+                                        tpt_preds=tpt_preds,
+                                    )
+                                    _ensure_same_len(mixed, labels, name=f"{attack}/{model}/{ds}/thresholded/{t}/{v}")
+                                    thr_per_ds[ds] = accuracy_percent(mixed, labels)
+                                thr_avg = avg_across_datasets(thr_per_ds, datasets)
+                            else:
+                                thr_avg = float("nan")
 
-                # plot_thresholded_bar_results(out_dir=tpt_root, summary_obj=summary)
-                plot_threshold_sweep_curves(out_dir=tpt_root)
+                            per_variant.setdefault("thresholded", {})[t] = {
+                                "avg_acc_across_datasets": thr_avg,
+                                "per_dataset": thr_per_ds,
+                            }
+
+                        summary["per_pred_variant"][v] = per_variant
+
+                    # plot_thresholded_bar_results(out_dir=diff_ratio_out_dir, summary_obj=summary)
+                    plot_threshold_sweep_curves(out_dir=diff_ratio_out_dir)
+
+                # One grid figure per variant with subplots for all noise configs
+                plot_threshold_sweep_grid(out_dir=thresholding_root)
 
         print(f"\n[Done] Threshold outputs written to: {out_root.resolve()}")
 
