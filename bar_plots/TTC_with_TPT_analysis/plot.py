@@ -1251,6 +1251,18 @@ if __name__ == "__main__":
                 color=name_to_color.get(name, None),
             )
 
+        # Ensure ticks correspond exactly to the provided threshold grid.
+        # Without this, Matplotlib may auto-format labels (e.g., rounding 0.85 to 0.8).
+        ax.set_xticks(x)
+        xticklabels = []
+        for xv in x:
+            # Show 1 decimal when it is exact (e.g., 0.8), otherwise show 2 decimals (e.g., 0.85)
+            if np.isclose(xv, round(float(xv), 1)):
+                xticklabels.append(f"{float(xv):.1f}")
+            else:
+                xticklabels.append(f"{float(xv):.2f}")
+        ax.set_xticklabels(xticklabels)
+
         ax.grid(True, alpha=grid_alpha, linestyle="-")
         ax.set_title(title)
         ax.set_xlabel(xlabel)
@@ -1285,7 +1297,8 @@ if __name__ == "__main__":
         Note: Intended for *coarse* threshold grids (e.g., 0.0..1.0 with step 0.1).
         """
         thresholds = [float(x) for x in thresholds]
-        x_labels = [f"{x:.1f}" for x in thresholds]
+        # Use an adaptive formatter so values like 0.85 are not shown as 0.8.
+        x_labels = [f"{x:.1f}" if np.isclose(x, round(x, 1)) else f"{x:.2f}" for x in thresholds]
         series_bar = [{"name": s["name"], "values": [float(y) for y in s["y"]]} for s in series]
 
         save_grouped_bar_plot(
@@ -1659,8 +1672,9 @@ if __name__ == "__main__":
 
                 def plot_threshold_sweep_curves(*, out_dir: Path):
                     """For each variant, plot accuracy vs tau-threshold + bar version."""
-                    thresholds = np.linspace(0.0, 1.0, 101, dtype=float)
-                    thresholds_bar = np.linspace(0.0, 1.0, 11, dtype=float)
+                    # Use only the requested threshold grid (no dense sweep).
+                    thresholds = np.asarray([0.1, 0.4, 0.6, 0.8, 0.85, 0.9, 1.0], dtype=float)
+                    thresholds_bar = thresholds
 
                     for v in variants:
                         # Zero-shot is independent of threshold
@@ -1733,11 +1747,10 @@ if __name__ == "__main__":
                             legend_loc="best",
                         )
 
-                        idx = [int(round(float(t) * (len(thresholds) - 1))) for t in thresholds_bar]
-                        series_bars = []
-                        for s in series_curves:
-                            y = np.asarray(s["y"], dtype=float)
-                            series_bars.append({"name": s["name"], "y": [float(y[i]) for i in idx]})
+                        series_bars = [
+                            {"name": s["name"], "y": [float(y) for y in s["y"]]}
+                            for s in series_curves
+                        ]
                         save_threshold_sweep_bar_plot(
                             out_dir / f"threshold_sweep_bar_{v}.png",
                             f"Threshold sweep (bars) ({attack}, {v})",
