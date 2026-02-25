@@ -7,7 +7,7 @@ High-level flow
 3) Produce plots:
    - zero-shot avg-across-datasets
    - TPT avg-across-datasets
-   - TPT-type comparison (`tpt` vs `rtpt`)
+   - TPT avg-across-datasets includes both `tpt` and `rtpt` in the same plot
 
 Folder layout reference (examples)
 ---------------------------------
@@ -1141,9 +1141,8 @@ if __name__ == "__main__":
     # ============================================================
     # 2) TPT results (avg across datasets) with folder structure
     #    Model/
-    #       TPT Type
-    #           attack_name/
-    #               plots + json
+    #       attack_name/
+    #           plots + json
     #
     # NOTE: NO conservative metrics are computed/saved/plotted.
     # ============================================================
@@ -1180,186 +1179,43 @@ if __name__ == "__main__":
                 # get tpt_types from first dataset
                 tpt_types = list(tpt_dic[attack][model][datasets[0]].keys())  # e.g. ["tpt", "rtpt"]
 
-                for tpt_type in tpt_types:
-                    print(f"    [TPT Type] {tpt_type}")
-                    tpt_root = model_root / tpt_type / attack
-                    tpt_root.mkdir(parents=True, exist_ok=True)
-
-                    # pred variants available (use first dataset as reference)
-                    ref_ds = datasets[0]
-                    pred_variants_all = list(tpt_dic[attack][model][ref_ds][tpt_type]["preds"].keys())
-
-                    # Requested layout:
-                    #   - legend = {Zero-shot, tpt_type}
-                    #   - x-axis = {Single, Vanilla, Weighted}
-                    variants = ["single", "vanilla", "weighted"]
-
-                    print(f"      pred_variants (available in TPT) = {pred_variants_all}")
-                    print(f"      x-axis variants (target)         = {variants}")
-
-                    summary = {
-                        "attack": attack,
-                        "model": model,
-                        "tpt_type": tpt_type,
-                        "datasets": datasets,
-                        "x_variants": variants,
-                        "per_pred_variant": {},
-                    }
-
-                    # Compute avg accuracy across datasets for each variant, for:
-                    #   - zero-shot baseline
-                    #   - the selected TPT type (tpt/rtpt)
-                    for v in variants:
-                        # zero-shot
-                        zs_per_ds = {}
-                        for ds in datasets:
-                            labels = TRUE_LABELS_DATASET[ds]
-                            preds = _get_zero_shot_preds_for_variant(
-                                attack=attack,
-                                dataset=ds,
-                                zs_variant=v,
-                            )
-                            _ensure_same_len(preds, labels, name=f"{attack}/{model}/{ds}/zero-shot/{v}")
-                            zs_per_ds[ds] = accuracy_percent(preds, labels)
-                        zs_avg = avg_across_datasets(zs_per_ds, datasets)
-
-                        # tpt_type (may be missing for some variants in some runs)
-                        tpt_per_ds = {}
-                        if v in pred_variants_all:
-                            for ds in datasets:
-                                labels = TRUE_LABELS_DATASET[ds]
-                                obj = tpt_dic[attack][model][ds][tpt_type]["preds"][v]
-                                preds = obj["prediction"]
-                                _ensure_same_len(preds, labels, name=f"{attack}/{model}/{ds}/{tpt_type}/{v}")
-                                tpt_per_ds[ds] = accuracy_percent(preds, labels)
-                            tpt_avg = avg_across_datasets(tpt_per_ds, datasets)
-                        else:
-                            tpt_avg = float("nan")
-
-                        summary["per_pred_variant"][v] = {
-                            "zero_shot": {
-                                "avg_acc_across_datasets": zs_avg,
-                                "per_dataset": zs_per_ds,
-                            },
-                            "tpt": {
-                                "avg_acc_across_datasets": tpt_avg,
-                                "per_dataset": tpt_per_ds,
-                            },
-                        }
-
-                        print(f"      [{v}] zero-shot avg_acc={zs_avg:.2f} | {tpt_type} avg_acc={tpt_avg:.2f}")
-
-                    # Save json
-                    save_json(tpt_root / "tpt_avg_across_datasets.json", summary)
-
-                    # Plot grouped bars: x = variant, series = {Zero-shot, tpt_type}
-                    x_labels = ["Single", "Vanilla", "Weighted"]
-                    series = [
-                        {
-                            "name": "Zero-shot",
-                            "values": [summary["per_pred_variant"][v]["zero_shot"]["avg_acc_across_datasets"] for v in variants],
-                        },
-                        {
-                            "name": tpt_type.upper(),
-                            "values": [summary["per_pred_variant"][v]["tpt"]["avg_acc_across_datasets"] for v in variants],
-                        },
-                    ]
-
-                    save_grouped_bar_plot(
-                        tpt_root / "avg_acc_across_datasets.png",
-                        f"Average accuracy across Datasets",
-                        x_labels=x_labels,
-                        series=series,
-                        ylabel="Average Accuracy (%)",
-                        ylim=(0, 100),
-                        legend_loc="upper center",
-                    )
-
-        print(f"\n[Done] Outputs written to: {out_root.resolve()}")
-
-
-    # ============================================================
-    # 3) TPT type comparison (tpt vs rtpt), avg across datasets
-    #    Output folder (in addition to existing structure):
-    #       out_root/
-    #         TPT_Type_Comparison/
-    #           Model/
-    #             attack/
-    #               tpt_type_comparison_avg_across_datasets.json
-    #               tpt_type_comparison_avg_across_datasets.png
-    #
-    # Each bar plot contains averages across datasets for both TPT types.
-    # ============================================================
-    def plot_tpt_type_comparison_avg_across_datasets(
-            *,
-            out_root="Results",
-            only_models=None,
-            datasets=None,
-            tpt_types_order=None,
-    ):
-        out_root = Path(out_root)
-        out_root.mkdir(parents=True, exist_ok=True)
-
-        if datasets is None:
-            datasets = list(TRUE_LABELS_DATASET.keys())
-        if tpt_types_order is None:
-            tpt_types_order = ["tpt", "rtpt"]
-
-        comparison_root = out_root / "TPT_vs_RTPT_Comparison"
-        comparison_root.mkdir(parents=True, exist_ok=True)
-
-        attacks = list(tpt_dic.keys())
-        for attack in attacks:
-            print(f"\n[TPT Type Comparison] Processing attack='{attack}'")
-            models = list(tpt_dic[attack].keys())
-
-            for model in models:
-                if only_models is not None and model not in only_models:
-                    continue
-
-                # sanity: datasets exist
-                for ds in datasets:
-                    if ds not in tpt_dic[attack][model]:
-                        raise KeyError(f"Missing dataset '{ds}' under tpt_dic['{attack}']['{model}'].")
-
-                # discover available tpt types
-                available_tpt_types = list(tpt_dic[attack][model][datasets[0]].keys())
-                tpt_types = [t for t in tpt_types_order if t in available_tpt_types]
-                if len(tpt_types) < 2:
-                    print(f"  [Skip] model={model}: need both tpt types for comparison, found={available_tpt_types}")
-                    continue
+                # We want a single plot per (model, attack) where the legend includes BOTH TPT types.
+                # Folder layout:
+                #   Results/{model}/{attack}/avg_acc_across_datasets.png
+                tpt_root = model_root / attack
+                tpt_root.mkdir(parents=True, exist_ok=True)
 
                 # Requested layout:
-                #   - legend = {Zero-shot, tpt, rtpt}
-                #   - x-axis = {Single, Vanilla, Weighted}
+                #   - legend = {Zero-shot, TPT, rTPT}
+                #   - x-axis  = {Single, Vanilla, Weighted}
                 variants = ["single", "vanilla", "weighted"]
 
-                # discover which variants exist for both tpt types (to avoid KeyErrors)
+                # pred variants available (use first dataset as reference)
                 ref_ds = datasets[0]
-                pred_variants_sets = []
-                for t in tpt_types:
-                    pred_variants_sets.append(set(tpt_dic[attack][model][ref_ds][t]["preds"].keys()))
-                pred_variants_intersection = set.intersection(*pred_variants_sets)
-                available_variants = [v for v in variants if v in pred_variants_intersection]
-                if not available_variants:
-                    print(f"  [Skip] model={model}: none of {variants} available for BOTH tpt types; intersection={sorted(pred_variants_intersection)}")
-                    continue
+                pred_variants_by_type = {
+                    t: set(tpt_dic[attack][model][ref_ds][t]["preds"].keys())
+                    for t in tpt_types
+                }
 
-                model_attack_root = comparison_root / model / attack
-                model_attack_root.mkdir(parents=True, exist_ok=True)
+                print(f"    [TPT Types] available = {tpt_types}")
+                for t, vs in pred_variants_by_type.items():
+                    print(f"      - {t}: pred_variants={sorted(vs)}")
+                print(f"      x-axis variants (target) = {variants}")
 
                 summary = {
                     "attack": attack,
                     "model": model,
-                    "datasets": datasets,
                     "tpt_types": tpt_types,
-                    "x_variants": available_variants,
-                    "avg_acc_across_datasets": {},
+                    "datasets": datasets,
+                    "x_variants": variants,
+                    "per_pred_variant": {},
                 }
 
-                # Zero-shot avg per variant (shared between tpt/rtpt)
-                summary["avg_acc_across_datasets"]["zero_shot"] = {}
-                for v in available_variants:
+                # Compute avg accuracy across datasets for each variant, for:
+                #   - zero-shot baseline
+                #   - each available tpt_type (e.g. tpt, rtpt)
+                for v in variants:
+                    # ----- zero-shot baseline
                     zs_per_ds = {}
                     for ds in datasets:
                         labels = TRUE_LABELS_DATASET[ds]
@@ -1370,54 +1226,80 @@ if __name__ == "__main__":
                         )
                         _ensure_same_len(preds, labels, name=f"{attack}/{model}/{ds}/zero-shot/{v}")
                         zs_per_ds[ds] = accuracy_percent(preds, labels)
-                    summary["avg_acc_across_datasets"]["zero_shot"][v] = {
-                        "avg_acc_across_datasets": avg_across_datasets(zs_per_ds, datasets),
-                        "per_dataset": zs_per_ds,
+                    zs_avg = avg_across_datasets(zs_per_ds, datasets)
+
+                    per_variant = {
+                        "zero_shot": {
+                            "avg_acc_across_datasets": zs_avg,
+                            "per_dataset": zs_per_ds,
+                        }
                     }
 
-                # Compute avg acc for each (tpt_type, variant)
-                for t in tpt_types:
-                    summary["avg_acc_across_datasets"][t] = {}
-                    for v in available_variants:
-                        per_ds_metrics = {}
-                        for ds in datasets:
-                            labels = TRUE_LABELS_DATASET[ds]
-                            obj = tpt_dic[attack][model][ds][t]["preds"][v]
-                            preds = obj["prediction"]
-                            _ensure_same_len(preds, labels, name=f"{attack}/{model}/{ds}/{t}/{v}")
-                            per_ds_metrics[ds] = accuracy_percent(preds, labels)
+                    # ----- TPT types
+                    for t in tpt_types:
+                        t_per_ds = {}
+                        if v in pred_variants_by_type.get(t, set()):
+                            for ds in datasets:
+                                labels = TRUE_LABELS_DATASET[ds]
+                                obj = tpt_dic[attack][model][ds][t]["preds"][v]
+                                preds = obj["prediction"]
+                                _ensure_same_len(preds, labels, name=f"{attack}/{model}/{ds}/{t}/{v}")
+                                t_per_ds[ds] = accuracy_percent(preds, labels)
+                            t_avg = avg_across_datasets(t_per_ds, datasets)
+                        else:
+                            t_avg = float("nan")
 
-                        summary["avg_acc_across_datasets"][t][v] = {
-                            "avg_acc_across_datasets": avg_across_datasets(per_ds_metrics, datasets),
-                            "per_dataset": per_ds_metrics,
+                        per_variant[t] = {
+                            "avg_acc_across_datasets": t_avg,
+                            "per_dataset": t_per_ds,
                         }
 
-                save_json(model_attack_root / "tpt_type_comparison_avg_across_datasets.json", summary)
+                    summary["per_pred_variant"][v] = per_variant
 
-                # Plot grouped bars: x = variants, series = {Zero-shot, tpt, rtpt}
-                x_labels = [v.capitalize() for v in available_variants]
+                    tpt_print = " | ".join(
+                        [
+                            f"{t} avg_acc={per_variant[t]['avg_acc_across_datasets']:.2f}"
+                            for t in tpt_types
+                        ]
+                    )
+                    print(f"      [{v}] zero-shot avg_acc={zs_avg:.2f} | {tpt_print}")
+
+                # Save json
+                save_json(tpt_root / "tpt_avg_across_datasets.json", summary)
+
+                # Plot grouped bars: x = variant, series = {Zero-shot, TPT, rTPT}
+                x_labels = ["Single", "Vanilla", "Weighted"]
                 series = [
                     {
                         "name": "Zero-shot",
-                        "values": [summary["avg_acc_across_datasets"]["zero_shot"][v]["avg_acc_across_datasets"] for v in available_variants],
+                        "values": [summary["per_pred_variant"][v]["zero_shot"]["avg_acc_across_datasets"] for v in variants],
                     },
                 ]
+
+                # Use pretty legend names for the common TPT types.
+                tpt_type_to_name = {
+                    "tpt": "TPT",
+                    "rtpt": "R-TPT",
+                }
                 for t in tpt_types:
-                    series.append({
-                        "name": t,
-                        "values": [summary["avg_acc_across_datasets"][t][v]["avg_acc_across_datasets"] for v in available_variants],
-                    })
+                    series.append(
+                        {
+                            "name": tpt_type_to_name.get(t, str(t)),
+                            "values": [summary["per_pred_variant"][v][t]["avg_acc_across_datasets"] for v in variants],
+                        }
+                    )
 
                 save_grouped_bar_plot(
-                    model_attack_root / "tpt_type_comparison_avg_across_datasets.png",
-                    f"{model} | {attack} | Avg accuracy across datasets: TPT type comparison",
+                    tpt_root / "avg_acc_across_datasets.png",
+                    f"Average accuracy across Datasets",
                     x_labels=x_labels,
                     series=series,
-                    ylabel="Accuracy (%)",
+                    ylabel="Average Accuracy (%)",
                     ylim=(0, 100),
-                    legend_loc="best",
+                    legend_loc="upper center",
                 )
 
+        print(f"\n[Done] Outputs written to: {out_root.resolve()}")
 
     # ============================================================
     # RUN (restrict to vit_l_14_datacomp_1b as per your earlier example)
@@ -1434,12 +1316,6 @@ if __name__ == "__main__":
     )
 
     plot_tpt_avg_results_and_plots(
-        out_root=out_root,
-        only_models=["vit_l_14_datacomp_1b"],
-        datasets=datasets,
-    )
-
-    plot_tpt_type_comparison_avg_across_datasets(
         out_root=out_root,
         only_models=["vit_l_14_datacomp_1b"],
         datasets=datasets,
