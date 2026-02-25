@@ -1015,6 +1015,227 @@ if __name__ == "__main__":
         return out
 
 
+    def _best_curve_point(taus: List[float], curve: List[float]) -> Dict[str, Any]:
+        """Return best (max) value in curve and the corresponding tau.
+
+        NaNs are ignored. If all values are NaN, returns {"best": nan, "tau": None}.
+        """
+        if not taus or not curve or len(taus) != len(curve):
+            raise ValueError("taus and curve must be same non-empty length")
+
+        best_v = float("nan")
+        best_tau: Optional[float] = None
+        for t, v in zip(taus, curve):
+            try:
+                fv = float(v)
+            except Exception:
+                continue
+            if np.isnan(fv):
+                continue
+            if best_tau is None or fv > best_v:
+                best_v = fv
+                best_tau = float(t)
+
+        return {"best": float(best_v), "tau": best_tau}
+
+
+    def _format_tau_label(t: float) -> str:
+        return f"{float(t):.2f}".rstrip("0").rstrip(".")
+
+
+    def _compute_tau_gated_curves_for_config(
+            *,
+            model: str,
+            attack: str,
+            variant: str,
+            datasets: List[str],
+            noise_type: str,
+            noise_key: str,
+            taus: List[float],
+    ) -> Dict[str, Any]:
+        """Compute (zero-shot, τ-gated TPT, τ-gated rTPT) curves averaged across datasets."""
+        if variant not in {"single", "vanilla", "weighted"}:
+            raise KeyError(f"Unsupported variant='{variant}'")
+
+        # get tpt_types from first dataset
+        tpt_types = list(tpt_dic[attack][model][datasets[0]].keys())  # e.g. ["tpt", "rtpt"]
+
+        # Precompute the (constant) zero-shot avg across datasets for this variant
+        zs_per_ds = {}
+        for ds in datasets:
+            labels = TRUE_LABELS_DATASET[ds]
+            zs_preds = _get_zero_shot_preds_for_variant(attack=attack, dataset=ds, zs_variant=variant)
+            _ensure_same_len(zs_preds, labels, name=f"{attack}/{model}/{ds}/zero-shot/{variant}")
+            zs_per_ds[ds] = accuracy_percent(zs_preds, labels)
+        zs_avg = avg_across_datasets(zs_per_ds, datasets)
+
+        zs_curve: List[float] = []
+        tpt_curve: List[float] = []
+        rtpt_curve: List[float] = []
+
+        for tau in taus:
+            zs_curve.append(zs_avg)
+
+            gated_tpt_per_ds = {}
+            gated_rtpt_per_ds = {}
+
+            for ds in datasets:
+                labels = TRUE_LABELS_DATASET[ds]
+                zs_preds = _get_zero_shot_preds_for_variant(attack=attack, dataset=ds, zs_variant=variant)
+
+                dr = _get_diff_ratio_per_sample(
+                    dataset=ds,
+                    attack=attack,
+                    noise_type=noise_type,
+                    noise_key=noise_key,
+                )
+
+                if "tpt" in tpt_types:
+                    tpt_preds = tpt_dic[attack][model][ds]["tpt"]["preds"][variant]["prediction"]
+                    gated = _mix_preds_by_tau_gate(
+                        diff_ratio_per_sample=dr,
+                        tau=float(tau),
+                        zs_preds=zs_preds,
+                        tpt_preds=tpt_preds,
+                    )
+                    gated_tpt_per_ds[ds] = accuracy_percent(gated, labels)
+
+                if "rtpt" in tpt_types:
+                    rtpt_preds = tpt_dic[attack][model][ds]["rtpt"]["preds"][variant]["prediction"]
+                    gated = _mix_preds_by_tau_gate(
+                        diff_ratio_per_sample=dr,
+                        tau=float(tau),
+                        zs_preds=zs_preds,
+                        tpt_preds=rtpt_preds,
+                    )
+                    gated_rtpt_per_ds[ds] = accuracy_percent(gated, labels)
+
+            tpt_curve.append(
+                avg_across_datasets(gated_tpt_per_ds, datasets) if "tpt" in tpt_types else float("nan")
+            )
+            rtpt_curve.append(
+                avg_across_datasets(gated_rtpt_per_ds, datasets) if "rtpt" in tpt_types else float("nan")
+            )
+
+        return {
+            "taus": list(taus),
+            "curves": {
+                "zero_shot": zs_curve,
+                "tpt": tpt_curve,
+                "rtpt": rtpt_curve,
+            },
+        }
+
+
+    def save_tau_gating_grid_plot(
+            *,
+            path: Path,
+            title: str,
+            taus: List[float],
+            panels: List[Dict[str, Any]],
+            ylim=(0, 100),
+            ncols: int = 3,
+    ):
+        """Save a grid of τ-gating grouped-bar panels.
+
+        panels: list of dicts, each must contain:
+          - noise_type, noise_key
+          - curves: {zero_shot, tpt, rtpt}
+        """
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        if not panels:
+            raise ValueError("panels must be non-empty")
+
+        plt.rcParams.update({
+            "figure.dpi": 120,
+            "savefig.dpi": 300,
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "axes.axisbelow": True,
+            "font.size": 10,
+        })
+
+        n_panels = len(panels)
+        ncols = max(1, int(ncols))
+        nrows = int(np.ceil(n_panels / ncols))
+
+        # size heuristic: keep panels readable
+        fig_w = 6.2 * ncols
+        fig_h = 4.1 * nrows
+        fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(fig_w, fig_h), squeeze=False)
+        fig.suptitle(title, fontsize=14)
+
+        x_labels = [_format_tau_label(t) for t in taus]
+        x = np.arange(len(x_labels))
+
+        # geometry for grouped bars
+        series_names = ["Zero-shot", "TPT", "R-TPT"]
+        name_to_color = {
+            "Zero-shot": "#4D4D4D",
+            "TPT": "#0072B2",
+            "R-TPT": "#D55E00",
+        }
+        colors = [name_to_color[n] for n in series_names]
+        total_width = 0.78
+        bar_width = total_width / len(series_names)
+        offsets = (np.arange(len(series_names)) - (len(series_names) - 1) / 2.0) * bar_width
+
+        for idx, panel in enumerate(panels):
+            r = idx // ncols
+            c = idx % ncols
+            ax = axes[r][c]
+
+            curves = panel["curves"]
+            zs_curve = np.asarray(curves["zero_shot"], dtype=float)
+            tpt_curve = np.asarray(curves["tpt"], dtype=float)
+            rtpt_curve = np.asarray(curves["rtpt"], dtype=float)
+
+            best_tpt = _best_curve_point(taus, list(tpt_curve))
+            best_rtpt = _best_curve_point(taus, list(rtpt_curve))
+
+            panel_title = (
+                f"{panel['noise_type']}_{panel['noise_key']}\n"
+                f"Best TPT {best_tpt['best']:.2f}% @ τ={_format_tau_label(best_tpt['tau']) if best_tpt['tau'] is not None else 'NA'} | "
+                f"Best R-TPT {best_rtpt['best']:.2f}% @ τ={_format_tau_label(best_rtpt['tau']) if best_rtpt['tau'] is not None else 'NA'}"
+            )
+            ax.set_title(panel_title, fontsize=10)
+
+            vals_by_series = [zs_curve, tpt_curve, rtpt_curve]
+            for si, vals in enumerate(vals_by_series):
+                ax.bar(
+                    x + offsets[si],
+                    vals,
+                    width=bar_width * 0.95,
+                    color=colors[si],
+                    edgecolor="#1a1a1a",
+                    linewidth=0.6,
+                    label=series_names[si] if idx == 0 else None,
+                )
+
+            ax.grid(True, axis="y", alpha=0.25, linestyle="-")
+            ax.set_ylim(*ylim)
+            ax.set_xticks(x)
+            ax.set_xticklabels(x_labels, rotation=0)
+
+        # hide unused axes
+        for j in range(n_panels, nrows * ncols):
+            r = j // ncols
+            c = j % ncols
+            axes[r][c].axis("off")
+
+        # Add shared legend once
+        handles, labels = axes[0][0].get_legend_handles_labels()
+        if handles:
+            fig.legend(handles, labels, loc="upper center", ncol=3, frameon=False, bbox_to_anchor=(0.5, 0.98))
+
+        fig.tight_layout(rect=(0, 0, 1, 0.95))
+        fig.savefig(path)
+        plt.close(fig)
+        print(f"[Saved] {path}")
+
+
     def save_bar_plot(
             path,
             title,
@@ -1584,66 +1805,18 @@ if __name__ == "__main__":
                 tpt_types = list(tpt_dic[attack][model][datasets[0]].keys())  # e.g. ["tpt", "rtpt"]
 
                 for v in variants:
-                    zs_curve = []
-                    tpt_curve = []
-                    rtpt_curve = []
-
-                    # Precompute the (constant) zero-shot avg across datasets for this variant
-                    zs_per_ds = {}
-                    for ds in datasets:
-                        labels = TRUE_LABELS_DATASET[ds]
-                        zs_preds = _get_zero_shot_preds_for_variant(attack=attack, dataset=ds, zs_variant=v)
-                        _ensure_same_len(zs_preds, labels, name=f"{attack}/{model}/{ds}/zero-shot/{v}")
-                        zs_per_ds[ds] = accuracy_percent(zs_preds, labels)
-                    zs_avg = avg_across_datasets(zs_per_ds, datasets)
-
-                    for tau in taus:
-                        # Baseline is constant across τ
-                        zs_curve.append(zs_avg)
-
-                        gated_tpt_per_ds = {}
-                        gated_rtpt_per_ds = {}
-
-                        for ds in datasets:
-                            labels = TRUE_LABELS_DATASET[ds]
-                            zs_preds = _get_zero_shot_preds_for_variant(attack=attack, dataset=ds, zs_variant=v)
-
-                            dr = _get_diff_ratio_per_sample(
-                                dataset=ds,
-                                attack=attack,
-                                noise_type=noise_type,
-                                noise_key=noise_key,
-                            )
-
-                            # gated TPT
-                            if "tpt" in tpt_types:
-                                tpt_preds = tpt_dic[attack][model][ds]["tpt"]["preds"][v]["prediction"]
-                                gated = _mix_preds_by_tau_gate(
-                                    diff_ratio_per_sample=dr,
-                                    tau=float(tau),
-                                    zs_preds=zs_preds,
-                                    tpt_preds=tpt_preds,
-                                )
-                                gated_tpt_per_ds[ds] = accuracy_percent(gated, labels)
-
-                            # gated rTPT
-                            if "rtpt" in tpt_types:
-                                rtpt_preds = tpt_dic[attack][model][ds]["rtpt"]["preds"][v]["prediction"]
-                                gated = _mix_preds_by_tau_gate(
-                                    diff_ratio_per_sample=dr,
-                                    tau=float(tau),
-                                    zs_preds=zs_preds,
-                                    tpt_preds=rtpt_preds,
-                                )
-                                gated_rtpt_per_ds[ds] = accuracy_percent(gated, labels)
-
-                        # If a type is missing, keep NaN to surface issues in plot.
-                        tpt_curve.append(
-                            avg_across_datasets(gated_tpt_per_ds, datasets) if "tpt" in tpt_types else float("nan")
-                        )
-                        rtpt_curve.append(
-                            avg_across_datasets(gated_rtpt_per_ds, datasets) if "rtpt" in tpt_types else float("nan")
-                        )
+                    curves_obj = _compute_tau_gated_curves_for_config(
+                        model=model,
+                        attack=attack,
+                        variant=v,
+                        datasets=datasets,
+                        noise_type=noise_type,
+                        noise_key=noise_key,
+                        taus=list(taus),
+                    )
+                    zs_curve = curves_obj["curves"]["zero_shot"]
+                    tpt_curve = curves_obj["curves"]["tpt"]
+                    rtpt_curve = curves_obj["curves"]["rtpt"]
 
                     # Save plot per variant
                     pretty_v = {"single": "single", "vanilla": "vanilla", "weighted": "weighted"}[v]
@@ -1652,7 +1825,7 @@ if __name__ == "__main__":
                     # Bar plot: x-axis are the discrete τ thresholds.
                     # We use a grouped bar plot so the user can compare {Zero-shot, TPT, R-TPT}
                     # at each τ value.
-                    x_labels = [f"{float(t):.2f}".rstrip("0").rstrip(".") for t in taus]
+                    x_labels = [_format_tau_label(t) for t in taus]
                     series = [
                         {
                             "name": "Zero-shot",
@@ -1686,7 +1859,7 @@ if __name__ == "__main__":
                                 "variant": v,
                                 "noise_type": noise_type,
                                 "noise_key": noise_key,
-                                "taus": taus,
+                                "taus": list(taus),
                                 "curves": {
                                     "zero_shot": zs_curve,
                                     "tpt": tpt_curve,
@@ -1734,6 +1907,73 @@ if __name__ == "__main__":
                     save_json_curves=save_json_curves,
                 )
 
+
+    def plot_tau_gated_tpt_grids_all_noise_configs(
+            *,
+            out_root="Results",
+            only_models=None,
+            datasets=None,
+            taus: Optional[List[float]] = None,
+            ncols: int = 3,
+    ):
+        """Create 3 grid plots (single/vanilla/weighted) that tile all noise configs.
+
+        For each subplot (noise config), we show the grouped bars over τ.
+        Each subplot title includes the best TPT and best R-TPT value and the τ that achieved it.
+        """
+        out_root = Path(out_root)
+        out_root.mkdir(parents=True, exist_ok=True)
+
+        if datasets is None:
+            datasets = list(TRUE_LABELS_DATASET.keys())
+        if taus is None:
+            taus = [0.0, 0.4, 0.7, 0.80, 0.85, 0.90, 1.0]
+
+        variants = ["single", "vanilla", "weighted"]
+        attacks = list(tpt_dic.keys())
+
+        for attack in attacks:
+            configs = _discover_diff_ratio_configs_for_attack(datasets=datasets, attack=attack)
+            if not configs:
+                print(f"[τ-gating-grid] No common diff-ratio noise configs found for attack='{attack}'. Skipping.")
+                continue
+
+            models = list(tpt_dic[attack].keys())
+            for model in models:
+                if only_models is not None and model not in only_models:
+                    continue
+
+                model_root = out_root / model
+                grid_root = model_root / attack / "tau_gating" / "grid"
+                grid_root.mkdir(parents=True, exist_ok=True)
+
+                for v in variants:
+                    panels = []
+                    for cfg in configs:
+                        curves_obj = _compute_tau_gated_curves_for_config(
+                            model=model,
+                            attack=attack,
+                            variant=v,
+                            datasets=datasets,
+                            noise_type=cfg["noise_type"],
+                            noise_key=cfg["noise_key"],
+                            taus=list(taus),
+                        )
+                        panels.append({
+                            "noise_type": cfg["noise_type"],
+                            "noise_key": cfg["noise_key"],
+                            "curves": curves_obj["curves"],
+                        })
+
+                    save_tau_gating_grid_plot(
+                        path=grid_root / f"tau_grid_{v}.png",
+                        title=f"τ-gated accuracy grid (avg across datasets) — {model} / {attack} / {v}",
+                        taus=list(taus),
+                        panels=panels,
+                        ylim=(0, 100),
+                        ncols=ncols,
+                    )
+
     # ============================================================
     # RUN (restrict to vit_l_14_datacomp_1b as per your earlier example)
     # ============================================================
@@ -1762,6 +2002,14 @@ if __name__ == "__main__":
         only_models=["vit_l_14_datacomp_1b"],
         datasets=datasets,
         save_json_curves=save_tau_json,
+    )
+
+    # New: grid figures (one per variant) that tile all noise configs.
+    plot_tau_gated_tpt_grids_all_noise_configs(
+        out_root=out_root,
+        only_models=["vit_l_14_datacomp_1b"],
+        datasets=datasets,
+        ncols=3,
     )
 
 

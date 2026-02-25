@@ -1673,7 +1673,7 @@ if __name__ == "__main__":
                 def plot_threshold_sweep_curves(*, out_dir: Path):
                     """For each variant, plot accuracy vs tau-threshold + bar version."""
                     # Use only the requested threshold grid (no dense sweep).
-                    thresholds = np.asarray([0.1, 0.4, 0.6, 0.8, 0.85, 0.9, 1.0], dtype=float)
+                    thresholds = np.asarray([0.0, 0.1, 0.4, 0.6, 0.8, 0.85, 0.9, 1.0], dtype=float)
                     thresholds_bar = thresholds
 
                     for v in variants:
