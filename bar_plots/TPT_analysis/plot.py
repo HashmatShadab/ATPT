@@ -933,6 +933,12 @@ if __name__ == "__main__":
                 "rtpt": "#D55E00",  # vermillion
                 "TPT": "#0072B2",
                 "rTPT": "#D55E00",
+
+                # Zero-shot series names (avg plot)
+                "Original": "#4D4D4D",  # neutral gray
+                "Single": "#0072B2",    # blue
+                "Vanilla": "#009E73",   # green
+                "Weighted": "#E69F00",  # orange
             }
             colors = [name_to_color.get(str(s["name"]), "#56B4E9") for s in series]
         if len(colors) != len(series):
@@ -1005,27 +1011,59 @@ if __name__ == "__main__":
         per_ds = {}
         for ds in datasets:
             labels = TRUE_LABELS_DATASET[ds]
+
+            # Original
             clean_preds = ZS_CLEAN_PREDS_DATASET[ds]
             adv_preds = ZS_ADV_PREDS_DATASET[ds]
-            _ensure_same_len(labels, clean_preds, adv_preds, name=f"{ds} zs preds")
 
-            clean_acc = accuracy_percent(clean_preds, labels)
-            adv_acc = accuracy_percent(adv_preds, labels)
+            # Vanilla
+            clean_preds_vanilla = ZS_CLEAN_PREDS_VANILLA_DATASET[ds]
+            adv_preds_vanilla = ZS_ADV_PREDS_VANILLA_DATASET[ds]
+
+            # Weighted
+            clean_preds_weighted = ZS_CLEAN_PREDS_WEIGHTED_DATASET[ds]
+            adv_preds_weighted = ZS_ADV_PREDS_WEIGHTED_DATASET[ds]
+
+            _ensure_same_len(labels, clean_preds, adv_preds, name=f"{ds} zs original preds")
+            _ensure_same_len(labels, clean_preds_vanilla, adv_preds_vanilla, name=f"{ds} zs vanilla preds")
+            _ensure_same_len(labels, clean_preds_weighted, adv_preds_weighted, name=f"{ds} zs weighted preds")
 
             per_ds[ds] = {
-                "zs_clean_acc": clean_acc,
-                "zs_adv_acc": adv_acc,
                 "num_samples": len(labels),
+                "single": {
+                    "zs_clean_acc": accuracy_percent(clean_preds, labels),
+                    "zs_adv_acc": accuracy_percent(adv_preds, labels),
+                },
+                "vanilla": {
+                    "zs_clean_acc": accuracy_percent(clean_preds_vanilla, labels),
+                    "zs_adv_acc": accuracy_percent(adv_preds_vanilla, labels),
+                },
+                "weighted": {
+                    "zs_clean_acc": accuracy_percent(clean_preds_weighted, labels),
+                    "zs_adv_acc": accuracy_percent(adv_preds_weighted, labels),
+                },
             }
 
         avg = {
-            "avg_zs_clean_acc": avg_across_datasets({d: per_ds[d]["zs_clean_acc"] for d in datasets}, datasets),
-            "avg_zs_adv_acc": avg_across_datasets({d: per_ds[d]["zs_adv_acc"] for d in datasets}, datasets),
+            "single": {
+                "avg_zs_clean_acc": avg_across_datasets({d: per_ds[d]["single"]["zs_clean_acc"] for d in datasets}, datasets),
+                "avg_zs_adv_acc": avg_across_datasets({d: per_ds[d]["single"]["zs_adv_acc"] for d in datasets}, datasets),
+            },
+            "vanilla": {
+                "avg_zs_clean_acc": avg_across_datasets({d: per_ds[d]["vanilla"]["zs_clean_acc"] for d in datasets}, datasets),
+                "avg_zs_adv_acc": avg_across_datasets({d: per_ds[d]["vanilla"]["zs_adv_acc"] for d in datasets}, datasets),
+            },
+            "weighted": {
+                "avg_zs_clean_acc": avg_across_datasets({d: per_ds[d]["weighted"]["zs_clean_acc"] for d in datasets}, datasets),
+                "avg_zs_adv_acc": avg_across_datasets({d: per_ds[d]["weighted"]["zs_adv_acc"] for d in datasets}, datasets),
+            },
         }
 
         print("[Zero-shot] Avg across datasets:")
-        for k, v in avg.items():
-            print(f"  - {k}: {v:.2f}")
+        for variant in ["single", "vanilla", "weighted"]:
+            print(f"  - {variant}:")
+            print(f"      clean: {avg[variant]['avg_zs_clean_acc']:.2f}")
+            print(f"      adv  : {avg[variant]['avg_zs_adv_acc']:.2f}")
 
         return {"per_dataset": per_ds, "avg": avg}
 
@@ -1045,14 +1083,36 @@ if __name__ == "__main__":
         zs = compute_zero_shot_avg_results(datasets)
         save_json(out_root / "zero_shot_avg_across_datasets.json", zs)
 
-        save_bar_plot(
+        # Plot grouped bars: x = attack condition, series = {original, vanilla, weighted}
+        x_labels = ["Clean", "Adversarial"]
+        series = [
+            {
+                "name": "Single",
+                "values": [
+                    zs["avg"]["single"]["avg_zs_clean_acc"],
+                    zs["avg"]["single"]["avg_zs_adv_acc"],
+                ],
+            },
+            {
+                "name": "Vanilla",
+                "values": [
+                    zs["avg"]["vanilla"]["avg_zs_clean_acc"],
+                    zs["avg"]["vanilla"]["avg_zs_adv_acc"],
+                ],
+            },
+            {
+                "name": "Weighted",
+                "values": [
+                    zs["avg"]["weighted"]["avg_zs_clean_acc"],
+                    zs["avg"]["weighted"]["avg_zs_adv_acc"],
+                ],
+            },
+        ]
+        save_grouped_bar_plot(
             out_root / "zero_shot_avg_across_datasets.png",
             "Zero-shot (avg across datasets)",
-            labels=["Clean", "Adversarial"],
-            values=[
-                zs["avg"]["avg_zs_clean_acc"],
-                zs["avg"]["avg_zs_adv_acc"],
-            ],
+            x_labels=x_labels,
+            series=series,
             ylabel="Accuracy (%)",
             ylim=(0, 100),
         )
@@ -1138,11 +1198,21 @@ if __name__ == "__main__":
                     for pv in pred_variants:
                         per_ds_metrics = {}
                         for ds in datasets:
-                            obj = tpt_dic[attack][model][ds][tpt_type]["preds"][pv]
-
                             # Source-of-truth labels (avoid any mismatch/leakage)
                             labels = TRUE_LABELS_DATASET[ds]
-                            preds = obj["prediction"]
+
+                            # IMPORTANT: "Zero-shot" bar should come from zero-shot runs,
+                            # not from the TPT folder's "original" json.
+                            if pv == "original":
+                                if attack == "clean":
+                                    preds = ZS_CLEAN_PREDS_DATASET[ds]
+                                elif attack == "adversarial_eps4_steps100":
+                                    preds = ZS_ADV_PREDS_DATASET[ds]
+                                else:
+                                    raise KeyError(f"Unsupported attack='{attack}' for zero-shot baseline mapping")
+                            else:
+                                obj = tpt_dic[attack][model][ds][tpt_type]["preds"][pv]
+                                preds = obj["prediction"]
                             _ensure_same_len(preds, labels, name=f"{attack}/{model}/{ds}/{tpt_type}/{pv}")
 
                             acc = accuracy_percent(preds, labels)
@@ -1269,9 +1339,21 @@ if __name__ == "__main__":
                     for pv in pred_variants:
                         per_ds_metrics = {}
                         for ds in datasets:
-                            obj = tpt_dic[attack][model][ds][t]["preds"][pv]
                             labels = TRUE_LABELS_DATASET[ds]
-                            preds = obj["prediction"]
+
+                            # Keep baseline consistent with plot_tpt_avg_results_and_plots:
+                            # when pv == "original" (displayed as "Zero-shot"), take preds from
+                            # the dedicated zero-shot runs.
+                            if pv == "original":
+                                if attack == "clean":
+                                    preds = ZS_CLEAN_PREDS_DATASET[ds]
+                                elif attack == "adversarial_eps4_steps100":
+                                    preds = ZS_ADV_PREDS_DATASET[ds]
+                                else:
+                                    raise KeyError(f"Unsupported attack='{attack}' for zero-shot baseline mapping")
+                            else:
+                                obj = tpt_dic[attack][model][ds][t]["preds"][pv]
+                                preds = obj["prediction"]
                             _ensure_same_len(preds, labels, name=f"{attack}/{model}/{ds}/{t}/{pv}")
                             per_ds_metrics[ds] = accuracy_percent(preds, labels)
 
