@@ -1,33 +1,47 @@
-"""
-Default TTC
+"""TPT analysis: aggregation + plotting.
 
-Final_Results_corrected_ca_tau_Counter_Attack/vit_l_14_datacomp_1b/<Dataset Name>/Adversarial_Eps_4_0_Steps_100/Counter_Attack/Eps_4_0_Steps_5_Alpha_1_0/tau_0_2_beta_2_0_weighted_pertrubation_True/No_TPT/Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01
-- results_original_clean.json
-- results_single.json
-- results_original.json
-- results_counter_attack_diff_ratio.json
+High-level flow
+----------------
+1) Load zero-shot predictions for each dataset (single / vanilla / weighted).
+2) Load TPT predictions for each dataset (e.g. `tpt`, `rtpt`).
+3) Load diff-ratio results produced by the diff-ratio pipeline.
+4) Produce plots:
+   - zero-shot avg-across-datasets
+   - TPT avg-across-datasets
+   - TPT-type comparison (`tpt` vs `rtpt`)
+   - threshold-sweep plots (x-axis = threshold) using per-sample gating:
+       if `diff_ratio > threshold` -> use TPT prediction
+       else -> use zero-shot prediction
 
-Final_Results_corrected_ca_tau_Counter_Attack/vit_l_14_datacomp_1b/<Dataset Name>/Clean/Counter_Attack/Eps_4_0_Steps_5_Alpha_1_0/tau_0_2_beta_2_0_weighted_pertrubation_True/No_TPT/Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01
-- results_original_clean.json
-- results_single.json
-- results_original.json
-- results_counter_attack_diff_ratio.json
+Folder layout reference (examples)
+---------------------------------
+- `Final_Results_corrected_ca_tau_Counter_Attack/vit_l_14_datacomp_1b/<Dataset Name>/...`
+  contains json files like:
+  - `results_original_clean.json`
+  - `results_single.json`
+  - `results_original.json`
+  - `results_counter_attack_diff_ratio.json`
 """
+
+from __future__ import annotations
 
 import argparse
 import json
 import os
 import re
-from typing import Any, Dict, Optional, List
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image
 
 
-def get_zs_results(model_name):
-    from pathlib import Path
-    import json
-    import numpy as np
+def get_zs_results(model_name: str) -> Dict[str, Any]:
+    """Load zero-shot predictions + labels for all datasets.
+
+    This function reads the json files produced by your zero-shot runs and returns
+    a single dictionary that is later used by the aggregation / plotting helpers.
+    """
 
     # MODELS = [
     #     "delta_clip_l14_224",
@@ -35,9 +49,8 @@ def get_zs_results(model_name):
     #     "ViT-L/14",
     #     "vit_l_14_datacomp_1b",
     # ]
-    MODELS = [
-             model_name,
-    ]
+    # Keep the structure consistent with earlier scripts that supported multiple models.
+    MODELS = [model_name]
 
     DATASETS = [
         "DTD",
@@ -72,10 +85,7 @@ def get_zs_results(model_name):
             "diff_ratio_avg": obj["avergae_diff_ratio"],
         }
 
-    def compute_accuracy(preds, labels):
-        preds = np.asarray(preds)
-        labels = np.asarray(labels)
-        return (preds == labels).mean() * 100.0
+    # NOTE: Prefer the global `compute_accuracy` / `accuracy_percent` helpers below.
 
     """
     ### ZERO SHOT Experiment
@@ -285,11 +295,11 @@ def get_zs_results(model_name):
 
     TRUE_LABELS_DATASET = true_labels_data
 
-    ZS_CLEAN_PREDS_DATASET = zero_shot_clean_preds_data
     ZS_ADV_PREDS_DATASET = zero_shot_adv_preds_data
     ZS_ADV_IMAGE_ONLY_PREDS_DATASET = zero_shot_adv_image_only_preds_data
     ZS_CLEAN_CORRECT_PREDS = zero_shot_clean_correct_preds
 
+    ZS_CLEAN_PREDS_DATASET = zero_shot_clean_preds_data
     # Vanilla
     ZS_CLEAN_PREDS_VANILLA_DATASET = zero_shot_clean_preds_vanilla_data
     ZS_ADV_PREDS_VANILLA_DATASET = zero_shot_adv_preds_vanilla_data
@@ -300,17 +310,26 @@ def get_zs_results(model_name):
     ZS_ADV_PREDS_WEIGHTED_DATASET = zero_shot_adv_preds_weighted_data
     ZS_ADV_IMAGE_ONLY_PREDS_WEIGHTED_DATASET = zero_shot_adv_image_only_preds_weighted_data
 
-    return_dic = {"zero_shot_clean": ZS_CLEAN_PREDS_DATASET, "zero_shot_adv": ZS_ADV_PREDS_DATASET,
-                  "zero_shot_adv_image_only": ZS_ADV_IMAGE_ONLY_PREDS_DATASET,
-                  "true_labels": TRUE_LABELS_DATASET,
-                  "zero_shot_clean_correct_preds": ZS_CLEAN_CORRECT_PREDS,
-                  "zero_shot_clean_vanilla": ZS_CLEAN_PREDS_VANILLA_DATASET, "zero_shot_adv_vanilla": ZS_ADV_PREDS_VANILLA_DATASET,
-                  "zero_shot_adv_image_only_vanilla": ZS_ADV_IMAGE_ONLY_PREDS_VANILLA_DATASET,
-                  "zero_shot_clean_weighted": ZS_CLEAN_PREDS_WEIGHTED_DATASET, "zero_shot_adv_weighted": ZS_ADV_PREDS_WEIGHTED_DATASET,
-                  "zero_shot_adv_image_only_weighted": ZS_ADV_IMAGE_ONLY_PREDS_WEIGHTED_DATASET,}
+    return_dic = {
+        "zero_shot_clean": ZS_CLEAN_PREDS_DATASET,
+        "zero_shot_adv": ZS_ADV_PREDS_DATASET,
+        "zero_shot_adv_image_only": ZS_ADV_IMAGE_ONLY_PREDS_DATASET,
+        "true_labels": TRUE_LABELS_DATASET,
+        "zero_shot_clean_correct_preds": ZS_CLEAN_CORRECT_PREDS,
+        "zero_shot_clean_vanilla": ZS_CLEAN_PREDS_VANILLA_DATASET,
+        "zero_shot_adv_vanilla": ZS_ADV_PREDS_VANILLA_DATASET,
+        "zero_shot_adv_image_only_vanilla": ZS_ADV_IMAGE_ONLY_PREDS_VANILLA_DATASET,
+        "zero_shot_clean_weighted": ZS_CLEAN_PREDS_WEIGHTED_DATASET,
+        "zero_shot_adv_weighted": ZS_ADV_PREDS_WEIGHTED_DATASET,
+        "zero_shot_adv_image_only_weighted": ZS_ADV_IMAGE_ONLY_PREDS_WEIGHTED_DATASET,
+    }
 
     return return_dic
 
+def compute_accuracy(preds, labels):
+    preds = np.asarray(preds)
+    labels = np.asarray(labels)
+    return (preds == labels).mean() * 100.0
 
 
 def parse_experiment_folder_name(folder_name: str) -> Optional[Dict[str, Any]]:
@@ -493,10 +512,12 @@ def get_aggregated_results(root: str, selected_attacks: Optional[List[str]] = No
 
     return aggregated
 
-def get_tpt_results(model_name):
-    from pathlib import Path
-    import json
-    import numpy as np
+def get_tpt_results(model_name: str) -> Dict[str, Any]:
+    """Load TPT predictions for all datasets.
+
+    Returns a nested dictionary keyed as:
+      tpt_dic[attack][model][dataset][tpt_type]["preds"][variant] -> prediction payload
+    """
 
     # MODELS = [
     #     "delta_clip_l14_224",
@@ -504,9 +525,8 @@ def get_tpt_results(model_name):
     #     "ViT-L/14",
     #     "vit_l_14_datacomp_1b",
     # ]
-    MODELS = [
-             model_name,
-    ]
+    # Keep the list wrapper for backward compatibility with earlier multi-model scripts.
+    MODELS = [model_name]
 
     DATASETS = [
         "DTD",
@@ -526,19 +546,10 @@ def get_tpt_results(model_name):
             return json.load(f)
 
     def _load_pred_json(obj: dict, *, allow_extra: bool = False) -> dict:
-        out = {}
-        for k in obj.keys():
-            out[k] = obj[k]
-
-
-        return out
-
-
-
-    def compute_accuracy(preds, labels):
-        preds = np.asarray(preds)
-        labels = np.asarray(labels)
-        return (preds == labels).mean() * 100.0
+        # TPT prediction jsons can contain multiple keys; we keep them all.
+        # (The downstream plotting code expects at least `prediction` and `label`.)
+        return dict(obj)
+    # NOTE: Prefer the global `compute_accuracy` / `accuracy_percent` helpers below.
 
     """
     ### ZERO SHOT Experiment
@@ -659,9 +670,44 @@ def get_tpt_results(model_name):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="AOM analysis plotting / aggregation")
     parser.add_argument("--model-name", type=str, default="vit_l_14_datacomp_1b")
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        nargs="*",
+        default=None,
+        help=(
+            "One or more diff-ratio thresholds for gating: if diff_ratio > threshold use TPT prediction else zero-shot. "
+            "If omitted, uses [0.0, 0.1, ..., 1.0]."
+        ),
+    )
+    parser.add_argument(
+        "--threshold-noise-type",
+        type=str,
+        default="Uniform",
+        choices=["Uniform", "Gaussian"],
+        help="Noise type slice to take from final_diff_ratio_dic for thresholded gating.",
+    )
+    parser.add_argument(
+        "--threshold-noise-value",
+        type=str,
+        default="Eps_24.0",
+        help="Noise value key to take from final_diff_ratio_dic for thresholded gating (e.g., 'Eps_24.0').",
+    )
+    parser.add_argument(
+        "--threshold-attack",
+        type=str,
+        default="Adversarial",
+        choices=["Clean", "Adversarial"],
+        help="Attack slice to take from final_diff_ratio_dic for thresholded gating.",
+    )
 
 
     args = parser.parse_args()
+
+    # Default thresholds: include 0.0 (requested as the 'no-threshold' entry) up to 1.0.
+    # Keep backward compatibility: `--threshold 0.5` becomes [0.5].
+    if not args.threshold:
+        args.threshold = [round(i * 0.1, 1) for i in range(0, 11)]
 
     model_name = args.model_name
 
@@ -685,14 +731,21 @@ if __name__ == "__main__":
     ZS_ADV_PREDS_WEIGHTED_DATASET = zero_shot_dic["zero_shot_adv_weighted"]
 
 
+    # ------------------------------------------------------------
+    # Diff-ratio results
+    # ------------------------------------------------------------
+    # The diff-ratio pipeline saves metrics under `Diffratio_Adv_gen_Results/...`.
+    # We load those jsons and reformat them into `final_diff_ratio_dic`, which is
+    # later used by the threshold gate (per-sample decision).
     root_diff_ratio = "../../Diffratio_Adv_gen_Results/vit_l_14_datacomp_1b"
-    selected_attacks = ['eps_0.0_steps_0', 'eps_4.0_steps_100']
+    selected_attacks = ["eps_0.0_steps_0", "eps_4.0_steps_100"]
     print(f"Loading diff ratio results from: {root_diff_ratio}")
-    diff_ratio_dic = get_aggregated_results(root_diff_ratio, selected_attacks=selected_attacks)
 
+    diff_ratio_dic = get_aggregated_results(root_diff_ratio, selected_attacks=selected_attacks)
     diff_ratio_dic = diff_ratio_dic["results"]["vit_l_14_datacomp_1b"]
 
-    final_diff_ratio_dic = {}
+    # final_diff_ratio_dic[dataset][Clean|Adversarial][Uniform|Gaussian][NoiseValue] -> list[float]
+    final_diff_ratio_dic: Dict[str, Any] = {}
 
     for dataset_key, dataset_value in diff_ratio_dic.items():
         final_diff_ratio_dic[dataset_key] = {}
@@ -709,7 +762,10 @@ if __name__ == "__main__":
                     noise_type_name = "Uniform"
                 final_diff_ratio_dic[dataset_key][attack_name][noise_type_name] = {}
                 for noise_param_key, noise_param_value in noise_type_value.items():
-                    for tau_type_key, tau_type_value in noise_param_value.items():
+                    # A given noise value can contain multiple tau variants.
+                    # For thresholding we only need the per-sample list stored under
+                    # `diff_ratio_after_counter_attack`.
+                    for _tau_type_key, tau_type_value in noise_param_value.items():
                         diff_ratio = tau_type_value.get("diff_ratio_after_counter_attack", None)
                         final_diff_ratio_dic[dataset_key][attack_name][noise_type_name][noise_param_key] = diff_ratio
 
@@ -717,10 +773,17 @@ if __name__ == "__main__":
 
 
 
-    tpt_dic = get_tpt_results(
-        model_name,
+    # ------------------------------------------------------------
+    # TPT results
+    # ------------------------------------------------------------
+    tpt_dic = get_tpt_results(model_name)
 
-    )
+    # ============================================================
+    # Helpers + plotting utilities
+    # ============================================================
+    # Everything below is pure-Python manipulation / plotting.
+    # The helpers are intentionally kept small and explicit so it is easy
+    # to sanity-check aggregation and thresholding behavior.
 
     def ensure_dir(path: str):
         os.makedirs(path, exist_ok=True)
@@ -730,13 +793,6 @@ if __name__ == "__main__":
         preds = np.asarray(preds)
         labels = np.asarray(labels)
         return (preds == labels).mean() * 100.0
-
-
-    import os
-    import json
-    from pathlib import Path
-    import numpy as np
-    import matplotlib.pyplot as plt
 
 
     # ============================================================
@@ -1044,6 +1100,408 @@ if __name__ == "__main__":
         print(f"[Saved] {path}")
 
 
+    def save_line_plot(
+            path,
+            title,
+            x_values,
+            series,
+            xlabel="Threshold",
+            ylabel="Accuracy (%)",
+            ylim=(0, 100),
+            value_fmt="{:.2f}",
+            colors=None,
+            grid_axis="both",
+            grid_alpha=0.25,
+            legend_loc="best",
+            marker="o",
+            linewidth=2.0,
+    ):
+        """Save a line plot.
+
+        x_values: list[float]
+        series: list of dicts, each:
+          {"name": str, "values": list[float] (same length as x_values)}
+        """
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        if not series:
+            raise ValueError("series must be non-empty")
+        n = len(x_values)
+        for s in series:
+            if len(s["values"]) != n:
+                raise ValueError(f"Length mismatch in series '{s.get('name', '?')}'. Expected {n} values.")
+
+        # --- style (match bar plots)
+        plt.rcParams.update({
+            "figure.dpi": 120,
+            "savefig.dpi": 300,
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "axes.axisbelow": True,
+            "axes.titlesize": 13,
+            "axes.labelsize": 12,
+            "xtick.labelsize": 11,
+            "ytick.labelsize": 11,
+            "font.size": 11,
+        })
+
+        if colors is None:
+            name_to_color = {
+                "Zero-shot": "#4D4D4D",
+                "Thresholded": "#009E73",
+                "tpt": "#0072B2",
+                "rtpt": "#D55E00",
+            }
+            colors = [name_to_color.get(str(s["name"]), "#56B4E9") for s in series]
+        if len(colors) != len(series):
+            raise ValueError("colors must have same length as series")
+
+        fig, ax = plt.subplots(figsize=(10.2, 4.9))
+        x = np.asarray(x_values, dtype=float)
+
+        for i, s in enumerate(series):
+            y = np.asarray(s["values"], dtype=float)
+            ax.plot(
+                x,
+                y,
+                label=str(s["name"]),
+                color=colors[i],
+                marker=marker,
+                linewidth=linewidth,
+            )
+
+        ax.grid(True, axis=grid_axis, alpha=grid_alpha, linestyle="-")
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.set_ylim(*ylim)
+        ax.set_title(title)
+        ax.legend(loc=legend_loc)
+
+        # annotate points lightly
+        y_min, y_max = ylim
+        y_range = float(y_max - y_min) if (y_max is not None and y_min is not None) else None
+        pad = 0.012 * y_range if y_range else 0.0
+        for i, s in enumerate(series):
+            for xv, yv in zip(x, s["values"]):
+                if yv is None or (isinstance(yv, float) and np.isnan(yv)):
+                    continue
+                ax.text(
+                    float(xv),
+                    float(yv) + pad,
+                    value_fmt.format(float(yv)),
+                    ha="center",
+                    va="bottom",
+                    fontsize=9,
+                    color=colors[i],
+                    clip_on=True,
+                )
+
+        fig.tight_layout()
+        fig.savefig(path)
+        plt.close(fig)
+        print(f"[Saved] {path}")
+
+
+    # ============================================================
+    # Thresholded prediction (gate between zero-shot and TPT)
+    # ============================================================
+    def _get_diff_ratio_for_thresholding(
+            *,
+            dataset: str,
+            attack_name: Optional[str] = None,
+            noise_type_name: Optional[str] = None,
+            noise_value_key: Optional[str] = None,
+    ):
+        """Return per-sample diff-ratio list for a selected (attack, noise_type, noise_value).
+
+        If any of the slice keys are not provided, they default to the CLI args.
+        """
+        # By default, thresholding uses the CLI-selected slice. Callers can override
+        # any of these keys to run the gate against a different diff-ratio slice
+        # (e.g., the fixed `Uniform` + `Eps_24.0` reference slice).
+        attack_name = args.threshold_attack if attack_name is None else attack_name
+        noise_type_name = args.threshold_noise_type if noise_type_name is None else noise_type_name
+        noise_value_key = args.threshold_noise_value if noise_value_key is None else noise_value_key
+
+        try:
+            diff_ratios = final_diff_ratio_dic[dataset][attack_name][noise_type_name][noise_value_key]
+        except KeyError as e:
+            available = {}
+            try:
+                available = final_diff_ratio_dic.get(dataset, {}).get(attack_name, {}).get(noise_type_name, {})
+            except Exception:
+                available = {}
+            raise KeyError(
+                f"Missing diff-ratio slice for thresholding: dataset='{dataset}', "
+                f"attack='{attack_name}', noise_type='{noise_type_name}', noise_value='{noise_value_key}'. "
+                f"Available noise values under that slice: {sorted(list(available.keys())) if isinstance(available, dict) else available}"
+            ) from e
+
+        if diff_ratios is None:
+            raise ValueError(
+                f"Diff-ratio list is None for dataset='{dataset}', attack='{attack_name}', "
+                f"noise_type='{noise_type_name}', noise_value='{noise_value_key}'."
+            )
+        return diff_ratios
+
+
+    def build_thresholded_predictions(
+            *,
+            attack: str,
+            model: str,
+            dataset: str,
+            tpt_type: str,
+            variant: str,
+            threshold: float,
+            diff_ratio_attack: Optional[str] = None,
+            diff_ratio_noise_type: Optional[str] = None,
+            diff_ratio_noise_value: Optional[str] = None,
+    ):
+        """Per-sample gate: if diff_ratio > threshold use TPT pred else zero-shot pred."""
+        # This function returns the *per-sample* thresholded predictions for one
+        # (attack, model, dataset, tpt_type, variant, threshold) configuration.
+        labels = TRUE_LABELS_DATASET[dataset]
+
+        # Baseline predictions used when diff_ratio <= threshold.
+        zs_preds = _get_zero_shot_preds_for_variant(attack=attack, dataset=dataset, zs_variant=variant)
+
+        # NOTE:
+        # - `tpt_dic` attack keys are `clean` / `adversarial_eps4_steps100`.
+        # - `final_diff_ratio_dic` attack keys are `Clean` / `Adversarial`.
+        diff_ratio_attack = args.threshold_attack if diff_ratio_attack is None else diff_ratio_attack
+        diff_ratio_noise_type = args.threshold_noise_type if diff_ratio_noise_type is None else diff_ratio_noise_type
+        diff_ratio_noise_value = args.threshold_noise_value if diff_ratio_noise_value is None else diff_ratio_noise_value
+
+        diff_ratios = _get_diff_ratio_for_thresholding(
+            dataset=dataset,
+            attack_name=diff_ratio_attack,
+            noise_type_name=diff_ratio_noise_type,
+            noise_value_key=diff_ratio_noise_value,
+        )
+
+        # TPT predictions used when diff_ratio > threshold.
+        try:
+            tpt_preds = tpt_dic[attack][model][dataset][tpt_type]["preds"][variant]["prediction"]
+        except KeyError as e:
+            raise KeyError(
+                f"Missing TPT predictions for thresholding: attack='{attack}', model='{model}', dataset='{dataset}', "
+                f"tpt_type='{tpt_type}', variant='{variant}'."
+            ) from e
+
+        _ensure_same_len(labels, zs_preds, name=f"{attack}/{model}/{dataset}/labels vs zs/{variant}")
+        _ensure_same_len(labels, tpt_preds, name=f"{attack}/{model}/{dataset}/labels vs tpt/{tpt_type}/{variant}")
+        _ensure_same_len(
+            labels,
+            diff_ratios,
+            name=f"{dataset}/labels vs diff_ratios ({diff_ratio_attack}/{diff_ratio_noise_type}/{diff_ratio_noise_value})",
+        )
+
+        # Gate per sample.
+        thr_preds = []
+        num_tpt = 0
+        num_zs = 0
+        for dr, p_tpt, p_zs in zip(diff_ratios, tpt_preds, zs_preds):
+            if dr is None:
+                # Be strict: missing diff-ratio should not silently bias results.
+                raise ValueError(
+                    f"Found None diff_ratio value for dataset='{dataset}'. "
+                    f"Check metrics JSON for {diff_ratio_attack}/{diff_ratio_noise_type}/{diff_ratio_noise_value}."
+                )
+            # Important: strict `>` matches the original requirement.
+            if float(dr) > float(threshold):
+                thr_preds.append(p_tpt)
+                num_tpt += 1
+            else:
+                thr_preds.append(p_zs)
+                num_zs += 1
+
+        return {
+            "predictions": thr_preds,
+            "labels": labels,
+            "num_used_tpt": num_tpt,
+            "num_used_zs": num_zs,
+            "fraction_used_tpt": (num_tpt / max(len(labels), 1)),
+        }
+
+
+    def plot_thresholded_avg_results(
+            *,
+            out_root="Results",
+            only_models=None,
+            datasets=None,
+            thresholds=None,
+    ):
+        """Plot avg-across-datasets for {Zero-shot, TPT, Thresholded} for each variant."""
+        out_root = Path(out_root)
+        out_root.mkdir(parents=True, exist_ok=True)
+
+        if datasets is None:
+            datasets = list(TRUE_LABELS_DATASET.keys())
+        if thresholds is None:
+            thresholds = list(args.threshold)
+
+        # sanitize
+        thresholds = [float(t) for t in thresholds]
+        thresholds = sorted(set(thresholds))
+
+        # We generate thresholded plots for:
+        #   (1) the currently selected diff-ratio slice (CLI args)
+        #   (2) additionally, a fixed slice: Noise Type = Uniform, Noise Value = Eps_24.0
+        # This enables a consistent comparison against the user-requested reference slice.
+        diff_ratio_slices = [
+            {
+                "tag": "selected",
+                "attack": args.threshold_attack,
+                "noise_type": args.threshold_noise_type,
+                "noise_value": args.threshold_noise_value,
+            },
+            {
+                "tag": "uniform_eps24",
+                "attack": args.threshold_attack,
+                "noise_type": "Uniform",
+                "noise_value": "Eps_24.0",
+            },
+        ]
+
+        attacks = list(tpt_dic.keys())
+        for diff_slice in diff_ratio_slices:
+            sweep_root = (
+                out_root
+                / "Thresholded"
+                / diff_slice["tag"]
+                / f"Noise_{diff_slice['noise_type']}_{diff_slice['noise_value']}"
+                / f"Attack_{diff_slice['attack']}"
+                / "Threshold_Sweep"
+            )
+            sweep_root.mkdir(parents=True, exist_ok=True)
+
+            for attack in attacks:
+                models = list(tpt_dic[attack].keys())
+                for model in models:
+                    if only_models is not None and model not in only_models:
+                        continue
+
+                    # Only run threshold sweep for the requested diff-ratio attack slice.
+                    attack_to_diff_ratio_attack = {
+                        "clean": "Clean",
+                        "adversarial_eps4_steps100": "Adversarial",
+                    }
+                    if attack_to_diff_ratio_attack.get(attack) != diff_slice["attack"]:
+                        continue
+
+                    ref_ds = datasets[0]
+                    tpt_types = list(tpt_dic[attack][model][ref_ds].keys())
+                    variants = ["single", "vanilla", "weighted"]
+
+                    for tpt_type in tpt_types:
+                        pred_variants_all = set(tpt_dic[attack][model][ref_ds][tpt_type]["preds"].keys())
+                        available_variants = [v for v in variants if v in pred_variants_all]
+                        if not available_variants:
+                            continue
+
+                        out_dir = sweep_root / model / attack / tpt_type
+                        out_dir.mkdir(parents=True, exist_ok=True)
+
+                        summary = {
+                            "attack": attack,
+                            "model": model,
+                            "tpt_type": tpt_type,
+                            "datasets": datasets,
+                            "thresholds": thresholds,
+                            "diff_ratio_slice": {
+                                "tag": diff_slice["tag"],
+                                "attack": diff_slice["attack"],
+                                "noise_type": diff_slice["noise_type"],
+                                "noise_value": diff_slice["noise_value"],
+                            },
+                            "per_variant": {},
+                        }
+
+                        for v in available_variants:
+                            # Constant baselines (avg across datasets)
+                            zs_per_ds = {}
+                            tpt_per_ds = {}
+                            for ds in datasets:
+                                labels = TRUE_LABELS_DATASET[ds]
+
+                                zs_preds = _get_zero_shot_preds_for_variant(attack=attack, dataset=ds, zs_variant=v)
+                                _ensure_same_len(zs_preds, labels, name=f"{attack}/{model}/{ds}/zero-shot/{v}")
+                                zs_per_ds[ds] = accuracy_percent(zs_preds, labels)
+
+                                tpt_obj = tpt_dic[attack][model][ds][tpt_type]["preds"][v]
+                                tpt_preds = tpt_obj["prediction"]
+                                _ensure_same_len(tpt_preds, labels, name=f"{attack}/{model}/{ds}/{tpt_type}/{v}")
+                                tpt_per_ds[ds] = accuracy_percent(tpt_preds, labels)
+
+                            zs_avg = avg_across_datasets(zs_per_ds, datasets)
+                            tpt_avg = avg_across_datasets(tpt_per_ds, datasets)
+
+                            # Threshold-dependent results
+                            thr_avg_by_threshold = []
+                            frac_used_tpt_avg_by_threshold = []
+                            for threshold in thresholds:
+                                thr_per_ds = {}
+                                frac_used_tpt_per_ds = {}
+                                for ds in datasets:
+                                    labels = TRUE_LABELS_DATASET[ds]
+                                    thr = build_thresholded_predictions(
+                                        attack=attack,
+                                        model=model,
+                                        dataset=ds,
+                                        tpt_type=tpt_type,
+                                        variant=v,
+                                        threshold=float(threshold),
+                                        diff_ratio_attack=diff_slice["attack"],
+                                        diff_ratio_noise_type=diff_slice["noise_type"],
+                                        diff_ratio_noise_value=diff_slice["noise_value"],
+                                    )
+                                    thr_per_ds[ds] = accuracy_percent(thr["predictions"], labels)
+                                    frac_used_tpt_per_ds[ds] = float(thr["fraction_used_tpt"])
+
+                                thr_avg_by_threshold.append(avg_across_datasets(thr_per_ds, datasets))
+                                frac_used_tpt_avg_by_threshold.append(avg_across_datasets(frac_used_tpt_per_ds, datasets))
+
+                            summary["per_variant"][v] = {
+                                "zero_shot": {
+                                    "avg_acc_across_datasets": zs_avg,
+                                    "per_dataset": zs_per_ds,
+                                },
+                                "tpt": {
+                                    "avg_acc_across_datasets": tpt_avg,
+                                    "per_dataset": tpt_per_ds,
+                                },
+                                "thresholded": {
+                                    "avg_acc_across_datasets_by_threshold": thr_avg_by_threshold,
+                                    "avg_fraction_used_tpt_by_threshold": frac_used_tpt_avg_by_threshold,
+                                },
+                            }
+
+                            # Plot: x-axis = thresholds, curves = {Zero-shot, tpt_type, Thresholded}
+                            series = [
+                                {"name": "Zero-shot", "values": [zs_avg for _ in thresholds]},
+                                {"name": tpt_type, "values": [tpt_avg for _ in thresholds]},
+                                {"name": "Thresholded", "values": thr_avg_by_threshold},
+                            ]
+                            save_line_plot(
+                                out_dir / f"threshold_sweep_avg_acc_{v}.png",
+                                (
+                                    f"{model} | {tpt_type} | {attack} | {v} | Threshold sweep "
+                                    f"({diff_slice['noise_type']} {diff_slice['noise_value']})"
+                                ),
+                                x_values=thresholds,
+                                series=series,
+                                xlabel="Threshold",
+                                ylabel="Accuracy (%)",
+                                ylim=(0, 100),
+                                legend_loc="best",
+                            )
+
+                        save_json(out_dir / "thresholded_threshold_sweep_avg_across_datasets.json", summary)
+
+            print(f"\n[Done] Threshold sweep outputs written to: {sweep_root.resolve()}")
+
+
     # ============================================================
     # 1) Zero-shot results (avg across datasets) [NO conservative]
     # ============================================================
@@ -1110,7 +1568,7 @@ if __name__ == "__main__":
 
     def plot_zero_shot_avg_results(
             *,
-            out_root="Results_AvgAcrossDatasets",
+            out_root="Results",
             datasets=None,
     ):
         """Compute + save the zero-shot avg-across-datasets JSON + plot."""
@@ -1171,7 +1629,7 @@ if __name__ == "__main__":
     # ============================================================
     def plot_tpt_avg_results_and_plots(
             *,
-            out_root="Results_AvgAcrossDatasets",
+            out_root="Results",
             only_models=None,  # e.g. ["vit_l_14_datacomp_1b"]
             datasets=None,
     ):
@@ -1314,7 +1772,7 @@ if __name__ == "__main__":
     # ============================================================
     def plot_tpt_type_comparison_avg_across_datasets(
             *,
-            out_root="Results_AvgAcrossDatasets",
+            out_root="Results",
             only_models=None,
             datasets=None,
             tpt_types_order=None,
@@ -1327,7 +1785,7 @@ if __name__ == "__main__":
         if tpt_types_order is None:
             tpt_types_order = ["tpt", "rtpt"]
 
-        comparison_root = out_root / "TPT_Type_Comparison"
+        comparison_root = out_root / "TPT_vs_RTPT_Comparison"
         comparison_root.mkdir(parents=True, exist_ok=True)
 
         attacks = list(tpt_dic.keys())
@@ -1447,7 +1905,7 @@ if __name__ == "__main__":
     # ============================================================
     # RUN (sequence: zero-shot first, then TPT)
     # ============================================================
-    out_root = "Results_AvgAcrossDatasets"
+    out_root = "Results"
     datasets = list(TRUE_LABELS_DATASET.keys())
 
     plot_zero_shot_avg_results(
@@ -1465,6 +1923,14 @@ if __name__ == "__main__":
         out_root=out_root,
         only_models=["vit_l_14_datacomp_1b"],
         datasets=datasets,
+    )
+
+    # Thresholded (gate between zero-shot and TPT using per-sample diff ratio)
+    plot_thresholded_avg_results(
+        out_root=out_root,
+        only_models=["vit_l_14_datacomp_1b"],
+        datasets=datasets,
+        thresholds=args.threshold,
     )
 
 
