@@ -303,7 +303,11 @@ def get_zs_results(model_name):
     return_dic = {"zero_shot_clean": ZS_CLEAN_PREDS_DATASET, "zero_shot_adv": ZS_ADV_PREDS_DATASET,
                   "zero_shot_adv_image_only": ZS_ADV_IMAGE_ONLY_PREDS_DATASET,
                   "true_labels": TRUE_LABELS_DATASET,
-                  "zero_shot_clean_correct_preds": ZS_CLEAN_CORRECT_PREDS,}
+                  "zero_shot_clean_correct_preds": ZS_CLEAN_CORRECT_PREDS,
+                  "zero_shot_clean_vanilla": ZS_CLEAN_PREDS_VANILLA_DATASET, "zero_shot_adv_vanilla": ZS_ADV_PREDS_VANILLA_DATASET,
+                  "zero_shot_adv_image_only_vanilla": ZS_ADV_IMAGE_ONLY_PREDS_VANILLA_DATASET,
+                  "zero_shot_clean_weighted": ZS_CLEAN_PREDS_WEIGHTED_DATASET, "zero_shot_adv_weighted": ZS_ADV_PREDS_WEIGHTED_DATASET,
+                  "zero_shot_adv_image_only_weighted": ZS_ADV_IMAGE_ONLY_PREDS_WEIGHTED_DATASET,}
 
     return return_dic
 
@@ -671,6 +675,15 @@ if __name__ == "__main__":
     # Zero-Shot clean correct predictions for all datasets
     ZS_CLEAN_CORRECT_DATASET = zero_shot_dic["zero_shot_clean_correct_preds"]
 
+    # Zero-shot clean vanilla predictions for all datasets
+    ZS_CLEAN_PREDS_VANILLA_DATASET = zero_shot_dic["zero_shot_clean_vanilla"]
+    # Zero-shot adversarial vanilla predictions for all datasets
+    ZS_ADV_PREDS_VANILLA_DATASET = zero_shot_dic["zero_shot_adv_vanilla"]
+    # Zero-shot clean weighted predictions for all datasets
+    ZS_CLEAN_PREDS_WEIGHTED_DATASET = zero_shot_dic["zero_shot_clean_weighted"]
+    # Zero-shot adversarial weighted predictions for all datasets
+    ZS_ADV_PREDS_WEIGHTED_DATASET = zero_shot_dic["zero_shot_adv_weighted"]
+
 
     root_diff_ratio = "../../Diffratio_Adv_gen_Results/vit_l_14_datacomp_1b"
     selected_attacks = ['eps_0.0_steps_0', 'eps_4.0_steps_100']
@@ -867,6 +880,124 @@ if __name__ == "__main__":
         print(f"[Saved] {path}")
 
 
+    def save_grouped_bar_plot(
+            path,
+            title,
+            x_labels,
+            series,
+            ylabel="Accuracy (%)",
+            ylim=(0, 100),
+            value_fmt="{:.2f}",
+            colors=None,
+            bar_edgecolor="#1a1a1a",
+            bar_linewidth=0.7,
+            grid_axis="y",
+            grid_alpha=0.25,
+            legend_loc="best",
+    ):
+        """
+        Save grouped bar plot.
+
+        x_labels: list[str] categories on x-axis.
+        series: list of dicts, each:
+          {"name": str, "values": list[float] (same length as x_labels)}
+        """
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        if not series:
+            raise ValueError("series must be non-empty")
+        n = len(x_labels)
+        for s in series:
+            if len(s["values"]) != n:
+                raise ValueError(f"Length mismatch in series '{s.get('name', '?')}'. Expected {n} values.")
+
+        # --- style (local, self-contained)
+        plt.rcParams.update({
+            "figure.dpi": 120,
+            "savefig.dpi": 300,
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "axes.axisbelow": True,
+            "axes.titlesize": 13,
+            "axes.labelsize": 12,
+            "xtick.labelsize": 11,
+            "ytick.labelsize": 11,
+            "font.size": 11,
+        })
+
+        if colors is None:
+            # Consistent with save_bar_plot; fixed mapping for common names
+            name_to_color = {
+                "tpt": "#0072B2",   # blue
+                "rtpt": "#D55E00",  # vermillion
+                "TPT": "#0072B2",
+                "rTPT": "#D55E00",
+            }
+            colors = [name_to_color.get(str(s["name"]), "#56B4E9") for s in series]
+        if len(colors) != len(series):
+            raise ValueError("colors must have same length as series")
+
+        fig, ax = plt.subplots(figsize=(10, 4.9))
+        x = np.arange(n)
+
+        # bar geometry
+        total_width = 0.72
+        bar_width = total_width / max(len(series), 1)
+        offsets = (np.arange(len(series)) - (len(series) - 1) / 2.0) * bar_width
+
+        bars_by_series = []
+        for i, s in enumerate(series):
+            vals = np.asarray(s["values"], dtype=float)
+            bars = ax.bar(
+                x + offsets[i],
+                vals,
+                width=bar_width * 0.95,
+                label=str(s["name"]),
+                color=colors[i],
+                edgecolor=bar_edgecolor,
+                linewidth=bar_linewidth,
+            )
+            bars_by_series.append((bars, vals))
+
+        ax.grid(True, axis=grid_axis, alpha=grid_alpha, linestyle="-")
+
+        # annotate
+        y_min, y_max = ylim
+        y_range = float(y_max - y_min) if (y_max is not None and y_min is not None) else None
+        pad = 0.012 * y_range if y_range else 0.0
+        for (bars, vals) in bars_by_series:
+            for rect, v in zip(bars, vals):
+                if v is None or (isinstance(v, float) and np.isnan(v)):
+                    continue
+                ax.text(
+                    rect.get_x() + rect.get_width() / 2.0,
+                    rect.get_height() + pad,
+                    value_fmt.format(float(v)),
+                    ha="center",
+                    va="bottom",
+                    fontsize=10,
+                    color="#222222",
+                    clip_on=True,
+                )
+
+        ax.set_xticks(x)
+        max_label_len = max((len(str(l)) for l in x_labels), default=0)
+        if max_label_len >= 10:
+            ax.set_xticklabels(x_labels, rotation=20, ha="right")
+        else:
+            ax.set_xticklabels(x_labels)
+
+        ax.set_ylabel(ylabel)
+        ax.set_ylim(*ylim)
+        ax.set_title(title)
+        ax.legend(loc=legend_loc)
+        fig.tight_layout()
+        fig.savefig(path)
+        plt.close(fig)
+        print(f"[Saved] {path}")
+
+
     # ============================================================
     # 1) Zero-shot results (avg across datasets) [NO conservative]
     # ============================================================
@@ -1049,6 +1180,129 @@ if __name__ == "__main__":
 
 
     # ============================================================
+    # 3) TPT type comparison (tpt vs rtpt), avg across datasets
+    #    Output folder (in addition to existing structure):
+    #       out_root/
+    #         TPT_Type_Comparison/
+    #           Model/
+    #             attack/
+    #               tpt_type_comparison_avg_across_datasets.json
+    #               tpt_type_comparison_avg_across_datasets.png
+    #
+    # Each bar plot contains averages across datasets for both TPT types.
+    # ============================================================
+    def plot_tpt_type_comparison_avg_across_datasets(
+            *,
+            out_root="Results_AvgAcrossDatasets",
+            only_models=None,
+            datasets=None,
+            tpt_types_order=None,
+    ):
+        out_root = Path(out_root)
+        out_root.mkdir(parents=True, exist_ok=True)
+
+        if datasets is None:
+            datasets = list(TRUE_LABELS_DATASET.keys())
+        if tpt_types_order is None:
+            tpt_types_order = ["tpt", "rtpt"]
+
+        comparison_root = out_root / "TPT_Type_Comparison"
+        comparison_root.mkdir(parents=True, exist_ok=True)
+
+        attacks = list(tpt_dic.keys())
+        for attack in attacks:
+            print(f"\n[TPT Type Comparison] Processing attack='{attack}'")
+            models = list(tpt_dic[attack].keys())
+
+            for model in models:
+                if only_models is not None and model not in only_models:
+                    continue
+
+                # sanity: datasets exist
+                for ds in datasets:
+                    if ds not in tpt_dic[attack][model]:
+                        raise KeyError(f"Missing dataset '{ds}' under tpt_dic['{attack}']['{model}'].")
+
+                # discover available tpt types
+                available_tpt_types = list(tpt_dic[attack][model][datasets[0]].keys())
+                tpt_types = [t for t in tpt_types_order if t in available_tpt_types]
+                if len(tpt_types) < 2:
+                    print(f"  [Skip] model={model}: need both tpt types for comparison, found={available_tpt_types}")
+                    continue
+
+                # pred variants (intersection across tpt types, based on reference dataset)
+                ref_ds = datasets[0]
+                pred_variants_sets = []
+                for t in tpt_types:
+                    pred_variants_sets.append(set(tpt_dic[attack][model][ref_ds][t]["preds"].keys()))
+                pred_variants_all = sorted(set.intersection(*pred_variants_sets))
+
+                allowed_pred_variants = ["original", "single", "vanilla", "weighted"]
+                pred_variants = [pv for pv in allowed_pred_variants if pv in pred_variants_all]
+                if not pred_variants:
+                    print(f"  [Skip] model={model}: no allowed pred_variants in intersection={pred_variants_all}")
+                    continue
+
+                pred_variant_display = {
+                    "original": "Zero-shot",
+                    "single": "Single",
+                    "vanilla": "Vanilla",
+                    "weighted": "Weighted",
+                }
+
+                model_attack_root = comparison_root / model / attack
+                model_attack_root.mkdir(parents=True, exist_ok=True)
+
+                summary = {
+                    "attack": attack,
+                    "model": model,
+                    "datasets": datasets,
+                    "tpt_types": tpt_types,
+                    "pred_variants": pred_variants,
+                    "pred_variant_display": {pv: pred_variant_display.get(pv, pv) for pv in pred_variants},
+                    "avg_acc_across_datasets": {},
+                }
+
+                # Compute avg acc for each (tpt_type, pred_variant)
+                for t in tpt_types:
+                    summary["avg_acc_across_datasets"][t] = {}
+                    for pv in pred_variants:
+                        per_ds_metrics = {}
+                        for ds in datasets:
+                            obj = tpt_dic[attack][model][ds][t]["preds"][pv]
+                            labels = TRUE_LABELS_DATASET[ds]
+                            preds = obj["prediction"]
+                            _ensure_same_len(preds, labels, name=f"{attack}/{model}/{ds}/{t}/{pv}")
+                            per_ds_metrics[ds] = accuracy_percent(preds, labels)
+
+                        avg_acc = avg_across_datasets(per_ds_metrics, datasets)
+                        summary["avg_acc_across_datasets"][t][pv] = {
+                            "avg_acc_across_datasets": avg_acc,
+                            "per_dataset": per_ds_metrics,
+                        }
+
+                save_json(model_attack_root / "tpt_type_comparison_avg_across_datasets.json", summary)
+
+                # Plot grouped bars: x = pred variants, series = tpt types
+                x_labels = [pred_variant_display.get(pv, pv) for pv in pred_variants]
+                series = []
+                for t in tpt_types:
+                    series.append({
+                        "name": t,
+                        "values": [summary["avg_acc_across_datasets"][t][pv]["avg_acc_across_datasets"] for pv in pred_variants],
+                    })
+
+                save_grouped_bar_plot(
+                    model_attack_root / "tpt_type_comparison_avg_across_datasets.png",
+                    f"{model} | {attack} | Avg accuracy across datasets: TPT type comparison",
+                    x_labels=x_labels,
+                    series=series,
+                    ylabel="Accuracy (%)",
+                    ylim=(0, 100),
+                )
+
+
+    # ============================================================
     # RUN (restrict to vit_l_14_datacomp_1b as per your earlier example)
     # ============================================================
     # ============================================================
@@ -1063,6 +1317,12 @@ if __name__ == "__main__":
     )
 
     plot_tpt_avg_results_and_plots(
+        out_root=out_root,
+        only_models=["vit_l_14_datacomp_1b"],
+        datasets=datasets,
+    )
+
+    plot_tpt_type_comparison_avg_across_datasets(
         out_root=out_root,
         only_models=["vit_l_14_datacomp_1b"],
         datasets=datasets,
