@@ -665,9 +665,43 @@ def get_tpt_results(model_name: str) -> Dict[str, Any]:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="AOM analysis plotting / aggregation")
     parser.add_argument("--model-name", type=str, default="vit_l_14_datacomp_1b")
+    parser.add_argument(
+        "--diff-ratio-root",
+        type=str,
+        default=None,
+        help=(
+            "Root directory containing per-dataset diff-ratio runs (e.g. ../../Diffratio_Adv_gen_Results/{model}). "
+            "If not provided, defaults to '../../Diffratio_Adv_gen_Results/{model-name}'."
+        ),
+    )
+    parser.add_argument(
+        "--noise-type",
+        type=str,
+        default="Gaussian",
+        choices=["Uniform", "Gaussian"],
+        help="Which diff-ratio noise type bucket to use when building τ-gated curves.",
+    )
+    parser.add_argument(
+        "--noise-key",
+        type=str,
+        default="Sigma_0.12",
+        help=(
+            "Which diff-ratio noise key to use (e.g. 'Eps_24.0' or 'Sigma_0.03'). "
+            "This must match a key present under final_diff_ratio_dic[dataset][attack][noise_type]."
+        ),
+    )
+    parser.add_argument(
+        "--save-tau-json",
+        action="store_true",
+        help="If set, save JSON curve data next to each τ-gating plot.",
+    )
     args = parser.parse_args()
 
     model_name = args.model_name
+    diff_ratio_root = args.diff_ratio_root
+    noise_type = str(args.noise_type)
+    noise_key = str(args.noise_key)
+    save_tau_json = bool(args.save_tau_json)
 
     zero_shot_dic = get_zs_results(model_name)
     # True labels for all datasets
@@ -698,6 +732,38 @@ if __name__ == "__main__":
     # TPT results
     # ------------------------------------------------------------
     tpt_dic = get_tpt_results(model_name)
+
+    # ------------------------------------------------------------
+    # Diff-ratio results (for τ-gated evaluation)
+    # ------------------------------------------------------------
+    if diff_ratio_root is None:
+        diff_ratio_root = f"../../Diffratio_Adv_gen_Results/{model_name}"
+    selected_attacks = ["eps_0.0_steps_0", "eps_4.0_steps_100"]
+    print(f"Loading diff ratio results from: {diff_ratio_root}")
+    diff_ratio_dic = get_aggregated_results(diff_ratio_root, selected_attacks=selected_attacks)
+    diff_ratio_dic = diff_ratio_dic["results"][model_name]
+
+    # final_diff_ratio_dic[dataset][{"Clean"|"Adversarial"}][{"Gaussian"|"Uniform"}][noise_key] -> list[float]
+    final_diff_ratio_dic = {}
+    for dataset_key, dataset_value in diff_ratio_dic.items():
+        final_diff_ratio_dic[dataset_key] = {}
+        for attack_key, attack_value in dataset_value.items():
+            if attack_key == "eps_0.0_steps_0":
+                attack_name = "Clean"
+            else:
+                attack_name = "Adversarial"
+            final_diff_ratio_dic[dataset_key][attack_name] = {}
+            for noise_type_key, noise_type_value in attack_value.items():
+                if noise_type_key == "gaussian":
+                    noise_type_name = "Gaussian"
+                else:
+                    noise_type_name = "Uniform"
+                final_diff_ratio_dic[dataset_key][attack_name][noise_type_name] = {}
+                for noise_param_key, noise_param_value in noise_type_value.items():
+                    # Some folders include tau_type as an extra hierarchy; we just take the stored list.
+                    for _tau_type_key, tau_type_value in noise_param_value.items():
+                        diff_ratio = tau_type_value.get("diff_ratio_after_counter_attack", None)
+                        final_diff_ratio_dic[dataset_key][attack_name][noise_type_name][noise_param_key] = diff_ratio
 
     # ============================================================
     # Helpers + plotting utilities
@@ -763,6 +829,68 @@ if __name__ == "__main__":
         print(f"[Saved] {path}")
 
 
+    def _safe_path_token(x: str) -> str:
+        """Make a value safe to use as a folder name segment."""
+        x = str(x)
+        # keep common safe chars; replace everything else with '_'
+        x = re.sub(r"[^A-Za-z0-9._-]+", "_", x)
+        # avoid empty segments
+        return x if x else "unknown"
+
+
+    def save_line_plot(
+            path,
+            title,
+            x_values,
+            series,
+            xlabel,
+            ylabel="Average Accuracy (%)",
+            ylim=(0, 100),
+            grid_alpha=0.25,
+            legend_loc="best",
+    ):
+        """Save a simple multi-series line plot.
+
+        series: list of dicts:
+          {"name": str, "y": list[float], "color": Optional[str], "linestyle": Optional[str]}
+        """
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        plt.rcParams.update({
+            "figure.dpi": 120,
+            "savefig.dpi": 300,
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "axes.axisbelow": True,
+            "axes.titlesize": 13,
+            "axes.labelsize": 12,
+            "xtick.labelsize": 11,
+            "ytick.labelsize": 11,
+            "font.size": 11,
+        })
+
+        fig, ax = plt.subplots(figsize=(10, 4.6))
+        ax.grid(True, axis="y", alpha=grid_alpha, linestyle="-")
+
+        for s in series:
+            name = str(s.get("name"))
+            y = np.asarray(s.get("y"), dtype=float)
+            color = s.get("color", None)
+            linestyle = s.get("linestyle", "-")
+            ax.plot(x_values, y, label=name, color=color, linestyle=linestyle, linewidth=2.2)
+
+        ax.set_title(title)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.set_ylim(*ylim)
+        ax.legend(loc=legend_loc)
+        fig.tight_layout()
+        fig.savefig(path)
+        plt.close(fig)
+        print(f"[Saved] {path}")
+
+
     def _get_zero_shot_preds_for_variant(*, attack: str, dataset: str, zs_variant: str):
         """Return zero-shot predictions for a given variant.
 
@@ -789,6 +917,102 @@ if __name__ == "__main__":
             return ZS_ADV_PREDS_WEIGHTED_DATASET[dataset]
 
         raise KeyError(f"Unsupported attack='{attack}' for zero-shot baseline mapping")
+
+
+    def _attack_to_diff_ratio_attack_name(attack: str) -> str:
+        if attack == "clean":
+            return "Clean"
+        if attack == "adversarial_eps4_steps100":
+            return "Adversarial"
+        raise KeyError(f"Unsupported attack='{attack}' for diff-ratio mapping")
+
+
+    def _get_diff_ratio_per_sample(
+            *,
+            dataset: str,
+            attack: str,
+            noise_type: str,
+            noise_key: str,
+    ):
+        """Fetch per-sample diff-ratio array from `final_diff_ratio_dic`.
+
+        Expected structure:
+          final_diff_ratio_dic[dataset][{"Clean"|"Adversarial"}][{"Gaussian"|"Uniform"}][noise_key] -> list[float]
+        """
+        attack_name = _attack_to_diff_ratio_attack_name(attack)
+        try:
+            dr = final_diff_ratio_dic[dataset][attack_name][noise_type][noise_key]
+        except KeyError as e:
+            available = final_diff_ratio_dic.get(dataset, {}).get(attack_name, {}).get(noise_type, {})
+            raise KeyError(
+                f"Missing diff-ratio for dataset='{dataset}', attack='{attack_name}', noise_type='{noise_type}', noise_key='{noise_key}'. "
+                f"Available noise keys={sorted(list(available.keys()))}"
+            ) from e
+        return dr
+
+
+    def _discover_diff_ratio_configs_for_attack(
+            *,
+            datasets: List[str],
+            attack: str,
+    ) -> List[Dict[str, str]]:
+        """Discover which (noise_type, noise_key) pairs exist for *all* datasets.
+
+        We compute an intersection across datasets for stability: the plotting routine
+        expects the selected diff-ratio config to exist for every dataset.
+
+        Returns a list of dicts:
+          [{"noise_type": "Uniform", "noise_key": "Eps_24.0"}, ...]
+        """
+        attack_name = _attack_to_diff_ratio_attack_name(attack)
+        common_pairs: Optional[set[tuple[str, str]]] = None
+
+        for ds in datasets:
+            ds_bucket = final_diff_ratio_dic.get(ds, {}).get(attack_name, {})
+            ds_pairs: set[tuple[str, str]] = set()
+            for nt, nt_bucket in ds_bucket.items():
+                if not isinstance(nt_bucket, dict):
+                    continue
+                for nk in nt_bucket.keys():
+                    ds_pairs.add((str(nt), str(nk)))
+
+            if common_pairs is None:
+                common_pairs = ds_pairs
+            else:
+                common_pairs = common_pairs.intersection(ds_pairs)
+
+        if not common_pairs:
+            return []
+
+        out = [
+            {"noise_type": nt, "noise_key": nk}
+            for (nt, nk) in sorted(common_pairs, key=lambda x: (x[0], x[1]))
+        ]
+        return out
+
+
+    def _mix_preds_by_tau_gate(
+            *,
+            diff_ratio_per_sample,
+            tau: float,
+            zs_preds,
+            tpt_preds,
+    ):
+        """Per-sample router: if dr[i] >= tau => use TPT else fall back to zero-shot."""
+        _ensure_same_len(diff_ratio_per_sample, zs_preds, tpt_preds, name="diff_ratio vs preds")
+        out = []
+        for r, zs_p, tpt_p in zip(diff_ratio_per_sample, zs_preds, tpt_preds):
+            # If diff-ratio is missing/None, default to zero-shot.
+            if r is None:
+                out.append(zs_p)
+                continue
+            try:
+                rv = float(r)
+            except Exception:
+                out.append(zs_p)
+                continue
+            out.append(tpt_p if (rv >= tau) else zs_p)
+        return out
 
 
     def save_bar_plot(
@@ -960,7 +1184,7 @@ if __name__ == "__main__":
         if len(colors) != len(series):
             raise ValueError("colors must have same length as series")
 
-        fig, ax = plt.subplots(figsize=(10, 4.9))
+        fig, ax = plt.subplots(figsize=(20, 6))
         x = np.arange(n)
 
         # bar geometry
@@ -1301,6 +1525,215 @@ if __name__ == "__main__":
 
         print(f"\n[Done] Outputs written to: {out_root.resolve()}")
 
+
+    # ============================================================
+    # 3) τ-gated TPT/rTPT curves (sweep τ, average across datasets)
+    # ============================================================
+    def plot_tau_gated_tpt_curves_and_plots(
+            *,
+            out_root="Results",
+            only_models=None,
+            datasets=None,
+            noise_type: str = "Uniform",
+            noise_key: str = "Eps_32.0",
+            attacks: Optional[List[str]] = None,
+            taus: Optional[List[float]] = None,
+            save_json_curves: bool = False,
+    ):
+        out_root = Path(out_root)
+        out_root.mkdir(parents=True, exist_ok=True)
+
+        if datasets is None:
+            datasets = list(TRUE_LABELS_DATASET.keys())
+        if taus is None:
+            taus = [0.0, 0.4, 0.7, 0.80, 0.85, 0.90, 1.0]
+
+        if attacks is None:
+            attacks = list(tpt_dic.keys())
+        variants = ["single", "vanilla", "weighted"]
+        tpt_types_pretty = {"tpt": "TPT", "rtpt": "R-TPT"}
+
+        for attack in attacks:
+            print(f"\n[τ-gating] Processing attack='{attack}' (noise_type='{noise_type}', noise_key='{noise_key}')")
+            models = list(tpt_dic[attack].keys())
+
+            for model in models:
+                if only_models is not None and model not in only_models:
+                    continue
+
+                model_root = out_root / model
+                # Requested: keep τ-gating plots under a subfolder that records the
+                # diff-ratio configuration used.
+                #
+                # Layout:
+                #   Results/{model}/{attack}/tau_gating/{noise_type}_{noise_key}/
+                tau_root = (
+                        model_root
+                        / attack
+                        / "tau_gating"
+                        / _safe_path_token(f"{noise_type}_{noise_key}")
+                )
+                tau_root.mkdir(parents=True, exist_ok=True)
+
+                # sanity: all datasets exist
+                for ds in datasets:
+                    if ds not in tpt_dic[attack][model]:
+                        raise KeyError(f"Missing dataset '{ds}' under tpt_dic['{attack}']['{model}'].")
+
+                # get tpt_types from first dataset
+                tpt_types = list(tpt_dic[attack][model][datasets[0]].keys())  # e.g. ["tpt", "rtpt"]
+
+                for v in variants:
+                    zs_curve = []
+                    tpt_curve = []
+                    rtpt_curve = []
+
+                    # Precompute the (constant) zero-shot avg across datasets for this variant
+                    zs_per_ds = {}
+                    for ds in datasets:
+                        labels = TRUE_LABELS_DATASET[ds]
+                        zs_preds = _get_zero_shot_preds_for_variant(attack=attack, dataset=ds, zs_variant=v)
+                        _ensure_same_len(zs_preds, labels, name=f"{attack}/{model}/{ds}/zero-shot/{v}")
+                        zs_per_ds[ds] = accuracy_percent(zs_preds, labels)
+                    zs_avg = avg_across_datasets(zs_per_ds, datasets)
+
+                    for tau in taus:
+                        # Baseline is constant across τ
+                        zs_curve.append(zs_avg)
+
+                        gated_tpt_per_ds = {}
+                        gated_rtpt_per_ds = {}
+
+                        for ds in datasets:
+                            labels = TRUE_LABELS_DATASET[ds]
+                            zs_preds = _get_zero_shot_preds_for_variant(attack=attack, dataset=ds, zs_variant=v)
+
+                            dr = _get_diff_ratio_per_sample(
+                                dataset=ds,
+                                attack=attack,
+                                noise_type=noise_type,
+                                noise_key=noise_key,
+                            )
+
+                            # gated TPT
+                            if "tpt" in tpt_types:
+                                tpt_preds = tpt_dic[attack][model][ds]["tpt"]["preds"][v]["prediction"]
+                                gated = _mix_preds_by_tau_gate(
+                                    diff_ratio_per_sample=dr,
+                                    tau=float(tau),
+                                    zs_preds=zs_preds,
+                                    tpt_preds=tpt_preds,
+                                )
+                                gated_tpt_per_ds[ds] = accuracy_percent(gated, labels)
+
+                            # gated rTPT
+                            if "rtpt" in tpt_types:
+                                rtpt_preds = tpt_dic[attack][model][ds]["rtpt"]["preds"][v]["prediction"]
+                                gated = _mix_preds_by_tau_gate(
+                                    diff_ratio_per_sample=dr,
+                                    tau=float(tau),
+                                    zs_preds=zs_preds,
+                                    tpt_preds=rtpt_preds,
+                                )
+                                gated_rtpt_per_ds[ds] = accuracy_percent(gated, labels)
+
+                        # If a type is missing, keep NaN to surface issues in plot.
+                        tpt_curve.append(
+                            avg_across_datasets(gated_tpt_per_ds, datasets) if "tpt" in tpt_types else float("nan")
+                        )
+                        rtpt_curve.append(
+                            avg_across_datasets(gated_rtpt_per_ds, datasets) if "rtpt" in tpt_types else float("nan")
+                        )
+
+                    # Save plot per variant
+                    pretty_v = {"single": "single", "vanilla": "vanilla", "weighted": "weighted"}[v]
+                    png_path = tau_root / f"tau_curve_{pretty_v}.png"
+
+                    # Bar plot: x-axis are the discrete τ thresholds.
+                    # We use a grouped bar plot so the user can compare {Zero-shot, TPT, R-TPT}
+                    # at each τ value.
+                    x_labels = [f"{float(t):.2f}".rstrip("0").rstrip(".") for t in taus]
+                    series = [
+                        {
+                            "name": "Zero-shot",
+                            "values": zs_curve,
+                        },
+                        {
+                            "name": tpt_types_pretty.get("tpt", "TPT"),
+                            "values": tpt_curve,
+                        },
+                        {
+                            "name": tpt_types_pretty.get("rtpt", "R-TPT"),
+                            "values": rtpt_curve,
+                        },
+                    ]
+                    save_grouped_bar_plot(
+                        png_path,
+                        title=f"τ-gated accuracy (avg across datasets) — {model} / {attack} / {v}",
+                        x_labels=x_labels,
+                        series=series,
+                        ylabel="Average Accuracy (%)",
+                        ylim=(0, 100),
+                        legend_loc="upper center",
+                    )
+
+                    if save_json_curves:
+                        save_json(
+                            tau_root / f"tau_curve_{pretty_v}.json",
+                            {
+                                "model": model,
+                                "attack": attack,
+                                "variant": v,
+                                "noise_type": noise_type,
+                                "noise_key": noise_key,
+                                "taus": taus,
+                                "curves": {
+                                    "zero_shot": zs_curve,
+                                    "tpt": tpt_curve,
+                                    "rtpt": rtpt_curve,
+                                },
+                            },
+                        )
+
+
+    def plot_tau_gated_tpt_curves_and_plots_all_noise_configs(
+            *,
+            out_root="Results",
+            only_models=None,
+            datasets=None,
+            taus: Optional[List[float]] = None,
+            save_json_curves: bool = False,
+    ):
+        """Generate τ-gating plots for every available diff-ratio noise configuration.
+
+        Outputs are saved into:
+          Results/{model}/{attack}/tau_gating/{noise_type}_{noise_key}/
+        """
+        if datasets is None:
+            datasets = list(TRUE_LABELS_DATASET.keys())
+        if taus is None:
+            taus = [0.0, 0.4, 0.7, 0.80, 0.85, 0.90, 1.0]
+
+        attacks = list(tpt_dic.keys())
+        for attack in attacks:
+            configs = _discover_diff_ratio_configs_for_attack(datasets=datasets, attack=attack)
+            if not configs:
+                print(f"[τ-gating] No common diff-ratio noise configs found for attack='{attack}'. Skipping.")
+                continue
+
+            print(f"\n[τ-gating] attack='{attack}': generating {len(configs)} noise configs")
+            for cfg in configs:
+                plot_tau_gated_tpt_curves_and_plots(
+                    out_root=out_root,
+                    only_models=only_models,
+                    datasets=datasets,
+                    noise_type=cfg["noise_type"],
+                    noise_key=cfg["noise_key"],
+                    attacks=[attack],
+                    taus=taus,
+                    save_json_curves=save_json_curves,
+                )
+
     # ============================================================
     # RUN (restrict to vit_l_14_datacomp_1b as per your earlier example)
     # ============================================================
@@ -1319,6 +1752,16 @@ if __name__ == "__main__":
         out_root=out_root,
         only_models=["vit_l_14_datacomp_1b"],
         datasets=datasets,
+    )
+
+    # Default behavior: always loop over ALL available (noise_type, noise_key) diff-ratio configs.
+    # The (--noise-type, --noise-key) args are kept only as optional convenience for
+    # direct/single-config plotting when calling the function manually.
+    plot_tau_gated_tpt_curves_and_plots_all_noise_configs(
+        out_root=out_root,
+        only_models=["vit_l_14_datacomp_1b"],
+        datasets=datasets,
+        save_json_curves=save_tau_json,
     )
 
 
