@@ -46,7 +46,7 @@ def get_zs_results(model_name):
         "Aircraft",
         "Pets",
         "Caltech101",
-        "UCF101",
+        # "UCF101",
         "eurosat",
     ]
 
@@ -719,7 +719,354 @@ if __name__ == "__main__":
         return (preds == labels).mean() * 100.0
 
 
+    import os
+    import json
+    from pathlib import Path
+    import numpy as np
+    import matplotlib.pyplot as plt
 
+
+    # ============================================================
+    # Assumptions (already available in your runtime as you said)
+    # ------------------------------------------------------------
+    # TRUE_LABELS_DATASET: dict[dataset] -> list[int] ground-truth labels
+    # ZS_CLEAN_PREDS_DATASET: dict[dataset] -> list[int] zero-shot clean preds
+    # ZS_ADV_PREDS_DATASET: dict[dataset] -> list[int] zero-shot adv preds
+    # final_diff_ratio_dic: dict[dataset][Clean/Adversarial][NoiseType][NoiseValue] -> list[float] per-sample diff ratio
+    # tpt_dic: dict[attack][model][dataset][tpt_type]["preds"][pred_variant] -> dict with keys incl: "prediction", "label"
+    # ============================================================
+
+    # ----------------------------
+    # Small utilities
+    # ----------------------------
+    def _as_np(x):
+        return np.asarray(x)
+
+
+    def _ensure_same_len(*arrays, name="arrays"):
+        lens = [len(a) for a in arrays]
+        if len(set(lens)) != 1:
+            raise ValueError(f"Length mismatch in {name}: {lens}")
+
+
+    def accuracy_percent(preds, labels):
+        preds = _as_np(preds)
+        labels = _as_np(labels)
+        _ensure_same_len(preds, labels, name="preds vs labels")
+        return float((preds == labels).mean() * 100.0)
+
+
+    def avg_across_datasets(metric_by_dataset, datasets):
+        """
+        metric_by_dataset: dict[dataset] -> float
+        Returns mean over datasets ignoring NaNs.
+        """
+        vals = [metric_by_dataset[d] for d in datasets]
+        vals = np.asarray(vals, dtype=float)
+        return float(np.nanmean(vals))
+
+
+    def save_json(path, obj):
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("w", encoding="utf-8") as f:
+            json.dump(obj, f, indent=2)
+        print(f"[Saved] {path}")
+
+
+    def save_bar_plot(
+            path,
+            title,
+            labels,
+            values,
+            ylabel="Accuracy (%)",
+            ylim=(0, 100),
+            value_fmt="{:.2f}",
+            colors=None,
+            bar_edgecolor="#1a1a1a",
+            bar_linewidth=0.7,
+            grid_axis="y",
+            grid_alpha=0.25,
+    ):
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        # --- style (local, self-contained)
+        plt.rcParams.update({
+            "figure.dpi": 120,
+            "savefig.dpi": 300,
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "axes.axisbelow": True,
+            "axes.titlesize": 13,
+            "axes.labelsize": 12,
+            "xtick.labelsize": 11,
+            "ytick.labelsize": 11,
+            "font.size": 11,
+        })
+
+        # Default palette (colorblind-friendly-ish)
+        # - prefer explicit mapping by common labels
+        if colors is None:
+            label_to_color = {
+                "Clean": "#0072B2",        # Okabe-Ito blue
+                "Adversarial": "#D55E00",  # Okabe-Ito vermillion
+                "Zero-shot": "#4D4D4D",    # neutral gray
+                "Single": "#0072B2",
+                "Vanilla": "#009E73",     # green
+                "Weighted": "#E69F00",    # orange
+            }
+            colors = [label_to_color.get(str(l), "#56B4E9") for l in labels]  # fallback: sky blue
+
+        fig, ax = plt.subplots(figsize=(10, 4.6))
+        x = np.arange(len(labels))
+        bars = ax.bar(
+            x,
+            values,
+            color=colors,
+            edgecolor=bar_edgecolor,
+            linewidth=bar_linewidth,
+            width=0.62,
+        )
+
+        # Grid (y only by default)
+        ax.grid(True, axis=grid_axis, alpha=grid_alpha, linestyle="-")
+
+        # Add value labels on top of bars
+        y_min, y_max = ylim
+        y_range = float(y_max - y_min) if (y_max is not None and y_min is not None) else None
+        pad = 0.012 * y_range if y_range else 0.0
+        for rect, v in zip(bars, values):
+            if v is None or (isinstance(v, float) and np.isnan(v)):
+                continue
+            ax.text(
+                rect.get_x() + rect.get_width() / 2.0,
+                rect.get_height() + pad,
+                value_fmt.format(v),
+                ha="center",
+                va="bottom",
+                fontsize=10,
+                color="#222222",
+                clip_on=True,
+            )
+
+        ax.set_xticks(x)
+        # Rotate only if labels are long
+        max_label_len = max((len(str(l)) for l in labels), default=0)
+        if max_label_len >= 10:
+            ax.set_xticklabels(labels, rotation=20, ha="right")
+        else:
+            ax.set_xticklabels(labels)
+
+        ax.set_ylabel(ylabel)
+        ax.set_ylim(*ylim)
+        ax.set_title(title)
+        fig.tight_layout()
+        fig.savefig(path)
+        plt.close(fig)
+        print(f"[Saved] {path}")
+
+
+    # ============================================================
+    # 1) Zero-shot results (avg across datasets) [NO conservative]
+    # ============================================================
+    def compute_zero_shot_avg_results(datasets):
+        per_ds = {}
+        for ds in datasets:
+            labels = TRUE_LABELS_DATASET[ds]
+            clean_preds = ZS_CLEAN_PREDS_DATASET[ds]
+            adv_preds = ZS_ADV_PREDS_DATASET[ds]
+            _ensure_same_len(labels, clean_preds, adv_preds, name=f"{ds} zs preds")
+
+            clean_acc = accuracy_percent(clean_preds, labels)
+            adv_acc = accuracy_percent(adv_preds, labels)
+
+            per_ds[ds] = {
+                "zs_clean_acc": clean_acc,
+                "zs_adv_acc": adv_acc,
+                "num_samples": len(labels),
+            }
+
+        avg = {
+            "avg_zs_clean_acc": avg_across_datasets({d: per_ds[d]["zs_clean_acc"] for d in datasets}, datasets),
+            "avg_zs_adv_acc": avg_across_datasets({d: per_ds[d]["zs_adv_acc"] for d in datasets}, datasets),
+        }
+
+        print("[Zero-shot] Avg across datasets:")
+        for k, v in avg.items():
+            print(f"  - {k}: {v:.2f}")
+
+        return {"per_dataset": per_ds, "avg": avg}
+
+
+    def plot_zero_shot_avg_results(
+            *,
+            out_root="Results_AvgAcrossDatasets",
+            datasets=None,
+    ):
+        """Compute + save the zero-shot avg-across-datasets JSON + plot."""
+        out_root = Path(out_root)
+        out_root.mkdir(parents=True, exist_ok=True)
+
+        if datasets is None:
+            datasets = list(TRUE_LABELS_DATASET.keys())
+
+        zs = compute_zero_shot_avg_results(datasets)
+        save_json(out_root / "zero_shot_avg_across_datasets.json", zs)
+
+        save_bar_plot(
+            out_root / "zero_shot_avg_across_datasets.png",
+            "Zero-shot (avg across datasets)",
+            labels=["Clean", "Adversarial"],
+            values=[
+                zs["avg"]["avg_zs_clean_acc"],
+                zs["avg"]["avg_zs_adv_acc"],
+            ],
+            ylabel="Accuracy (%)",
+            ylim=(0, 100),
+        )
+
+        return zs
+
+
+    # ============================================================
+    # 2) TPT results (avg across datasets) with folder structure
+    #    Model/
+    #       TPT Type
+    #           attack_name/
+    #               plots + json
+    #
+    # NOTE: NO conservative metrics are computed/saved/plotted.
+    # ============================================================
+    def plot_tpt_avg_results_and_plots(
+            *,
+            out_root="Results_AvgAcrossDatasets",
+            only_models=None,  # e.g. ["vit_l_14_datacomp_1b"]
+            datasets=None,
+    ):
+        out_root = Path(out_root)
+        out_root.mkdir(parents=True, exist_ok=True)
+
+        if datasets is None:
+            datasets = list(TRUE_LABELS_DATASET.keys())
+
+        # ----- TPT summary -----
+        attacks = list(tpt_dic.keys())  # e.g. ["clean", "adversarial_eps4_steps100"]
+        for attack in attacks:
+            print(f"\n[TPT] Processing attack='{attack}'")
+            models = list(tpt_dic[attack].keys())
+
+            for model in models:
+                if only_models is not None and model not in only_models:
+                    continue
+
+                print(f"  [Model] {model}")
+                model_root = out_root / model
+
+                # sanity: all datasets exist
+                for ds in datasets:
+                    if ds not in tpt_dic[attack][model]:
+                        raise KeyError(f"Missing dataset '{ds}' under tpt_dic['{attack}']['{model}'].")
+
+                # get tpt_types from first dataset
+                tpt_types = list(tpt_dic[attack][model][datasets[0]].keys())  # e.g. ["tpt", "rtpt"]
+
+                for tpt_type in tpt_types:
+                    print(f"    [TPT Type] {tpt_type}")
+                    tpt_root = model_root / tpt_type / attack
+                    tpt_root.mkdir(parents=True, exist_ok=True)
+
+                    # pred variants available (use first dataset as reference)
+                    ref_ds = datasets[0]
+                    pred_variants_all = list(tpt_dic[attack][model][ref_ds][tpt_type]["preds"].keys())
+
+                    # For TPT bar plots: only plot single, vanilla, weighted, and original.
+                    # The "original" baseline should be displayed as "Zero-shot".
+                    allowed_pred_variants = ["original", "single", "vanilla", "weighted"]
+                    pred_variants = [pv for pv in allowed_pred_variants if pv in pred_variants_all]
+                    print(f"      pred_variants (available) = {pred_variants_all}")
+                    print(f"      pred_variants (plotted)   = {pred_variants}")
+
+                    pred_variant_display = {
+                        "original": "Zero-shot",
+                        "single": "Single",
+                        "vanilla": "Vanilla",
+                        "weighted": "Weighted",
+                    }
+
+                    summary = {
+                        "attack": attack,
+                        "model": model,
+                        "tpt_type": tpt_type,
+                        "datasets": datasets,
+                        "pred_variants": pred_variants,
+                        "pred_variant_display": {pv: pred_variant_display.get(pv, pv) for pv in pred_variants},
+                        "per_pred_variant": {},
+                    }
+
+                    for pv in pred_variants:
+                        per_ds_metrics = {}
+                        for ds in datasets:
+                            obj = tpt_dic[attack][model][ds][tpt_type]["preds"][pv]
+
+                            # Source-of-truth labels (avoid any mismatch/leakage)
+                            labels = TRUE_LABELS_DATASET[ds]
+                            preds = obj["prediction"]
+                            _ensure_same_len(preds, labels, name=f"{attack}/{model}/{ds}/{tpt_type}/{pv}")
+
+                            acc = accuracy_percent(preds, labels)
+                            per_ds_metrics[ds] = {
+                                "acc": acc,
+                                "num_samples": len(labels),
+                            }
+
+                        avg_acc = avg_across_datasets({d: per_ds_metrics[d]["acc"] for d in datasets}, datasets)
+
+                        summary["per_pred_variant"][pv] = {
+                            "per_dataset": per_ds_metrics,
+                            "avg_acc_across_datasets": avg_acc,
+                        }
+
+                        print(f"      [{pv}] avg_acc={avg_acc:.2f}")
+
+                    # Save json
+                    save_json(tpt_root / "tpt_avg_across_datasets.json", summary)
+
+                    # Plot avg accuracy across datasets per pred_variant
+                    labels_pv = [pred_variant_display.get(pv, pv) for pv in pred_variants]
+                    values_avg = [summary["per_pred_variant"][pv]["avg_acc_across_datasets"] for pv in pred_variants]
+
+                    save_bar_plot(
+                        tpt_root / "avg_acc_across_datasets.png",
+                        f"{model} | {tpt_type} | {attack} | Avg accuracy across datasets",
+                        labels=labels_pv,
+                        values=values_avg,
+                        ylabel="Accuracy (%)",
+                        ylim=(0, 100),
+                    )
+
+        print(f"\n[Done] Outputs written to: {out_root.resolve()}")
+
+
+    # ============================================================
+    # RUN (restrict to vit_l_14_datacomp_1b as per your earlier example)
+    # ============================================================
+    # ============================================================
+    # RUN (sequence: zero-shot first, then TPT)
+    # ============================================================
+    out_root = "Results_AvgAcrossDatasets"
+    datasets = list(TRUE_LABELS_DATASET.keys())
+
+    plot_zero_shot_avg_results(
+        out_root=out_root,
+        datasets=datasets,
+    )
+
+    plot_tpt_avg_results_and_plots(
+        out_root=out_root,
+        only_models=["vit_l_14_datacomp_1b"],
+        datasets=datasets,
+    )
 
 
 
