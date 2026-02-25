@@ -30,6 +30,97 @@ from typing import Any, Dict, List, Optional
 import matplotlib.pyplot as plt
 import numpy as np
 
+def get_aggregated_results(root: str, selected_attacks: Optional[List[str]] = None) -> dict:
+    if not os.path.isdir(root):
+        raise RuntimeError(f"Root is not a directory: {root}")
+
+    aggregated = {
+        "root": root,
+        "results": {},  # Hierarchical: model -> dataset -> attack -> noise_type -> noise_param -> tau_type
+        "stats": {
+            "num_datasets_seen": 0,
+            "num_experiment_folders_seen": 0,
+            "num_json_present": 0,
+            "num_json_missing_or_invalid": 0,
+        },
+    }
+
+    # Datasets are immediate subfolders under root
+    dataset_names = [
+        d for d in sorted(os.listdir(root))
+        if os.path.isdir(os.path.join(root, d))
+    ]
+    aggregated["stats"]["num_datasets_seen"] = len(dataset_names)
+
+    model_name = os.path.basename(root)  # e.g., vit_l_14_datacomp_1b
+
+    for dataset in dataset_names:
+        dataset_dir = os.path.join(root, dataset)
+
+        # Experiment folders are subfolders under dataset_dir
+        for exp_name in sorted(os.listdir(dataset_dir)):
+            exp_dir = os.path.join(dataset_dir, exp_name)
+            if not os.path.isdir(exp_dir):
+                continue
+
+            params = parse_experiment_folder_name(exp_name)
+            if params is None:
+                continue  # ignore non ADV_Generation_* folders
+
+            metrics = load_metrics_or_none(exp_dir)
+
+            # Extract param components
+            attack = params["attack"]
+
+            # Mapping: 'eps_0.0_steps_0_image_only_attack_prm' -> 'eps_0.0_steps_0'
+            if attack == "eps_0.0_steps_0_image_only_attack_prm":
+                attack = "eps_0.0_steps_0"
+
+            # Filtering: if selected_attacks is provided, only include those attacks
+            if selected_attacks is not None and attack not in selected_attacks:
+                continue
+
+            noise_type = params["noise_type"]
+            noise_param_obj = params["noise_param"]  # {"name": "Sigma", "value": 0.03}
+            tau_type = params["tau_type"]
+
+            # # Filter: remove or don't add values which have Noise uniform and value is 48.0
+            # if noise_type.lower() == "uniform" and noise_param_obj["value"] == 48.0:
+            #     continue
+
+            # Construct noise_param string key
+            if noise_param_obj["name"] and noise_param_obj["value"] is not None:
+                noise_param_str = f"{noise_param_obj['name']}_{noise_param_obj['value']}"
+            else:
+                noise_param_str = "None"
+
+            # Build hierarchy: model -> dataset -> attack -> noise_type -> noise_param -> tau_type
+            if model_name not in aggregated["results"]:
+                aggregated["results"][model_name] = {}
+            if dataset not in aggregated["results"][model_name]:
+                aggregated["results"][model_name][dataset] = {}
+            if attack not in aggregated["results"][model_name][dataset]:
+                aggregated["results"][model_name][dataset][attack] = {}
+            if noise_type not in aggregated["results"][model_name][dataset][attack]:
+                aggregated["results"][model_name][dataset][attack][noise_type] = {}
+            if noise_param_str not in aggregated["results"][model_name][dataset][attack][noise_type]:
+                aggregated["results"][model_name][dataset][attack][noise_type][noise_param_str] = {}
+
+            # Save metrics under tau_type
+            aggregated["results"][model_name][dataset][attack][noise_type][noise_param_str][tau_type] = {
+                "folder": exp_name,
+                "path": exp_dir,
+                **metrics,
+            }
+
+            aggregated["stats"]["num_experiment_folders_seen"] += 1
+            if metrics["metrics_json_present"] and metrics["metrics_json_error"] is None:
+                aggregated["stats"]["num_json_present"] += 1
+            else:
+                aggregated["stats"]["num_json_missing_or_invalid"] += 1
+
+    return aggregated
+
 
 def get_zs_results(model_name: str) -> Dict[str, Any]:
     """Load zero-shot predictions + labels for all datasets.
@@ -688,11 +779,33 @@ if __name__ == "__main__":
     # Zero-shot adversarial weighted predictions for all datasets
     ZS_ADV_PREDS_WEIGHTED_DATASET = zero_shot_dic["zero_shot_adv_weighted"]
 
+    root_diff_ratio = "../../Diffratio_Adv_gen_Results/vit_l_14_datacomp_1b"
+    selected_attacks = ['eps_0.0_steps_0', 'eps_4.0_steps_100']
+    print(f"Loading diff ratio results from: {root_diff_ratio}")
+    diff_ratio_dic = get_aggregated_results(root_diff_ratio, selected_attacks=selected_attacks)
 
+    diff_ratio_dic = diff_ratio_dic["results"]["vit_l_14_datacomp_1b"]
 
+    final_diff_ratio_dic = {}
 
-
-
+    for dataset_key, dataset_value in diff_ratio_dic.items():
+        final_diff_ratio_dic[dataset_key] = {}
+        for attack_key, attack_value in dataset_value.items():
+            if attack_key == 'eps_0.0_steps_0':
+                attack_name = "Clean"
+            else:
+                attack_name = "Adversarial"
+            final_diff_ratio_dic[dataset_key][attack_name] = {}
+            for noise_type_key, noise_type_value in attack_value.items():
+                if noise_type_key == 'gaussian':
+                    noise_type_name = "Gaussian"
+                else:
+                    noise_type_name = "Uniform"
+                final_diff_ratio_dic[dataset_key][attack_name][noise_type_name] = {}
+                for noise_param_key, noise_param_value in noise_type_value.items():
+                    for tau_type_key, tau_type_value in noise_param_value.items():
+                        diff_ratio = tau_type_value.get("diff_ratio_after_counter_attack", None)
+                        final_diff_ratio_dic[dataset_key][attack_name][noise_type_name][noise_param_key] = diff_ratio
 
     # ------------------------------------------------------------
     # TPT results
