@@ -787,6 +787,34 @@ if __name__ == "__main__":
         print(f"[Saved] {path}")
 
 
+    def _get_zero_shot_preds_for_variant(*, attack: str, dataset: str, zs_variant: str):
+        """Return zero-shot predictions for a given variant.
+
+        zs_variant:
+          - 'single'   -> ZS_*_PREDS_DATASET
+          - 'vanilla'  -> ZS_*_PREDS_VANILLA_DATASET
+          - 'weighted' -> ZS_*_PREDS_WEIGHTED_DATASET
+        """
+        if zs_variant not in {"single", "vanilla", "weighted"}:
+            raise KeyError(f"Unsupported zs_variant='{zs_variant}'")
+
+        if attack == "clean":
+            if zs_variant == "single":
+                return ZS_CLEAN_PREDS_DATASET[dataset]
+            if zs_variant == "vanilla":
+                return ZS_CLEAN_PREDS_VANILLA_DATASET[dataset]
+            return ZS_CLEAN_PREDS_WEIGHTED_DATASET[dataset]
+
+        if attack == "adversarial_eps4_steps100":
+            if zs_variant == "single":
+                return ZS_ADV_PREDS_DATASET[dataset]
+            if zs_variant == "vanilla":
+                return ZS_ADV_PREDS_VANILLA_DATASET[dataset]
+            return ZS_ADV_PREDS_WEIGHTED_DATASET[dataset]
+
+        raise KeyError(f"Unsupported attack='{attack}' for zero-shot baseline mapping")
+
+
     def save_bar_plot(
             path,
             title,
@@ -828,6 +856,14 @@ if __name__ == "__main__":
                 "Single": "#0072B2",
                 "Vanilla": "#009E73",     # green
                 "Weighted": "#E69F00",    # orange
+
+                # Expanded labels used by TPT plots
+                "Zero-shot (Single)": "#0072B2",
+                "Zero-shot (Vanilla)": "#009E73",
+                "Zero-shot (Weighted)": "#E69F00",
+                "TPT Single": "#0072B2",
+                "TPT Vanilla": "#009E73",
+                "TPT Weighted": "#E69F00",
             }
             colors = [label_to_color.get(str(l), "#56B4E9") for l in labels]  # fallback: sky blue
 
@@ -933,6 +969,10 @@ if __name__ == "__main__":
                 "rtpt": "#D55E00",  # vermillion
                 "TPT": "#0072B2",
                 "rTPT": "#D55E00",
+
+                # requested unified baseline series
+                "Zero-shot": "#4D4D4D",  # neutral gray
+                "zero-shot": "#4D4D4D",
 
                 # Zero-shot series names (avg plot)
                 "Original": "#4D4D4D",  # neutral gray
@@ -1171,79 +1211,90 @@ if __name__ == "__main__":
                     ref_ds = datasets[0]
                     pred_variants_all = list(tpt_dic[attack][model][ref_ds][tpt_type]["preds"].keys())
 
-                    # For TPT bar plots: only plot single, vanilla, weighted, and original.
-                    # The "original" baseline should be displayed as "Zero-shot".
-                    allowed_pred_variants = ["original", "single", "vanilla", "weighted"]
-                    pred_variants = [pv for pv in allowed_pred_variants if pv in pred_variants_all]
-                    print(f"      pred_variants (available) = {pred_variants_all}")
-                    print(f"      pred_variants (plotted)   = {pred_variants}")
+                    # Requested layout:
+                    #   - legend = {Zero-shot, tpt_type}
+                    #   - x-axis = {Single, Vanilla, Weighted}
+                    variants = ["single", "vanilla", "weighted"]
 
-                    pred_variant_display = {
-                        "original": "Zero-shot",
-                        "single": "Single",
-                        "vanilla": "Vanilla",
-                        "weighted": "Weighted",
-                    }
+                    print(f"      pred_variants (available in TPT) = {pred_variants_all}")
+                    print(f"      x-axis variants (target)         = {variants}")
 
                     summary = {
                         "attack": attack,
                         "model": model,
                         "tpt_type": tpt_type,
                         "datasets": datasets,
-                        "pred_variants": pred_variants,
-                        "pred_variant_display": {pv: pred_variant_display.get(pv, pv) for pv in pred_variants},
+                        "x_variants": variants,
                         "per_pred_variant": {},
                     }
 
-                    for pv in pred_variants:
-                        per_ds_metrics = {}
+                    # Compute avg accuracy across datasets for each variant, for:
+                    #   - zero-shot baseline
+                    #   - the selected TPT type (tpt/rtpt)
+                    for v in variants:
+                        # zero-shot
+                        zs_per_ds = {}
                         for ds in datasets:
-                            # Source-of-truth labels (avoid any mismatch/leakage)
                             labels = TRUE_LABELS_DATASET[ds]
+                            preds = _get_zero_shot_preds_for_variant(
+                                attack=attack,
+                                dataset=ds,
+                                zs_variant=v,
+                            )
+                            _ensure_same_len(preds, labels, name=f"{attack}/{model}/{ds}/zero-shot/{v}")
+                            zs_per_ds[ds] = accuracy_percent(preds, labels)
+                        zs_avg = avg_across_datasets(zs_per_ds, datasets)
 
-                            # IMPORTANT: "Zero-shot" bar should come from zero-shot runs,
-                            # not from the TPT folder's "original" json.
-                            if pv == "original":
-                                if attack == "clean":
-                                    preds = ZS_CLEAN_PREDS_DATASET[ds]
-                                elif attack == "adversarial_eps4_steps100":
-                                    preds = ZS_ADV_PREDS_DATASET[ds]
-                                else:
-                                    raise KeyError(f"Unsupported attack='{attack}' for zero-shot baseline mapping")
-                            else:
-                                obj = tpt_dic[attack][model][ds][tpt_type]["preds"][pv]
+                        # tpt_type (may be missing for some variants in some runs)
+                        tpt_per_ds = {}
+                        if v in pred_variants_all:
+                            for ds in datasets:
+                                labels = TRUE_LABELS_DATASET[ds]
+                                obj = tpt_dic[attack][model][ds][tpt_type]["preds"][v]
                                 preds = obj["prediction"]
-                            _ensure_same_len(preds, labels, name=f"{attack}/{model}/{ds}/{tpt_type}/{pv}")
+                                _ensure_same_len(preds, labels, name=f"{attack}/{model}/{ds}/{tpt_type}/{v}")
+                                tpt_per_ds[ds] = accuracy_percent(preds, labels)
+                            tpt_avg = avg_across_datasets(tpt_per_ds, datasets)
+                        else:
+                            tpt_avg = float("nan")
 
-                            acc = accuracy_percent(preds, labels)
-                            per_ds_metrics[ds] = {
-                                "acc": acc,
-                                "num_samples": len(labels),
-                            }
-
-                        avg_acc = avg_across_datasets({d: per_ds_metrics[d]["acc"] for d in datasets}, datasets)
-
-                        summary["per_pred_variant"][pv] = {
-                            "per_dataset": per_ds_metrics,
-                            "avg_acc_across_datasets": avg_acc,
+                        summary["per_pred_variant"][v] = {
+                            "zero_shot": {
+                                "avg_acc_across_datasets": zs_avg,
+                                "per_dataset": zs_per_ds,
+                            },
+                            "tpt": {
+                                "avg_acc_across_datasets": tpt_avg,
+                                "per_dataset": tpt_per_ds,
+                            },
                         }
 
-                        print(f"      [{pv}] avg_acc={avg_acc:.2f}")
+                        print(f"      [{v}] zero-shot avg_acc={zs_avg:.2f} | {tpt_type} avg_acc={tpt_avg:.2f}")
 
                     # Save json
                     save_json(tpt_root / "tpt_avg_across_datasets.json", summary)
 
-                    # Plot avg accuracy across datasets per pred_variant
-                    labels_pv = [pred_variant_display.get(pv, pv) for pv in pred_variants]
-                    values_avg = [summary["per_pred_variant"][pv]["avg_acc_across_datasets"] for pv in pred_variants]
+                    # Plot grouped bars: x = variant, series = {Zero-shot, tpt_type}
+                    x_labels = ["Single", "Vanilla", "Weighted"]
+                    series = [
+                        {
+                            "name": "Zero-shot",
+                            "values": [summary["per_pred_variant"][v]["zero_shot"]["avg_acc_across_datasets"] for v in variants],
+                        },
+                        {
+                            "name": tpt_type,
+                            "values": [summary["per_pred_variant"][v]["tpt"]["avg_acc_across_datasets"] for v in variants],
+                        },
+                    ]
 
-                    save_bar_plot(
+                    save_grouped_bar_plot(
                         tpt_root / "avg_acc_across_datasets.png",
                         f"{model} | {tpt_type} | {attack} | Avg accuracy across datasets",
-                        labels=labels_pv,
-                        values=values_avg,
+                        x_labels=x_labels,
+                        series=series,
                         ylabel="Accuracy (%)",
                         ylim=(0, 100),
+                        legend_loc="best",
                     )
 
         print(f"\n[Done] Outputs written to: {out_root.resolve()}")
@@ -1300,25 +1351,21 @@ if __name__ == "__main__":
                     print(f"  [Skip] model={model}: need both tpt types for comparison, found={available_tpt_types}")
                     continue
 
-                # pred variants (intersection across tpt types, based on reference dataset)
+                # Requested layout:
+                #   - legend = {Zero-shot, tpt, rtpt}
+                #   - x-axis = {Single, Vanilla, Weighted}
+                variants = ["single", "vanilla", "weighted"]
+
+                # discover which variants exist for both tpt types (to avoid KeyErrors)
                 ref_ds = datasets[0]
                 pred_variants_sets = []
                 for t in tpt_types:
                     pred_variants_sets.append(set(tpt_dic[attack][model][ref_ds][t]["preds"].keys()))
-                pred_variants_all = sorted(set.intersection(*pred_variants_sets))
-
-                allowed_pred_variants = ["original", "single", "vanilla", "weighted"]
-                pred_variants = [pv for pv in allowed_pred_variants if pv in pred_variants_all]
-                if not pred_variants:
-                    print(f"  [Skip] model={model}: no allowed pred_variants in intersection={pred_variants_all}")
+                pred_variants_intersection = set.intersection(*pred_variants_sets)
+                available_variants = [v for v in variants if v in pred_variants_intersection]
+                if not available_variants:
+                    print(f"  [Skip] model={model}: none of {variants} available for BOTH tpt types; intersection={sorted(pred_variants_intersection)}")
                     continue
-
-                pred_variant_display = {
-                    "original": "Zero-shot",
-                    "single": "Single",
-                    "vanilla": "Vanilla",
-                    "weighted": "Weighted",
-                }
 
                 model_attack_root = comparison_root / model / attack
                 model_attack_root.mkdir(parents=True, exist_ok=True)
@@ -1328,50 +1375,59 @@ if __name__ == "__main__":
                     "model": model,
                     "datasets": datasets,
                     "tpt_types": tpt_types,
-                    "pred_variants": pred_variants,
-                    "pred_variant_display": {pv: pred_variant_display.get(pv, pv) for pv in pred_variants},
+                    "x_variants": available_variants,
                     "avg_acc_across_datasets": {},
                 }
 
-                # Compute avg acc for each (tpt_type, pred_variant)
+                # Zero-shot avg per variant (shared between tpt/rtpt)
+                summary["avg_acc_across_datasets"]["zero_shot"] = {}
+                for v in available_variants:
+                    zs_per_ds = {}
+                    for ds in datasets:
+                        labels = TRUE_LABELS_DATASET[ds]
+                        preds = _get_zero_shot_preds_for_variant(
+                            attack=attack,
+                            dataset=ds,
+                            zs_variant=v,
+                        )
+                        _ensure_same_len(preds, labels, name=f"{attack}/{model}/{ds}/zero-shot/{v}")
+                        zs_per_ds[ds] = accuracy_percent(preds, labels)
+                    summary["avg_acc_across_datasets"]["zero_shot"][v] = {
+                        "avg_acc_across_datasets": avg_across_datasets(zs_per_ds, datasets),
+                        "per_dataset": zs_per_ds,
+                    }
+
+                # Compute avg acc for each (tpt_type, variant)
                 for t in tpt_types:
                     summary["avg_acc_across_datasets"][t] = {}
-                    for pv in pred_variants:
+                    for v in available_variants:
                         per_ds_metrics = {}
                         for ds in datasets:
                             labels = TRUE_LABELS_DATASET[ds]
-
-                            # Keep baseline consistent with plot_tpt_avg_results_and_plots:
-                            # when pv == "original" (displayed as "Zero-shot"), take preds from
-                            # the dedicated zero-shot runs.
-                            if pv == "original":
-                                if attack == "clean":
-                                    preds = ZS_CLEAN_PREDS_DATASET[ds]
-                                elif attack == "adversarial_eps4_steps100":
-                                    preds = ZS_ADV_PREDS_DATASET[ds]
-                                else:
-                                    raise KeyError(f"Unsupported attack='{attack}' for zero-shot baseline mapping")
-                            else:
-                                obj = tpt_dic[attack][model][ds][t]["preds"][pv]
-                                preds = obj["prediction"]
-                            _ensure_same_len(preds, labels, name=f"{attack}/{model}/{ds}/{t}/{pv}")
+                            obj = tpt_dic[attack][model][ds][t]["preds"][v]
+                            preds = obj["prediction"]
+                            _ensure_same_len(preds, labels, name=f"{attack}/{model}/{ds}/{t}/{v}")
                             per_ds_metrics[ds] = accuracy_percent(preds, labels)
 
-                        avg_acc = avg_across_datasets(per_ds_metrics, datasets)
-                        summary["avg_acc_across_datasets"][t][pv] = {
-                            "avg_acc_across_datasets": avg_acc,
+                        summary["avg_acc_across_datasets"][t][v] = {
+                            "avg_acc_across_datasets": avg_across_datasets(per_ds_metrics, datasets),
                             "per_dataset": per_ds_metrics,
                         }
 
                 save_json(model_attack_root / "tpt_type_comparison_avg_across_datasets.json", summary)
 
-                # Plot grouped bars: x = pred variants, series = tpt types
-                x_labels = [pred_variant_display.get(pv, pv) for pv in pred_variants]
-                series = []
+                # Plot grouped bars: x = variants, series = {Zero-shot, tpt, rtpt}
+                x_labels = [v.capitalize() for v in available_variants]
+                series = [
+                    {
+                        "name": "Zero-shot",
+                        "values": [summary["avg_acc_across_datasets"]["zero_shot"][v]["avg_acc_across_datasets"] for v in available_variants],
+                    },
+                ]
                 for t in tpt_types:
                     series.append({
                         "name": t,
-                        "values": [summary["avg_acc_across_datasets"][t][pv]["avg_acc_across_datasets"] for pv in pred_variants],
+                        "values": [summary["avg_acc_across_datasets"][t][v]["avg_acc_across_datasets"] for v in available_variants],
                     })
 
                 save_grouped_bar_plot(
@@ -1381,6 +1437,7 @@ if __name__ == "__main__":
                     series=series,
                     ylabel="Accuracy (%)",
                     ylim=(0, 100),
+                    legend_loc="best",
                 )
 
 
