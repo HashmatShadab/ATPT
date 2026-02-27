@@ -568,6 +568,10 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             if args.add_noise:
                 all_add_noise_preds.extend(adv_pred_counter.cpu().numpy().tolist())
 
+
+        if args.add_noise:
+            del adv_images_counter, adv_logits_counter, adv_probs_counter, adv_pred_counter
+
         # Free memory
         del images, adv_images, target
 
@@ -577,9 +581,6 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
         del adv_logits, adv_probs, adv_pred
         del clean_logits, clean_probs, clean_pred
-
-        if args.add_noise:
-            del adv_images_counter, adv_logits_counter, adv_probs_counter, adv_pred_counter
 
         # Force garbage collection and clear GPU cache more frequently
         torch.cuda.empty_cache()
