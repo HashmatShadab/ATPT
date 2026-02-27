@@ -1896,7 +1896,7 @@ if __name__ == "__main__":
                         fig, axes = plt.subplots(
                             nrows=nrows,
                             ncols=ncols,
-                            figsize=(5.0 * ncols, 3.6 * nrows),
+                            figsize=(10.0 * ncols, 3.6 * nrows),
                             sharex=True,
                             sharey=True,
                         )
@@ -2092,11 +2092,11 @@ if __name__ == "__main__":
         datasets=datasets,
     )
 
-    # plot_tpt_avg_results_and_plots_threshold(
-    #     out_root=out_root,
-    #     only_models=["vit_l_14_datacomp_1b"],
-    #     datasets=datasets,
-    # )
+    plot_tpt_avg_results_and_plots_threshold(
+        out_root=out_root,
+        only_models=["vit_l_14_datacomp_1b"],
+        datasets=datasets,
+    )
 
 
 
