@@ -229,5 +229,5 @@ class AddNoise(Attack):
             diff_ratio = self.compute_tau_noisy_uniform(images, tau_eps, number_of_anchors)
 
 
-        return adv_images, diff_ratio.item()
+        return adv_images, diff_ratio
 

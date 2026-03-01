@@ -495,12 +495,43 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     # Purification-related bookkeeping removed
 
-    diff_ratio_after_add_noise = []
 
     all_true_labels = []
     all_clean_preds = []
     all_adv_preds = []
     all_add_noise_preds = []
+
+    # Vision feature saving
+    n_samples = len(val_loader.dataset)
+    feat_write_ptr = 0
+    image_features_clean = []
+    image_features_adv = []
+    image_features_adv_counter = []
+
+    if args.image_only_attack:
+        features_dir = os.path.join(
+            args.log_output_dir,
+
+        )
+    elif args.image_predicted_label_attack:
+        features_dir = os.path.join(
+            args.log_output_dir,
+
+        )
+    else:
+        features_dir = os.path.join(
+            args.log_output_dir,
+
+        )
+
+    if args.transferability:
+        features_dir = features_dir.replace(args.arch, args.source_model)
+
+    features_dir = os.path.join(features_dir, "image_features")
+
+    os.makedirs(features_dir, exist_ok=True)
+    if logger:
+        logger.info(f"Vision features will be saved to {features_dir}")
 
     # Iterate through validation data
     for i, data in enumerate(val_loader):
@@ -526,7 +557,6 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             # If using noise addition, apply it to the generated image
             adv_images_counter, diff_ratio = noise_atk(adv_images, target)
             adv_images_counter = adv_images_counter.cuda(args.gpu, non_blocking=True)
-            diff_ratio_after_add_noise.append(diff_ratio)
 
         # Pass adversarial images to the model
         adv_images = adv_images.cuda(args.gpu, non_blocking=True)
@@ -536,6 +566,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         context = nullcontext()
         # Model forward pass
         with context:
+
 
             # Adversarial examples (purification removed; always evaluate original)
             with torch.no_grad():
@@ -569,11 +600,28 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
                 all_add_noise_preds.extend(adv_pred_counter.cpu().numpy().tolist())
 
 
+        images_vision_features = model(images, get_image_features=True)
+        adv_images_vision_features = model(adv_images, get_image_features=True)
         if args.add_noise:
-            del adv_images_counter, adv_logits_counter, adv_probs_counter, adv_pred_counter
+            adv_images_counter_vision_features = model(adv_images_counter, get_image_features=True)
+
+        # Add vision features to the list sample-by-sample.
+        # When `adv_bs` / dataloader batch size > 1, each forward returns a batch of features.
+        images_vision_features_cpu = images_vision_features.detach().cpu().numpy()
+        adv_images_vision_features_cpu = adv_images_vision_features.detach().cpu().numpy()
+        for b in range(images_vision_features_cpu.shape[0]):
+            image_features_clean.append(images_vision_features_cpu[b])
+            image_features_adv.append(adv_images_vision_features_cpu[b])
+
+        if args.add_noise:
+            adv_images_counter_vision_features_cpu = adv_images_counter_vision_features.detach().cpu().numpy()
+            for b in range(adv_images_counter_vision_features_cpu.shape[0]):
+                image_features_adv_counter.append(adv_images_counter_vision_features_cpu[b])
 
         # Free memory
         del images, adv_images, target
+        if args.add_noise:
+            del adv_images_counter, adv_logits_counter, adv_probs_counter, adv_pred_counter
 
         # Clear additional temporary variables
         if 'path' in locals():
@@ -597,11 +645,10 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         torch.cuda.empty_cache()
         end = time.time()
 
+
     # Calculate final accuracy
     original_accuracy_orig = clean_correct_orig / total
     adv_accuracy_orig = adv_correct_orig / total
-    avg_diff_ratio_after_add_noise = sum(diff_ratio_after_add_noise) / len(
-        diff_ratio_after_add_noise) if len(diff_ratio_after_add_noise) > 0 else 0
 
     if args.add_noise:
         adv_accuracy_counter = adv_correct_counter / total
@@ -653,8 +700,6 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
 
     # save the diff_ratio_after_add_noise and avg_diff_ratio_after_add_noise as a json in log directory
     info = {
-        'diff_ratio_after_add_noise': diff_ratio_after_add_noise,
-        'avg_diff_ratio_after_add_noise': avg_diff_ratio_after_add_noise,
         'original_clean_accuracy': original_accuracy_orig,
         'adversarial_accuracy': adv_accuracy_orig,
         "add_noise_accuracy": adv_accuracy_counter if args.add_noise else None,
@@ -663,8 +708,17 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         'adversarial_predictions': all_adv_preds,
         'add_noise_predictions': all_add_noise_preds if args.add_noise else None,
     }
-    with open(os.path.join(args.log_output_dir, f'diff_ratio_after_add_noise.json'), 'w') as f:
+    with open(os.path.join(args.log_output_dir, f'results_after_add_noise.json'), 'w') as f:
         json.dump(info, f, indent=4)
+
+    # save the image features as a npy file in log directory
+    image_features_clean = np.array(image_features_clean)
+    np.save(os.path.join(features_dir, f'image_features_clean.npy'), image_features_clean)
+    if args.add_noise:
+        image_features_adv_counter = np.array(image_features_adv_counter)
+        np.save(os.path.join(features_dir, f'image_features_adv_counter.npy'), image_features_adv_counter)
+    image_features_adv = np.array(image_features_adv)
+    np.save(os.path.join(features_dir, f'image_features_adv.npy'), image_features_adv)
 
 
 if __name__ == '__main__':
