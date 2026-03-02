@@ -508,6 +508,11 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     image_features_adv = []
     image_features_adv_counter = []
 
+    # Keep per-feature metadata aligned with the saved feature arrays
+    # (one entry per feature row).
+    feature_true_labels = []
+    feature_image_paths = []
+
     if args.image_only_attack:
         features_dir = os.path.join(
             args.log_output_dir,
@@ -609,9 +614,19 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         # When `adv_bs` / dataloader batch size > 1, each forward returns a batch of features.
         images_vision_features_cpu = images_vision_features.detach().cpu().numpy()
         adv_images_vision_features_cpu = adv_images_vision_features.detach().cpu().numpy()
+
+        target_cpu = target.detach().cpu().numpy().tolist()
+
         for b in range(images_vision_features_cpu.shape[0]):
             image_features_clean.append(images_vision_features_cpu[b])
             image_features_adv.append(adv_images_vision_features_cpu[b])
+
+            # Store metadata aligned with feature rows
+            feature_true_labels.append(int(target_cpu[b]))
+            if path is not None:
+                feature_image_paths.append(path[b])
+            else:
+                feature_image_paths.append(None)
 
         if args.add_noise:
             adv_images_counter_vision_features_cpu = adv_images_counter_vision_features.detach().cpu().numpy()
@@ -719,6 +734,14 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
         np.save(os.path.join(features_dir, f'image_features_adv_counter.npy'), image_features_adv_counter)
     image_features_adv = np.array(image_features_adv)
     np.save(os.path.join(features_dir, f'image_features_adv.npy'), image_features_adv)
+
+    # Save corresponding labels (and optional paths) for each saved feature row
+    features_metadata = {
+        "true_labels": feature_true_labels,
+        "image_paths": feature_image_paths,
+    }
+    with open(os.path.join(features_dir, "image_features_metadata.json"), "w") as f:
+        json.dump(features_metadata, f, indent=4)
 
 
 if __name__ == '__main__':
