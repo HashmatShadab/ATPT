@@ -25,6 +25,7 @@ from typing import Iterable
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from matplotlib.ticker import AutoMinorLocator, MaxNLocator
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
@@ -86,6 +87,42 @@ COLORS = {
     "counter": "#2ca02c",  # green
     "neutral": "#7f7f7f",  # gray
 }
+
+
+def _scatter_drift(
+    ax: plt.Axes,
+    x: np.ndarray,
+    y: np.ndarray,
+    *,
+    label: str,
+    color: str | tuple[float, float, float, float],
+    marker: str,
+    n: int,
+) -> None:
+    """Consistent scatter styling for the drift PCA plot."""
+
+    # Visual tuning for readability across different subsample sizes.
+    s = 18 if n <= 2500 else (14 if n <= 6000 else 10)
+    a = 0.60 if n <= 2500 else (0.45 if n <= 6000 else 0.35)
+
+    # White edge strokes look good for small-to-medium n, but can get noisy for large n.
+    # Also avoid Matplotlib warnings for unfilled markers.
+    use_edge = (marker in ("o", "s", "D")) and n <= 6000
+    edgecolors = "white" if use_edge else "none"
+    linewidths = 0.28 if use_edge else 0.0
+
+    ax.scatter(
+        x,
+        y,
+        s=s,
+        alpha=a,
+        color=color,
+        marker=marker,
+        edgecolors=edgecolors,
+        linewidths=linewidths,
+        label=label,
+        rasterized=n > 4000,
+    )
 
 
 def apply_plot_style() -> None:
@@ -417,38 +454,94 @@ def main() -> None:
     #   comparable scale, making the PCA projection more stable/interpretable.
     X = np.vstack([D_attack, *D_recovers])
     X = StandardScaler().fit_transform(X)
-    Z = PCA(n_components=2, random_state=RANDOM_SEED).fit_transform(X)
+    pca = PCA(n_components=2, random_state=RANDOM_SEED)
+    Z = pca.fit_transform(X)
 
     Za = Z[:n]
     Zrs = [Z[n * (i + 1) : n * (i + 2)] for i in range(len(D_recovers))]
 
-    fig, ax = plt.subplots(figsize=(10, 8), constrained_layout=True)
-    ax.scatter(
+    fig, ax = plt.subplots(figsize=(10.5, 7.4), constrained_layout=True)
+
+    _scatter_drift(
+        ax,
         Za[:, 0],
         Za[:, 1],
-        s=18,
-        alpha=0.55,
-        color=COLORS["attack"],
-        edgecolors="white",
-        linewidths=0.25,
         label="attack drift (adv-clean)",
+        color=COLORS["attack"],
+        marker="o",
+        n=n,
     )
+
     cmap = plt.get_cmap("tab10")
     for i, (Zr, lbl) in enumerate(zip(Zrs, counter_labels, strict=True)):
-        ax.scatter(
+        _scatter_drift(
+            ax,
             Zr[:, 0],
             Zr[:, 1],
-            s=18,
-            alpha=0.50,
-            color=cmap((i + 1) % 10),
-            edgecolors="white",
-            linewidths=0.25,
             label=f"recovery drift ({lbl})",
+            color=cmap((i + 1) % 10),
+            marker="^",
+            n=n,
         )
-    ax.set_title("Drift space (PCA-2D)")
-    ax.set_xlabel("PC1")
-    ax.set_ylabel("PC2")
-    ax.legend(loc="best")
+
+        # Centroid marker (helps convey the mean drift direction without over-plotting).
+        ax.scatter(
+            [float(np.mean(Zr[:, 0]))],
+            [float(np.mean(Zr[:, 1]))],
+            s=90,
+            marker="^",
+            color=cmap((i + 1) % 10),
+            edgecolors="#111111",
+            linewidths=0.6,
+            alpha=0.95,
+            zorder=4,
+        )
+
+    # Centroid for the attack drift.
+    ax.scatter(
+        [float(np.mean(Za[:, 0]))],
+        [float(np.mean(Za[:, 1]))],
+        s=90,
+        marker="o",
+        color=COLORS["attack"],
+        edgecolors="#111111",
+        linewidths=0.6,
+        alpha=0.95,
+        zorder=4,
+    )
+
+    evr = pca.explained_variance_ratio_
+    ax.set_title(f"Drift space (PCA-2D) — {n:,} samples")
+    ax.set_xlabel(f"PC1 ({evr[0] * 100:.1f}% var)")
+    ax.set_ylabel(f"PC2 ({evr[1] * 100:.1f}% var)")
+    # Keep equal scaling (so directions/angles are not distorted) but avoid expanding
+    # the data limits to force a square data box (which can leave empty space on x).
+    ax.set_aspect("equal", adjustable="box")
+    ax.margins(x=0.03, y=0.03)
+
+    # Ticks: keep them readable and consistent across runs/datasets.
+    ax.xaxis.set_major_locator(MaxNLocator(nbins=6))
+    ax.yaxis.set_major_locator(MaxNLocator(nbins=6))
+    ax.xaxis.set_minor_locator(AutoMinorLocator(2))
+    ax.yaxis.set_minor_locator(AutoMinorLocator(2))
+    ax.tick_params(axis="both", which="major", direction="out", length=5, width=1.0)
+    ax.tick_params(axis="both", which="minor", direction="out", length=2.8, width=0.8)
+    ax.grid(True, which="major", alpha=0.22)
+    ax.grid(True, which="minor", alpha=0.12)
+
+    # Legend: on top, centered.
+    n_entries = 1 + len(counter_labels)
+    ncol = 3 if n_entries >= 3 else n_entries
+    ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, 1.14),
+        ncol=ncol,
+        borderaxespad=0.0,
+        handlelength=1.2,
+        markerscale=1.1,
+        columnspacing=1.2,
+        handletextpad=0.5,
+    )
     plt.show()
 
     # ---------------------------
