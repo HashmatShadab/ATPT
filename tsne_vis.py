@@ -20,6 +20,8 @@ from __future__ import annotations
 
 import json
 import os
+import re
+from typing import Iterable
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -38,8 +40,19 @@ BASE_DIR = "tsne/vit_l_14_datacomp_1b/Caltech101"
 # Feature folders (relative to `BASE_DIR`).
 CLEAN_FOLDER = "ADV_Generation_eps_0.0_steps_0"
 ADV_FOLDER = "ADV_Generation_eps_4.0_steps_100"
-COUNTER_FOLDER = (
-    "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_48.0_Tau_Type_normal_num_anchors_1"
+# One or more countermeasure variants (relative to `BASE_DIR`).
+#
+# Example (multiple):
+# COUNTER_FOLDERS = (
+#     "..._Added_Noise_uniform_Eps_48.0_...",
+#     "..._Added_Noise_uniform_Eps_24.0_...",
+# )
+COUNTER_FOLDERS = (
+    "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_48.0_Tau_Type_normal_num_anchors_1",
+    # "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_4.0_Tau_Type_normal_num_anchors_1",
+    # "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_8.0_Tau_Type_normal_num_anchors_1",
+    # "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_16.0_Tau_Type_normal_num_anchors_1",
+
 )
 
 # Feature filenames stored under `<folder>/image_features/`.
@@ -158,6 +171,70 @@ def l2_distance_rows(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     return np.linalg.norm(a - b, axis=1)
 
 
+def counter_legend_label(counter_folder: str) -> str:
+    """Build a short legend label for a counter folder.
+
+    Requirement (per issue): legend must include "Add Noise" and the Eps value.
+    """
+
+    # Typical folder fragment: `Added_Noise_<type>_Eps_<value>_...`
+    m = re.search(r"Added_Noise_([^_]+)_Eps_([0-9]*\.?[0-9]+)", counter_folder)
+    if m is None:
+        return f"Add Noise (Eps=?)"
+    noise_type, eps = m.group(1), m.group(2)
+    return f"Add Noise ({noise_type}, Eps={eps})"
+
+
+def plot_histogram_multi_overlay(
+    *,
+    xs: list[np.ndarray],
+    labels: list[str],
+    title: str,
+    xlabel: str,
+    bins: int = 30,
+    figsize: tuple[int, int] = (10, 6),
+    colors: Iterable[str | tuple[float, float, float, float]] | None = None,
+    show_mean_lines: bool = True,
+) -> None:
+    """Overlay multiple histograms to compare distributions."""
+
+    if len(xs) != len(labels):
+        raise ValueError(f"xs and labels must have same length. Got {len(xs)} vs {len(labels)}")
+    if len(xs) == 0:
+        raise ValueError("xs must be non-empty")
+
+    fig, ax = plt.subplots(figsize=figsize, constrained_layout=True)
+
+    if colors is None:
+        cmap = plt.get_cmap("tab10")
+        colors = [cmap(i % 10) for i in range(len(xs))]
+    else:
+        colors = list(colors)
+        if len(colors) < len(xs):
+            raise ValueError(f"colors has {len(colors)} entries but need {len(xs)}")
+
+    for x, label, color in zip(xs, labels, colors, strict=True):
+        ax.hist(
+            x,
+            bins=bins,
+            density=True,
+            alpha=0.35,
+            color=color,
+            edgecolor="white",
+            linewidth=0.7,
+            label=label,
+        )
+        if show_mean_lines:
+            m = float(np.mean(x))
+            ax.axvline(m, color=color, linestyle="--", linewidth=1.4, alpha=0.95)
+
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel("density")
+    ax.legend(loc="best")
+    plt.show()
+
+
 def plot_histogram_overlay(
     *,
     x1: np.ndarray,
@@ -252,14 +329,17 @@ def main() -> None:
     # Each `.npy` is expected to be `[N, D]` (N samples, D feature dims).
     F_clean = load_npy(CLEAN_FOLDER, CLEAN_FILE)
     F_adv = load_npy(ADV_FOLDER, ADV_FILE)
-    F_ctr = load_npy(COUNTER_FOLDER, COUNTER_FILE)
+    counter_folders = list(COUNTER_FOLDERS)
+    if len(counter_folders) == 0:
+        raise ValueError("COUNTER_FOLDERS must contain at least one folder")
+    F_ctrs = [load_npy(folder, COUNTER_FILE) for folder in counter_folders]
     y = load_labels(META_PATH)
 
     # Defensive alignment: some folders may contain slightly different sample counts.
-    min_len = min(len(F_clean), len(F_adv), len(F_ctr), len(y))
+    min_len = min([len(F_clean), len(F_adv), len(y), *[len(F) for F in F_ctrs]])
     F_clean = F_clean[:min_len]
     F_adv = F_adv[:min_len]
-    F_ctr = F_ctr[:min_len]
+    F_ctrs = [F[:min_len] for F in F_ctrs]
     y = y[:min_len]
 
     # Shared random subsample:
@@ -271,58 +351,54 @@ def main() -> None:
 
     F_clean = F_clean[idx]
     F_adv = F_adv[idx]
-    F_ctr = F_ctr[idx]
+    F_ctrs = [F[idx] for F in F_ctrs]
     y = y[idx]
 
     # ---------------------------
     # COMPUTE DRIFTS + METRICS
     # ---------------------------
 
-    # Drift vectors (all are `[N, D]`):
-    # - Attack drift: how far the adversary moves a feature from its clean baseline.
-    # - Recovery drift: how far the countermeasure moves from the attacked feature.
-    # - Net drift: where the countermeasure ends up relative to the clean baseline.
+    # Drift vectors / metrics that don't depend on which counter we use.
     D_attack = F_adv - F_clean  # adv - clean
-    D_recover = F_ctr - F_adv  # counter - adv
-    D_net = F_ctr - F_clean  # counter - clean
-
-    # Pairwise cosine similarities (per sample):
-    # - `cos(clean, adv)`   : similarity after attack (lower often means larger semantic drift)
-    # - `cos(clean, counter)`: similarity after recovery (higher means closer to clean)
     cos_clean_adv = cosine_similarity_rows(F_clean, F_adv)
-    cos_clean_ctr = cosine_similarity_rows(F_clean, F_ctr)
-    cos_adv_ctr = cosine_similarity_rows(F_adv, F_ctr)
-
-    # Pairwise L2 distances (per sample):
-    # - These capture magnitude of movement in feature space (scale-dependent).
     l2_clean_adv = l2_distance_rows(F_clean, F_adv)
-    l2_clean_ctr = l2_distance_rows(F_clean, F_ctr)
-    l2_adv_ctr = l2_distance_rows(F_adv, F_ctr)
 
-    # Drift alignment score:
-    # `cos(D_attack, D_recover)` tells whether the countermeasure moves in the same direction
-    # as the attack (+1), in the opposite direction (-1), or orthogonally (~0).
-    drift_cos = cosine_similarity_rows(D_attack, D_recover)
+    # Per-counter drifts/metrics.
+    counter_labels = [counter_legend_label(folder) for folder in counter_folders]
+    D_recovers: list[np.ndarray] = []
+    cos_clean_ctrs: list[np.ndarray] = []
+    l2_clean_ctrs: list[np.ndarray] = []
+    drift_coss: list[np.ndarray] = []
+    alphas: list[np.ndarray] = []
 
-    # Alpha projection coefficient:
-    # Projection of net drift onto the attack direction:
-    #   alpha = <(counter-clean), (adv-clean)> / ||adv-clean||^2
-    # Interpretation (roughly):
-    # - `alpha ≈  1` : counter ends up along the same attack direction (no real undo)
-    # - `alpha ≈  0` : counter movement is mostly orthogonal to attack direction
-    # - `alpha ≈ -1` : counter tends to reverse the attack direction (strong undo)
     den = np.sum(D_attack * D_attack, axis=1) + 1e-12
-    alpha = np.sum(D_net * D_attack, axis=1) / den
+    for F_ctr in F_ctrs:
+        D_recover = F_ctr - F_adv  # counter - adv
+        D_net = F_ctr - F_clean  # counter - clean
+        D_recovers.append(D_recover)
+
+        cos_clean_ctrs.append(cosine_similarity_rows(F_clean, F_ctr))
+        l2_clean_ctrs.append(l2_distance_rows(F_clean, F_ctr))
+
+        drift_coss.append(cosine_similarity_rows(D_attack, D_recover))
+        alphas.append(np.sum(D_net * D_attack, axis=1) / den)
 
     print("=== Summary (mean ± std) ===")
-    print(f"cos(clean, adv):     {cos_clean_adv.mean():.4f} ± {cos_clean_adv.std():.4f}")
-    print(f"cos(clean, counter): {cos_clean_ctr.mean():.4f} ± {cos_clean_ctr.std():.4f}")
-    print(f"cos(adv, counter):   {cos_adv_ctr.mean():.4f} ± {cos_adv_ctr.std():.4f}")
-    print(f"l2(clean, adv):      {l2_clean_adv.mean():.4f} ± {l2_clean_adv.std():.4f}")
-    print(f"l2(clean, counter):  {l2_clean_ctr.mean():.4f} ± {l2_clean_ctr.std():.4f}")
-    print(f"l2(adv, counter):    {l2_adv_ctr.mean():.4f} ± {l2_adv_ctr.std():.4f}")
-    print(f"drift_cos(att, rec): {drift_cos.mean():.4f} ± {drift_cos.std():.4f}")
-    print(f"alpha(net onto att): {alpha.mean():.4f} ± {alpha.std():.4f}")
+    print(f"cos(clean, adv): {cos_clean_adv.mean():.4f} ± {cos_clean_adv.std():.4f}")
+    print(f"l2(clean, adv):  {l2_clean_adv.mean():.4f} ± {l2_clean_adv.std():.4f}")
+    for lbl, cos_clean_ctr, l2_clean_ctr, drift_cos, alpha in zip(
+        counter_labels,
+        cos_clean_ctrs,
+        l2_clean_ctrs,
+        drift_coss,
+        alphas,
+        strict=True,
+    ):
+        print(f"--- {lbl} ---")
+        print(f"cos(clean, counter): {cos_clean_ctr.mean():.4f} ± {cos_clean_ctr.std():.4f}")
+        print(f"l2(clean, counter):  {l2_clean_ctr.mean():.4f} ± {l2_clean_ctr.std():.4f}")
+        print(f"drift_cos(att, rec): {drift_cos.mean():.4f} ± {drift_cos.std():.4f}")
+        print(f"alpha(net onto att): {alpha.mean():.4f} ± {alpha.std():.4f}")
 
     # ---------------------------
     # FIGURE 1: Drift space (PCA-2D)
@@ -339,12 +415,12 @@ def main() -> None:
     # Important detail:
     # - We standardize the stacked drift vectors before PCA so that each drift dimension has
     #   comparable scale, making the PCA projection more stable/interpretable.
-    X = np.vstack([D_attack, D_recover])
+    X = np.vstack([D_attack, *D_recovers])
     X = StandardScaler().fit_transform(X)
     Z = PCA(n_components=2, random_state=RANDOM_SEED).fit_transform(X)
 
     Za = Z[:n]
-    Zr = Z[n:]
+    Zrs = [Z[n * (i + 1) : n * (i + 2)] for i in range(len(D_recovers))]
 
     fig, ax = plt.subplots(figsize=(10, 8), constrained_layout=True)
     ax.scatter(
@@ -357,16 +433,18 @@ def main() -> None:
         linewidths=0.25,
         label="attack drift (adv-clean)",
     )
-    ax.scatter(
-        Zr[:, 0],
-        Zr[:, 1],
-        s=18,
-        alpha=0.55,
-        color=COLORS["recovery"],
-        edgecolors="white",
-        linewidths=0.25,
-        label="recovery drift (counter-adv)",
-    )
+    cmap = plt.get_cmap("tab10")
+    for i, (Zr, lbl) in enumerate(zip(Zrs, counter_labels, strict=True)):
+        ax.scatter(
+            Zr[:, 0],
+            Zr[:, 1],
+            s=18,
+            alpha=0.50,
+            color=cmap((i + 1) % 10),
+            edgecolors="white",
+            linewidths=0.25,
+            label=f"recovery drift ({lbl})",
+        )
     ax.set_title("Drift space (PCA-2D)")
     ax.set_xlabel("PC1")
     ax.set_ylabel("PC2")
@@ -382,16 +460,13 @@ def main() -> None:
     # How to read:
     # - If the countermeasure is effective, the `cos(clean, counter)` distribution should
     #   shift right (toward 1.0) relative to `cos(clean, adv)`.
-    plot_histogram_overlay(
-        x1=cos_clean_adv,
-        x2=cos_clean_ctr,
-        label1="cos(clean, adv)",
-        label2="cos(clean, counter)",
-        title="Cosine similarity distributions (clean vs adv / counter)",
+    plot_histogram_multi_overlay(
+        xs=[cos_clean_adv, *cos_clean_ctrs],
+        labels=["cos(clean, adv)", *[f"cos(clean, {lbl})" for lbl in counter_labels]],
+        title="Cosine similarity distributions (clean vs adv / counters)",
         xlabel="cosine similarity",
         bins=30,
-        color1=COLORS["attack"],
-        color2=COLORS["counter"],
+        colors=[COLORS["attack"], *[plt.get_cmap("tab10")((i + 1) % 10) for i in range(len(counter_labels))]],
     )
 
     # ---------------------------
@@ -403,16 +478,13 @@ def main() -> None:
     # How to read:
     # - Smaller `||clean-counter||` than `||clean-adv||` indicates the countermeasure moved
     #   features closer (in Euclidean distance) to their clean baseline.
-    plot_histogram_overlay(
-        x1=l2_clean_adv,
-        x2=l2_clean_ctr,
-        label1="||clean-adv||",
-        label2="||clean-counter||",
+    plot_histogram_multi_overlay(
+        xs=[l2_clean_adv, *l2_clean_ctrs],
+        labels=["||clean-adv||", *[f"||clean-{lbl}||" for lbl in counter_labels]],
         title="L2 distance distributions (to clean)",
         xlabel="L2 distance",
         bins=30,
-        color1=COLORS["attack"],
-        color2=COLORS["counter"],
+        colors=[COLORS["attack"], *[plt.get_cmap("tab10")((i + 1) % 10) for i in range(len(counter_labels))]],
     )
 
     # ---------------------------
@@ -427,12 +499,13 @@ def main() -> None:
     # - Values near `+1` mean counter drift tends to follow the attack drift (bad sign).
     # - Values near `0` mean counter drift is orthogonal (changes features, but not by undoing
     #   the attack direction).
-    plot_histogram(
-        x=drift_cos,
+    plot_histogram_multi_overlay(
+        xs=drift_coss,
+        labels=[f"cos(D_attack, D_recover) ({lbl})" for lbl in counter_labels],
         title="Alignment between attack and recovery drifts\ncos(D_attack, D_recover)",
         xlabel="cosine",
         bins=40,
-        color=COLORS["neutral"],
+        colors=[plt.get_cmap("tab10")((i + 1) % 10) for i in range(len(counter_labels))],
     )
 
     # ---------------------------
@@ -445,15 +518,16 @@ def main() -> None:
     # How to read:
     # - `alpha < 0` indicates the countermeasure tends to move opposite to the attack.
     # - `alpha > 0` indicates it tends to move in the same direction as the attack.
-    plot_histogram(
-        x=alpha,
+    plot_histogram_multi_overlay(
+        xs=alphas,
+        labels=[f"alpha ({lbl})" for lbl in counter_labels],
         title=(
             "Projection of net drift onto attack drift\n"
             "alpha = <(counter-clean),(adv-clean)> / ||adv-clean||^2"
         ),
         xlabel="alpha",
         bins=40,
-        color=COLORS["neutral"],
+        colors=[plt.get_cmap("tab10")((i + 1) % 10) for i in range(len(counter_labels))],
     )
 
     # ---------------------------
@@ -463,7 +537,8 @@ def main() -> None:
     # - For each class, we compute `delta_cos = cos(clean,counter) - cos(clean,adv)`.
     # - If `delta_cos` is positive, the countermeasure improves similarity to clean.
     # - Boxplots show the per-class distribution of this improvement.
-    delta_cos = cos_clean_ctr - cos_clean_adv
+    # For per-class plot, use the first counter variant by default to avoid clutter.
+    delta_cos = cos_clean_ctrs[0] - cos_clean_adv
 
     classes = np.unique(y)
     min_per_class = 10

@@ -912,7 +912,9 @@ if __name__ == "__main__":
             except Exception:
                 out.append(zs_p)
                 continue
-            out.append(tpt_p if (rv > threshold) else zs_p)
+            # out.append(tpt_p if (rv > threshold) else zs_p)
+            out.append(tpt_p if (rv < threshold) else zs_p)
+
         return out
 
 
@@ -970,6 +972,7 @@ if __name__ == "__main__":
             ylim=(0, 100),
             value_fmt="{:.2f}",
             colors=None,
+            hatches=None,
             bar_edgecolor="#1a1a1a",
             bar_linewidth=0.7,
             grid_axis="y",
@@ -990,6 +993,7 @@ if __name__ == "__main__":
             "xtick.labelsize": 11,
             "ytick.labelsize": 11,
             "font.size": 11,
+            "hatch.linewidth": 1.0,
         })
 
         # Default palette (colorblind-friendly-ish)
@@ -1013,6 +1017,25 @@ if __name__ == "__main__":
             }
             colors = [label_to_color.get(str(l), "#56B4E9") for l in labels]  # fallback: sky blue
 
+        if hatches is None:
+            label_to_hatch = {
+                "Clean": "///",
+                "Adversarial": "\\\\",
+                "Zero-shot": "",
+                "Single": "///",
+                "Vanilla": "xx",
+                "Weighted": "..",
+                "Zero-shot (Single)": "///",
+                "Zero-shot (Vanilla)": "xx",
+                "Zero-shot (Weighted)": "..",
+                "TPT Single": "///",
+                "TPT Vanilla": "xx",
+                "TPT Weighted": "..",
+            }
+            hatches = [label_to_hatch.get(str(l), "") for l in labels]
+        if len(hatches) != len(labels):
+            raise ValueError("hatches must have same length as labels")
+
         fig, ax = plt.subplots(figsize=(10, 4.6))
         x = np.arange(len(labels))
         bars = ax.bar(
@@ -1022,7 +1045,12 @@ if __name__ == "__main__":
             edgecolor=bar_edgecolor,
             linewidth=bar_linewidth,
             width=0.62,
+            alpha=0.95,
         )
+
+        for rect, h in zip(bars, hatches):
+            if h:
+                rect.set_hatch(h)
 
         # Grid (y only by default)
         ax.grid(True, axis=grid_axis, alpha=grid_alpha, linestyle="-")
@@ -1042,6 +1070,8 @@ if __name__ == "__main__":
                 va="bottom",
                 fontsize=10,
                 color="#222222",
+                fontweight="medium",
+                bbox=dict(boxstyle="round,pad=0.15", facecolor="white", edgecolor="none", alpha=0.65),
                 clip_on=True,
             )
 
@@ -1053,9 +1083,9 @@ if __name__ == "__main__":
         else:
             ax.set_xticklabels(labels)
 
-        ax.set_ylabel(ylabel)
+        ax.set_ylabel(ylabel, fontweight="semibold")
         ax.set_ylim(*ylim)
-        ax.set_title(title)
+        ax.set_title(title, fontweight="semibold", pad=10)
         fig.tight_layout()
         fig.savefig(path)
         plt.close(fig)
@@ -1071,6 +1101,7 @@ if __name__ == "__main__":
             ylim=(0, 100),
             value_fmt="{:.2f}",
             colors=None,
+            hatches=None,
             bar_edgecolor="#1a1a1a",
             bar_linewidth=0.7,
             grid_axis="y",
@@ -1106,6 +1137,7 @@ if __name__ == "__main__":
             "xtick.labelsize": 16,
             "ytick.labelsize": 16,
             "font.size": 14,
+            "hatch.linewidth": 1.0,
         })
 
         if colors is None:
@@ -1130,6 +1162,13 @@ if __name__ == "__main__":
         if len(colors) != len(series):
             raise ValueError("colors must have same length as series")
 
+        if hatches is None:
+            # Keep series visually separable in grayscale/print.
+            base = ["///", "\\\\", "xx", "..", "++", "oo"]
+            hatches = [base[i % len(base)] for i in range(len(series))]
+        if len(hatches) != len(series):
+            raise ValueError("hatches must have same length as series")
+
         fig, ax = plt.subplots(figsize=(24, 6))
         x = np.arange(n)
 
@@ -1149,6 +1188,8 @@ if __name__ == "__main__":
                 color=colors[i],
                 edgecolor=bar_edgecolor,
                 linewidth=bar_linewidth,
+                hatch=hatches[i],
+                alpha=0.95,
             )
             bars_by_series.append((bars, vals))
 
@@ -1701,7 +1742,7 @@ if __name__ == "__main__":
                 def plot_threshold_sweep_curves(*, out_dir: Path):
                     """For each variant, plot accuracy vs tau-threshold + bar version."""
                     # Use only the requested threshold grid (no dense sweep).
-                    thresholds = np.asarray([0.0, 0.1, 0.4, 0.6, 0.8, 0.85, 0.9, 1.0], dtype=float)
+                    thresholds = np.asarray([0.0, 0.1, 0.2, 0.25, 0.30, 0.4, 0.6, 0.8, 0.85, 0.9, 1.0], dtype=float)
                     thresholds_bar = thresholds
 
                     for v in variants:
@@ -2077,7 +2118,7 @@ if __name__ == "__main__":
     # ============================================================
     # RUN (sequence: zero-shot first, then TPT)
     # ============================================================
-    out_root = "Results"
+    out_root = "Results_TTC_default"
     datasets = list(TRUE_LABELS_DATASET.keys())
 
     plot_zero_shot_avg_results(
