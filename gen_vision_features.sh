@@ -56,7 +56,7 @@ COMMON_PARAMS+=" --top_k $TOP_K_NEIGHBOURS_FOR_SIMILARITY_MATRIX"
 COMMON_PARAMS+=" --softmax_temp $SOFTMAX_TEMP_FOR_SIMILARITY_WEIGHTING --print-freq 20"
 
 # Model parameters
-MODEL="-a $MODEL_NAME -b 1 --adv_bs 1"
+MODEL="-a $MODEL_NAME -b 16 --adv_bs 16"
 
 # Display configuration
 echo "=== Configuration ==="
@@ -112,13 +112,13 @@ if [ "$DATASET_ID" = "all"   ]; then
 #  python adv_gen_analysis.py $DATA_ROOT --test_sets Pets $MODEL $COMMON_PARAMS
 #  echo "  ✓ Pets dataset Adv Examples  complete"
 #
-#  echo "  [6/8] Adv Examples  Caltech101 dataset..."
-#  python adv_gen_analysis.py $DATA_ROOT --test_sets Caltech101 $MODEL $COMMON_PARAMS
-#  echo "  ✓ Caltech101 dataset Adv Examples  complete"
+  echo "  [6/8] Adv Examples  Caltech101 dataset..."
+  python adv_gen_analysis.py $DATA_ROOT --test_sets Caltech101 $MODEL $COMMON_PARAMS
+  echo "  ✓ Caltech101 dataset Adv Examples  complete"
 
-  echo "  [7/8] Adv Examples  UCF101 dataset..."
-  python adv_gen_analysis.py $DATA_ROOT --test_sets UCF101 $MODEL $COMMON_PARAMS
-  echo "  ✓ UCF101 dataset Adv Examples  complete"
+#  echo "  [7/8] Adv Examples  UCF101 dataset..."
+#  python adv_gen_analysis.py $DATA_ROOT --test_sets UCF101 $MODEL $COMMON_PARAMS
+#  echo "  ✓ UCF101 dataset Adv Examples  complete"
 
 #  echo "  [8/8] Adv Examples  eurosat dataset..."
 #  python rtpt_adv_generation.py $DATA_ROOT --test_sets eurosat $MODEL $COMMON_PARAMS
