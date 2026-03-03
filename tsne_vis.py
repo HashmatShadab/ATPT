@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from datetime import datetime
 from typing import Iterable
 
 import matplotlib.pyplot as plt
@@ -29,6 +30,7 @@ from matplotlib.ticker import AutoMinorLocator, MaxNLocator
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from cycler import cycler
 
 
 # ---------------------------
@@ -79,16 +81,82 @@ MAX_SAMPLES = 5000
 
 
 # ---------------------------
+# OUTPUT (saving plots)
+# ---------------------------
+
+# Set to `True` to write all figures to disk under `PLOTS_ROOT_DIR/<run_folder>/...`.
+SAVE_PLOTS = True
+
+# Set to `True` if you also want interactive windows (`plt.show()`).
+# For non-interactive / headless runs, keep this `False`.
+SHOW_PLOTS = True
+
+# Root directory (relative to project root) for generated figures.
+PLOTS_ROOT_DIR = "plots_output"
+
+
+def _safe_name(s: str, *, max_len: int = 180) -> str:
+    """Convert an arbitrary string into a filesystem-safe filename fragment."""
+
+    s = (s or "").strip()
+    s = re.sub(r"[^0-9a-zA-Z._-]+", "_", s)
+    s = re.sub(r"_+", "_", s).strip("_.-")
+    if not s:
+        s = "plot"
+    return s[:max_len]
+
+
+def _make_plots_dir() -> str:
+    """Create (if needed) and return the per-run plots directory."""
+
+    # Keep the run folder informative but not excessively long.
+    dataset = _safe_name(os.path.basename(BASE_DIR))
+    adv = _safe_name(ADV_FOLDER)
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_folder = _safe_name(f"tsne_vis__{dataset}__{adv}__{ts}")
+    out_dir = os.path.join(PLOTS_ROOT_DIR, run_folder)
+    os.makedirs(out_dir, exist_ok=True)
+    return out_dir
+
+
+def _finalize_figure(fig: plt.Figure, *, save_path: str | None) -> None:
+    """Save/show/close a Matplotlib figure based on global flags."""
+
+    if save_path is not None and SAVE_PLOTS:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        fig.savefig(save_path, bbox_inches="tight")
+
+    if SHOW_PLOTS:
+        plt.show()
+    else:
+        plt.close(fig)
+
+
+# ---------------------------
 # PLOTTING STYLE
 # ---------------------------
 
-# A small, colorblind-friendly palette (close to Matplotlib "tab" colors, but explicit).
+# A small, colorblind-friendly palette (Okabe–Ito inspired; explicit hex for consistency).
+# These tend to print well and remain distinguishable under common color-vision deficiencies.
 COLORS = {
-    "attack": "#1f77b4",  # blue
-    "recovery": "#ff7f0e",  # orange
-    "counter": "#2ca02c",  # green
-    "neutral": "#7f7f7f",  # gray
+    "attack": "#0072B2",  # blue
+    "recovery": "#E69F00",  # orange
+    "counter": "#009E73",  # green
+    "neutral": "#666666",  # gray
 }
+
+# Default cycle for multi-series plots (hist overlays, etc.).
+# Kept distinct from the semantic COLORS above (attack/counter/neutral).
+COLOR_CYCLE = [
+    "#0072B2",  # blue
+    "#E69F00",  # orange
+    "#009E73",  # green
+    "#D55E00",  # vermillion
+    "#CC79A7",  # reddish purple
+    "#56B4E9",  # sky blue
+    "#F0E442",  # yellow
+    "#000000",  # black
+]
 
 
 def _scatter_drift(
@@ -104,14 +172,15 @@ def _scatter_drift(
     """Consistent scatter styling for the drift PCA plot."""
 
     # Visual tuning for readability across different subsample sizes.
-    s = 18 if n <= 2500 else (14 if n <= 6000 else 10)
-    a = 0.60 if n <= 2500 else (0.45 if n <= 6000 else 0.35)
+    # Slightly larger markers + a bit less transparency improves perceived dot quality.
+    s = 22 if n <= 2500 else (16 if n <= 6000 else 12)
+    a = 0.65 if n <= 2500 else (0.50 if n <= 6000 else 0.40)
 
     # White edge strokes look good for small-to-medium n, but can get noisy for large n.
     # Also avoid Matplotlib warnings for unfilled markers.
-    use_edge = (marker in ("o", "s", "D")) and n <= 6000
+    use_edge = (marker in ("o", "s", "D", "^")) and n <= 9000
     edgecolors = "white" if use_edge else "none"
-    linewidths = 0.28 if use_edge else 0.0
+    linewidths = 0.35 if use_edge else 0.0
 
     ax.scatter(
         x,
@@ -123,7 +192,9 @@ def _scatter_drift(
         edgecolors=edgecolors,
         linewidths=linewidths,
         label=label,
-        rasterized=n > 4000,
+        antialiased=True,
+        # Rasterize only for very large clouds to keep vector outputs responsive.
+        rasterized=n > 8000,
     )
 
 
@@ -146,15 +217,17 @@ def apply_plot_style() -> None:
 
     mpl.rcParams.update(
         {
-            "figure.dpi": 130,
-            "savefig.dpi": 200,
+            # Higher DPI gives sharper markers/lines in saved PNGs.
+            "figure.dpi": 160,
+            "savefig.dpi": 320,
             "font.size": 20,
             "axes.titlesize": 20,
             # Axis titles (x/y labels) and tick labels.
-            "axes.labelsize": 22,
-            "xtick.labelsize": 18,
-            "ytick.labelsize": 18,
+            "axes.labelsize": 24,
+            "xtick.labelsize": 20,
+            "ytick.labelsize": 20,
             "axes.titleweight": "semibold",
+            "axes.prop_cycle": cycler(color=COLOR_CYCLE),
             "axes.grid": True,
             "grid.alpha": 0.25,
             "grid.linewidth": 0.8,
@@ -165,10 +238,12 @@ def apply_plot_style() -> None:
             "axes.spines.bottom": True,
             "axes.edgecolor": "#222222",
             "axes.linewidth": 1.1,
-            "legend.frameon": True,
+            "legend.frameon": False,
             "legend.framealpha": 0.9,
             "legend.edgecolor": "#dddddd",
-            "legend.fontsize": 15,
+            "legend.fontsize": 16,
+            # Slightly smoother output for lines/markers.
+            "lines.antialiased": True,
         }
     )
 
@@ -221,15 +296,42 @@ def l2_distance_rows(a: np.ndarray, b: np.ndarray) -> np.ndarray:
 def counter_legend_label(counter_folder: str) -> str:
     """Build a short legend label for a counter folder.
 
-    Requirement (per issue): legend must include "Add Noise" and the ε (epsilon) value.
+    Requirement (per issue): legend must include the noise type and its main parameter:
+    - uniform noise uses ε (epsilon)
+    - gaussian noise uses σ (sigma)
     """
 
-    # Typical folder fragment: `Added_Noise_<type>_Eps_<value>_...`
-    m = re.search(r"Added_Noise_([^_]+)_Eps_([0-9]*\.?[0-9]+)", counter_folder)
-    if m is None:
-        return "Noise (ε=?)"
-    noise_type, eps = m.group(1), m.group(2)
-    return f"Noise ({noise_type}, ε={int(float(eps))}/255)"
+    def _pretty_noise_type(noise_type: str) -> str:
+        """Normalize noise type tokens from folder names for legend display."""
+
+        noise_type = (noise_type or "").strip()
+        if noise_type.lower() == "uniform":
+            return "Uniform"
+        if noise_type.lower() == "gaussian":
+            return "Gaussian"
+        # Fallback: capitalize first letter to keep legend readable.
+        return noise_type[:1].upper() + noise_type[1:] if noise_type else "?"
+
+    # Folder fragments we need to handle (examples):
+    # - `..._Added_Noise_uniform_Eps_48.0_...`
+    # - `..._Added_Noise_gaussian_Sigma_0.03_...`
+    m_eps = re.search(r"Added_Noise_([^_]+)_Eps_([0-9]*\.?[0-9]+)", counter_folder)
+    if m_eps is not None:
+        noise_type, eps = m_eps.group(1), m_eps.group(2)
+        return f"Noise ({_pretty_noise_type(noise_type)}, ε={int(float(eps))}/255)"
+
+    m_sigma = re.search(r"Added_Noise_([^_]+)_Sigma_([0-9]*\.?[0-9]+)", counter_folder)
+    if m_sigma is not None:
+        noise_type, sigma = m_sigma.group(1), m_sigma.group(2)
+        # Keep sigma as-is (already in natural units in folder names, e.g. 0.03).
+        return f"Noise ({_pretty_noise_type(noise_type)}, σ={sigma})"
+
+    # Fallback: still show the noise type if possible.
+    m_type = re.search(r"Added_Noise_([^_]+)", counter_folder)
+    if m_type is not None:
+        return f"Noise ({_pretty_noise_type(m_type.group(1))}, ε=?/σ=?)"
+
+    return "Noise (ε=?/σ=?)"
 
 
 def counter_source_label(counter_folder: str) -> str:
@@ -250,9 +352,10 @@ def plot_histogram_multi_overlay(
     title: str,
     xlabel: str,
     bins: int = 30,
-    figsize: tuple[int, int] = (10, 6),
+    figsize: tuple[int, int] = (10, 7.4),
     colors: Iterable[str | tuple[float, float, float, float]] | None = None,
     show_mean_lines: bool = True,
+    save_path: str | None = None,
 ) -> None:
     """Overlay multiple histograms to compare distributions."""
 
@@ -290,7 +393,8 @@ def plot_histogram_multi_overlay(
     ax.set_xlabel(xlabel)
     ax.set_ylabel("Density")
     ax.legend(loc="best")
-    plt.show()
+
+    _finalize_figure(fig, save_path=save_path)
 
 
 def plot_histogram_overlay(
@@ -306,6 +410,7 @@ def plot_histogram_overlay(
     color1: str = COLORS["attack"],
     color2: str = COLORS["counter"],
     show_mean_lines: bool = True,
+    save_path: str | None = None,
 ) -> None:
     """Overlay two histograms to compare distributions."""
 
@@ -343,7 +448,8 @@ def plot_histogram_overlay(
     ax.set_xlabel(xlabel)
     ax.set_ylabel("density")
     ax.legend(loc="best")
-    plt.show()
+
+    _finalize_figure(fig, save_path=save_path)
 
 
 def plot_histogram(
@@ -355,6 +461,7 @@ def plot_histogram(
     figsize: tuple[int, int] = (10, 6),
     color: str = COLORS["neutral"],
     show_mean_line: bool = True,
+    save_path: str | None = None,
 ) -> None:
     """Plot a single histogram."""
 
@@ -376,10 +483,15 @@ def plot_histogram(
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel("density")
-    plt.show()
+
+    _finalize_figure(fig, save_path=save_path)
 
 def main() -> None:
     apply_plot_style()
+
+    plots_dir = _make_plots_dir() if SAVE_PLOTS else None
+    if plots_dir is not None:
+        print(f"[INFO] Saving plots to: {plots_dir}")
 
     # ---------------------------
     # LOAD (and align lengths)
@@ -532,15 +644,15 @@ def main() -> None:
         n=n,
     )
 
-    cmap = plt.get_cmap("tab10")
     for i, (Zr, lbl) in enumerate(zip(Zrs, counter_labels, strict=True)):
         src = counter_source_label(counter_folders[i])
+        ctr_color = COLOR_CYCLE[(i + 1) % len(COLOR_CYCLE)]
         _scatter_drift(
             ax,
             Zr[:, 0],
             Zr[:, 1],
             label=f"{src} + {lbl}",
-            color=cmap((i + 1) % 10),
+            color=ctr_color,
             marker="^",
             n=n,
         )
@@ -553,7 +665,7 @@ def main() -> None:
             [float(np.mean(Zr[:, 1]))],
             s=90,
             marker="^",
-            color=cmap((i + 1) % 10),
+            color=ctr_color,
             edgecolors="#111111",
             linewidths=0.6,
             alpha=0.95,
@@ -577,8 +689,8 @@ def main() -> None:
     # `explained_variance_ratio_` tells how much of the drift-vector variance is captured by each PC.
     # Higher percentages mean the 2D projection preserves more of the drift distribution structure.
     # ax.set_title(f"Drift space (PCA-2D) — {n:,} samples")
-    ax.set_xlabel(f"PC1 ({evr[0] * 100:.1f}% var)")
-    ax.set_ylabel(f"PC2 ({evr[1] * 100:.1f}% var)")
+    ax.set_xlabel(f"PC1")
+    ax.set_ylabel(f"PC2")
     # Keep equal scaling (so directions/angles are not distorted) but avoid expanding
     # the data limits to force a square data box (which can leave empty space on x).
     # ax.set_aspect("equal", adjustable="box")
@@ -621,7 +733,11 @@ def main() -> None:
         columnspacing=1.2,
         handletextpad=0.5,
     )
-    plt.show()
+
+    _finalize_figure(
+        fig,
+        save_path=None if plots_dir is None else os.path.join(plots_dir, "fig1_drift_space_pca2d.png"),
+    )
 
     # ---------------------------
     # FIGURE 2: Cosine similarity distributions
@@ -642,7 +758,8 @@ def main() -> None:
         title="Cosine similarity distributions (clean vs adv / counters)",
         xlabel="Cosine similarity",
         bins=30,
-        colors=[COLORS["attack"], *[plt.get_cmap("tab10")((i + 1) % 10) for i in range(len(counter_labels))]],
+        colors=[COLORS["attack"], *[COLOR_CYCLE[(i + 1) % len(COLOR_CYCLE)] for i in range(len(counter_labels))]],
+        save_path=None if plots_dir is None else os.path.join(plots_dir, "fig2_cosine_similarity_distributions.png"),
     )
 
     # ---------------------------
@@ -661,7 +778,8 @@ def main() -> None:
         title="L2 distance distributions (to clean)",
         xlabel="L2 distance",
         bins=30,
-        colors=[COLORS["attack"], *[plt.get_cmap("tab10")((i + 1) % 10) for i in range(len(counter_labels))]],
+        colors=[COLORS["attack"], *[COLOR_CYCLE[(i + 1) % len(COLOR_CYCLE)] for i in range(len(counter_labels))]],
+        save_path=None if plots_dir is None else os.path.join(plots_dir, "fig3_l2_distance_distributions_to_clean.png"),
     )
 
     # ---------------------------
@@ -683,7 +801,8 @@ def main() -> None:
         title="Alignment between attack and recovery drifts\ncos(D_attack, D_recover)",
         xlabel="cosine",
         bins=40,
-        colors=[plt.get_cmap("tab10")((i + 1) % 10) for i in range(len(counter_labels))],
+        colors=[COLOR_CYCLE[(i + 1) % len(COLOR_CYCLE)] for i in range(len(counter_labels))],
+        save_path=None if plots_dir is None else os.path.join(plots_dir, "fig4_attack_recovery_alignment_cosine.png"),
     )
 
     # ---------------------------
@@ -705,7 +824,8 @@ def main() -> None:
         ),
         xlabel="alpha",
         bins=40,
-        colors=[plt.get_cmap("tab10")((i + 1) % 10) for i in range(len(counter_labels))],
+        colors=[COLOR_CYCLE[(i + 1) % len(COLOR_CYCLE)] for i in range(len(counter_labels))],
+        save_path=None if plots_dir is None else os.path.join(plots_dir, "fig5_alpha_projection_coefficient.png"),
     )
 
     # ---------------------------
@@ -745,7 +865,13 @@ def main() -> None:
         # X-axis is the *index* in `keep` (not necessarily the raw class id).
         ax.set_xlabel("class index in keep[]")
         ax.set_ylabel("delta cosine")
-        plt.show()
+
+        _finalize_figure(
+            fig,
+            save_path=None
+            if plots_dir is None
+            else os.path.join(plots_dir, "fig6_per_class_delta_cos_boxplot.png"),
+        )
     else:
         print(f"[INFO] No class has ≥{min_per_class} samples in the current subsample.")
 
