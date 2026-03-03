@@ -384,6 +384,23 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
     num_attacks = len(present_attacks)
     cols = 4
     rows = (num_attacks + cols - 1) // cols
+
+    noise_type_lower = (noise_type or "").lower()
+    if noise_type_lower == "uniform":
+        x_label = "Uniform Noise (ε/255)"
+    elif noise_type_lower == "gaussian":
+        x_label = "Gaussian Noise (σ)"
+    else:
+        x_label = f"{noise_type} Noise"
+
+    grid_tick_labelsize = 20
+    grid_axis_labelsize = 20
+    grid_legend_fontsize = 20
+
+    indiv_tick_labelsize = 26
+    indiv_axis_labelsize = 26
+    indiv_legend_fontsize = 26
+    indiv_title_fontsize = 28
     
     fig, axes = plt.subplots(rows, cols, figsize=(cols * 7, rows * 4), squeeze=False)
     if metric_key == 'counter_attack_accuracy':
@@ -422,12 +439,13 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
 
         pretty_adv_name = get_pretty_attack_name(adv_attack)
         ax.set_title(pretty_adv_name, fontsize=16, fontweight='bold')
-        ax.set_xlabel(f"{noise_type} Noise", fontsize=14)
-        ax.set_ylabel(clean_metric_name)
+        ax.set_xlabel(x_label, fontsize=grid_axis_labelsize)
+        ax.set_ylabel(clean_metric_name, fontsize=grid_axis_labelsize)
         ax.set_xticks(x_indices)
-        ax.set_xticklabels([str(v) for v in unique_noise_vals])
+        ax.set_xticklabels([str(v) for v in unique_noise_vals], fontsize=grid_tick_labelsize)
+        ax.tick_params(axis='y', labelsize=grid_tick_labelsize)
         if i == 0:
-            ax.legend(fontsize=14, loc='upper left', ncol=2)
+            ax.legend(fontsize=grid_legend_fontsize, loc='upper left', ncol=2)
         ax.grid(True, axis='y', linestyle='--', alpha=0.7)
         
         current_ylim = ax.get_ylim()
@@ -443,20 +461,20 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
                                  color='skyblue' if label == "Clean" else 'salmon')
             ax_indiv.bar_label(rects, padding=3, fmt='%.2f', fontsize=18)
         
-        ax_indiv.set_title(pretty_adv_name, fontsize=22, fontweight='bold', pad=20)
-        ax_indiv.set_xlabel(f"{noise_type} Noise", fontsize=20, labelpad=10)
-        ax_indiv.set_ylabel(clean_metric_name, fontsize=20, labelpad=10)
+        ax_indiv.set_title(pretty_adv_name, fontsize=indiv_title_fontsize, fontweight='bold', pad=20)
+        ax_indiv.set_xlabel(x_label, fontsize=indiv_axis_labelsize, labelpad=10)
+        ax_indiv.set_ylabel(clean_metric_name, fontsize=indiv_axis_labelsize, labelpad=10)
         ax_indiv.set_xticks(x_indices)
-        ax_indiv.set_xticklabels([str(v) for v in unique_noise_vals], fontsize=20)
-        ax_indiv.tick_params(axis='y', labelsize=20)
-        ax_indiv.legend(fontsize=20, loc='upper left', ncol=2)
+        ax_indiv.set_xticklabels([str(v) for v in unique_noise_vals], fontsize=indiv_tick_labelsize)
+        ax_indiv.tick_params(axis='both', labelsize=indiv_tick_labelsize)
+        ax_indiv.legend(fontsize=indiv_legend_fontsize, loc='upper left', ncol=2)
         ax_indiv.grid(True, axis='y', linestyle='--', alpha=0.7)
         
         ax_indiv.set_ylim(ax.get_ylim()) # Match the grid subplot's y-limit
         
         plt.tight_layout()
         indiv_filename = f"{noise_type}_{metric_key}_{adv_attack}_summary.png"
-        fig_indiv.savefig(os.path.join(metric_indiv_dir, indiv_filename))
+        fig_indiv.savefig(os.path.join(metric_indiv_dir, indiv_filename), dpi=300, bbox_inches='tight')
         plt.close(fig_indiv)
 
     # Hide unused subplots
@@ -569,6 +587,23 @@ def plot_grid(datasets: Dict[str, Any], model_name: str, adv_attack: str, clean_
     if num_datasets == 0:
         return
 
+    noise_type_lower = (noise_type or "").lower()
+    if noise_type_lower == "uniform":
+        x_label = "Uniform Noise (ε)"
+    elif noise_type_lower == "gaussian":
+        x_label = "Gaussian Noise (σ)"
+    else:
+        x_label = f"{noise_type} Noise"
+
+    grid_tick_labelsize = 16
+    grid_axis_labelsize = 16
+    grid_legend_fontsize = 16
+
+    indiv_tick_labelsize = 24
+    indiv_axis_labelsize = 24
+    indiv_legend_fontsize = 24
+    indiv_title_fontsize = 26
+
     # Add 1 for the "Average" plot
     total_plots = num_datasets + 1
     cols = 3
@@ -657,11 +692,12 @@ def plot_grid(datasets: Dict[str, Any], model_name: str, adv_attack: str, clean_
                 ax.bar_label(rects, padding=3, fmt='%.3f', fontsize=8)
             
         ax.set_title(title, fontweight='bold' if i == num_datasets else 'normal')
-        ax.set_xlabel(f"{noise_type} value")
-        ax.set_ylabel(metric_key.replace('_', ' ').title())
+        ax.set_xlabel(x_label, fontsize=grid_axis_labelsize)
+        ax.set_ylabel(metric_key.replace('_', ' ').title(), fontsize=grid_axis_labelsize)
         ax.set_xticks(x_indices)
-        ax.set_xticklabels([str(v) for v in unique_noise_vals])
-        ax.legend()
+        ax.set_xticklabels([str(v) for v in unique_noise_vals], fontsize=grid_tick_labelsize)
+        ax.tick_params(axis='y', labelsize=grid_tick_labelsize)
+        ax.legend(fontsize=grid_legend_fontsize)
         ax.grid(True, axis='y', linestyle='--', alpha=0.7)
 
         # Increase y-limit to avoid labels hitting the top border
@@ -687,20 +723,20 @@ def plot_grid(datasets: Dict[str, Any], model_name: str, adv_attack: str, clean_
                                      color='skyblue' if label == "Clean" else 'salmon')
                 ax_indiv.bar_label(rects, padding=3, fmt='%.3f', fontsize=14)
         
-        ax_indiv.set_title(title, fontsize=26, fontweight='bold' if i == num_datasets else 'normal', pad=20)
-        ax_indiv.set_xlabel(f"{noise_type} value", fontsize=24, labelpad=10)
-        ax_indiv.set_ylabel(metric_key.replace('_', ' ').title(), fontsize=24, labelpad=10)
+        ax_indiv.set_title(title, fontsize=indiv_title_fontsize, fontweight='bold' if i == num_datasets else 'normal', pad=20)
+        ax_indiv.set_xlabel(x_label, fontsize=indiv_axis_labelsize, labelpad=10)
+        ax_indiv.set_ylabel(metric_key.replace('_', ' ').title(), fontsize=indiv_axis_labelsize, labelpad=10)
         ax_indiv.set_xticks(x_indices)
-        ax_indiv.set_xticklabels([str(v) for v in unique_noise_vals], fontsize=20)
-        ax_indiv.tick_params(axis='y', labelsize=20)
-        ax_indiv.legend(fontsize=20)
+        ax_indiv.set_xticklabels([str(v) for v in unique_noise_vals], fontsize=indiv_tick_labelsize)
+        ax_indiv.tick_params(axis='both', labelsize=indiv_tick_labelsize)
+        ax_indiv.legend(fontsize=indiv_legend_fontsize)
         ax_indiv.grid(True, axis='y', linestyle='--', alpha=0.7)
         ax_indiv.set_ylim(ax.get_ylim())
 
         plt.tight_layout()
         safe_title = title.replace(" ", "_").lower()
         indiv_filename = f"{adv_attack}_{noise_type}_{metric_key}_{safe_title}.png"
-        fig_indiv.savefig(os.path.join(metric_indiv_dir, indiv_filename))
+        fig_indiv.savefig(os.path.join(metric_indiv_dir, indiv_filename), dpi=300, bbox_inches='tight')
         plt.close(fig_indiv)
 
     # Hide unused subplots
