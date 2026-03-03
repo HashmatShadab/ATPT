@@ -355,6 +355,7 @@ def plot_histogram_multi_overlay(
     figsize: tuple[int, int] = (10, 7.4),
     colors: Iterable[str | tuple[float, float, float, float]] | None = None,
     show_mean_lines: bool = True,
+    show_legend: bool = True,
     save_path: str | None = None,
 ) -> None:
     """Overlay multiple histograms to compare distributions."""
@@ -392,9 +393,65 @@ def plot_histogram_multi_overlay(
     # ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel("Density")
-    ax.legend(loc="best")
+    # Allow caller to decide whether to draw a per-axis legend. When composing
+    # multi-panel figures we may want a single unified legend at the figure level.
+    if show_legend:
+        ax.legend(loc="best")
 
     _finalize_figure(fig, save_path=save_path)
+
+
+def plot_histogram_multi_overlay_ax(
+    ax: plt.Axes,
+    *,
+    xs: list[np.ndarray],
+    labels: list[str],
+    xlabel: str,
+    bins: int = 30,
+    colors: Iterable[str | tuple[float, float, float, float]] | None = None,
+    show_mean_lines: bool = True,
+    show_legend: bool = True,
+) -> None:
+    """Overlay multiple histograms on an existing axis.
+
+    This is useful when composing multi-panel figures (e.g., a horizontal grid
+    containing Fig. 1 + Fig. 2).
+    """
+
+    if len(xs) != len(labels):
+        raise ValueError(f"xs and labels must have same length. Got {len(xs)} vs {len(labels)}")
+    if len(xs) == 0:
+        raise ValueError("xs must be non-empty")
+
+    if colors is None:
+        cmap = plt.get_cmap("tab10")
+        colors = [cmap(i % 10) for i in range(len(xs))]
+    else:
+        colors = list(colors)
+        if len(colors) < len(xs):
+            raise ValueError(f"colors has {len(colors)} entries but need {len(xs)}")
+
+    for x, label, color in zip(xs, labels, colors, strict=True):
+        ax.hist(
+            x,
+            bins=bins,
+            density=True,
+            alpha=0.35,
+            color=color,
+            edgecolor="white",
+            linewidth=0.7,
+            label=label,
+        )
+        if show_mean_lines:
+            m = float(np.mean(x))
+            ax.axvline(m, color=color, linestyle="--", linewidth=1.4, alpha=0.95)
+
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel("Density")
+    # Allow caller to decide whether to draw a per-axis legend. When composing
+    # multi-panel figures we may want a single unified legend at the figure level.
+    if show_legend:
+        ax.legend(loc="best")
 
 
 def plot_histogram_overlay(
@@ -601,6 +658,129 @@ def main() -> None:
         print(f"drift_cos(att, rec): {drift_cos.mean():.4f} ± {drift_cos.std():.4f}")
         print(f"alpha(net onto att): {alpha.mean():.4f} ± {alpha.std():.4f}")
 
+    def _plot_fig1_drift_pca(ax: plt.Axes, show_legend: bool = True) -> None:
+        """Figure 1: Drift space (PCA-2D) on an existing axis."""
+
+        _scatter_drift(
+            ax,
+            Za[:, 0],
+            Za[:, 1],
+            label="Adv. Drift",
+            color=COLORS["attack"],
+            marker="o",
+            n=n,
+        )
+
+        for i, (Zr, lbl) in enumerate(zip(Zrs, counter_labels, strict=True)):
+            src = counter_source_label(counter_folders[i])
+            ctr_color = COLOR_CYCLE[(i + 1) % len(COLOR_CYCLE)]
+            _scatter_drift(
+                ax,
+                Zr[:, 0],
+                Zr[:, 1],
+                label=f"{src} + {lbl}",
+                color=ctr_color,
+                marker="^",
+                n=n,
+            )
+
+            # Centroid marker (mean of the 2D-projected drift vectors).
+            # This is a visual summary of the “average drift” direction in PCA space; it is not used
+            # for computation, but helps interpret whether the counter drifts roughly oppose the attack.
+            ax.scatter(
+                [float(np.mean(Zr[:, 0]))],
+                [float(np.mean(Zr[:, 1]))],
+                s=90,
+                marker="^",
+                color=ctr_color,
+                edgecolors="#111111",
+                linewidths=0.6,
+                alpha=0.95,
+                zorder=4,
+            )
+
+        # Centroid for the attack drift (same idea as above, but for `D_attack`).
+        ax.scatter(
+            [float(np.mean(Za[:, 0]))],
+            [float(np.mean(Za[:, 1]))],
+            s=90,
+            marker="o",
+            color=COLORS["attack"],
+            edgecolors="#111111",
+            linewidths=0.6,
+            alpha=0.95,
+            zorder=4,
+        )
+
+        # `explained_variance_ratio_` tells how much of the drift-vector variance is captured by each PC.
+        # Higher percentages mean the 2D projection preserves more of the drift distribution structure.
+        _ = pca.explained_variance_ratio_
+
+        ax.set_xlabel("PC1")
+        ax.set_ylabel("PC2", labelpad=2)
+
+        # Tighten limits to reduce empty space while keeping a small padding so points/centroids are not clipped.
+        xs = [Za[:, 0], *[Zr[:, 0] for Zr in Zrs]]
+        ys = [Za[:, 1], *[Zr[:, 1] for Zr in Zrs]]
+        x_min = float(np.min(np.concatenate(xs)))
+        x_max = float(np.max(np.concatenate(xs)))
+        y_min = float(np.min(np.concatenate(ys)))
+        y_max = float(np.max(np.concatenate(ys)))
+
+        x_pad = 0.02 * (x_max - x_min + 1e-12)
+        y_pad = 0.02 * (y_max - y_min + 1e-12)
+        ax.set_xlim(x_min - x_pad, x_max + x_pad)
+        ax.set_ylim(y_min - y_pad, y_max + y_pad)
+
+        ax.xaxis.set_major_locator(MaxNLocator(nbins=6))
+        ax.yaxis.set_major_locator(MaxNLocator(nbins=6))
+        ax.xaxis.set_minor_locator(AutoMinorLocator(2))
+        ax.yaxis.set_minor_locator(AutoMinorLocator(2))
+        ax.tick_params(axis="both", which="major", direction="out", length=5, width=1.0)
+        ax.tick_params(axis="both", which="minor", direction="out", length=2.8, width=0.8)
+        ax.grid(True, which="major", alpha=0.22)
+        ax.grid(True, which="minor", alpha=0.12)
+
+        # Per-axis legend may be suppressed when the caller wants a single
+        # figure-level legend (e.g., for a 1x2 grid). Draw the axis legend only
+        # when requested.
+        if show_legend:
+            n_entries = 1 + len(counter_labels)
+            ncol = 3 if n_entries >= 3 else n_entries
+            ax.legend(
+                loc="upper center",
+                bbox_to_anchor=(0.5, 1.08),
+                ncol=ncol,
+                borderaxespad=0.0,
+                handlelength=1.2,
+                markerscale=1.7,
+                columnspacing=1.2,
+                handletextpad=0.5,
+            )
+
+    def _plot_fig2_cosine_hist(ax: plt.Axes, show_legend: bool = True) -> None:
+        """Figure 2: Cosine similarity distributions on an existing axis."""
+
+        labels = ["Adversarial"]
+        for idx, lbl in enumerate(counter_labels):
+            src = counter_source_label(counter_folders[idx])
+            labels.append(f"{src} + {lbl}")
+
+        # Draw the histogram overlay. The caller can control whether this axis
+        # draws its own legend (useful when composing a multi-panel figure).
+        plot_histogram_multi_overlay_ax(
+            ax,
+            xs=[cos_clean_adv, *cos_clean_ctrs],
+            labels=labels,
+            xlabel="Cosine similarity",
+            bins=30,
+            colors=[
+                COLORS["attack"],
+                *[COLOR_CYCLE[(i + 1) % len(COLOR_CYCLE)] for i in range(len(counter_labels))],
+            ],
+            show_legend=show_legend,
+        )
+
     # ---------------------------
     # FIGURE 1: Drift space (PCA-2D)
     # ---------------------------
@@ -633,106 +813,7 @@ def main() -> None:
     Zrs = [Z[n * (i + 1) : n * (i + 2)] for i in range(len(D_recovers))]
 
     fig, ax = plt.subplots(figsize=(10, 7.4), constrained_layout=True)
-
-    _scatter_drift(
-        ax,
-        Za[:, 0],
-        Za[:, 1],
-        label="Adv. Drift",
-        color=COLORS["attack"],
-        marker="o",
-        n=n,
-    )
-
-    for i, (Zr, lbl) in enumerate(zip(Zrs, counter_labels, strict=True)):
-        src = counter_source_label(counter_folders[i])
-        ctr_color = COLOR_CYCLE[(i + 1) % len(COLOR_CYCLE)]
-        _scatter_drift(
-            ax,
-            Zr[:, 0],
-            Zr[:, 1],
-            label=f"{src} + {lbl}",
-            color=ctr_color,
-            marker="^",
-            n=n,
-        )
-
-        # Centroid marker (mean of the 2D-projected drift vectors).
-        # This is a visual summary of the “average drift” direction in PCA space; it is not used
-        # for computation, but helps interpret whether the counter drifts roughly oppose the attack.
-        ax.scatter(
-            [float(np.mean(Zr[:, 0]))],
-            [float(np.mean(Zr[:, 1]))],
-            s=90,
-            marker="^",
-            color=ctr_color,
-            edgecolors="#111111",
-            linewidths=0.6,
-            alpha=0.95,
-            zorder=4,
-        )
-
-    # Centroid for the attack drift (same idea as above, but for `D_attack`).
-    ax.scatter(
-        [float(np.mean(Za[:, 0]))],
-        [float(np.mean(Za[:, 1]))],
-        s=90,
-        marker="o",
-        color=COLORS["attack"],
-        edgecolors="#111111",
-        linewidths=0.6,
-        alpha=0.95,
-        zorder=4,
-    )
-
-    evr = pca.explained_variance_ratio_
-    # `explained_variance_ratio_` tells how much of the drift-vector variance is captured by each PC.
-    # Higher percentages mean the 2D projection preserves more of the drift distribution structure.
-    # ax.set_title(f"Drift space (PCA-2D) — {n:,} samples")
-    ax.set_xlabel(f"PC1")
-    ax.set_ylabel(f"PC2")
-    # Keep equal scaling (so directions/angles are not distorted) but avoid expanding
-    # the data limits to force a square data box (which can leave empty space on x).
-    # ax.set_aspect("equal", adjustable="box")
-
-    # Tighten limits to reduce empty space (especially on y) while keeping a small
-    # padding so points/centroids are not clipped.
-    xs = [Za[:, 0], *[Zr[:, 0] for Zr in Zrs]]
-    ys = [Za[:, 1], *[Zr[:, 1] for Zr in Zrs]]
-    x_min = float(np.min(np.concatenate(xs)))
-    x_max = float(np.max(np.concatenate(xs)))
-    y_min = float(np.min(np.concatenate(ys)))
-    y_max = float(np.max(np.concatenate(ys)))
-
-    x_pad = 0.02 * (x_max - x_min + 1e-12)
-    y_pad = 0.02 * (y_max - y_min + 1e-12)
-    ax.set_xlim(x_min - x_pad, x_max + x_pad)
-    ax.set_ylim(y_min - y_pad, y_max + y_pad)
-
-    # Ticks: keep them readable and consistent across runs/datasets.
-    ax.xaxis.set_major_locator(MaxNLocator(nbins=6))
-    ax.yaxis.set_major_locator(MaxNLocator(nbins=6))
-    ax.xaxis.set_minor_locator(AutoMinorLocator(2))
-    ax.yaxis.set_minor_locator(AutoMinorLocator(2))
-    ax.tick_params(axis="both", which="major", direction="out", length=5, width=1.0)
-    ax.tick_params(axis="both", which="minor", direction="out", length=2.8, width=0.8)
-    ax.grid(True, which="major", alpha=0.22)
-    ax.grid(True, which="minor", alpha=0.12)
-
-    # Legend: on top, centered.
-    n_entries = 1 + len(counter_labels)
-    ncol = 3 if n_entries >= 3 else n_entries
-    ax.legend(
-        loc="upper center",
-        bbox_to_anchor=(0.5, 1.08),
-        ncol=ncol,
-        borderaxespad=0.0,
-        handlelength=1.2,
-        # Increase legend icon (marker) size for readability.
-        markerscale=1.7,
-        columnspacing=1.2,
-        handletextpad=0.5,
-    )
+    _plot_fig1_drift_pca(ax)
 
     _finalize_figure(
         fig,
@@ -748,18 +829,64 @@ def main() -> None:
     # How to read:
     # - If the countermeasure is effective, the `cos(clean, counter)` distribution should
     #   shift right (toward 1.0) relative to `cos(clean, adv)`.
-    labels = ["Adversarial"]
-    for idx, lbl in enumerate(counter_labels):
-        src = counter_source_label(counter_folders[idx])
-        labels.append(f"{src} + {lbl}")
-    plot_histogram_multi_overlay(
-        xs=[cos_clean_adv, *cos_clean_ctrs],
-        labels=labels,
-        title="Cosine similarity distributions (clean vs adv / counters)",
-        xlabel="Cosine similarity",
-        bins=30,
-        colors=[COLORS["attack"], *[COLOR_CYCLE[(i + 1) % len(COLOR_CYCLE)] for i in range(len(counter_labels))]],
+    fig, ax = plt.subplots(figsize=(10, 7.4), constrained_layout=True)
+    _plot_fig2_cosine_hist(ax)
+    _finalize_figure(
+        fig,
         save_path=None if plots_dir is None else os.path.join(plots_dir, "fig2_cosine_similarity_distributions.png"),
+    )
+
+    # ---------------------------
+    # FIGURE 1+2: Horizontal grid (PCA drift + cosine similarity)
+    # ---------------------------
+    fig, (ax1, ax2) = plt.subplots(
+        1,
+        2,
+        figsize=(20, 7.4),
+        constrained_layout=True,
+        gridspec_kw={"width_ratios": [1.1, 1.0]},
+    )
+
+    # Suppress per-axis legends for the grid. We'll place a single, PCA-only
+    # legend at the figure level (user requested only the PCA legend at top).
+    _plot_fig1_drift_pca(ax1, show_legend=False)
+    _plot_fig2_cosine_hist(ax2, show_legend=False)
+
+    # Remove any remaining axis-level legends on both subplots. This ensures
+    # only the PCA legend (placed at the figure level) is visible.
+    for a in (ax1, ax2):
+        la = a.get_legend()
+        if la is not None:
+            try:
+                la.remove()
+            except Exception:
+                # Non-fatal: ignore removal failures and continue.
+                pass
+
+    # Build a figure-level legend using only the PCA axis handles/labels so
+    # the top legend reflects the PCA drift plot entries exclusively.
+    handles, labels = ax1.get_legend_handles_labels()
+    n_entries = len(labels)
+    ncol = 3 if n_entries >= 3 else max(1, n_entries)
+
+    fig.legend(
+        handles,
+        labels,
+        loc="upper center",
+        bbox_to_anchor=(0.5, 1.12),
+        ncol=ncol,
+        borderaxespad=0.0,
+        handlelength=1.2,
+        markerscale=1.7,
+        columnspacing=1.2,
+        handletextpad=0.5,
+    )
+
+    _finalize_figure(
+        fig,
+        save_path=None
+        if plots_dir is None
+        else os.path.join(plots_dir, "fig1_fig2_horizontal_grid_pca_drift_and_cosine.png"),
     )
 
     # ---------------------------
