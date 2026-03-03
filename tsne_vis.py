@@ -50,9 +50,11 @@ ADV_FOLDER = "ADV_Generation_eps_4.0_steps_100"
 # )
 COUNTER_FOLDERS = (
     "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_48.0_Tau_Type_normal_num_anchors_1",
-    "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_4.0_Tau_Type_normal_num_anchors_1",
+    # "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_4.0_Tau_Type_normal_num_anchors_1",
     # "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_8.0_Tau_Type_normal_num_anchors_1",
     # "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_16.0_Tau_Type_normal_num_anchors_1",
+    # "ADV_Generation_eps_4.0_steps_100_Added_Noise_gaussian_Sigma_0.06_Tau_Type_noisy_num_anchors_10",
+    "ADV_Generation_eps_0.0_steps_0_Added_Noise_uniform_Eps_48.0_Tau_Type_normal_num_anchors_1",
 
 )
 
@@ -401,8 +403,17 @@ def main() -> None:
     # ---------------------------
 
     # Drift vectors / metrics that don't depend on which counter we use.
+    # `D_attack`: how much the *attack* moved each sample in feature space.
+    # Shape `[N, D]` where each row is a vector pointing from the clean feature to the adversarial feature.
+    #   D_attack[i] = F_adv[i] - F_clean[i]
     D_attack = F_adv - F_clean  # adv - clean
+
+    # `cos_clean_adv`: similarity between the clean and adversarial features per sample.
+    # Values close to 1.0 mean the attack barely changed the feature direction; smaller values mean larger change.
     cos_clean_adv = cosine_similarity_rows(F_clean, F_adv)
+
+    # `l2_clean_adv`: Euclidean distance between clean and adversarial features per sample.
+    # Larger values indicate larger absolute movement (magnitude), regardless of direction.
     l2_clean_adv = l2_distance_rows(F_clean, F_adv)
 
     # Per-counter drifts/metrics.
@@ -413,16 +424,38 @@ def main() -> None:
     drift_coss: list[np.ndarray] = []
     alphas: list[np.ndarray] = []
 
+    # Precompute the per-sample squared attack magnitude `||D_attack||^2`.
+    # Used to normalize the projection coefficient `alpha` below.
     den = np.sum(D_attack * D_attack, axis=1) + 1e-12
     for F_ctr in F_ctrs:
+        # `D_recover`: how much the *countermeasure* moved features, starting from the adversarial point.
+        #   D_recover[i] = F_ctr[i] - F_adv[i]
         D_recover = F_ctr - F_adv  # counter - adv
+
+        # `D_net`: total / net movement from clean to countered.
+        # This is the overall effect after attack + countermeasure.
+        #   D_net[i] = F_ctr[i] - F_clean[i]
         D_net = F_ctr - F_clean  # counter - clean
         D_recovers.append(D_recover)
 
         cos_clean_ctrs.append(cosine_similarity_rows(F_clean, F_ctr))
         l2_clean_ctrs.append(l2_distance_rows(F_clean, F_ctr))
 
+        # `drift_cos = cos(D_attack, D_recover)` measures alignment between the attack direction
+        # and the counter direction (both as vectors in feature space).
+        # - near -1: counter tends to reverse the attack direction
+        # - near  0: counter moves in an orthogonal direction
+        # - near +1: counter moves in the same direction as the attack
         drift_coss.append(cosine_similarity_rows(D_attack, D_recover))
+
+        # `alpha`: scalar projection of the *net* drift onto the attack drift direction.
+        # It answers: “after the countermeasure, how much of the remaining change is still along
+        # the original attack direction?”
+        #   alpha = <D_net, D_attack> / ||D_attack||^2
+        # Interpretation (per sample):
+        # - alpha ≈ 1  : net movement is similar to the original attack (counter did not undo it)
+        # - alpha ≈ 0  : net movement has little component along the attack direction
+        # - alpha < 0  : net movement points opposite the attack direction (over-correction)
         alphas.append(np.sum(D_net * D_attack, axis=1) / den)
 
     print("=== Summary (mean ± std) ===")
@@ -457,11 +490,19 @@ def main() -> None:
     # Important detail:
     # - We standardize the stacked drift vectors before PCA so that each drift dimension has
     #   comparable scale, making the PCA projection more stable/interpretable.
+    #
+    # Key terminology for this plot:
+    # - “drift vector” = a difference of two feature vectors (e.g., adv-clean), not the feature itself.
+    # - PCA axes (PC1/PC2) are directions of maximal variance *within the drift vectors*.
+    # - The relative position of clouds indicates how similar the drift distributions are.
     X = np.vstack([D_attack, *D_recovers])
     X = StandardScaler().fit_transform(X)
     pca = PCA(n_components=2, random_state=RANDOM_SEED)
     Z = pca.fit_transform(X)
 
+    # `Z` contains the 2D PCA coordinates for the stacked drifts.
+    # First `n` rows correspond to `D_attack`; then each subsequent block of `n` rows corresponds
+    # to one `D_recover` in the same order as `COUNTER_FOLDERS`.
     Za = Z[:n]
     Zrs = [Z[n * (i + 1) : n * (i + 2)] for i in range(len(D_recovers))]
 
@@ -471,7 +512,7 @@ def main() -> None:
         ax,
         Za[:, 0],
         Za[:, 1],
-        label="attack drift (adv-clean)",
+        label="Adversarial Drift",
         color=COLORS["attack"],
         marker="o",
         n=n,
@@ -483,13 +524,15 @@ def main() -> None:
             ax,
             Zr[:, 0],
             Zr[:, 1],
-            label=f"recovery drift ({lbl})",
+            label=f"Adversarial + {lbl}",
             color=cmap((i + 1) % 10),
             marker="^",
             n=n,
         )
 
-        # Centroid marker (helps convey the mean drift direction without over-plotting).
+        # Centroid marker (mean of the 2D-projected drift vectors).
+        # This is a visual summary of the “average drift” direction in PCA space; it is not used
+        # for computation, but helps interpret whether the counter drifts roughly oppose the attack.
         ax.scatter(
             [float(np.mean(Zr[:, 0]))],
             [float(np.mean(Zr[:, 1]))],
@@ -502,7 +545,7 @@ def main() -> None:
             zorder=4,
         )
 
-    # Centroid for the attack drift.
+    # Centroid for the attack drift (same idea as above, but for `D_attack`).
     ax.scatter(
         [float(np.mean(Za[:, 0]))],
         [float(np.mean(Za[:, 1]))],
@@ -516,7 +559,9 @@ def main() -> None:
     )
 
     evr = pca.explained_variance_ratio_
-    ax.set_title(f"Drift space (PCA-2D) — {n:,} samples")
+    # `explained_variance_ratio_` tells how much of the drift-vector variance is captured by each PC.
+    # Higher percentages mean the 2D projection preserves more of the drift distribution structure.
+    # ax.set_title(f"Drift space (PCA-2D) — {n:,} samples")
     ax.set_xlabel(f"PC1 ({evr[0] * 100:.1f}% var)")
     ax.set_ylabel(f"PC2 ({evr[1] * 100:.1f}% var)")
     # Keep equal scaling (so directions/angles are not distorted) but avoid expanding
@@ -589,6 +634,7 @@ def main() -> None:
     # How to read:
     # - Smaller `||clean-counter||` than `||clean-adv||` indicates the countermeasure moved
     #   features closer (in Euclidean distance) to their clean baseline.
+
     plot_histogram_multi_overlay(
         xs=[l2_clean_adv, *l2_clean_ctrs],
         labels=["||clean-adv||", *[f"||clean-{lbl}||" for lbl in counter_labels]],
@@ -610,6 +656,7 @@ def main() -> None:
     # - Values near `+1` mean counter drift tends to follow the attack drift (bad sign).
     # - Values near `0` mean counter drift is orthogonal (changes features, but not by undoing
     #   the attack direction).
+
     plot_histogram_multi_overlay(
         xs=drift_coss,
         labels=[f"cos(D_attack, D_recover) ({lbl})" for lbl in counter_labels],
@@ -649,6 +696,7 @@ def main() -> None:
     # - If `delta_cos` is positive, the countermeasure improves similarity to clean.
     # - Boxplots show the per-class distribution of this improvement.
     # For per-class plot, use the first counter variant by default to avoid clutter.
+
     delta_cos = cos_clean_ctrs[0] - cos_clean_adv
 
     classes = np.unique(y)
