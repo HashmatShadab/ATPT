@@ -148,9 +148,12 @@ def apply_plot_style() -> None:
         {
             "figure.dpi": 130,
             "savefig.dpi": 200,
-            "font.size": 11,
-            "axes.titlesize": 13,
-            "axes.labelsize": 11,
+            "font.size": 20,
+            "axes.titlesize": 20,
+            # Axis titles (x/y labels) and tick labels.
+            "axes.labelsize": 22,
+            "xtick.labelsize": 18,
+            "ytick.labelsize": 18,
             "axes.titleweight": "semibold",
             "axes.grid": True,
             "grid.alpha": 0.25,
@@ -165,7 +168,7 @@ def apply_plot_style() -> None:
             "legend.frameon": True,
             "legend.framealpha": 0.9,
             "legend.edgecolor": "#dddddd",
-            "legend.fontsize": 10,
+            "legend.fontsize": 15,
         }
     )
 
@@ -218,15 +221,26 @@ def l2_distance_rows(a: np.ndarray, b: np.ndarray) -> np.ndarray:
 def counter_legend_label(counter_folder: str) -> str:
     """Build a short legend label for a counter folder.
 
-    Requirement (per issue): legend must include "Add Noise" and the Eps value.
+    Requirement (per issue): legend must include "Add Noise" and the ε (epsilon) value.
     """
 
     # Typical folder fragment: `Added_Noise_<type>_Eps_<value>_...`
     m = re.search(r"Added_Noise_([^_]+)_Eps_([0-9]*\.?[0-9]+)", counter_folder)
     if m is None:
-        return f"Add Noise (Eps=?)"
+        return "Noise (ε=?)"
     noise_type, eps = m.group(1), m.group(2)
-    return f"Add Noise ({noise_type}, Eps={eps})"
+    return f"Noise ({noise_type}, ε={int(float(eps))}/255)"
+
+
+def counter_source_label(counter_folder: str) -> str:
+    """Return the source condition name for a counter folder.
+
+    Requirement (per issue): if the counter folder name contains `eps_0.0_steps_0`,
+    the legend should refer to the `Clean` condition (no adversarial attack).
+    Otherwise, treat it as starting from `Adversarial`.
+    """
+
+    return "Clean" if "eps_0.0_steps_0" in counter_folder else "Adv."
 
 
 def plot_histogram_multi_overlay(
@@ -272,9 +286,9 @@ def plot_histogram_multi_overlay(
             m = float(np.mean(x))
             ax.axvline(m, color=color, linestyle="--", linewidth=1.4, alpha=0.95)
 
-    ax.set_title(title)
+    # ax.set_title(title)
     ax.set_xlabel(xlabel)
-    ax.set_ylabel("density")
+    ax.set_ylabel("Density")
     ax.legend(loc="best")
     plt.show()
 
@@ -506,13 +520,13 @@ def main() -> None:
     Za = Z[:n]
     Zrs = [Z[n * (i + 1) : n * (i + 2)] for i in range(len(D_recovers))]
 
-    fig, ax = plt.subplots(figsize=(10.5, 7.4), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(10, 7.4), constrained_layout=True)
 
     _scatter_drift(
         ax,
         Za[:, 0],
         Za[:, 1],
-        label="Adversarial Drift",
+        label="Adv. Drift",
         color=COLORS["attack"],
         marker="o",
         n=n,
@@ -520,11 +534,12 @@ def main() -> None:
 
     cmap = plt.get_cmap("tab10")
     for i, (Zr, lbl) in enumerate(zip(Zrs, counter_labels, strict=True)):
+        src = counter_source_label(counter_folders[i])
         _scatter_drift(
             ax,
             Zr[:, 0],
             Zr[:, 1],
-            label=f"Adversarial + {lbl}",
+            label=f"{src} + {lbl}",
             color=cmap((i + 1) % 10),
             marker="^",
             n=n,
@@ -566,7 +581,7 @@ def main() -> None:
     ax.set_ylabel(f"PC2 ({evr[1] * 100:.1f}% var)")
     # Keep equal scaling (so directions/angles are not distorted) but avoid expanding
     # the data limits to force a square data box (which can leave empty space on x).
-    ax.set_aspect("equal", adjustable="box")
+    # ax.set_aspect("equal", adjustable="box")
 
     # Tighten limits to reduce empty space (especially on y) while keeping a small
     # padding so points/centroids are not clipped.
@@ -597,11 +612,12 @@ def main() -> None:
     ncol = 3 if n_entries >= 3 else n_entries
     ax.legend(
         loc="upper center",
-        bbox_to_anchor=(0.5, 1.14),
+        bbox_to_anchor=(0.5, 1.08),
         ncol=ncol,
         borderaxespad=0.0,
         handlelength=1.2,
-        markerscale=1.1,
+        # Increase legend icon (marker) size for readability.
+        markerscale=1.7,
         columnspacing=1.2,
         handletextpad=0.5,
     )
@@ -616,11 +632,15 @@ def main() -> None:
     # How to read:
     # - If the countermeasure is effective, the `cos(clean, counter)` distribution should
     #   shift right (toward 1.0) relative to `cos(clean, adv)`.
+    labels = ["Adversarial"]
+    for idx, lbl in enumerate(counter_labels):
+        src = counter_source_label(counter_folders[idx])
+        labels.append(f"{src} + {lbl}")
     plot_histogram_multi_overlay(
         xs=[cos_clean_adv, *cos_clean_ctrs],
-        labels=["cos(clean, adv)", *[f"cos(clean, {lbl})" for lbl in counter_labels]],
+        labels=labels,
         title="Cosine similarity distributions (clean vs adv / counters)",
-        xlabel="cosine similarity",
+        xlabel="Cosine similarity",
         bins=30,
         colors=[COLORS["attack"], *[plt.get_cmap("tab10")((i + 1) % 10) for i in range(len(counter_labels))]],
     )
