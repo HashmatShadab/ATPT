@@ -874,15 +874,15 @@ def main() -> None:
         labels,
         loc="upper center",
         # Nudge the legend upward a bit to make room for a larger font size.
-        bbox_to_anchor=(0.5, 1.16),
+        bbox_to_anchor=(0.5, 1.09),
         ncol=ncol,
         borderaxespad=0.0,
         # Slightly increase handle/marker sizes so the legend is clearer at larger font.
         handlelength=1.6,
-        markerscale=2.2,
+        markerscale=3.2,
         columnspacing=1.2,
         handletextpad=0.6,
-        fontsize=22,
+        fontsize=30,
     )
 
     # Just in case, remove any axis-level legends that might still exist so

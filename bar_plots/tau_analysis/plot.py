@@ -1267,7 +1267,7 @@ def exclude_noise_values(final_diff_ratio_dic, noise_type, exclude_list):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="AOM analysis plotting / aggregation")
-    parser.add_argument("--model-name", type=str, default="fare4")
+    parser.add_argument("--model-name", type=str, default="vit_l_14_datacomp_1b")
 
 
     args = parser.parse_args()
@@ -1543,12 +1543,12 @@ if __name__ == "__main__":
         )
 
         if noise_type == "Gaussian":
-            plt.xlabel("Noise Strength σ", fontsize=12)
+            plt.xlabel("Noise Strength σ", fontsize=20)
         else:
-            plt.xlabel("Noise Strength ε (/255)", fontsize=12)
-        plt.ylabel("Mean Latent Drift τ", fontsize=12)
-        plt.title(f"A1: Average Noise–τ Response Across Datasets ({noise_type})", fontsize=13)
-        plt.legend()
+            plt.xlabel("Noise Strength ε (/255)", fontsize=20)
+        plt.ylabel("Mean Latent Drift τ", fontsize=20)
+        plt.title(f"A1: Average Noise–τ Response Across Datasets ({noise_type})", fontsize=20)
+        plt.legend(fontsize=16)
         plt.grid(True, linestyle="--", alpha=0.5)
 
         # Keep y-axis range from becoming overly tight (more consistent across runs)
@@ -1574,15 +1574,15 @@ if __name__ == "__main__":
 
         # Plot: mean τ gap
         mean_gap = [avg_results[k]["mean_gap"] for k in sorted_keys]
-        fig = plt.figure(figsize=(7, 4))
+        fig = plt.figure(figsize=(7, 6))
         plt.plot(eps, mean_gap, marker='d', linewidth=2.5)
         plt.axhline(0, linestyle='--', linewidth=1)
 
         if noise_type == "Gaussian":
-            plt.xlabel("Noise Strength σ")
+            plt.xlabel("Noise Strength σ", fontsize=20)
         else:
-            plt.xlabel("Noise Strength ε (/255)")
-        plt.ylabel("Δτ = τ_adv − τ_clean")
+            plt.xlabel("Noise Strength ε (/255)", fontsize=20)
+        plt.ylabel("Mean Latent Drift τ", fontsize=20)
         plt.title(f"A1: Adversarial–Clean τ Gap (Averaged Across Datasets) ({noise_type})")
         plt.grid(True, linestyle="--", alpha=0.5)
 
@@ -1631,7 +1631,7 @@ if __name__ == "__main__":
             os.makedirs(dataset_dir, exist_ok=True)
 
             # Per-dataset: mean τ curves
-            fig = plt.figure(figsize=(7, 5))
+            fig = plt.figure(figsize=(7, 6))
             plt.plot(
                 dataset_eps,
                 ds_mean_clean,
@@ -1665,12 +1665,12 @@ if __name__ == "__main__":
             )
 
             if noise_type == "Gaussian":
-                plt.xlabel("Noise Strength σ", fontsize=12)
+                plt.xlabel("Noise Strength σ", fontsize=28)
             else:
-                plt.xlabel("Noise Strength ε (/255)", fontsize=12)
-            plt.ylabel("Mean Latent Drift τ", fontsize=12)
-            plt.title(f"A1: Noise–τ Curve ({dataset_name}) ({noise_type})", fontsize=13)
-            plt.legend()
+                plt.xlabel("Noise Strength ε (/255)", fontsize=28)
+            plt.ylabel("Mean Latent Drift τ", fontsize=28)
+            plt.title(f"{dataset_name}", fontsize=32)
+            plt.legend(fontsize=20)
             plt.grid(True, linestyle="--", alpha=0.5)
 
             ax = plt.gca()
@@ -1699,11 +1699,11 @@ if __name__ == "__main__":
             plt.axhline(0, linestyle='--', linewidth=1)
 
             if noise_type == "Gaussian":
-                plt.xlabel("Noise Strength σ")
+                plt.xlabel("Noise Strength σ", fontsize=20)
             else:
-                plt.xlabel("Noise Strength ε (/255)")
-            plt.ylabel("Δτ = τ_adv − τ_clean")
-            plt.title(f"A1: Adversarial–Clean τ Gap ({dataset_name}) ({noise_type})")
+                plt.xlabel("Noise Strength ε (/255)", fontsize=20)
+            plt.ylabel("Mean Latent Drift τ", fontsize=20)
+            plt.title(f"{dataset_name}", fontsize=28)
             plt.grid(True, linestyle="--", alpha=0.5)
 
             ax = plt.gca()
