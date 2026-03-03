@@ -397,16 +397,16 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
     grid_axis_labelsize = 20
     grid_legend_fontsize = 20
 
-    indiv_tick_labelsize = 26
-    indiv_axis_labelsize = 26
-    indiv_legend_fontsize = 26
-    indiv_title_fontsize = 28
+    indiv_tick_labelsize = 30
+    indiv_axis_labelsize = 34
+    indiv_legend_fontsize = 30
+    indiv_title_fontsize = 36
     
     fig, axes = plt.subplots(rows, cols, figsize=(cols * 7, rows * 4), squeeze=False)
     if metric_key == 'counter_attack_accuracy':
-        metric_key = "average_accuracy_after_noise_addition"
+        metric_key = "average_accuracy"
     elif metric_key == 'avg_diff_ratio_after_counter_attack':
-        metric_key = "avg_latent_drift"
+        metric_key = "Mean_latent_drift"
     clean_metric_name = metric_key.replace('_', ' ').title()
     fig.suptitle(f"Average Across Datasets. Added Noise: {noise_type}\n Evaluating Metric: {clean_metric_name}", fontsize=20)
 
@@ -419,7 +419,9 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
         x_indices = np.arange(len(unique_noise_vals))
         width = 0.45
         
-        labels = ["Clean", "Adversarial"]
+        pretty_adv_name = get_pretty_attack_name(adv_attack)
+        labels = ["Clean", pretty_adv_name]
+
         for j, label in enumerate(labels):
             atk_to_plot = clean_attack if label == "Clean" else adv_attack
             y_vals = []
@@ -438,7 +440,7 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
                 plot_data_for_indiv.append((idx_list, y_vals, label, offset))
 
         pretty_adv_name = get_pretty_attack_name(adv_attack)
-        ax.set_title(pretty_adv_name, fontsize=16, fontweight='bold')
+        ax.set_title(pretty_adv_name, fontsize=28, fontweight='bold')
         ax.set_xlabel(x_label, fontsize=grid_axis_labelsize)
         ax.set_ylabel(clean_metric_name, fontsize=grid_axis_labelsize)
         ax.set_xticks(x_indices)
@@ -461,7 +463,7 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
                                  color='skyblue' if label == "Clean" else 'salmon')
             ax_indiv.bar_label(rects, padding=3, fmt='%.2f', fontsize=18)
         
-        ax_indiv.set_title(pretty_adv_name, fontsize=indiv_title_fontsize, fontweight='bold', pad=20)
+        # ax_indiv.set_title(pretty_adv_name, fontsize=indiv_title_fontsize, fontweight='bold', pad=20)
         ax_indiv.set_xlabel(x_label, fontsize=indiv_axis_labelsize, labelpad=10)
         ax_indiv.set_ylabel(clean_metric_name, fontsize=indiv_axis_labelsize, labelpad=10)
         ax_indiv.set_xticks(x_indices)
