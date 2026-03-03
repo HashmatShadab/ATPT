@@ -50,7 +50,7 @@ ADV_FOLDER = "ADV_Generation_eps_4.0_steps_100"
 # )
 COUNTER_FOLDERS = (
     "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_48.0_Tau_Type_normal_num_anchors_1",
-    # "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_4.0_Tau_Type_normal_num_anchors_1",
+    "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_4.0_Tau_Type_normal_num_anchors_1",
     # "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_8.0_Tau_Type_normal_num_anchors_1",
     # "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_16.0_Tau_Type_normal_num_anchors_1",
 
@@ -522,7 +522,20 @@ def main() -> None:
     # Keep equal scaling (so directions/angles are not distorted) but avoid expanding
     # the data limits to force a square data box (which can leave empty space on x).
     ax.set_aspect("equal", adjustable="box")
-    ax.margins(x=0.03, y=0.03)
+
+    # Tighten limits to reduce empty space (especially on y) while keeping a small
+    # padding so points/centroids are not clipped.
+    xs = [Za[:, 0], *[Zr[:, 0] for Zr in Zrs]]
+    ys = [Za[:, 1], *[Zr[:, 1] for Zr in Zrs]]
+    x_min = float(np.min(np.concatenate(xs)))
+    x_max = float(np.max(np.concatenate(xs)))
+    y_min = float(np.min(np.concatenate(ys)))
+    y_max = float(np.max(np.concatenate(ys)))
+
+    x_pad = 0.02 * (x_max - x_min + 1e-12)
+    y_pad = 0.02 * (y_max - y_min + 1e-12)
+    ax.set_xlim(x_min - x_pad, x_max + x_pad)
+    ax.set_ylim(y_min - y_pad, y_max + y_pad)
 
     # Ticks: keep them readable and consistent across runs/datasets.
     ax.xaxis.set_major_locator(MaxNLocator(nbins=6))

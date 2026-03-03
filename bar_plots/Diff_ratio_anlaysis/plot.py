@@ -27,22 +27,43 @@ import numpy as np
 
 METRICS_FILENAME = "diff_ratio_after_counter_attack.json"
 
+# ATTACK_NAME_MAPPING = {
+#     "eps_0.0_steps_0": "Clean",
+#     "eps_1.0_steps_10": "PGD 1/255 (10 steps)",
+#     "eps_1.0_steps_10_image_only_attack_prm": "PGD 1/255 (10 steps, image only)",
+#     "eps_1.0_steps_100": "PGD 1/255 (100 steps)",
+#     "eps_1.0_steps_100_image_only_attack_prm": "PGD 1/255 (100 steps, image only)",
+#     "eps_4.0_steps_10": "PGD 4/255 (10 steps)",
+#     "eps_4.0_steps_10_image_only_attack_prm": "PGD 4/255 (10 steps, image only)",
+#     "eps_4.0_steps_100": "PGD 4/255 (100 steps)",
+#     "eps_4.0_steps_100_image_only_attack_prm": "PGD 4/255 (100 steps, image only)",
+#     "eps_8.0_steps_10": "PGD 8/255 (10 steps)",
+#     "eps_8.0_steps_10_image_only_attack_prm": "PGD 8/255 (10 steps, image only)",
+#     "eps_8.0_steps_100": "PGD 8/255 (100 steps)",
+#     "eps_8.0_steps_100_image_only_attack_prm": "PGD 8/255 (100 steps, image only)",
+# }
+
 ATTACK_NAME_MAPPING = {
     "eps_0.0_steps_0": "Clean",
-    "eps_1.0_steps_10": "PGD 1/255 (10 steps)",
-    "eps_1.0_steps_10_image_only_attack_prm": "PGD 1/255 (10 steps, image only)",
-    "eps_1.0_steps_100": "PGD 1/255 (100 steps)",
-    "eps_1.0_steps_100_image_only_attack_prm": "PGD 1/255 (100 steps, image only)",
-    "eps_4.0_steps_10": "PGD 4/255 (10 steps)",
-    "eps_4.0_steps_10_image_only_attack_prm": "PGD 4/255 (10 steps, image only)",
-    "eps_4.0_steps_100": "PGD 4/255 (100 steps)",
-    "eps_4.0_steps_100_image_only_attack_prm": "PGD 4/255 (100 steps, image only)",
-    "eps_8.0_steps_10": "PGD 8/255 (10 steps)",
-    "eps_8.0_steps_10_image_only_attack_prm": "PGD 8/255 (10 steps, image only)",
-    "eps_8.0_steps_100": "PGD 8/255 (100 steps)",
-    "eps_8.0_steps_100_image_only_attack_prm": "PGD 8/255 (100 steps, image only)",
-}
 
+    # Epsilon 1/255
+    "eps_1.0_steps_10": "PGD-10 (ε=1/255)",
+    "eps_1.0_steps_10_image_only_attack_prm": "PGD-10 (ε=1/255, Img)",
+    "eps_1.0_steps_100": "PGD-100 (ε=1/255)",
+    "eps_1.0_steps_100_image_only_attack_prm": "PGD-100 (ε=1/255, Img)",
+
+    # Epsilon 4/255
+    "eps_4.0_steps_10": "PGD-10 (ε=4/255)",
+    "eps_4.0_steps_10_image_only_attack_prm": "PGD-10 (ε=4/255, Img)",
+    "eps_4.0_steps_100": "PGD-100 (ε=4/255)",
+    "eps_4.0_steps_100_image_only_attack_prm": "PGD-100 (ε=4/255, Img)",
+
+    # Epsilon 8/255
+    "eps_8.0_steps_10": "PGD-10 (ε=8/255)",
+    "eps_8.0_steps_10_image_only_attack_prm": "PGD-10 (ε=8/255, Img)",
+    "eps_8.0_steps_100": "PGD-100 (ε=8/255)",
+    "eps_8.0_steps_100_image_only_attack_prm": "PGD-100 (ε=8/255, Img)",
+}
 
 def parse_experiment_folder_name(folder_name: str) -> Optional[Dict[str, Any]]:
     """
@@ -366,9 +387,9 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
     
     fig, axes = plt.subplots(rows, cols, figsize=(cols * 7, rows * 4), squeeze=False)
     if metric_key == 'counter_attack_accuracy':
-        metric_key = "accuracy_after_noise_addition"
+        metric_key = "average_accuracy_after_noise_addition"
     elif metric_key == 'avg_diff_ratio_after_counter_attack':
-        metric_key = "avg_diff_ratio"
+        metric_key = "avg_latent_drift"
     clean_metric_name = metric_key.replace('_', ' ').title()
     fig.suptitle(f"Average Across Datasets. Added Noise: {noise_type}\n Evaluating Metric: {clean_metric_name}", fontsize=20)
 
@@ -420,15 +441,15 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
         for idx_list, y_vals, label, offset in plot_data_for_indiv:
             rects = ax_indiv.bar(np.array(idx_list) + offset, y_vals, width, label=label,
                                  color='skyblue' if label == "Clean" else 'salmon')
-            ax_indiv.bar_label(rects, padding=3, fmt='%.2f', fontsize=14)
+            ax_indiv.bar_label(rects, padding=3, fmt='%.2f', fontsize=18)
         
         ax_indiv.set_title(pretty_adv_name, fontsize=22, fontweight='bold', pad=20)
         ax_indiv.set_xlabel(f"{noise_type} Noise", fontsize=20, labelpad=10)
         ax_indiv.set_ylabel(clean_metric_name, fontsize=20, labelpad=10)
         ax_indiv.set_xticks(x_indices)
-        ax_indiv.set_xticklabels([str(v) for v in unique_noise_vals], fontsize=16)
-        ax_indiv.tick_params(axis='y', labelsize=16)
-        ax_indiv.legend(fontsize=18, loc='upper left', ncol=2)
+        ax_indiv.set_xticklabels([str(v) for v in unique_noise_vals], fontsize=20)
+        ax_indiv.tick_params(axis='y', labelsize=20)
+        ax_indiv.legend(fontsize=20, loc='upper left', ncol=2)
         ax_indiv.grid(True, axis='y', linestyle='--', alpha=0.7)
         
         ax_indiv.set_ylim(ax.get_ylim()) # Match the grid subplot's y-limit
@@ -489,9 +510,9 @@ def plot_noise_summary(datasets: Dict[str, Any], model_name: str, clean_attack: 
     
     fig, ax = plt.subplots(figsize=(12, 7))
     if metric_key == 'counter_attack_accuracy':
-        metric_key = "accuracy_after_noise_addition"
+        metric_key = "average_accuracy_after_noise_addition"
     elif metric_key == 'avg_diff_ratio_after_counter_attack':
-        metric_key = "avg_diff_ratio"
+        metric_key = "avg_latent_drift"
     clean_metric_name = metric_key.replace('_', ' ').title()
     ax.set_title(f"{model_name} | Noise: {noise_type} | Average Across Datasets\nMetric: {clean_metric_name}", fontsize=16)
 
