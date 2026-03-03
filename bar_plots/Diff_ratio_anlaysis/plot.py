@@ -461,7 +461,7 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
         for idx_list, y_vals, label, offset in plot_data_for_indiv:
             rects = ax_indiv.bar(np.array(idx_list) + offset, y_vals, width, label=label,
                                  color='skyblue' if label == "Clean" else 'salmon')
-            ax_indiv.bar_label(rects, padding=3, fmt='%.2f', fontsize=18)
+            # ax_indiv.bar_label(rects, padding=3, fmt='%.2f', fontsize=18)
         
         # ax_indiv.set_title(pretty_adv_name, fontsize=indiv_title_fontsize, fontweight='bold', pad=20)
         ax_indiv.set_xlabel(x_label, fontsize=indiv_axis_labelsize, labelpad=10)
