@@ -873,14 +873,27 @@ def main() -> None:
         handles,
         labels,
         loc="upper center",
-        bbox_to_anchor=(0.5, 1.12),
+        # Nudge the legend upward a bit to make room for a larger font size.
+        bbox_to_anchor=(0.5, 1.16),
         ncol=ncol,
         borderaxespad=0.0,
-        handlelength=1.2,
-        markerscale=1.7,
+        # Slightly increase handle/marker sizes so the legend is clearer at larger font.
+        handlelength=1.6,
+        markerscale=2.2,
         columnspacing=1.2,
-        handletextpad=0.5,
+        handletextpad=0.6,
+        fontsize=22,
     )
+
+    # Just in case, remove any axis-level legends that might still exist so
+    # the figure-level PCA legend is the only legend shown.
+    for a in (ax1, ax2):
+        la = a.get_legend()
+        if la is not None:
+            try:
+                la.remove()
+            except Exception:
+                pass
 
     _finalize_figure(
         fig,
