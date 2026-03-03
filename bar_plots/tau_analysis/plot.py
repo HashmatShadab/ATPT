@@ -1508,6 +1508,11 @@ if __name__ == "__main__":
 
             ax.set_ylim(y_min, y_max)
 
+        TICK_LABEL_FONTSIZE = 18
+
+        def _set_tick_label_fontsize(ax, fontsize: int = TICK_LABEL_FONTSIZE):
+            ax.tick_params(axis="both", which="major", labelsize=fontsize)
+
         # Plot: mean τ curves
         fig = plt.figure(figsize=(7, 5))
         plt.plot(
@@ -1553,6 +1558,7 @@ if __name__ == "__main__":
 
         # Keep y-axis range from becoming overly tight (more consistent across runs)
         ax = plt.gca()
+        _set_tick_label_fontsize(ax)
         y_upper_clean = np.array(mean_clean) + np.array(std_clean)
         y_upper_adv = np.array(mean_adv) + np.array(std_adv)
         y_lower_clean = np.array(mean_clean) - np.array(std_clean)
@@ -1588,6 +1594,7 @@ if __name__ == "__main__":
 
         # Keep y-axis range stable and always centered around 0 for gap plots
         ax = plt.gca()
+        _set_tick_label_fontsize(ax)
         _set_reasonable_ylim(
             ax,
             y_values=np.asarray(mean_gap, dtype=float),
@@ -1669,11 +1676,14 @@ if __name__ == "__main__":
             else:
                 plt.xlabel("Noise Strength ε (/255)", fontsize=28)
             plt.ylabel("Mean Latent Drift τ", fontsize=28)
-            plt.title(f"{dataset_name}", fontsize=32)
+            if dataset_name == "eurosat":
+                dataset_name = "EuroSAT"
+            plt.title(f"{dataset_name}", fontsize=32, fontweight="bold")
             plt.legend(fontsize=20)
             plt.grid(True, linestyle="--", alpha=0.5)
 
             ax = plt.gca()
+            _set_tick_label_fontsize(ax)
             y_upper_clean = np.array(ds_mean_clean) + np.array(ds_std_clean)
             y_upper_adv = np.array(ds_mean_adv) + np.array(ds_std_adv)
             y_lower_clean = np.array(ds_mean_clean) - np.array(ds_std_clean)
@@ -1707,6 +1717,7 @@ if __name__ == "__main__":
             plt.grid(True, linestyle="--", alpha=0.5)
 
             ax = plt.gca()
+            _set_tick_label_fontsize(ax)
             _set_reasonable_ylim(
                 ax,
                 y_values=np.asarray(ds_gap, dtype=float),
