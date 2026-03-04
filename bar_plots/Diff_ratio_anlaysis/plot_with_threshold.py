@@ -899,6 +899,7 @@ def main():
         plt.ylabel('Average Accuracy (%)', fontsize=46)
         plt.title(f'{format_tau_label_from_ca(ca_label)}\n{format_tau_label_from_dr(dr_label)}', fontsize=42)
         plt.xticks(x, [str(t) for t in sorted_thresholds], fontsize=34)
+        plt.yticks(fontsize=34)
         # Calculate dynamic y-limits
         all_values = []
         for acc_list in attack_accs.values():
@@ -1029,6 +1030,7 @@ def main():
             ax.set_title(f'{dr_label}', fontsize=16)
             ax.set_xticks(x)
             ax.set_xticklabels([str(t) for t in sorted_thresholds])
+            ax.tick_params(axis='y', labelsize=14)
             ax.legend(fontsize=8)
             ax.grid(axis='y', linestyle='--', alpha=0.7)
             
