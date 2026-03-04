@@ -27,10 +27,32 @@ from PIL import Image
 # Map adversarial `attack_key` identifiers to human-readable legend labels.
 # (Used for plots where we compare Clean vs a single adversarial setting.)
 ATTACK_KEY_LEGEND_MAPPING = {
-    "eps_4.0_steps_100": "PGD 4/255 (100 steps)",
-    "eps_8.0_steps_100": "PGD 8/255 (100 steps)",
+    "eps_4.0_steps_100": "PGD-100 (ε=4/255)",
+    "eps_8.0_steps_100": "PGD-100 (ε=8/255)",
 }
 
+
+# ATTACK_NAME_MAPPING = {
+#     "eps_0.0_steps_0": "Clean",
+#
+#     # Epsilon 1/255
+#     "eps_1.0_steps_10": "PGD-10 (ε=1/255)",
+#     "eps_1.0_steps_10_image_only_attack_prm": "PGD-10 (ε=1/255, Img)",
+#     "eps_1.0_steps_100": "PGD-100 (ε=1/255)",
+#     "eps_1.0_steps_100_image_only_attack_prm": "PGD-100 (ε=1/255, Img)",
+#
+#     # Epsilon 4/255
+#     "eps_4.0_steps_10": "PGD-10 (ε=4/255)",
+#     "eps_4.0_steps_10_image_only_attack_prm": "PGD-10 (ε=4/255, Img)",
+#     "eps_4.0_steps_100": "PGD-100 (ε=4/255)",
+#     "eps_4.0_steps_100_image_only_attack_prm": "PGD-100 (ε=4/255, Img)",
+#
+#     # Epsilon 8/255
+#     "eps_8.0_steps_10": "PGD-10 (ε=8/255)",
+#     "eps_8.0_steps_10_image_only_attack_prm": "PGD-10 (ε=8/255, Img)",
+#     "eps_8.0_steps_100": "PGD-100 (ε=8/255)",
+#     "eps_8.0_steps_100_image_only_attack_prm": "PGD-100 (ε=8/255, Img)",
+# }
 
 def sanitize_for_path(name: str) -> str:
     """Make a string safe to use as a Windows folder/file name component."""
