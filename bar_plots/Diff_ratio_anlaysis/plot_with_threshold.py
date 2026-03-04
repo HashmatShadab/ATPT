@@ -370,10 +370,13 @@ METRICS_FILENAME = "diff_ratio_after_counter_attack.json"
 # Mapping of dataset folder names to more descriptive labels for plots (if needed).
 ATTACK_NAME_MAPPING = {
     "eps_0.0_steps_0": "Clean",
-    "eps_4.0_steps_100": "PGD 4/255 (100 steps)",
+    "eps_4.0_steps_100": "PGD-100 (ε=4/255)",
 }
 
-
+# ATTACK_KEY_LEGEND_MAPPING = {
+#     "eps_4.0_steps_100": "PGD-100 (ε=4/255)",
+#     "eps_8.0_steps_100": "PGD-100 (ε=8/255)",
+# }
 
 
 # Traverse the root directory to aggregate experiment results.
@@ -603,7 +606,7 @@ def main():
 
     # Range of thresholds for the Diff Ratio.
     # For each sample: if sample_diff_ratio < threshold, use ZS prediction; otherwise, use Counter-Attack prediction.
-    thresholds = [0.0, 0.1,  0.2, 0.3,  0.4,  0.5, 0.6, 0.7,  0.8, 0.85, 0.9,  1.0]
+    thresholds = [0.0,  0.2,   0.4,  0.6,   0.8, 0.85, 0.9,  1.0]
     
     model_name = "vit_l_14_datacomp_1b"
     datasets = list(results_dic['results'][model_name].keys())
@@ -921,10 +924,10 @@ def main():
                     #              ha='center',
                     #              fontweight='bold')
             
-        plt.xlabel(rf"Threshold $\tau$", fontsize=24)
-        plt.ylabel('Average Accuracy (%)', fontsize=24)
-        plt.title(f'{format_tau_label_from_ca(ca_label)}\n{format_tau_label_from_dr(dr_label)}', fontsize=20)
-        plt.xticks(x, [str(t) for t in sorted_thresholds], fontsize=20)
+        plt.xlabel(rf"Mean Latent Drift Threshold $\tau$", fontsize=32)
+        plt.ylabel('Average Accuracy (%)', fontsize=32)
+        plt.title(f'{format_tau_label_from_ca(ca_label)}\n{format_tau_label_from_dr(dr_label)}', fontsize=32)
+        plt.xticks(x, [str(t) for t in sorted_thresholds], fontsize=24)
         # Calculate dynamic y-limits
         all_values = []
         for acc_list in attack_accs.values():
@@ -939,7 +942,7 @@ def main():
         else:
             plt.ylim(40, 80)
         
-        plt.legend(fontsize=18)
+        plt.legend(fontsize=24)
         plt.grid(axis='y', linestyle='--', alpha=0.7)
         
         # Save the plot in structured directory
