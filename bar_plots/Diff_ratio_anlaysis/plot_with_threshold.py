@@ -509,7 +509,7 @@ def format_tau_label_from_dr(dr_label: str):
     else:
         param_str = f"{param_name} = {param_value}"
 
-    return rf"Threshold $\tau({noise_symbol},\ {param_str})$"
+    return rf"Mean Latent Drift using $\tau({noise_symbol},\ {param_str})$"
 
 def format_tau_label_from_ca(dr_label: str):
     """
@@ -913,7 +913,7 @@ def main():
         else:
             plt.ylim(40, 80)
         
-        plt.legend(fontsize=24)
+        plt.legend(fontsize=26)
         plt.grid(axis='y', linestyle='--', alpha=0.7)
         
         # Save the plot in structured directory
@@ -1004,7 +1004,7 @@ def main():
                         va='bottom',
                         fontweight='bold',
                         color='black',
-                        fontsize=10,
+                        fontsize=14,
                         bbox=dict(boxstyle='round,pad=0.2', facecolor='gold', edgecolor='black', alpha=0.9),
                         zorder=6,
                     )
