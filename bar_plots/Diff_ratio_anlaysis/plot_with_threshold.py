@@ -790,7 +790,7 @@ def main():
         ca_to_drs[ca] = sorted(list(ca_to_drs[ca]))
                 
     for dr_label, ca_label in combinations:
-        plt.figure(figsize=(20, 10))
+        plt.figure(figsize=(16, 10))
         
         # Prepare data for this combination
         # x_values: thresholds
@@ -832,7 +832,7 @@ def main():
                 for bar in bars:
                     height = bar.get_height()
                     plt.text(bar.get_x() + bar.get_width()/2., height + 0.5,
-                             f'{height:.1f}', ha='center', va='bottom', fontsize=16)
+                             f'{height:.1f}', ha='center', va='bottom', fontsize=20)
                 
                 found_data = True
 
