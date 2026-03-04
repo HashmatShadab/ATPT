@@ -113,7 +113,7 @@ def _make_plots_dir() -> str:
     dataset = _safe_name(os.path.basename(BASE_DIR))
     adv = _safe_name(ADV_FOLDER)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    run_folder = _safe_name(f"tsne_vis__{dataset}__{adv}__{ts}")
+    run_folder = _safe_name(f"tsne_vis__{dataset}__{adv}")
     out_dir = os.path.join(PLOTS_ROOT_DIR, run_folder)
     os.makedirs(out_dir, exist_ok=True)
     return out_dir
@@ -135,6 +135,11 @@ def _finalize_figure(fig: plt.Figure, *, save_path: str | None) -> None:
 # ---------------------------
 # PLOTTING STYLE
 # ---------------------------
+
+# Figure-specific font overrides.
+# Requested: increase font size of Fig. 1+2 for x/y tick labels and axis labels.
+FIG12_AXES_LABELSIZE = 38
+FIG12_TICK_LABELSIZE = 32
 
 # A small, colorblind-friendly palette (Okabe–Ito inspired; explicit hex for consistency).
 # These tend to print well and remain distinguishable under common color-vision deficiencies.
@@ -223,9 +228,9 @@ def apply_plot_style() -> None:
             "font.size": 20,
             "axes.titlesize": 20,
             # Axis titles (x/y labels) and tick labels.
-            "axes.labelsize": 24,
-            "xtick.labelsize": 20,
-            "ytick.labelsize": 20,
+            "axes.labelsize": 30,
+            "xtick.labelsize": 24,
+            "ytick.labelsize": 24,
             "axes.titleweight": "semibold",
             "axes.prop_cycle": cycler(color=COLOR_CYCLE),
             "axes.grid": True,
@@ -665,7 +670,7 @@ def main() -> None:
             ax,
             Za[:, 0],
             Za[:, 1],
-            label="Adv. Drift",
+            label="Adversarial",
             color=COLORS["attack"],
             marker="o",
             n=n,
@@ -716,8 +721,8 @@ def main() -> None:
         # Higher percentages mean the 2D projection preserves more of the drift distribution structure.
         _ = pca.explained_variance_ratio_
 
-        ax.set_xlabel("PC1")
-        ax.set_ylabel("PC2", labelpad=2)
+        ax.set_xlabel("PC1", fontsize=FIG12_AXES_LABELSIZE)
+        ax.set_ylabel("PC2", labelpad=2, fontsize=FIG12_AXES_LABELSIZE)
 
         # Tighten limits to reduce empty space while keeping a small padding so points/centroids are not clipped.
         xs = [Za[:, 0], *[Zr[:, 0] for Zr in Zrs]]
@@ -736,7 +741,14 @@ def main() -> None:
         ax.yaxis.set_major_locator(MaxNLocator(nbins=6))
         ax.xaxis.set_minor_locator(AutoMinorLocator(2))
         ax.yaxis.set_minor_locator(AutoMinorLocator(2))
-        ax.tick_params(axis="both", which="major", direction="out", length=5, width=1.0)
+        ax.tick_params(
+            axis="both",
+            which="major",
+            direction="out",
+            length=5,
+            width=1.0,
+            labelsize=FIG12_TICK_LABELSIZE,
+        )
         ax.tick_params(axis="both", which="minor", direction="out", length=2.8, width=0.8)
         ax.grid(True, which="major", alpha=0.22)
         ax.grid(True, which="minor", alpha=0.12)
@@ -754,8 +766,8 @@ def main() -> None:
                 borderaxespad=0.0,
                 handlelength=1.2,
                 markerscale=1.7,
-                columnspacing=1.2,
-                handletextpad=0.5,
+                # columnspacing=1.2,
+                # handletextpad=0.5,
             )
 
     def _plot_fig2_cosine_hist(ax: plt.Axes, show_legend: bool = True) -> None:
@@ -780,6 +792,11 @@ def main() -> None:
             ],
             show_legend=show_legend,
         )
+
+        # Ensure Fig. 2 axis label + tick labels match the requested larger size.
+        ax.set_xlabel("Cosine similarity", fontsize=FIG12_AXES_LABELSIZE)
+        ax.set_ylabel("Density", fontsize=FIG12_AXES_LABELSIZE)
+        ax.tick_params(axis="both", which="major", labelsize=FIG12_TICK_LABELSIZE)
 
     # ---------------------------
     # FIGURE 1: Drift space (PCA-2D)
@@ -812,7 +829,7 @@ def main() -> None:
     Za = Z[:n]
     Zrs = [Z[n * (i + 1) : n * (i + 2)] for i in range(len(D_recovers))]
 
-    fig, ax = plt.subplots(figsize=(10, 7.4), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(12, 8))
     _plot_fig1_drift_pca(ax)
 
     _finalize_figure(
@@ -829,7 +846,7 @@ def main() -> None:
     # How to read:
     # - If the countermeasure is effective, the `cos(clean, counter)` distribution should
     #   shift right (toward 1.0) relative to `cos(clean, adv)`.
-    fig, ax = plt.subplots(figsize=(10, 7.4), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(12, 8))
     _plot_fig2_cosine_hist(ax)
     _finalize_figure(
         fig,
@@ -842,9 +859,7 @@ def main() -> None:
     fig, (ax1, ax2) = plt.subplots(
         1,
         2,
-        figsize=(20, 7.4),
-        constrained_layout=True,
-        gridspec_kw={"width_ratios": [1.1, 1.0]},
+        figsize=(24, 8),
     )
 
     # Suppress per-axis legends for the grid. We'll place a single, PCA-only
@@ -874,15 +889,15 @@ def main() -> None:
         labels,
         loc="upper center",
         # Nudge the legend upward a bit to make room for a larger font size.
-        bbox_to_anchor=(0.5, 1.09),
+        bbox_to_anchor=(0.5, 1.0),
         ncol=ncol,
         borderaxespad=0.0,
         # Slightly increase handle/marker sizes so the legend is clearer at larger font.
-        handlelength=1.6,
-        markerscale=3.2,
-        columnspacing=1.2,
-        handletextpad=0.6,
-        fontsize=30,
+        # handlelength=1.6,
+        markerscale=4,
+        # columnspacing=1.2,
+        # handletextpad=0.6,
+        fontsize=32,
     )
 
     # Just in case, remove any axis-level legends that might still exist so
