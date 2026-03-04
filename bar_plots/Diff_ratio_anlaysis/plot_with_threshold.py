@@ -850,14 +850,6 @@ def main():
             
             plt.plot(x, net_accs, marker='o', color='purple', label="Net Average", linewidth=2)
             
-            # Add line plots for Clean and Adversarial alone
-            if attack_keys[0] in attack_accs:
-                offset_clean = (0 - 0.5) * width
-                plt.plot(x + offset_clean, attack_accs[attack_keys[0]], marker='s', color='blue', label="Clean", linewidth=1.5, linestyle='--')
-            if attack_keys[1] in attack_accs:
-                offset_pgd = (1 - 0.5) * width
-                plt.plot(x + offset_pgd, attack_accs[attack_keys[1]], marker='^', color='red', label="Adversarial", linewidth=1.5, linestyle='--')
-            
             # Highlight the dot with the highest score and mention the threshold
             max_net_acc = max(net_accs)
             max_indices = [idx for idx, val in enumerate(net_accs) if val == max_net_acc]
@@ -872,40 +864,6 @@ def main():
                 #              fontweight='bold',
                 #              color='purple',
                 #              fontsize=14)
-
-            # Highlight Clean line max
-            if attack_keys[0] in attack_accs:
-                clean_accs = attack_accs[attack_keys[0]]
-                max_clean_acc = max(clean_accs)
-                max_clean_indices = [idx for idx, val in enumerate(clean_accs) if val == max_clean_acc]
-                offset_clean = (0 - 0.5) * width
-                for max_idx in max_clean_indices:
-                    plt.plot(x[max_idx] + offset_clean, clean_accs[max_idx], marker='*', color='gold', markersize=15, markeredgecolor='black', zorder=5)
-                    # plt.annotate(f"T: {sorted_thresholds[max_idx]}",
-                    #              xy=(x[max_idx] + offset_clean, clean_accs[max_idx]),
-                    #              xytext=(0, -15),
-                    #              textcoords='offset points',
-                    #              ha='center',
-                    #              fontweight='bold',
-                    #              color='blue',
-                    #              fontsize=9)
-
-            # Highlight PGD line max
-            if attack_keys[1] in attack_accs:
-                pgd_accs = attack_accs[attack_keys[1]]
-                max_pgd_acc = max(pgd_accs)
-                max_pgd_indices = [idx for idx, val in enumerate(pgd_accs) if val == max_pgd_acc]
-                offset_pgd = (1 - 0.5) * width
-                for max_idx in max_pgd_indices:
-                    plt.plot(x[max_idx] + offset_pgd, pgd_accs[max_idx], marker='*', color='gold', markersize=15, markeredgecolor='black', zorder=5)
-                    # plt.annotate(f"T: {sorted_thresholds[max_idx]}",
-                    #              xy=(x[max_idx] + offset_pgd, pgd_accs[max_idx]),
-                    #              xytext=(0, 10),
-                    #              textcoords='offset points',
-                    #              ha='center',
-                    #              fontweight='bold',
-                    #              color='red',
-                    #              fontsize=9)
                              
         elif len(attack_accs) > 0:
             # If only one attack is present, just plot its line (fallback)
@@ -1020,29 +978,11 @@ def main():
                 net_accs = [(attack_accs[attack_keys[0]][j] + attack_accs[attack_keys[1]][j]) / 2.0 for j in range(len(sorted_thresholds))]
                 ax.plot(x, net_accs, marker='o', color='purple', label="Net Average", linewidth=2)
                 
-                offset_clean = (0 - 0.5) * width
-                ax.plot(x + offset_clean, attack_accs[attack_keys[0]], marker='s', color='blue', label="Clean", linewidth=1.5, linestyle='--')
-                
-                offset_pgd = (1 - 0.5) * width
-                ax.plot(x + offset_pgd, attack_accs[attack_keys[1]], marker='^', color='red', label="PGD", linewidth=1.5, linestyle='--')
-                
                 # Highlight Net Max
                 max_net_acc = max(net_accs)
                 for max_idx in [i for i, v in enumerate(net_accs) if v == max_net_acc]:
                     ax.plot(x[max_idx], net_accs[max_idx], marker='*', color='gold', markersize=15, markeredgecolor='black', zorder=5)
                     ax.annotate(f"T: {sorted_thresholds[max_idx]}", xy=(x[max_idx], net_accs[max_idx]), xytext=(0, 10), textcoords='offset points', ha='center', fontweight='bold', color='purple', fontsize=10)
-                
-                # Highlight Clean Max
-                clean_accs = attack_accs[attack_keys[0]]
-                max_clean_acc = max(clean_accs)
-                for max_idx in [i for i, v in enumerate(clean_accs) if v == max_clean_acc]:
-                    ax.plot(x[max_idx] + offset_clean, clean_accs[max_idx], marker='*', color='gold', markersize=12, markeredgecolor='black', zorder=5)
-                
-                # Highlight PGD Max
-                pgd_accs = attack_accs[attack_keys[1]]
-                max_pgd_acc = max(pgd_accs)
-                for max_idx in [i for i, v in enumerate(pgd_accs) if v == max_pgd_acc]:
-                    ax.plot(x[max_idx] + offset_pgd, pgd_accs[max_idx], marker='*', color='gold', markersize=12, markeredgecolor='black', zorder=5)
 
             # Calculate dynamic y-limits for subplot
             all_values_subplot = []
