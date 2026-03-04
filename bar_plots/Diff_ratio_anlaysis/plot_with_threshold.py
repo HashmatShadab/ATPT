@@ -790,7 +790,7 @@ def main():
         ca_to_drs[ca] = sorted(list(ca_to_drs[ca]))
                 
     for dr_label, ca_label in combinations:
-        plt.figure(figsize=(16, 10))
+        plt.figure(figsize=(26, 12))
         
         # Prepare data for this combination
         # x_values: thresholds
@@ -799,7 +799,7 @@ def main():
         # Determine available thresholds (should be same for all)
         sorted_thresholds = sorted(thresholds)
         x = np.arange(len(sorted_thresholds))
-        width = 0.4  # width of the bars
+        width = 0.45  # width of the bars
         
         found_data = False
         
@@ -832,7 +832,7 @@ def main():
                 for bar in bars:
                     height = bar.get_height()
                     plt.text(bar.get_x() + bar.get_width()/2., height + 0.5,
-                             f'{height:.1f}', ha='center', va='bottom', fontsize=20)
+                             f'{height:.1f}', ha='center', va='bottom', fontsize=30)
                 
                 found_data = True
 
@@ -862,7 +862,7 @@ def main():
                     textcoords='offset points',
                     ha='center',
                     va='bottom',
-                    fontsize=16,
+                    fontsize=30,
                     fontweight='bold',
                     color='black',
                     bbox=dict(boxstyle='round,pad=0.2', facecolor='gold', edgecolor='black', alpha=0.9),
@@ -895,10 +895,10 @@ def main():
                     #              ha='center',
                     #              fontweight='bold')
             
-        plt.xlabel(rf"Mean Latent Drift Threshold $\tau$", fontsize=32)
-        plt.ylabel('Average Accuracy (%)', fontsize=32)
-        plt.title(f'{format_tau_label_from_ca(ca_label)}\n{format_tau_label_from_dr(dr_label)}', fontsize=32)
-        plt.xticks(x, [str(t) for t in sorted_thresholds], fontsize=24)
+        plt.xlabel(rf"Mean Latent Drift Threshold $\tau$", fontsize=46)
+        plt.ylabel('Average Accuracy (%)', fontsize=46)
+        plt.title(f'{format_tau_label_from_ca(ca_label)}\n{format_tau_label_from_dr(dr_label)}', fontsize=42)
+        plt.xticks(x, [str(t) for t in sorted_thresholds], fontsize=34)
         # Calculate dynamic y-limits
         all_values = []
         for acc_list in attack_accs.values():
@@ -913,7 +913,7 @@ def main():
         else:
             plt.ylim(40, 80)
         
-        plt.legend(fontsize=26)
+        plt.legend(fontsize=40)
         plt.grid(axis='y', linestyle='--', alpha=0.7)
         
         # Save the plot in structured directory
