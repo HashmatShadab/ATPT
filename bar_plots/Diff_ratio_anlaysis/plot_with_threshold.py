@@ -854,7 +854,20 @@ def main():
             max_net_acc = max(net_accs)
             max_indices = [idx for idx, val in enumerate(net_accs) if val == max_net_acc]
             for max_idx in max_indices:
-                plt.plot(x[max_idx], net_accs[max_idx], marker='*', color='gold', markersize=15, markeredgecolor='black', zorder=5)
+                plt.plot(x[max_idx], net_accs[max_idx], marker='*', color='gold', markersize=25, markeredgecolor='black', zorder=5)
+                plt.annotate(
+                    f"{net_accs[max_idx]:.1f}",
+                    xy=(x[max_idx], net_accs[max_idx]),
+                    xytext=(0, 18),
+                    textcoords='offset points',
+                    ha='center',
+                    va='bottom',
+                    fontsize=16,
+                    fontweight='bold',
+                    color='black',
+                    bbox=dict(boxstyle='round,pad=0.2', facecolor='gold', edgecolor='black', alpha=0.9),
+                    zorder=6,
+                )
                 # Annotate with threshold value
                 # plt.annotate(f"T: {sorted_thresholds[max_idx]}",
                 #              xy=(x[max_idx], net_accs[max_idx]),
@@ -981,7 +994,20 @@ def main():
                 # Highlight Net Max
                 max_net_acc = max(net_accs)
                 for max_idx in [i for i, v in enumerate(net_accs) if v == max_net_acc]:
-                    ax.plot(x[max_idx], net_accs[max_idx], marker='*', color='gold', markersize=15, markeredgecolor='black', zorder=5)
+                    ax.plot(x[max_idx], net_accs[max_idx], marker='*', color='gold', markersize=25, markeredgecolor='black', zorder=5)
+                    ax.annotate(
+                        f"{net_accs[max_idx]:.1f}",
+                        xy=(x[max_idx], net_accs[max_idx]),
+                        xytext=(0, 14),
+                        textcoords='offset points',
+                        ha='center',
+                        va='bottom',
+                        fontweight='bold',
+                        color='black',
+                        fontsize=10,
+                        bbox=dict(boxstyle='round,pad=0.2', facecolor='gold', edgecolor='black', alpha=0.9),
+                        zorder=6,
+                    )
                     ax.annotate(f"T: {sorted_thresholds[max_idx]}", xy=(x[max_idx], net_accs[max_idx]), xytext=(0, 10), textcoords='offset points', ha='center', fontweight='bold', color='purple', fontsize=10)
 
             # Calculate dynamic y-limits for subplot
