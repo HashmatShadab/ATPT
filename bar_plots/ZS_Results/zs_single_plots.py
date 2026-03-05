@@ -4,10 +4,10 @@ import numpy as np
 import argparse
 
 MODELS = [
-    "delta_clip_l14_224",
+    # "delta_clip_l14_224",
     "fare4",
-    "ViT-L/14",
-    "vit_l_14_datacomp_1b",
+    # "ViT-L/14",
+    # "vit_l_14_datacomp_1b",
 ]
 
 MODEL_NAME_MAP = {

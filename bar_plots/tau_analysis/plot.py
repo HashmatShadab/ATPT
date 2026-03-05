@@ -29,6 +29,8 @@ from PIL import Image
 ATTACK_KEY_LEGEND_MAPPING = {
     "eps_4.0_steps_100": "PGD-100 (ε=4/255)",
     "eps_8.0_steps_100": "PGD-100 (ε=8/255)",
+    "eps_1.0_steps_100": "PGD-100 (ε=1/255)",
+
 }
 
 
@@ -1315,7 +1317,7 @@ if __name__ == "__main__":
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     root_diff_ratio = os.path.abspath(os.path.join(script_dir, "..", "..", "Diffratio_v3", model_name))
-    selected_attacks = ['eps_0.0_steps_0', 'eps_4.0_steps_100']
+    selected_attacks = ['eps_0.0_steps_0', 'eps_8.0_steps_100']
 
     # The analysis code below compares exactly two conditions:
     #   - Clean (eps_0.0_steps_0)
@@ -1530,13 +1532,13 @@ if __name__ == "__main__":
 
             ax.set_ylim(y_min, y_max)
 
-        TICK_LABEL_FONTSIZE = 18
+        TICK_LABEL_FONTSIZE = 28
 
         def _set_tick_label_fontsize(ax, fontsize: int = TICK_LABEL_FONTSIZE):
             ax.tick_params(axis="both", which="major", labelsize=fontsize)
 
         # Plot: mean τ curves
-        fig = plt.figure(figsize=(7, 5))
+        fig = plt.figure(figsize=(8, 7))
         plt.plot(
             eps, mean_clean,
             marker='o',
@@ -1570,12 +1572,12 @@ if __name__ == "__main__":
         )
 
         if noise_type == "Gaussian":
-            plt.xlabel("Noise Strength σ", fontsize=20)
+            plt.xlabel("Noise Strength σ", fontsize=34)
         else:
-            plt.xlabel("Noise Strength ε (/255)", fontsize=20)
-        plt.ylabel("Mean Latent Drift τ", fontsize=20)
-        plt.title(f"A1: Average Noise–τ Response Across Datasets ({noise_type})", fontsize=20)
-        plt.legend(fontsize=16)
+            plt.xlabel("Noise Strength ε (/255)", fontsize=34)
+        plt.ylabel("Mean Latent Drift τ", fontsize=34)
+        plt.title(f"Average  Across Datasets", fontsize=34)
+        plt.legend(fontsize=26, frameon=False)
         plt.grid(True, linestyle="--", alpha=0.5)
 
         # Keep y-axis range from becoming overly tight (more consistent across runs)

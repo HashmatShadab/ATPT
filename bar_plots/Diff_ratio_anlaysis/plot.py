@@ -397,9 +397,9 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
     grid_axis_labelsize = 20
     grid_legend_fontsize = 20
 
-    indiv_tick_labelsize = 30
-    indiv_axis_labelsize = 34
-    indiv_legend_fontsize = 30
+    indiv_tick_labelsize = 36
+    indiv_axis_labelsize = 42
+    indiv_legend_fontsize = 36
     indiv_title_fontsize = 36
     
     fig, axes = plt.subplots(rows, cols, figsize=(cols * 7, rows * 4), squeeze=False)
@@ -457,7 +457,7 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
         metric_indiv_dir = os.path.join(indiv_plots_dir, metric_key)
         os.makedirs(metric_indiv_dir, exist_ok=True)
 
-        fig_indiv, ax_indiv = plt.subplots(figsize=(12, 8))
+        fig_indiv, ax_indiv = plt.subplots(figsize=(14, 8))
         for idx_list, y_vals, label, offset in plot_data_for_indiv:
             rects = ax_indiv.bar(np.array(idx_list) + offset, y_vals, width, label=label,
                                  color='skyblue' if label == "Clean" else 'salmon')
@@ -469,7 +469,7 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
         ax_indiv.set_xticks(x_indices)
         ax_indiv.set_xticklabels([str(v) for v in unique_noise_vals], fontsize=indiv_tick_labelsize)
         ax_indiv.tick_params(axis='both', labelsize=indiv_tick_labelsize)
-        ax_indiv.legend(fontsize=indiv_legend_fontsize, loc='upper left', ncol=2)
+        ax_indiv.legend(fontsize=indiv_legend_fontsize, loc='upper left', ncol=1)
         ax_indiv.grid(True, axis='y', linestyle='--', alpha=0.7)
         
         ax_indiv.set_ylim(ax.get_ylim()) # Match the grid subplot's y-limit
