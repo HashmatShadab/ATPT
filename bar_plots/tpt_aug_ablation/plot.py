@@ -1063,11 +1063,11 @@ if __name__ == "__main__":
         plt.style.use("seaborn-v0_8-whitegrid")
 
         # Font sizes tuned for readability once stitched into a multi-panel grid.
-        label_fontsize = 36
-        tick_fontsize = 28
-        legend_fontsize = 28
-        title_fontsize = 42
-        value_label_fontsize = 24
+        label_fontsize = 46
+        tick_fontsize = 36
+        legend_fontsize = 42
+        title_fontsize = 50
+        value_label_fontsize = 38
 
         dataset_names = list(diff_by_dataset.keys())
         if not dataset_names:
@@ -1138,27 +1138,47 @@ if __name__ == "__main__":
             )
             ax.set_ylabel("Mean Latent Drift", labelpad=10, fontsize=label_fontsize)
             ax.set_xlabel("Stochastic Transformation", fontsize=label_fontsize)
-            ax.set_title(f"{dset}", fontsize=title_fontsize, pad=22)
+            # Layout request:
+            #   - Title at the very top
+            #   - Legend below the title
+            #   - Bars/axes below the legend
+            # Using figure-level title/legend avoids overlap within the axes (important for grid stitching).
+            # Tune y-positions + tight_layout rect to guarantee clear separation.
+            title_y = 0.995
+            legend_y = 0.900
+            header_rect_top = 0.76
+
+            if dset == "eurosat":
+                dset = "EuroSAT"
+            fig.suptitle(f"{dset}", fontsize=title_fontsize, y=title_y, fontweight="bold")
 
             ax.tick_params(axis="both", which="major", labelsize=tick_fontsize)
-            ax.legend(
-                ncol=2,
-                loc="upper center",
-                bbox_to_anchor=(0.5, 1.05),
-                frameon=True,
-                fancybox=True,
-                framealpha=0.95,
-                fontsize=legend_fontsize,
-                columnspacing=1.4,
-                handlelength=1.6,
-                borderpad=0.6,
-            )
+            handles, labels = ax.get_legend_handles_labels()
+            if handles:
+                fig.legend(
+                    handles,
+                    labels,
+                    ncol=2,
+                    loc="upper center",
+                    # Place legend in the figure header area, under the suptitle.
+                    bbox_to_anchor=(0.5, legend_y),
+                    borderaxespad=0.0,
+                    frameon=True,
+                    fancybox=True,
+                    framealpha=0.95,
+                    fontsize=legend_fontsize,
+                    columnspacing=1.4,
+                    handlelength=1.6,
+                    borderpad=0.6,
+                )
             ax.grid(axis="y", linestyle="--", alpha=0.35)
             ax.grid(axis="x", visible=False)
             for spine in ["top", "right"]:
                 ax.spines[spine].set_visible(False)
 
-            # plt.tight_layout()
+            # Reserve room on top for (1) suptitle and (2) figure-level legend.
+            # Rect top is a fraction of the figure height.
+            fig.tight_layout(rect=(0.0, 0.0, 1.0, header_rect_top))
             out_path = os.path.join(
                 out_dir,
                 f"diff_ratio_by_augmentation_{sanitize_for_path(dset)}_{model_name}.png",
