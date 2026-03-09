@@ -33,6 +33,22 @@ ATTACK_KEY_LEGEND_MAPPING = {
 
 }
 
+# Map internal dataset identifiers to display names used in plot titles.
+DATASET_DISPLAY_NAME = {
+    "I": "ImageNet",
+    "A": "ImageNet-A",
+    "R": "ImageNet-R",
+    "K": "ImageNet-S",
+    "V": "ImageNet-V",
+}
+
+
+def dataset_display_name(dataset_key: str) -> str:
+    # Preserve any existing special casing in plots.
+    if dataset_key == "eurosat":
+        return "EuroSAT"
+    return DATASET_DISPLAY_NAME.get(dataset_key, dataset_key)
+
 
 # ATTACK_NAME_MAPPING = {
 #     "eps_0.0_steps_0": "Clean",
@@ -1648,7 +1664,9 @@ if __name__ == "__main__":
 
         # Preserve deterministic ordering in grids
         for dataset_name in sorted(all_results.keys()):
-            dataset_stats = all_results[dataset_name]
+            dataset_key = dataset_name
+            display_name = dataset_display_name(dataset_key)
+            dataset_stats = all_results[dataset_key]
             dataset_sorted_keys = sorted(dataset_stats.keys(), key=eps_from_key)
             dataset_eps = [eps_from_key(k) for k in dataset_sorted_keys]
 
@@ -1658,7 +1676,7 @@ if __name__ == "__main__":
             ds_std_adv = [dataset_stats[k]["std_adv"] for k in dataset_sorted_keys]
             ds_gap = [dataset_stats[k]["gap"] for k in dataset_sorted_keys]
 
-            dataset_dir = os.path.join(per_dataset_root, sanitize_for_path(dataset_name))
+            dataset_dir = os.path.join(per_dataset_root, sanitize_for_path(dataset_key))
             os.makedirs(dataset_dir, exist_ok=True)
 
             # Per-dataset: mean τ curves
@@ -1700,9 +1718,7 @@ if __name__ == "__main__":
             else:
                 plt.xlabel("Noise Strength ε (/255)", fontsize=28)
             plt.ylabel("Mean Latent Drift τ", fontsize=28)
-            if dataset_name == "eurosat":
-                dataset_name = "EuroSAT"
-            plt.title(f"{dataset_name}", fontsize=32, fontweight="bold")
+            plt.title(f"{display_name}", fontsize=32, fontweight="bold")
             plt.legend(fontsize=20)
             plt.grid(True, linestyle="--", alpha=0.5)
 
@@ -1721,7 +1737,7 @@ if __name__ == "__main__":
             )
             plt.tight_layout()
 
-            ds_tau_name = f"a1_mean_tau_curve_{sanitize_for_path(dataset_name)}_{attack_key}.png" if attack_key else f"a1_mean_tau_curve_{sanitize_for_path(dataset_name)}.png"
+            ds_tau_name = f"a1_mean_tau_curve_{sanitize_for_path(dataset_key)}_{attack_key}.png" if attack_key else f"a1_mean_tau_curve_{sanitize_for_path(dataset_key)}.png"
             ds_tau_path = os.path.join(dataset_dir, ds_tau_name)
             fig.savefig(ds_tau_path, dpi=200)
             plt.close(fig)
@@ -1737,7 +1753,7 @@ if __name__ == "__main__":
             else:
                 plt.xlabel("Noise Strength ε (/255)", fontsize=20)
             plt.ylabel("Mean Latent Drift τ", fontsize=20)
-            plt.title(f"{dataset_name}", fontsize=28)
+            plt.title(f"{display_name}", fontsize=28)
             plt.grid(True, linestyle="--", alpha=0.5)
 
             ax = plt.gca()
@@ -1751,7 +1767,7 @@ if __name__ == "__main__":
             )
             plt.tight_layout()
 
-            ds_gap_name = f"a1_tau_gap_curve_{sanitize_for_path(dataset_name)}_{attack_key}.png" if attack_key else f"a1_tau_gap_curve_{sanitize_for_path(dataset_name)}.png"
+            ds_gap_name = f"a1_tau_gap_curve_{sanitize_for_path(dataset_key)}_{attack_key}.png" if attack_key else f"a1_tau_gap_curve_{sanitize_for_path(dataset_key)}.png"
             ds_gap_path = os.path.join(dataset_dir, ds_gap_name)
             fig.savefig(ds_gap_path, dpi=200)
             plt.close(fig)

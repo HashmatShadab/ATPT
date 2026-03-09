@@ -382,7 +382,7 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
     unique_noise_vals = sorted(list(set(nv for nv, atk in summary_data.keys())))
     
     num_attacks = len(present_attacks)
-    cols = 4
+    cols = 3
     rows = (num_attacks + cols - 1) // cols
 
     noise_type_lower = (noise_type or "").lower()
@@ -393,22 +393,22 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
     else:
         x_label = f"{noise_type} Noise"
 
-    grid_tick_labelsize = 20
-    grid_axis_labelsize = 20
-    grid_legend_fontsize = 20
+    grid_tick_labelsize = 60
+    grid_axis_labelsize = 46
+    grid_legend_fontsize = 42
 
     indiv_tick_labelsize = 36
     indiv_axis_labelsize = 42
     indiv_legend_fontsize = 36
     indiv_title_fontsize = 36
     
-    fig, axes = plt.subplots(rows, cols, figsize=(cols * 7, rows * 4), squeeze=False)
+    fig, axes = plt.subplots(rows, cols, figsize=(cols * 17.5, rows * 9), squeeze=False)
     if metric_key == 'counter_attack_accuracy':
         metric_key = "average_accuracy"
     elif metric_key == 'avg_diff_ratio_after_counter_attack':
         metric_key = "Mean_latent_drift"
     clean_metric_name = metric_key.replace('_', ' ').title()
-    fig.suptitle(f"Average Across Datasets. Added Noise: {noise_type}\n Evaluating Metric: {clean_metric_name}", fontsize=20)
+    # fig.suptitle(f"Average Across Datasets. Added Noise: {noise_type}\n Evaluating Metric: {clean_metric_name}", fontsize=20)
 
     for i, adv_attack in enumerate(present_attacks):
         ax = axes[i // cols, i % cols]
@@ -420,7 +420,7 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
         width = 0.45
         
         pretty_adv_name = get_pretty_attack_name(adv_attack)
-        labels = ["Clean", pretty_adv_name]
+        labels = ["Clean", "Adversarial"]
 
         for j, label in enumerate(labels):
             atk_to_plot = clean_attack if label == "Clean" else adv_attack
@@ -436,16 +436,18 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
                 offset = (j - 0.5) * width
                 rects = ax.bar(np.array(idx_list) + offset, y_vals, width, label=label,
                                color='skyblue' if label == "Clean" else 'salmon')
-                ax.bar_label(rects, padding=3, fmt='%.2f', fontsize=12)
+                # ax.bar_label(rects, padding=3, fmt='%.2f', fontsize=12)
                 plot_data_for_indiv.append((idx_list, y_vals, label, offset))
 
         pretty_adv_name = get_pretty_attack_name(adv_attack)
-        ax.set_title(pretty_adv_name, fontsize=28, fontweight='bold')
-        ax.set_xlabel(x_label, fontsize=grid_axis_labelsize)
+        ax.set_title(pretty_adv_name, fontsize=46, fontweight='bold')
+        ax.set_xlabel(x_label, fontsize=60)
         ax.set_ylabel(clean_metric_name, fontsize=grid_axis_labelsize)
         ax.set_xticks(x_indices)
         ax.set_xticklabels([str(v) for v in unique_noise_vals], fontsize=grid_tick_labelsize)
         ax.tick_params(axis='y', labelsize=grid_tick_labelsize)
+        ax.tick_params(axis='x', labelsize=grid_tick_labelsize)
+
         if i == 0:
             ax.legend(fontsize=grid_legend_fontsize, loc='upper left', ncol=2)
         ax.grid(True, axis='y', linestyle='--', alpha=0.7)
