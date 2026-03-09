@@ -15,10 +15,8 @@ Final_Results_corrected_ca_tau_Counter_Attack/vit_l_14_datacomp_1b/<Dataset Name
 """
 
 import argparse
-import json
 import os
 import re
-import math
 from typing import Any, Dict, Optional, List
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,6 +28,18 @@ ATTACK_KEY_LEGEND_MAPPING = {
     "eps_4.0_steps_100": "PGD 4/255 (100 steps)",
     "eps_8.0_steps_100": "PGD 8/255 (100 steps)",
 }
+
+
+# Human-friendly names for plotting only (keys are on-disk augmentation pool identifiers).
+AUGMENTATION_PLOT_NAMES = {
+    "all": "Combined",
+    "photometric_tpt": "Photometric",
+    "geometric_tpt": "Geometric",
+}
+
+
+def augmentation_plot_name(aug: str) -> str:
+    return AUGMENTATION_PLOT_NAMES.get(aug, aug)
 
 
 def sanitize_for_path(name: str) -> str:
@@ -82,7 +92,6 @@ def create_image_grid(image_paths, output_path, cols=4, scale: float = 1.0):
 def get_zs_aug_results(model_name):
     from pathlib import Path
     import json
-    import numpy as np
 
     # MODELS = [
     #     "delta_clip_l14_224",
@@ -105,7 +114,9 @@ def get_zs_aug_results(model_name):
         "eurosat",
     ]
 
-    AUGMENTATIONS = ["all", "tpt", "photometric", "photometric_tpt", "geometric_tpt"]
+    # Keep this list minimal for the diff-ratio grid/plots (requested).
+    # NOTE: these are the on-disk augmentation pool identifiers.
+    AUGMENTATIONS = ["all", "photometric_tpt", "geometric_tpt"]
 
     # Optional on-disk cache: loading all jsons for all augmentations is slow.
     # Cache is stored next to this plotting script.
@@ -142,7 +153,17 @@ def get_zs_aug_results(model_name):
     # Try cache first (this call can be very slow otherwise).
     cached = _try_load_cache()
     if cached is not None:
-        return cached
+        # Backward/forward safety: if an older cache exists with different augmentation set,
+        # ignore it and rebuild.
+        # (This script's correctness depends on matching the current AUGMENTATIONS list.)
+        try:
+            if set(cached.get("zero_shot_aug_clean", {}).keys()) == set(AUGMENTATIONS):
+                return cached
+        except Exception:
+            pass
+        print(
+            f"[INFO] Ignoring cached ZS aug data due to AUGMENTATIONS mismatch. Rebuilding: {AUGMENTATIONS}"
+        )
 
     PRED_KEYS = ("max_confidence", "prediction", "label")
 
@@ -181,23 +202,35 @@ def get_zs_aug_results(model_name):
     """
 
     # Base path templates for each case
+    # IMPORTANT: build paths relative to this file to avoid dependence on CWD.
+    results_root = Path(__file__).resolve().parents[2] / "Final_Results_corrected_ca_tau_aug_pool_ablation"
+
     RESULT_PATHS = {
         "zero_shot": {
             "clean": {
                 "base_path": (
-                    "../../Final_Results_corrected_ca_tau_aug_pool_ablation/"
-                    "{model}/{dataset}/"
-                    "Clean/No_Counter_Attack/No_TPT/"
-                    "Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01_augmentation_pool_{augment}"
+                    str(
+                        results_root
+                        / "{model}"
+                        / "{dataset}"
+                        / "Clean"
+                        / "No_Counter_Attack"
+                        / "No_TPT"
+                        / "Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01_augmentation_pool_{augment}"
+                    )
                 ),
             },
             "adversarial_eps4_steps100": {
                 "base_path": (
-                    "../../Final_Results_corrected_ca_tau_aug_pool_ablation/"
-                    "{model}/{dataset}/"
-                    "Adversarial_Eps_4_0_Steps_100/"
-                    "No_Counter_Attack/No_TPT/"
-                    "Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01_augmentation_pool_{augment}"
+                    str(
+                        results_root
+                        / "{model}"
+                        / "{dataset}"
+                        / "Adversarial_Eps_4_0_Steps_100"
+                        / "No_Counter_Attack"
+                        / "No_TPT"
+                        / "Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01_augmentation_pool_{augment}"
+                    )
                 ),
             },
             # "adversarial_eps4_steps100_image_only": {
@@ -240,6 +273,12 @@ def get_zs_aug_results(model_name):
         preds = {}
         for key in ["original", "single", "vanilla", "weighted"]:
             fp = base / JSON_KEYMAP[key]
+            if not fp.exists() and key == "original":
+                # Some clean runs only store `results_original_clean.json`.
+                # Fall back to that file if `results_original.json` is missing.
+                fp_alt = base / JSON_KEYMAP["original_clean"]
+                if fp_alt.exists():
+                    fp = fp_alt
             obj = _load_json(fp)
             preds[key] = _load_pred_json(obj)
 
@@ -426,6 +465,38 @@ def aggregate_avg_accuracy_across_datasets(zs_aug_dic):
     return avg_acc
 
 
+def aggregate_accuracy_by_dataset_and_augmentation(zs_aug_dic: Dict[str, Any]) -> Dict[str, Dict[str, Dict[str, float]]]:
+    """Compute accuracy per dataset (no cross-dataset averaging).
+
+    Returns:
+        acc[dataset][augment][setting] = accuracy (%)
+
+        setting ∈ {
+            clean_original, clean_vanilla, clean_weighted,
+            adv_original, adv_vanilla, adv_weighted
+        }
+    """
+
+    datasets = list(zs_aug_dic["true_labels"].keys())
+    augmentations = list(zs_aug_dic["zero_shot_aug_clean"].keys())
+
+    out: Dict[str, Dict[str, Dict[str, float]]] = {}
+    for dset in datasets:
+        labels = zs_aug_dic["true_labels"][dset]
+        out[dset] = {}
+        for aug in augmentations:
+            out[dset][aug] = {
+                "clean_original": compute_accuracy(zs_aug_dic["zero_shot_aug_clean"][aug][dset], labels),
+                "clean_vanilla": compute_accuracy(zs_aug_dic["zero_shot_aug_vanilla_clean"][aug][dset], labels),
+                "clean_weighted": compute_accuracy(zs_aug_dic["zero_shot_aug_weighted_clean"][aug][dset], labels),
+                "adv_original": compute_accuracy(zs_aug_dic["zero_shot_aug_adv"][aug][dset], labels),
+                "adv_vanilla": compute_accuracy(zs_aug_dic["zero_shot_aug_vanilla_adv"][aug][dset], labels),
+                "adv_weighted": compute_accuracy(zs_aug_dic["zero_shot_aug_weighted_adv"][aug][dset], labels),
+            }
+
+    return out
+
+
 def aggregate_avg_diff_ratio_across_datasets(zs_aug_dic):
     """Aggregate average diff-ratio across datasets for each augmentation.
 
@@ -474,6 +545,45 @@ def aggregate_avg_diff_ratio_across_datasets(zs_aug_dic):
     return avg_diff
 
 
+def aggregate_diff_ratio_by_dataset_and_augmentation(
+    zs_aug_dic: Dict[str, Any],
+) -> Dict[str, Dict[str, Dict[str, float]]]:
+    """Compute mean diff-ratio per dataset and augmentation (no cross-dataset averaging).
+
+    Returns:
+        diff[dataset][augment][setting] = mean diff ratio
+
+        setting ∈ {clean, adv}
+
+    Notes:
+        - If a diff-ratio list is missing/empty for a dataset+augmentation, the value is NaN.
+    """
+
+    datasets = list(zs_aug_dic.get("true_labels", {}).keys())
+    augmentations = list(zs_aug_dic.get("zero_shot_aug_clean", {}).keys())
+
+    def _safe_mean(x) -> float:
+        if x is None:
+            return float("nan")
+        arr = np.asarray(x, dtype=float)
+        if arr.size == 0:
+            return float("nan")
+        return float(np.nanmean(arr))
+
+    out: Dict[str, Dict[str, Dict[str, float]]] = {}
+    for dset in datasets:
+        out[dset] = {}
+        for aug in augmentations:
+            clean_list = zs_aug_dic.get("diff_ratio_per_sample_clean", {}).get(aug, {}).get(dset)
+            adv_list = zs_aug_dic.get("diff_ratio_per_sample_adv", {}).get(aug, {}).get(dset)
+            out[dset][aug] = {
+                "clean": _safe_mean(clean_list),
+                "adv": _safe_mean(adv_list),
+            }
+
+    return out
+
+
 def _combine_predictions_by_diff_ratio_threshold(
     original_preds: List[int],
     modified_preds: List[int],
@@ -505,7 +615,7 @@ def _combine_predictions_by_diff_ratio_threshold(
 def aggregate_thresholded_accuracy_across_datasets(
     zs_aug_dic: Dict[str, Any],
     thresholds: List[float],
-) -> Dict[str, Dict[str, Dict[float, float]]]:
+) -> Dict[str, Dict[str, Dict[Any, float]]]:
     """Compute average accuracy across datasets under per-sample diff-ratio threshold routing.
 
     Returns:
@@ -523,7 +633,7 @@ def aggregate_thresholded_accuracy_across_datasets(
     datasets = list(zs_aug_dic["true_labels"].keys())
     augmentations = list(zs_aug_dic["zero_shot_aug_clean"].keys())
 
-    out: Dict[str, Dict[str, Dict[float, float]]] = {}
+    out: Dict[str, Dict[str, Dict[Any, float]]] = {}
 
     for aug in augmentations:
         out[aug] = {
@@ -616,6 +726,19 @@ if __name__ == "__main__":
             "Comma-separated diff-ratio thresholds. For each sample: if diff_ratio < threshold, "
             "use original prediction; else use vanilla/weighted prediction."
         ),
+    )
+
+    parser.add_argument(
+        "--dataset-grid-cols",
+        type=int,
+        default=4,
+        help="Number of columns for the per-dataset plot grid image.",
+    )
+    parser.add_argument(
+        "--dataset-grid-scale",
+        type=float,
+        default=1.0,
+        help="Optional scaling factor applied to each tile when building the per-dataset grid image.",
     )
 
 
@@ -725,6 +848,123 @@ if __name__ == "__main__":
         plt.close()
 
 
+    def plot_accuracy_by_augmentation_per_dataset(
+        acc_by_dataset: Dict[str, Dict[str, Dict[str, float]]],
+        out_dir: str,
+        model_name: str,
+        *,
+        grid_cols: int = 4,
+        grid_scale: float = 1.0,
+    ) -> None:
+        """Create one accuracy plot per dataset + a grid image that contains all dataset plots."""
+
+        os.makedirs(out_dir, exist_ok=True)
+        plt.style.use("seaborn-v0_8-whitegrid")
+
+        # Ensure stable ordering (match the order used in the loading section when possible).
+        dataset_names = list(acc_by_dataset.keys())
+        if not dataset_names:
+            return
+
+        # Augmentations from first dataset.
+        augmentations = list(acc_by_dataset[dataset_names[0]].keys())
+        x = np.arange(len(augmentations))
+        width = 0.12
+
+        settings = [
+            ("clean_original", "Clean – Original", "#4C72B0"),
+            ("clean_vanilla", "Clean – Vanilla", "#9AB6DF"),
+            ("clean_weighted", "Clean – Weighted", "#2F5597"),
+            ("adv_original", "Adv – Original", "#DD8452"),
+            ("adv_vanilla", "Adv – Vanilla", "#F0B38C"),
+            ("adv_weighted", "Adv – Weighted", "#C44E52"),
+        ]
+
+        def _add_value_labels(ax, bars, *, fmt: str = "{:.1f}", fontsize: int = 8):
+            for b in bars:
+                h = b.get_height()
+                if not np.isfinite(h):
+                    continue
+                ax.text(
+                    b.get_x() + b.get_width() / 2.0,
+                    h + 0.2,
+                    fmt.format(h),
+                    ha="center",
+                    va="bottom",
+                    fontsize=fontsize,
+                    color="#222222",
+                    rotation=0,
+                    clip_on=False,
+                )
+
+        saved_paths: List[str] = []
+
+        for dset in dataset_names:
+            # Compute y-limits per dataset with a little headroom.
+            all_vals = [
+                acc_by_dataset[dset][aug][k]
+                for aug in augmentations
+                for k, _, _ in settings
+                if k in acc_by_dataset[dset][aug]
+            ]
+            ymin = max(0.0, float(np.floor(min(all_vals) / 5.0) * 5.0)) if all_vals else 0.0
+            ymax = (float(np.ceil(max(all_vals) / 5.0) * 5.0) + 3.0) if all_vals else 100.0
+
+            fig, ax = plt.subplots(figsize=(14, 6.5))
+            ax.set_ylim(ymin, ymax)
+
+            for i, (key, label, color) in enumerate(settings):
+                values = [float(acc_by_dataset[dset][aug][key]) for aug in augmentations]
+                bars = ax.bar(
+                    x + (i - 2.5) * width,
+                    values,
+                    width,
+                    label=label,
+                    color=color,
+                    edgecolor="white",
+                    linewidth=0.6,
+                )
+                _add_value_labels(ax, bars)
+
+            ax.set_xticks(x)
+            ax.set_xticklabels(augmentations, rotation=15, ha="right")
+            ax.set_ylabel("Accuracy (%)", labelpad=8, fontsize=12)
+            ax.set_xlabel("Augmentation Type", fontsize=12)
+            ax.set_title(f"{dset} | Model: {model_name}", fontsize=13, pad=12)
+
+            ax.tick_params(axis="both", which="major", labelsize=10)
+            ax.legend(
+                ncol=6,
+                loc="upper center",
+                bbox_to_anchor=(0.5, 1.18),
+                frameon=True,
+                fancybox=True,
+                framealpha=0.95,
+                fontsize=10,
+                columnspacing=1.2,
+                handlelength=1.4,
+                borderpad=0.6,
+            )
+            ax.grid(axis="y", linestyle="--", alpha=0.35)
+            ax.grid(axis="x", visible=False)
+            for spine in ["top", "right"]:
+                ax.spines[spine].set_visible(False)
+
+            plt.tight_layout()
+            out_path = os.path.join(
+                out_dir,
+                f"accuracy_by_augmentation_{sanitize_for_path(dset)}_{model_name}.png",
+            )
+            plt.savefig(out_path, dpi=300, bbox_inches="tight")
+            print(f"[SAVED] {out_path}")
+            saved_paths.append(out_path)
+            plt.close(fig)
+
+        # Grid over datasets
+        grid_out = os.path.join(out_dir, f"accuracy_by_augmentation_all_datasets_grid_{model_name}.png")
+        create_image_grid(saved_paths, grid_out, cols=max(1, int(grid_cols)), scale=float(grid_scale))
+
+
     def plot_avg_diff_ratio_by_augmentation(avg_diff, out_dir, model_name):
         os.makedirs(out_dir, exist_ok=True)
 
@@ -779,10 +1019,10 @@ if __name__ == "__main__":
             _add_value_labels(bars)
 
         ax.set_xticks(x)
-        ax.set_xticklabels(augmentations, rotation=15, ha="right")
-        ax.set_ylabel("Average Diff Ratio", labelpad=8, fontsize=12)
-        ax.set_xlabel("Augmentation Type", fontsize=12)
-        ax.tick_params(axis="both", which="major", labelsize=10)
+        ax.set_xticklabels([augmentation_plot_name(a) for a in augmentations], rotation=0, ha="center")
+        ax.set_ylabel("Average Diff Ratio", labelpad=10, fontsize=14)
+        ax.set_xlabel("Augmentation Type", fontsize=14)
+        ax.tick_params(axis="both", which="major", labelsize=12)
 
         ax.legend(
             ncol=2,
@@ -791,7 +1031,7 @@ if __name__ == "__main__":
             frameon=True,
             fancybox=True,
             framealpha=0.95,
-            fontsize=10,
+            fontsize=12,
             columnspacing=1.4,
             handlelength=1.6,
             borderpad=0.6,
@@ -808,6 +1048,129 @@ if __name__ == "__main__":
         print(f"[SAVED] {out_path}")
         plt.close()
 
+
+    def plot_diff_ratio_by_augmentation_per_dataset(
+        diff_by_dataset: Dict[str, Dict[str, Dict[str, float]]],
+        out_dir: str,
+        model_name: str,
+        *,
+        grid_cols: int = 4,
+        grid_scale: float = 1.0,
+    ) -> None:
+        """Create one diff-ratio plot per dataset + a grid image that contains all dataset plots."""
+
+        os.makedirs(out_dir, exist_ok=True)
+        plt.style.use("seaborn-v0_8-whitegrid")
+
+        # Font sizes tuned for readability once stitched into a multi-panel grid.
+        label_fontsize = 36
+        tick_fontsize = 28
+        legend_fontsize = 28
+        title_fontsize = 42
+        value_label_fontsize = 24
+
+        dataset_names = list(diff_by_dataset.keys())
+        if not dataset_names:
+            return
+
+        augmentations = list(diff_by_dataset[dataset_names[0]].keys())
+        x = np.arange(len(augmentations))
+        width = 0.36
+
+        settings = [
+            ("clean", "Clean", "#4C72B0"),
+            ("adv", "Adversarial", "#DD8452"),
+        ]
+
+        def _add_value_labels(ax, bars, *, fmt: str = "{:.3f}", fontsize: int = value_label_fontsize):
+            for b in bars:
+                h = b.get_height()
+                if not np.isfinite(h):
+                    continue
+                ax.text(
+                    b.get_x() + b.get_width() / 2.0,
+                    h + 0.01,
+                    fmt.format(h),
+                    ha="center",
+                    va="bottom",
+                    fontsize=fontsize,
+                    color="#222222",
+                    rotation=0,
+                    clip_on=False,
+                )
+
+        saved_paths: List[str] = []
+
+        for dset in dataset_names:
+            all_vals = [
+                float(diff_by_dataset[dset][aug][k])
+                for aug in augmentations
+                for k, _, _ in settings
+                if k in diff_by_dataset[dset][aug]
+            ]
+            finite = [v for v in all_vals if np.isfinite(v)]
+
+            fig, ax = plt.subplots(figsize=(14, 8))
+            # if finite:
+            #     ymin = max(0.0, float(np.floor(min(finite) * 20.0) / 20.0))
+            #     ymax = float(np.ceil(max(finite) * 20.0) / 20.0) + 0.05
+            #     ax.set_ylim(ymin, min(1.0, ymax) if ymax <= 1.0 else ymax)
+
+            for i, (key, label, color) in enumerate(settings):
+                values = [float(diff_by_dataset[dset][aug][key]) for aug in augmentations]
+                bars = ax.bar(
+                    x + (i - 0.5) * width,
+                    values,
+                    width,
+                    label=label,
+                    color=color,
+                    edgecolor="white",
+                    linewidth=0.6,
+                )
+                _add_value_labels(ax, bars)
+
+            ax.set_xticks(x)
+            ax.set_xticklabels(
+                [augmentation_plot_name(a) for a in augmentations],
+                rotation=0,
+                ha="center",
+                fontsize=tick_fontsize,
+            )
+            ax.set_ylabel("Mean Latent Drift", labelpad=10, fontsize=label_fontsize)
+            ax.set_xlabel("Stochastic Transformation", fontsize=label_fontsize)
+            ax.set_title(f"{dset}", fontsize=title_fontsize, pad=22)
+
+            ax.tick_params(axis="both", which="major", labelsize=tick_fontsize)
+            ax.legend(
+                ncol=2,
+                loc="upper center",
+                bbox_to_anchor=(0.5, 1.05),
+                frameon=True,
+                fancybox=True,
+                framealpha=0.95,
+                fontsize=legend_fontsize,
+                columnspacing=1.4,
+                handlelength=1.6,
+                borderpad=0.6,
+            )
+            ax.grid(axis="y", linestyle="--", alpha=0.35)
+            ax.grid(axis="x", visible=False)
+            for spine in ["top", "right"]:
+                ax.spines[spine].set_visible(False)
+
+            # plt.tight_layout()
+            out_path = os.path.join(
+                out_dir,
+                f"diff_ratio_by_augmentation_{sanitize_for_path(dset)}_{model_name}.png",
+            )
+            plt.savefig(out_path, dpi=300, bbox_inches="tight")
+            print(f"[SAVED] {out_path}")
+            saved_paths.append(out_path)
+            plt.close(fig)
+
+        grid_out = os.path.join(out_dir, f"diff_ratio_by_augmentation_all_datasets_grid_{model_name}.png")
+        create_image_grid(saved_paths, grid_out, cols=max(1, int(grid_cols)), scale=float(grid_scale))
+
     avg_acc = aggregate_avg_accuracy_across_datasets(zero_shot_aug_dic)
     avg_diff = aggregate_avg_diff_ratio_across_datasets(zero_shot_aug_dic)
 
@@ -817,10 +1180,30 @@ if __name__ == "__main__":
         model_name=model_name,
     )
 
+    # --- NEW: per-dataset plots + grid ---
+    acc_by_dataset = aggregate_accuracy_by_dataset_and_augmentation(zero_shot_aug_dic)
+    plot_accuracy_by_augmentation_per_dataset(
+        acc_by_dataset,
+        out_dir=args.out_dir,
+        model_name=model_name,
+        grid_cols=args.dataset_grid_cols,
+        grid_scale=args.dataset_grid_scale,
+    )
+
     plot_avg_diff_ratio_by_augmentation(
         avg_diff,
         out_dir=args.out_dir,
         model_name=model_name,
+    )
+
+    # --- NEW: per-dataset diff-ratio plots + grid ---
+    diff_by_dataset = aggregate_diff_ratio_by_dataset_and_augmentation(zero_shot_aug_dic)
+    plot_diff_ratio_by_augmentation_per_dataset(
+        diff_by_dataset,
+        out_dir=args.out_dir,
+        model_name=model_name,
+        grid_cols=args.dataset_grid_cols,
+        grid_scale=args.dataset_grid_scale,
     )
 
     def plot_accuracy_vs_diff_ratio_threshold(avg_acc_thr, thresholds, out_dir, model_name):
