@@ -92,9 +92,9 @@ echo "Generating Adv Examples  on Fine-grained datasets..."
 if [ "$DATASET_ID" = "all"   ]; then
   echo "Running tests on Fine-grained datasets..."
 
-#  echo "  [1/8] Adv Examples  DTD dataset..."
-#  python rtpt_adv_generation.py $DATA_ROOT --test_sets DTD $MODEL $COMMON_PARAMS
-#  echo "  ✓ DTD dataset Adv Examples  complete"
+  echo "  [1/8] Adv Examples  DTD dataset..."
+  python rtpt_adv_generation.py $DATA_ROOT --test_sets DTD $MODEL $COMMON_PARAMS
+  echo "  ✓ DTD dataset Adv Examples  complete"
 #
 #  echo "  [2/8] Adv Examples  Flower102 dataset..."
 #  python rtpt_adv_generation.py $DATA_ROOT --test_sets Flower102 $MODEL $COMMON_PARAMS
@@ -112,9 +112,9 @@ if [ "$DATASET_ID" = "all"   ]; then
 #  python adv_gen_analysis.py $DATA_ROOT --test_sets Pets $MODEL $COMMON_PARAMS
 #  echo "  ✓ Pets dataset Adv Examples  complete"
 #
-  echo "  [6/8] Adv Examples  Caltech101 dataset..."
-  python adv_gen_analysis.py $DATA_ROOT --test_sets Caltech101 $MODEL $COMMON_PARAMS
-  echo "  ✓ Caltech101 dataset Adv Examples  complete"
+#  echo "  [6/8] Adv Examples  Caltech101 dataset..."
+#  python adv_gen_analysis.py $DATA_ROOT --test_sets Caltech101 $MODEL $COMMON_PARAMS
+#  echo "  ✓ Caltech101 dataset Adv Examples  complete"
 
 #  echo "  [7/8] Adv Examples  UCF101 dataset..."
 #  python adv_gen_analysis.py $DATA_ROOT --test_sets UCF101 $MODEL $COMMON_PARAMS
