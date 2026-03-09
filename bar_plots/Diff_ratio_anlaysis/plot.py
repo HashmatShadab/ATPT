@@ -20,7 +20,7 @@ import argparse
 import json
 import os
 import re
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, Optional
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -389,6 +389,11 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
 
     unique_noise_vals = sorted(list(set(nv for nv, atk in summary_data.keys())))
     
+    # For uniform noise, exclude specific epsilon values that should not appear on the x-axis
+    noise_type_lower = (noise_type or "").lower()
+    if noise_type_lower == "uniform":
+        unique_noise_vals = [v for v in unique_noise_vals if v not in (2.0, 24.0)]
+
     num_attacks = len(present_attacks)
     cols = 3
     rows = (num_attacks + cols - 1) // cols
@@ -403,7 +408,7 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
 
     grid_tick_labelsize = 60
     grid_axis_labelsize = 50
-    grid_legend_fontsize = 42
+    grid_legend_fontsize = 50
 
     indiv_tick_labelsize = 36
     indiv_axis_labelsize = 42
@@ -448,7 +453,7 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
                 plot_data_for_indiv.append((idx_list, y_vals, label, offset))
 
         pretty_adv_name = get_pretty_attack_name(adv_attack)
-        ax.set_title(pretty_adv_name, fontsize=46, fontweight='bold')
+        ax.set_title(pretty_adv_name, fontsize=60, fontweight='bold')
         ax.set_xlabel(x_label, fontsize=60)
         ax.set_ylabel(clean_metric_name, fontsize=grid_axis_labelsize)
         ax.set_xticks(x_indices)
@@ -493,8 +498,8 @@ def plot_attack_vs_clean_summary_grid(datasets: Dict[str, Any], model_name: str,
     for i in range(num_attacks, rows * cols):
         axes[i // cols, i % cols].axis('off')
 
-    plt.tight_layout(rect=[0, 0.03, 1, 0.98])
-    
+    plt.tight_layout(rect=(0, 0.03, 1, 0.98))
+
     filename = f"{noise_type}_{metric_key}_summary_vs_clean_grid.png"
     save_path = os.path.join(plots_dir, filename)
     plt.savefig(save_path)
@@ -538,6 +543,11 @@ def plot_noise_summary(datasets: Dict[str, Any], model_name: str, clean_attack: 
     # Process into means
     unique_noise_vals = sorted(list(set(nv for nv, atk in summary_data.keys())))
     
+    # For uniform noise, exclude specific epsilon values that should not appear on the x-axis
+    noise_type_lower = (noise_type or "").lower()
+    if noise_type_lower == "uniform":
+        unique_noise_vals = [v for v in unique_noise_vals if v not in (2.0, 24.0)]
+
     fig, ax = plt.subplots(figsize=(12, 7))
     if metric_key == 'counter_attack_accuracy':
         metric_key = "average_accuracy_after_noise_addition"
