@@ -1040,8 +1040,8 @@ if __name__ == "__main__":
     print(f"Plots saved in {output_dir}")
 
     diff_ratio_thresholds = [
-        0.0, 0.1, 0.2, 0.25, 0.3, 0.4,
-        0.5, 0.6, 0.7,
+        0.0,  0.2, 0.4,
+         0.6, 0.7,
         0.8, 0.85, 0.9, 1.0
     ]
 
@@ -1066,15 +1066,16 @@ if __name__ == "__main__":
             return noise_type
 
         # Gaussian noise
+        # Gaussian noise
         if noise_type.lower() == "gaussian" and name.lower() == "sigma":
-            return rf"Threshold $\tau(\mathcal{{N}}, \sigma = {value})$"
+            return rf"Mean Latent Drift $\tau(\mathcal{{N}}, \sigma = {value})$"
 
         # Uniform noise
         if noise_type.lower() == "uniform" and name.lower() == "eps":
             if value > 1:
-                return rf"Threshold $\tau(\mathcal{{U}}, \epsilon = {int(value)}/255)$"
+                return rf"Mean Latent Drift $\tau(\mathcal{{U}}, \epsilon = {int(value)}/255)$"
             else:
-                return rf"Threshold $\tau(\mathcal{{U}},\ \epsilon = {value})$"
+                return rf"Mean Latent Drift $\tau(\mathcal{{U}},\ \epsilon = {value})$"
 
         return noise_type
 
@@ -1190,7 +1191,7 @@ if __name__ == "__main__":
                 os.makedirs(save_dir, exist_ok=True)
 
                 x = np.arange(len(diff_ratio_thresholds))
-                width = 0.35
+                width = 0.40
 
                 plt.figure(figsize=(12, 8))
                 # Professional colors: Steel Blue and Coral
@@ -1199,35 +1200,36 @@ if __name__ == "__main__":
                 bars2 = plt.bar(x + width / 2, adv_accs, width, label="Adversarial", color='#FF7F50', edgecolor='black',
                                 linewidth=0.5, alpha=0.7)
 
-                plt.xticks(x, diff_ratio_thresholds, fontsize=18)
-                plt.xlabel(r"$\tau_{\text{threshold}}$", fontsize=24)
-                plt.ylabel("Average Accuracy (%)", fontsize=24)
+                plt.xticks(x, diff_ratio_thresholds, fontsize=24)
+                plt.xlabel(r"$\tau_{\text{threshold}}$", fontsize=32)
+                plt.ylabel("Average Accuracy (%)", fontsize=32)
 
                 if current_logic == "greater":
-                    logic_str = r"{Apply Counter Attack if $\tau > \tau_{threshold}$; otherwise Zero-Shot (Ours)}"
+                    logic_str = r"(Apply Counter Attack if $\tau > \tau_{threshold}$; otherwise Zero-Shot)"
                 else:
-                    logic_str = r"{Apply Counter Attack if $\tau \leq \tau_{threshold}$; otherwise Zero-Shot (Baseline)}"
+                    logic_str = r"(Apply Counter Attack if $\tau \leq \tau_{threshold}$; otherwise Zero-Shot)"
 
                 # First two lines (normal)
                 plt.title(
                     f"Test Time Counter Attack {logic_str}\n"
                     f"{format_noise_math(noise_type, noise_param)}",
-                    fontsize=12
+                    fontsize=18, pad=20
                 )
 
                 # Third line (colored separately)
                 plt.text(
-                    0.5, .92,
+                    0.5, .88,
                     rf"Best Average Performance: {max_net_val:.1f}% at $\tau_{{\text{{threshold}}}} = {max_net_thr}$",
                     color="blue",
-                    fontsize=12,
+                    fontsize=18,
                     ha="center",
                     va="bottom",
                     transform=plt.gca().transAxes
                 )
 
-                plt.legend(fontsize=18, loc='upper left', bbox_to_anchor=(1, 1))
-                plt.ylim(0, 85)  # Increased to give space for text
+                plt.legend(fontsize=18, loc='upper center', ncol=2, bbox_to_anchor=(0.5, 1.05), fancybox=True,
+                           shadow=True)
+                plt.ylim(0, 90)  # Increased to give space for text
                 plt.grid(axis='y', linestyle='--', alpha=0.7)
 
 
@@ -1235,7 +1237,7 @@ if __name__ == "__main__":
                     for bar in bars:
                         height = bar.get_height()
                         plt.text(bar.get_x() + bar.get_width() / 2., height + 1,
-                                 f'{height:.1f}', ha='center', va='bottom', fontsize=8, fontweight='bold')
+                                 f'{height:.1f}', ha='center', va='bottom', fontsize=14, fontweight='bold')
 
 
                 add_labels(bars1)
