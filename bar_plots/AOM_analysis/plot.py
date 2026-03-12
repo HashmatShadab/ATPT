@@ -1247,10 +1247,22 @@ if __name__ == "__main__":
                     f"{h:.1f}",
                     ha="center",
                     va="bottom",
-                    fontsize=10,
+                    fontsize=16,
                     color="#222222",
                     clip_on=True,
                 )
+
+        # Keep the y-axis comparable across threshold-mixing plots.
+        # Requirement: y-min should not go below 60.
+        all_vals = []
+        for _a, _vals in alpha_to_acc.items():
+            try:
+                all_vals.extend([float(v) for v in _vals])
+            except Exception:
+                continue
+        max_val = float(np.nanmax(all_vals)) if all_vals and np.any(np.isfinite(all_vals)) else 100.0
+        # Requirement: y-max should be exactly (max plotted value + 4).
+        ax.set_ylim(60, max_val + 4.0)
 
         for i, alpha in enumerate(alphas_sorted):
             y = np.asarray(alpha_to_acc[alpha], dtype=float)
@@ -1283,7 +1295,7 @@ if __name__ == "__main__":
         ax.set_xticklabels(tick_labels, fontsize=24)
         ax.set_xlabel(r"$\tau_{\mathrm{threshold}}$", fontsize=30)
         ax.set_ylabel(ylabel.replace("(%)", r"(%)"), fontsize=18)
-        ax.set_title(title, pad=30)
+        ax.set_title(title, pad=30, fontsize=22)
 
         # Corner note clarifying that \tau-threshold=0.0 corresponds to original AOM (no thresholding).
         note_text = r"$\tau_{\mathrm{threshold}}=0.0$ corresponds to original AOM (no thresholding)"
@@ -1293,7 +1305,7 @@ if __name__ == "__main__":
             note_text,
             ha="right",
             va="bottom",
-            fontsize=16,
+            fontsize=24,
             color="#000000",
             alpha=0.35,
         )
@@ -1304,7 +1316,7 @@ if __name__ == "__main__":
             ncol=min(4, n_series),
             columnspacing=1.0,
             handlelength=1.3,
-            fontsize=10,
+            fontsize=20,
         )
 
         # Extra bottom margin for the explanatory note.
@@ -1380,7 +1392,7 @@ if __name__ == "__main__":
                 outpath = os.path.join(outdir, "clean_vs_adversarial_bars.png")
 
                 title = (
-                    "Average accuracy across Datasets\n"
+                    "Average Accuracy\n"
                     f"Anchor={noise_anchor}, Normalize={normalize}"
                 )
 
@@ -1686,15 +1698,17 @@ if __name__ == "__main__":
                         outpath_avg_cons = os.path.join(outdir_avg, "conservative_accuracy_vs_threshold.png")
 
                         title_avg = (
-                            r"$\tau$-thresholded AOM (Avg. Clean/Adv.): use AOM if $\tau > \tau_{\mathrm{threshold}}$ else Zero-shot"
+                            r"Mean Latent Drift($\tau$) based AOM: use AOM if $\tau > \tau_{\mathrm{threshold}}$ else Zero-shot"
                             "\n"
-                            rf"AOM Anchor: {anchor_desc} | Diff-ratio: {diff_noise_desc}"
+                            rf"AOM Anchor: {anchor_desc} | Mean Latent Drift: $\tau$ {diff_noise_desc}"
                         )
                         title_avg_cons = (
-                            r"$\tau$-thresholded AOM (Conservative, Avg. Clean/Adv.): use AOM if $\tau > \tau_{\mathrm{threshold}}$ else Zero-shot"
+                            r"Mean Latent Drift($\tau$) based AOM: use AOM if $\tau > \tau_{\mathrm{threshold}}$ else Zero-shot"
                             "\n"
-                            rf"AOM Anchor: {anchor_desc} | Diff-ratio: {diff_noise_desc}"
+                            rf"AOM Anchor: {anchor_desc} | Mean Latent Drift: $\tau$ {diff_noise_desc}"
                         )
+
+
 
                         plot_threshold_mixing_bars(
                             thresholds=thresholds,
@@ -1707,7 +1721,7 @@ if __name__ == "__main__":
                             alpha_to_acc=alpha_to_cons_acc_avg,
                             title=title_avg_cons,
                             outpath=outpath_avg_cons,
-                            ylabel="Average accuracy across datasets (%)",
+                            ylabel="Average Accuracy (%)",
                         )
 
                         if os.path.exists(outpath_avg):
