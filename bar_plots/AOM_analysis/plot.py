@@ -1063,7 +1063,7 @@ if __name__ == "__main__":
         ax.set_xticklabels(tick_labels)
 
         max_val = float(np.nanmax([np.nanmax(clean_avg), np.nanmax(adv_avg)]))
-        ax.set_ylim(0, max(100.0, max_val + 4.0))
+        ax.set_ylim(60, max(100.0, max_val + 4.0))
         ax.set_xlabel(r"$\alpha$")
         ax.set_ylabel(r"Average accuracy across datasets (\%)")
         ax.set_title(title)
@@ -1280,8 +1280,8 @@ if __name__ == "__main__":
                 tick_labels.append("0.0\n(AOM)")
             else:
                 tick_labels.append(f"{t:.2f}".rstrip("0").rstrip("."))
-        ax.set_xticklabels(tick_labels, fontsize=16)
-        ax.set_xlabel(r"$\tau_{\mathrm{threshold}}$", fontsize=20)
+        ax.set_xticklabels(tick_labels, fontsize=24)
+        ax.set_xlabel(r"$\tau_{\mathrm{threshold}}$", fontsize=30)
         ax.set_ylabel(ylabel.replace("(%)", r"(%)"), fontsize=18)
         ax.set_title(title, pad=30)
 
@@ -1425,10 +1425,10 @@ if __name__ == "__main__":
         ]
 
         # Thresholds requested (fixed)
-        thresholds = [0.0, 0.2, 0.40, 0.60, 0.80, 0.85, 0.90, 0.95,  1.0]
+        thresholds = [0.0, 0.2, 0.40, 0.60, 0.80, 0.85, 0.90,  1.0]
 
         # Only evaluate these alpha values for threshold plots (requested)
-        target_threshold_alphas = [1.0, 1.2, 1.4]
+        target_threshold_alphas = [1.2, 1.4]
 
         # Helper: get diff-ratio vector for a dataset + specific noise setting.
         # NOTE: This must be independent of `anchor_key` (anchor is only for AOM predictions).
@@ -1612,15 +1612,15 @@ if __name__ == "__main__":
 
                     # NOTE: Avoid raw strings for the newline; in a raw string, "\n" is literal.
                     title = (
-                        r"$\tau$-thresholded AOM (Label Leakage): use AOM if $\tau > \tau_{\mathrm{threshold}}$ else Zero-shot"
+                        r"Mean Latent Drift($\tau$) based AOM: use AOM if $\tau > \tau_{\mathrm{threshold}}$ else Zero-shot"
                         "\n"
-                        rf"AOM Anchor: {anchor_desc} | Diff-ratio: {diff_noise_desc}"
+                        rf"AOM Anchor: {anchor_desc} | Mean Latent Drift: $\tau$ {diff_noise_desc}"
                     )
 
-                    title_cons = (
-                        r"$\tau$-thresholded AOM: use AOM if $\tau > \tau_{\mathrm{threshold}}$ else Zero-shot"
+                    title_cons =(
+                        r"Mean Latent Drift($\tau$) based AOM: use AOM if $\tau > \tau_{\mathrm{threshold}}$ else Zero-shot"
                         "\n"
-                        rf"AOM Anchor: {anchor_desc} | Diff-ratio: {diff_noise_desc}"
+                        rf"AOM Anchor: {anchor_desc} | Mean Latent Drift: $\tau$ {diff_noise_desc}"
                     )
 
                     plot_threshold_mixing_bars(
@@ -1635,7 +1635,7 @@ if __name__ == "__main__":
                         alpha_to_acc=alpha_to_cons_acc,
                         title=title_cons,
                         outpath=outpath_cons,
-                        ylabel="Average accuracy across datasets (%)",
+                        ylabel="Average accuracy (%)",
                     )
 
                     # Add to grid lists (keep anchor order as in `target_anchors`).
