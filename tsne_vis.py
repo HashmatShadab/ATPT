@@ -92,7 +92,7 @@ SAVE_PLOTS = True
 SHOW_PLOTS = True
 
 # Root directory (relative to project root) for generated figures.
-PLOTS_ROOT_DIR = "plots_output"
+PLOTS_ROOT_DIR = "plots_output_check"
 
 
 def _safe_name(s: str, *, max_len: int = 180) -> str:
