@@ -52,10 +52,10 @@ ADV_FOLDER = "ADV_Generation_eps_4.0_steps_100"
 # )
 COUNTER_FOLDERS = (
     "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_48.0_Tau_Type_normal_num_anchors_1",
-    # "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_4.0_Tau_Type_normal_num_anchors_1",
-    # "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_8.0_Tau_Type_normal_num_anchors_1",
-    # "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_16.0_Tau_Type_normal_num_anchors_1",
-    # "ADV_Generation_eps_4.0_steps_100_Added_Noise_gaussian_Sigma_0.06_Tau_Type_noisy_num_anchors_10",
+    "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_4.0_Tau_Type_normal_num_anchors_1",
+    "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_8.0_Tau_Type_normal_num_anchors_1",
+    "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_16.0_Tau_Type_normal_num_anchors_1",
+    "ADV_Generation_eps_4.0_steps_100_Added_Noise_gaussian_Sigma_0.06_Tau_Type_noisy_num_anchors_10",
     "ADV_Generation_eps_0.0_steps_0_Added_Noise_uniform_Eps_48.0_Tau_Type_normal_num_anchors_1",
 
 )
@@ -758,7 +758,7 @@ def main() -> None:
         # when requested.
         if show_legend:
             n_entries = 1 + len(counter_labels)
-            ncol = 3 if n_entries >= 3 else n_entries
+            ncol = 4 if n_entries >= 3 else n_entries
             ax.legend(
                 loc="upper center",
                 bbox_to_anchor=(0.5, 1.08),
@@ -829,7 +829,7 @@ def main() -> None:
     Za = Z[:n]
     Zrs = [Z[n * (i + 1) : n * (i + 2)] for i in range(len(D_recovers))]
 
-    fig, ax = plt.subplots(figsize=(12, 8))
+    fig, ax = plt.subplots(figsize=(24, 8))
     _plot_fig1_drift_pca(ax)
 
     _finalize_figure(
