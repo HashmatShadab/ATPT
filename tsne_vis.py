@@ -26,6 +26,7 @@ from typing import Iterable
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from matplotlib.lines import Line2D
 from matplotlib.ticker import AutoMinorLocator, MaxNLocator
 import numpy as np
 from sklearn.decomposition import PCA
@@ -51,11 +52,12 @@ ADV_FOLDER = "ADV_Generation_eps_4.0_steps_100"
 #     "..._Added_Noise_uniform_Eps_24.0_...",
 # )
 COUNTER_FOLDERS = (
-    "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_48.0_Tau_Type_normal_num_anchors_1",
     "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_4.0_Tau_Type_normal_num_anchors_1",
     "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_8.0_Tau_Type_normal_num_anchors_1",
     "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_16.0_Tau_Type_normal_num_anchors_1",
     "ADV_Generation_eps_4.0_steps_100_Added_Noise_gaussian_Sigma_0.06_Tau_Type_noisy_num_anchors_10",
+    "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_48.0_Tau_Type_normal_num_anchors_1",
+    "ADV_Generation_eps_0.0_steps_0_Added_Noise_gaussian_Sigma_0.06_Tau_Type_noisy_num_anchors_10",
     "ADV_Generation_eps_0.0_steps_0_Added_Noise_uniform_Eps_48.0_Tau_Type_normal_num_anchors_1",
 
 )
@@ -771,13 +773,46 @@ def main() -> None:
         ax.grid(True, which="major", alpha=0.22)
         ax.grid(True, which="minor", alpha=0.12)
 
+        # Legend: keep markers SOLID in the legend even if some scatter series
+        # are drawn as hollow markers in the plot to mitigate overplotting.
+        # (User request: legend signs should match the solid colors.)
+        legend_handles: list[Line2D] = [
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                linestyle="",
+                markerfacecolor=COLORS["attack"],
+                markeredgecolor=COLORS["attack"],
+                markersize=10,
+            )
+        ]
+        legend_labels: list[str] = ["Adversarial"]
+        for i, lbl in enumerate(counter_labels):
+            src = counter_source_label(counter_folders[i])
+            ctr_color = COLOR_CYCLE[(i + 1) % len(COLOR_CYCLE)]
+            legend_handles.append(
+                Line2D(
+                    [0],
+                    [0],
+                    marker=counter_markers[i % len(counter_markers)],
+                    linestyle="",
+                    markerfacecolor=ctr_color,
+                    markeredgecolor=ctr_color,
+                    markersize=10,
+                )
+            )
+            legend_labels.append(f"{src} + {lbl}")
+
         # Per-axis legend may be suppressed when the caller wants a single
         # figure-level legend (e.g., for a 1x2 grid). Draw the axis legend only
         # when requested.
         if show_legend:
-            n_entries = 1 + len(counter_labels)
+            n_entries = len(legend_labels)
             ncol = 4 if n_entries >= 3 else n_entries
             ax.legend(
+                legend_handles,
+                legend_labels,
                 loc="upper center",
                 bbox_to_anchor=(0.5, 1.18),
                 ncol=ncol,
@@ -897,9 +932,36 @@ def main() -> None:
                 # Non-fatal: ignore removal failures and continue.
                 pass
 
-    # Build a figure-level legend using only the PCA axis handles/labels so
-    # the top legend reflects the PCA drift plot entries exclusively.
-    handles, labels = ax1.get_legend_handles_labels()
+    # Build a figure-level legend (PCA only) with SOLID legend markers.
+    handles: list[Line2D] = [
+        Line2D(
+            [0],
+            [0],
+            marker="o",
+            linestyle="",
+            markerfacecolor=COLORS["attack"],
+            markeredgecolor=COLORS["attack"],
+            markersize=10,
+        )
+    ]
+    labels: list[str] = ["Adversarial"]
+    counter_markers = ("^", "s", "D", "P", "X", "v", "<", ">")
+    for i, lbl in enumerate(counter_labels):
+        src = counter_source_label(counter_folders[i])
+        ctr_color = COLOR_CYCLE[(i + 1) % len(COLOR_CYCLE)]
+        handles.append(
+            Line2D(
+                [0],
+                [0],
+                marker=counter_markers[i % len(counter_markers)],
+                linestyle="",
+                markerfacecolor=ctr_color,
+                markeredgecolor=ctr_color,
+                markersize=10,
+            )
+        )
+        labels.append(f"{src} + {lbl}")
+
     n_entries = len(labels)
     ncol = 3 if n_entries >= 3 else max(1, n_entries)
 
