@@ -181,9 +181,9 @@ def _scatter_drift(
     """Consistent scatter styling for the drift PCA plot."""
 
     # Visual tuning for readability across different subsample sizes.
-    # Slightly larger markers + a bit less transparency improves perceived dot quality.
-    s = 44 if n <= 2500 else (32 if n <= 6000 else 24)
-    a = 0.55 if n <= 2500 else (0.40 if n <= 6000 else 0.28)
+    # User request: increase the size of scatter dots.
+    s = 120 if n <= 2500 else (92 if n <= 6000 else 72)
+    a = 0.52 if n <= 2500 else (0.38 if n <= 6000 else 0.26)
 
     # Overplotting mitigation:
     # - use hollow markers for secondary series so points underneath remain visible
@@ -212,6 +212,60 @@ def _scatter_drift(
         # Rasterize only for very large clouds to keep vector outputs responsive.
         rasterized=n > 8000,
     )
+
+
+def _add_transition_flow_line(
+    ax: plt.Axes,
+    points: list[tuple[float, float]],
+    *,
+    color: str = "#222222",
+    linewidth: float = 2.4,
+    alpha: float = 0.55,
+) -> None:
+    """Draw a smooth-ish flow line through the given (x,y) points.
+
+    This is used in Fig. 1 to show the overall transition trajectory between
+    the centroid of the adversarial drift and the centroids of countermeasure
+    drifts.
+    """
+
+    if len(points) < 2:
+        return
+
+    # Build a simple quadratic Bezier chain (CURVE3) so the path looks more
+    # "free-flow" than a rigid polyline without adding extra dependencies.
+    from matplotlib.path import Path
+    from matplotlib.patches import PathPatch
+
+    verts: list[tuple[float, float]] = [points[0]]
+    # Matplotlib's Path codes are small integers but are typed as numpy scalars;
+    # cast to plain int to keep static type checkers happy.
+    codes: list[int] = [int(Path.MOVETO)]
+
+    for (x0, y0), (x1, y1) in zip(points[:-1], points[1:], strict=True):
+        mx, my = (x0 + x1) / 2.0, (y0 + y1) / 2.0
+        dx, dy = x1 - x0, y1 - y0
+        # Perpendicular offset scaled to segment length (kept small so it doesn't
+        # distort the meaning of the trajectory).
+        seg = float(np.hypot(dx, dy)) + 1e-12
+        ox, oy = (-dy / seg) * (0.07 * seg), (dx / seg) * (0.07 * seg)
+        ctrl = (mx + ox, my + oy)
+
+        verts.extend([ctrl, (x1, y1)])
+        codes.extend([int(Path.CURVE3), int(Path.CURVE3)])
+
+    path = Path(verts, codes)
+    patch = PathPatch(
+        path,
+        facecolor="none",
+        edgecolor=color,
+        linewidth=linewidth,
+        alpha=alpha,
+        zorder=3.2,
+        capstyle="round",
+        joinstyle="round",
+    )
+    ax.add_patch(patch)
 
 
 def apply_plot_style() -> None:
@@ -869,6 +923,9 @@ def main() -> None:
             zorder=2,
         )
 
+        attack_centroid = (float(np.mean(Za[:, 0])), float(np.mean(Za[:, 1])))
+        counter_centroids: list[tuple[float, float]] = []
+
         for i, (Zr, lbl) in enumerate(zip(Zrs, counter_labels, strict=True)):
             src = counter_source_label(counter_folders[i])
             ctr_color = COLOR_CYCLE[(i + 1) % len(COLOR_CYCLE)]
@@ -891,7 +948,8 @@ def main() -> None:
             ax.scatter(
                 [float(np.mean(Zr[:, 0]))],
                 [float(np.mean(Zr[:, 1]))],
-                s=180,
+                # Larger, solid centroid symbols so they stand out from the point clouds.
+                s=420,
                 marker=counter_markers[i % len(counter_markers)],
                 color=ctr_color,
                 edgecolors="#111111",
@@ -900,11 +958,14 @@ def main() -> None:
                 zorder=4,
             )
 
+            counter_centroids.append((float(np.mean(Zr[:, 0])), float(np.mean(Zr[:, 1]))))
+
         # Centroid for the attack drift (same idea as above, but for `D_attack`).
         ax.scatter(
-            [float(np.mean(Za[:, 0]))],
-            [float(np.mean(Za[:, 1]))],
-            s=180,
+            [attack_centroid[0]],
+            [attack_centroid[1]],
+            # Larger, solid centroid symbol so it matches the counter centroids.
+            s=420,
             marker="o",
             color=COLORS["attack"],
             edgecolors="#111111",
@@ -960,7 +1021,7 @@ def main() -> None:
                 linestyle="",
                 markerfacecolor=COLORS["attack"],
                 markeredgecolor=COLORS["attack"],
-                markersize=10,
+                markersize=16,
             )
         ]
         legend_labels: list[str] = ["Adversarial"]
@@ -1095,7 +1156,7 @@ def main() -> None:
     Za = Z[:n]
     Zrs = [Z[n * (i + 1) : n * (i + 2)] for i in range(len(D_recovers))]
 
-    fig, ax = plt.subplots(figsize=(32, 8))
+    fig, ax = plt.subplots(figsize=(34, 8))
     _plot_fig1_drift_pca(ax)
 
     _finalize_figure(
