@@ -56,8 +56,8 @@ COUNTER_FOLDERS = (
     "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_8.0_Tau_Type_normal_num_anchors_1",
     "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_16.0_Tau_Type_normal_num_anchors_1",
     "ADV_Generation_eps_4.0_steps_100_Added_Noise_gaussian_Sigma_0.06_Tau_Type_noisy_num_anchors_10",
-    "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_48.0_Tau_Type_normal_num_anchors_1",
     "ADV_Generation_eps_0.0_steps_0_Added_Noise_gaussian_Sigma_0.06_Tau_Type_noisy_num_anchors_10",
+    "ADV_Generation_eps_4.0_steps_100_Added_Noise_uniform_Eps_48.0_Tau_Type_normal_num_anchors_1",
     "ADV_Generation_eps_0.0_steps_0_Added_Noise_uniform_Eps_48.0_Tau_Type_normal_num_anchors_1",
 
 )
@@ -350,6 +350,49 @@ def counter_legend_label(counter_folder: str) -> str:
     return "Noise (ε=?/σ=?)"
 
 
+def counter_concise_noise_label(counter_folder: str) -> str:
+    """Build a concise label for y-ticks in Fig. 2/3.
+
+    Requirement (per issue): use LaTeX/mathtext symbols for noise type
+    so they render reliably across fonts:
+    - uniform  -> $\mathcal{U}$
+    - gaussian -> $\mathcal{N}$
+
+    Format: `$\\mathcal{U} (\\epsilon=...)$` or `$\\mathcal{N} (\\sigma=...)$`.
+    """
+
+    # Folder fragments we need to handle (examples):
+    # - `..._Added_Noise_uniform_Eps_48.0_...`
+    # - `..._Added_Noise_gaussian_Sigma_0.03_...`
+    m_eps = re.search(r"Added_Noise_([^_]+)_Eps_([0-9]*\.?[0-9]+)", counter_folder)
+    if m_eps is not None:
+        noise_type, eps = m_eps.group(1), m_eps.group(2)
+        if noise_type.lower() == "uniform":
+            # Use mathtext so the symbol renders even when the system font lacks unicode glyphs.
+            return f"$\\mathcal{{U}}\
+\;(\\epsilon={int(float(eps))}/255)$"
+        return "? (epsilon=?)"
+
+    m_sigma = re.search(r"Added_Noise_([^_]+)_Sigma_([0-9]*\.?[0-9]+)", counter_folder)
+    if m_sigma is not None:
+        noise_type, sigma = m_sigma.group(1), m_sigma.group(2)
+        if noise_type.lower() == "gaussian":
+            return f"$\\mathcal{{N}}\
+\;(\\sigma={sigma})$"
+        return "? (sigma=?)"
+
+    m_type = re.search(r"Added_Noise_([^_]+)", counter_folder)
+    if m_type is not None:
+        noise_type = m_type.group(1)
+        if noise_type.lower() == "uniform":
+            return r"$\mathcal{U}\;(\epsilon=?)$"
+        if noise_type.lower() == "gaussian":
+            return r"$\mathcal{N}\;(\sigma=?)$"
+        return "? (epsilon/sigma=?)"
+
+    return "? (epsilon/sigma=?)"
+
+
 def counter_source_label(counter_folder: str) -> str:
     """Return the source condition name for a counter folder.
 
@@ -468,6 +511,139 @@ def plot_histogram_multi_overlay_ax(
     # multi-panel figures we may want a single unified legend at the figure level.
     if show_legend:
         ax.legend(loc="best")
+
+
+def plot_violin_distributions_with_means_ax(
+    ax: plt.Axes,
+    *,
+    xs: list[np.ndarray],
+    labels: list[str],
+    xlabel: str,
+    colors: Iterable[str | tuple[float, float, float, float]] | None = None,
+    show_legend: bool = True,
+    show_points: bool = False,
+    max_points_per_group: int = 450,
+    rng: np.random.Generator | None = None,
+) -> None:
+    """Violin distributions with mean±std overlays.
+
+    Compared to overlaid histograms, horizontal violins reduce occlusion and make it
+    easier to compare distribution shape *and* summary statistics.
+    """
+
+    if len(xs) != len(labels):
+        raise ValueError(f"xs and labels must have same length. Got {len(xs)} vs {len(labels)}")
+    if len(xs) == 0:
+        raise ValueError("xs must be non-empty")
+
+    if colors is None:
+        cmap = plt.get_cmap("tab10")
+        colors = [cmap(i % 10) for i in range(len(xs))]
+    else:
+        colors = list(colors)
+        if len(colors) < len(xs):
+            raise ValueError(f"colors has {len(colors)} entries but need {len(xs)}")
+
+    data = [np.asarray(x, dtype=float) for x in xs]
+    pos = np.arange(1, len(data) + 1)
+
+    parts = ax.violinplot(
+        data,
+        positions=pos,
+        vert=False,
+        showmeans=False,
+        showmedians=False,
+        showextrema=False,
+        widths=0.78,
+    )
+
+    # Matplotlib returns a dict-like mapping.
+    # Annotate explicitly for friendlier static type checking.
+    # `violinplot` returns a dict of artists; Matplotlib typing stubs sometimes
+    # expose bodies as a generic Collection, which can trip static inspections.
+    # noinspection PyTypeChecker
+    bodies = list(parts["bodies"])
+    for i, body in enumerate(bodies):
+        body.set_facecolor(colors[i])
+        body.set_edgecolor(colors[i])
+        body.set_alpha(0.28)
+        body.set_linewidth(1.0)
+
+    means = np.array([float(np.mean(x)) for x in data], dtype=float)
+    stds = np.array([float(np.std(x)) for x in data], dtype=float)
+
+    # Show mean progression (line) + per-series mean markers.
+    ax.plot(
+        means,
+        pos,
+        color="#222222",
+        linewidth=1.6,
+        alpha=0.8,
+        zorder=3,
+    )
+    for i, (m, s) in enumerate(zip(means, stds, strict=True)):
+        ax.errorbar(
+            m,
+            pos[i],
+            xerr=s,
+            fmt="o",
+            markersize=9,
+            color=colors[i],
+            markerfacecolor=colors[i],
+            markeredgecolor="#111111",
+            markeredgewidth=0.5,
+            ecolor=colors[i],
+            elinewidth=1.8,
+            capsize=4.0,
+            alpha=0.98,
+            zorder=4,
+        )
+
+        if show_points:
+            if rng is None:
+                rng = np.random.default_rng(0)
+            x = data[i]
+            k = min(len(x), max_points_per_group)
+            if k > 0:
+                take = rng.choice(len(x), size=k, replace=False)
+                # Small vertical jitter so points don't collapse into a single line.
+                yj = pos[i] + rng.normal(loc=0.0, scale=0.06, size=k)
+                ax.scatter(
+                    x[take],
+                    yj,
+                    s=10,
+                    color=colors[i],
+                    alpha=0.10,
+                    edgecolors="none",
+                    zorder=2,
+                    rasterized=k > 400,
+                )
+
+    ax.set_xlabel(xlabel)
+    ax.set_yticks(pos)
+    ax.set_yticklabels(labels)
+    ax.invert_yaxis()  # Put the first entry (Adversarial) at the top.
+
+    ax.xaxis.set_major_locator(MaxNLocator(nbins=6))
+    ax.xaxis.set_minor_locator(AutoMinorLocator(2))
+    ax.grid(True, which="major", axis="x", alpha=0.22)
+    ax.grid(True, which="minor", axis="x", alpha=0.12)
+    ax.grid(False, axis="y")
+
+    if show_legend:
+        handles = [
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                linestyle="",
+                markerfacecolor=colors[i],
+                markeredgecolor=colors[i],
+                markersize=9,
+            )
+            for i in range(len(labels))
+        ]
+        ax.legend(handles, labels, loc="lower right")
 
 
 def plot_histogram_overlay(
@@ -824,33 +1000,69 @@ def main() -> None:
                 # handletextpad=0.5,
             )
 
-    def _plot_fig2_cosine_hist(ax: plt.Axes, show_legend: bool = True) -> None:
+    def _plot_fig2_cosine_hist(ax: plt.Axes) -> None:
         """Figure 2: Cosine similarity distributions on an existing axis."""
 
         labels = ["Adversarial"]
         for idx, lbl in enumerate(counter_labels):
             src = counter_source_label(counter_folders[idx])
-            labels.append(f"{src} + {lbl}")
+            labels.append(f"{src} + {counter_concise_noise_label(counter_folders[idx])}")
 
-        # Draw the histogram overlay. The caller can control whether this axis
-        # draws its own legend (useful when composing a multi-panel figure).
-        plot_histogram_multi_overlay_ax(
+        # Prefer violin distributions + mean±std markers (and a connected mean line)
+        # over overlaid histograms, which can hide distributions and make averages
+        # hard to compare when many series are present.
+        plot_violin_distributions_with_means_ax(
             ax,
             xs=[cos_clean_adv, *cos_clean_ctrs],
             labels=labels,
-            xlabel="Cosine similarity",
-            bins=30,
+            xlabel="Average Cosine similarity with Clean Distribution",
             colors=[
                 COLORS["attack"],
                 *[COLOR_CYCLE[(i + 1) % len(COLOR_CYCLE)] for i in range(len(counter_labels))],
             ],
-            show_legend=show_legend,
+            show_legend=False,
+            show_points=False,
+            rng=rng,
         )
 
         # Ensure Fig. 2 axis label + tick labels match the requested larger size.
-        ax.set_xlabel("Cosine similarity", fontsize=FIG12_AXES_LABELSIZE)
-        ax.set_ylabel("Density", fontsize=FIG12_AXES_LABELSIZE)
-        ax.tick_params(axis="both", which="major", labelsize=FIG12_TICK_LABELSIZE)
+        ax.set_xlabel(
+            "Average Cosine similarity with Clean Distribution",
+            fontsize=FIG12_AXES_LABELSIZE -2 ,
+        )
+        ax.set_ylabel("", fontsize=FIG12_AXES_LABELSIZE)
+        ax.tick_params(axis="x", which="major", labelsize=FIG12_TICK_LABELSIZE)
+        ax.tick_params(axis="y", which="major", labelsize=22)
+
+    def _plot_fig3_l2_distance(ax: plt.Axes) -> None:
+        """Figure 3: L2 distance distributions (to clean) on an existing axis."""
+
+        labels = ["Adversarial"]
+        for idx, lbl in enumerate(counter_labels):
+            src = counter_source_label(counter_folders[idx])
+            labels.append(f"{src} + {counter_concise_noise_label(counter_folders[idx])}")
+
+        plot_violin_distributions_with_means_ax(
+            ax,
+            xs=[l2_clean_adv, *l2_clean_ctrs],
+            labels=labels,
+            xlabel="Average L2 distance with Clean distribution",
+            colors=[
+                COLORS["attack"],
+                *[COLOR_CYCLE[(i + 1) % len(COLOR_CYCLE)] for i in range(len(counter_labels))],
+            ],
+            show_legend=False,
+            show_points=False,
+            rng=rng,
+        )
+
+        ax.set_xlabel(
+            "Average L2 distance with Clean distribution",
+            fontsize=FIG12_AXES_LABELSIZE -2 ,
+        )
+        ax.set_ylabel("", fontsize=FIG12_AXES_LABELSIZE)
+        ax.tick_params(axis="x", which="major", labelsize=FIG12_TICK_LABELSIZE)
+        ax.tick_params(axis="y", which="major", labelsize=22)
 
     # ---------------------------
     # FIGURE 1: Drift space (PCA-2D)
@@ -900,7 +1112,7 @@ def main() -> None:
     # How to read:
     # - If the countermeasure is effective, the `cos(clean, counter)` distribution should
     #   shift right (toward 1.0) relative to `cos(clean, adv)`.
-    fig, ax = plt.subplots(figsize=(12, 8))
+    fig, ax = plt.subplots(figsize=(14, 8))
     _plot_fig2_cosine_hist(ax)
     _finalize_figure(
         fig,
@@ -919,7 +1131,7 @@ def main() -> None:
     # Suppress per-axis legends for the grid. We'll place a single, PCA-only
     # legend at the figure level (user requested only the PCA legend at top).
     _plot_fig1_drift_pca(ax1, show_legend=False)
-    _plot_fig2_cosine_hist(ax2, show_legend=False)
+    _plot_fig2_cosine_hist(ax2)
 
     # Remove any remaining axis-level legends on both subplots. This ensures
     # only the PCA legend (placed at the figure level) is visible.
@@ -1008,13 +1220,10 @@ def main() -> None:
     # - Smaller `||clean-counter||` than `||clean-adv||` indicates the countermeasure moved
     #   features closer (in Euclidean distance) to their clean baseline.
 
-    plot_histogram_multi_overlay(
-        xs=[l2_clean_adv, *l2_clean_ctrs],
-        labels=["||clean-adv||", *[f"||clean-{lbl}||" for lbl in counter_labels]],
-        title="L2 distance distributions (to clean)",
-        xlabel="L2 distance",
-        bins=30,
-        colors=[COLORS["attack"], *[COLOR_CYCLE[(i + 1) % len(COLOR_CYCLE)] for i in range(len(counter_labels))]],
+    fig, ax = plt.subplots(figsize=(14, 8))
+    _plot_fig3_l2_distance(ax)
+    _finalize_figure(
+        fig,
         save_path=None if plots_dir is None else os.path.join(plots_dir, "fig3_l2_distance_distributions_to_clean.png"),
     )
 
