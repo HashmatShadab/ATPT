@@ -173,31 +173,40 @@ def _scatter_drift(
     color: str | tuple[float, float, float, float],
     marker: str,
     n: int,
+    filled: bool = True,
+    zorder: float = 2,
 ) -> None:
     """Consistent scatter styling for the drift PCA plot."""
 
     # Visual tuning for readability across different subsample sizes.
     # Slightly larger markers + a bit less transparency improves perceived dot quality.
-    s = 22 if n <= 2500 else (16 if n <= 6000 else 12)
-    a = 0.65 if n <= 2500 else (0.50 if n <= 6000 else 0.40)
+    s = 44 if n <= 2500 else (32 if n <= 6000 else 24)
+    a = 0.55 if n <= 2500 else (0.40 if n <= 6000 else 0.28)
 
-    # White edge strokes look good for small-to-medium n, but can get noisy for large n.
-    # Also avoid Matplotlib warnings for unfilled markers.
-    use_edge = (marker in ("o", "s", "D", "^")) and n <= 9000
-    edgecolors = "white" if use_edge else "none"
-    linewidths = 0.35 if use_edge else 0.0
+    # Overplotting mitigation:
+    # - use hollow markers for secondary series so points underneath remain visible
+    # - keep a visible edge stroke for both filled + hollow markers
+    if filled:
+        facecolors = color
+        edgecolors = "white" if n <= 9000 else "none"
+        linewidths = 0.45 if n <= 9000 else 0.0
+    else:
+        facecolors = "none"
+        edgecolors = color
+        linewidths = 1.1 if n <= 6000 else (0.85 if n <= 12000 else 0.6)
 
     ax.scatter(
         x,
         y,
         s=s,
         alpha=a,
-        color=color,
         marker=marker,
+        facecolors=facecolors,
         edgecolors=edgecolors,
         linewidths=linewidths,
         label=label,
         antialiased=True,
+        zorder=zorder,
         # Rasterize only for very large clouds to keep vector outputs responsive.
         rasterized=n > 8000,
     )
@@ -666,6 +675,10 @@ def main() -> None:
     def _plot_fig1_drift_pca(ax: plt.Axes, show_legend: bool = True) -> None:
         """Figure 1: Drift space (PCA-2D) on an existing axis."""
 
+        # Use distinct markers across counter variants to reduce visual ambiguity
+        # when multiple series overlap heavily.
+        counter_markers = ("^", "s", "D", "P", "X", "v", "<", ">")
+
         _scatter_drift(
             ax,
             Za[:, 0],
@@ -674,6 +687,8 @@ def main() -> None:
             color=COLORS["attack"],
             marker="o",
             n=n,
+            filled=True,
+            zorder=2,
         )
 
         for i, (Zr, lbl) in enumerate(zip(Zrs, counter_labels, strict=True)):
@@ -685,8 +700,11 @@ def main() -> None:
                 Zr[:, 1],
                 label=f"{src} + {lbl}",
                 color=ctr_color,
-                marker="^",
+                marker=counter_markers[i % len(counter_markers)],
                 n=n,
+                # Hollow markers keep overlapped points visible (less occlusion).
+                filled=False,
+                zorder=1.5,
             )
 
             # Centroid marker (mean of the 2D-projected drift vectors).
@@ -695,8 +713,8 @@ def main() -> None:
             ax.scatter(
                 [float(np.mean(Zr[:, 0]))],
                 [float(np.mean(Zr[:, 1]))],
-                s=90,
-                marker="^",
+                s=180,
+                marker=counter_markers[i % len(counter_markers)],
                 color=ctr_color,
                 edgecolors="#111111",
                 linewidths=0.6,
@@ -708,7 +726,7 @@ def main() -> None:
         ax.scatter(
             [float(np.mean(Za[:, 0]))],
             [float(np.mean(Za[:, 1]))],
-            s=90,
+            s=180,
             marker="o",
             color=COLORS["attack"],
             edgecolors="#111111",
@@ -761,11 +779,12 @@ def main() -> None:
             ncol = 4 if n_entries >= 3 else n_entries
             ax.legend(
                 loc="upper center",
-                bbox_to_anchor=(0.5, 1.08),
+                bbox_to_anchor=(0.5, 1.18),
                 ncol=ncol,
                 borderaxespad=0.0,
                 handlelength=1.2,
-                markerscale=1.7,
+                markerscale=2.2,
+                fontsize=26,
                 # columnspacing=1.2,
                 # handletextpad=0.5,
             )
@@ -829,7 +848,7 @@ def main() -> None:
     Za = Z[:n]
     Zrs = [Z[n * (i + 1) : n * (i + 2)] for i in range(len(D_recovers))]
 
-    fig, ax = plt.subplots(figsize=(24, 8))
+    fig, ax = plt.subplots(figsize=(32, 8))
     _plot_fig1_drift_pca(ax)
 
     _finalize_figure(
@@ -897,7 +916,7 @@ def main() -> None:
         markerscale=4,
         # columnspacing=1.2,
         # handletextpad=0.6,
-        fontsize=32,
+        fontsize=30,
     )
 
     # Just in case, remove any axis-level legends that might still exist so
