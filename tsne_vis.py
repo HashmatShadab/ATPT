@@ -622,7 +622,8 @@ def plot_violin_distributions_with_means_ax(
         body.set_facecolor(colors[i])
         body.set_edgecolor(colors[i])
         body.set_alpha(0.28)
-        body.set_linewidth(1.0)
+        # Thicker violin outlines so contours read well in large-format figures.
+        body.set_linewidth(3.2)
 
     means = np.array([float(np.mean(x)) for x in data], dtype=float)
     stds = np.array([float(np.std(x)) for x in data], dtype=float)
@@ -632,7 +633,7 @@ def plot_violin_distributions_with_means_ax(
         means,
         pos,
         color="#222222",
-        linewidth=1.6,
+        linewidth=4.2,
         alpha=0.8,
         zorder=3,
     )
@@ -642,14 +643,15 @@ def plot_violin_distributions_with_means_ax(
             pos[i],
             xerr=s,
             fmt="o",
-            markersize=9,
+            # Larger mean markers so they stay legible over the violins.
+            markersize=15,
             color=colors[i],
             markerfacecolor=colors[i],
             markeredgecolor="#111111",
-            markeredgewidth=0.5,
+            markeredgewidth=1.6,
             ecolor=colors[i],
-            elinewidth=1.8,
-            capsize=4.0,
+            elinewidth=3.6,
+            capsize=7.0,
             alpha=0.98,
             zorder=4,
         )
@@ -1135,7 +1137,7 @@ def main() -> None:
         )
         ax.set_ylabel("", fontsize=FIG12_AXES_LABELSIZE)
         ax.tick_params(axis="x", which="major", labelsize=FIG12_TICK_LABELSIZE)
-        ax.tick_params(axis="y", which="major", labelsize=22)
+        ax.tick_params(axis="y", which="major", labelsize=FIG12_TICK_LABELSIZE + 4)
 
     def _plot_fig3_l2_distance(ax: plt.Axes) -> None:
         """Figure 3: L2 distance distributions (to clean) on an existing axis."""
@@ -1165,7 +1167,7 @@ def main() -> None:
         )
         ax.set_ylabel("", fontsize=FIG12_AXES_LABELSIZE)
         ax.tick_params(axis="x", which="major", labelsize=FIG12_TICK_LABELSIZE)
-        ax.tick_params(axis="y", which="major", labelsize=22)
+        ax.tick_params(axis="y", which="major", labelsize=FIG12_TICK_LABELSIZE + 4)
 
     # ---------------------------
     # FIGURE 1: Drift space (PCA-2D)
