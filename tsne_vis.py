@@ -26,6 +26,7 @@ from typing import Iterable
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.patheffects as pe
 from matplotlib.lines import Line2D
 from matplotlib.ticker import AutoMinorLocator, MaxNLocator
 import numpy as np
@@ -907,6 +908,40 @@ def main() -> None:
     def _plot_fig1_drift_pca(ax: plt.Axes, show_legend: bool = True) -> None:
         """Figure 1: Drift space (PCA-2D) on an existing axis."""
 
+        def _spread_points(
+            pts: list[tuple[float, float]],
+            *,
+            min_dist: float,
+            step: float,
+        ) -> list[tuple[float, float]]:
+            """Deterministically de-overlap points by nudging close ones.
+
+            This is used for centroid markers in Fig. 1 only. It keeps the
+            *ordering* stable and applies small offsets only when centroids are
+            very close, so all solid markers remain visible.
+            """
+
+            out: list[tuple[float, float]] = []
+            for i, (x, y) in enumerate(pts):
+                xx, yy = float(x), float(y)
+                if i == 0:
+                    out.append((xx, yy))
+                    continue
+
+                for k in range(60):
+                    if all((xx - px) ** 2 + (yy - py) ** 2 >= min_dist**2 for px, py in out):
+                        break
+
+                    # Spiral-like deterministic offsets (no randomness).
+                    ang = (k * 2.399963229728653) + (i * 0.37)  # ~golden angle
+                    rad = step * (1.0 + 0.15 * k)
+                    xx = float(x) + rad * float(np.cos(ang))
+                    yy = float(y) + rad * float(np.sin(ang))
+
+                out.append((xx, yy))
+
+            return out
+
         # Use distinct markers across counter variants to reduce visual ambiguity
         # when multiple series overlap heavily.
         counter_markers = ("^", "s", "D", "P", "X", "v", "<", ">")
@@ -924,7 +959,11 @@ def main() -> None:
         )
 
         attack_centroid = (float(np.mean(Za[:, 0])), float(np.mean(Za[:, 1])))
-        counter_centroids: list[tuple[float, float]] = []
+
+        # We'll draw centroid markers *after* setting axis limits so we can pick a
+        # sensible de-overlap radius in PCA units.
+        centroid_specs: list[tuple[tuple[float, float], str, str]] = []
+        centroid_specs.append((attack_centroid, "o", COLORS["attack"]))
 
         for i, (Zr, lbl) in enumerate(zip(Zrs, counter_labels, strict=True)):
             src = counter_source_label(counter_folders[i])
@@ -942,37 +981,13 @@ def main() -> None:
                 zorder=1.5,
             )
 
-            # Centroid marker (mean of the 2D-projected drift vectors).
-            # This is a visual summary of the “average drift” direction in PCA space; it is not used
-            # for computation, but helps interpret whether the counter drifts roughly oppose the attack.
-            ax.scatter(
-                [float(np.mean(Zr[:, 0]))],
-                [float(np.mean(Zr[:, 1]))],
-                # Larger, solid centroid symbols so they stand out from the point clouds.
-                s=420,
-                marker=counter_markers[i % len(counter_markers)],
-                color=ctr_color,
-                edgecolors="#111111",
-                linewidths=0.6,
-                alpha=0.95,
-                zorder=4,
+            centroid_specs.append(
+                (
+                    (float(np.mean(Zr[:, 0])), float(np.mean(Zr[:, 1]))),
+                    counter_markers[i % len(counter_markers)],
+                    ctr_color,
+                )
             )
-
-            counter_centroids.append((float(np.mean(Zr[:, 0])), float(np.mean(Zr[:, 1]))))
-
-        # Centroid for the attack drift (same idea as above, but for `D_attack`).
-        ax.scatter(
-            [attack_centroid[0]],
-            [attack_centroid[1]],
-            # Larger, solid centroid symbol so it matches the counter centroids.
-            s=420,
-            marker="o",
-            color=COLORS["attack"],
-            edgecolors="#111111",
-            linewidths=0.6,
-            alpha=0.95,
-            zorder=4,
-        )
 
         # `explained_variance_ratio_` tells how much of the drift-vector variance is captured by each PC.
         # Higher percentages mean the 2D projection preserves more of the drift distribution structure.
@@ -993,6 +1008,33 @@ def main() -> None:
         y_pad = 0.02 * (y_max - y_min + 1e-12)
         ax.set_xlim(x_min - x_pad, x_max + x_pad)
         ax.set_ylim(y_min - y_pad, y_max + y_pad)
+
+        # ---- Centroid markers (solid) ----
+        # Make them all visible:
+        # - add a thick white border so they pop over dense clouds
+        # - slightly de-overlap centroids if they land very close
+        span = max((x_max - x_min), (y_max - y_min), 1e-12)
+        min_dist = 0.018 * span
+        step = 0.010 * span
+        pts = [p for (p, _m, _c) in centroid_specs]
+        pts_spread = _spread_points(pts, min_dist=min_dist, step=step)
+
+        for (pt, marker, color), (xx, yy) in zip(centroid_specs, pts_spread, strict=True):
+            sc = ax.scatter(
+                [xx],
+                [yy],
+                # Larger, solid centroid symbols so they stand out from the point clouds.
+                s=420,
+                marker=marker,
+                color=color,
+                edgecolors="white",
+                linewidths=2.6,
+                alpha=0.98,
+                zorder=5,
+            )
+            # Add a subtle dark stroke *outside* the white edge so the marker stays
+            # visible on very bright regions too.
+            sc.set_path_effects([pe.withStroke(linewidth=3.2, foreground="#111111")])
 
         ax.xaxis.set_major_locator(MaxNLocator(nbins=6))
         ax.yaxis.set_major_locator(MaxNLocator(nbins=6))
