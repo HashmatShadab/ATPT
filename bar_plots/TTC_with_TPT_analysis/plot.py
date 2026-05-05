@@ -757,6 +757,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="AOM analysis plotting / aggregation")
     parser.add_argument("--model-name", type=str, default="vit_l_14_datacomp_1b")
     parser.add_argument(
+        "--datasets",
+        type=str,
+        default=None,
+        help=(
+            "Comma-separated list of dataset names to plot (e.g. 'DTD,Cars'). "
+            "If omitted, all available datasets are used."
+        ),
+    )
+    parser.add_argument(
         "--diff-ratio-threshold",
         type=float,
         default=0.5,
@@ -913,7 +922,7 @@ if __name__ == "__main__":
                 out.append(zs_p)
                 continue
             # out.append(tpt_p if (rv > threshold) else zs_p)
-            out.append(tpt_p if (rv < threshold) else zs_p)
+            out.append(tpt_p if (rv > threshold) else zs_p)
 
         return out
 
@@ -969,7 +978,7 @@ if __name__ == "__main__":
             labels,
             values,
             ylabel="Accuracy (%)",
-            ylim=(0, 100),
+            ylim=(0, 120),
             value_fmt="{:.2f}",
             colors=None,
             hatches=None,
@@ -1467,6 +1476,43 @@ if __name__ == "__main__":
             ylim=(0, 100),
         )
 
+        # Per-dataset plots
+        per_ds_root = out_root / "per_dataset"
+        per_ds_root.mkdir(parents=True, exist_ok=True)
+        for ds in datasets:
+            series_ds = [
+                {
+                    "name": "Single",
+                    "values": [
+                        zs["per_dataset"][ds]["single"]["zs_clean_acc"],
+                        zs["per_dataset"][ds]["single"]["zs_adv_acc"],
+                    ],
+                },
+                {
+                    "name": "Vanilla",
+                    "values": [
+                        zs["per_dataset"][ds]["vanilla"]["zs_clean_acc"],
+                        zs["per_dataset"][ds]["vanilla"]["zs_adv_acc"],
+                    ],
+                },
+                {
+                    "name": "Weighted",
+                    "values": [
+                        zs["per_dataset"][ds]["weighted"]["zs_clean_acc"],
+                        zs["per_dataset"][ds]["weighted"]["zs_adv_acc"],
+                    ],
+                },
+            ]
+
+            save_grouped_bar_plot(
+                per_ds_root / f"zero_shot_{ds}.png",
+                f"Zero-shot ({ds})",
+                x_labels=x_labels,
+                series=series_ds,
+                ylabel="Accuracy (%)",
+                ylim=(0, 100),
+            )
+
         return zs
 
 
@@ -1627,6 +1673,45 @@ if __name__ == "__main__":
                     legend_loc="upper center",
                 )
 
+                # Per-dataset plots
+                per_ds_root = tpt_root / "per_dataset"
+                per_ds_root.mkdir(parents=True, exist_ok=True)
+                for ds in datasets:
+                    series_ds = [
+                        {
+                            "name": "Zero-shot",
+                            "values": [
+                                summary["per_pred_variant"][v]["zero_shot"]["per_dataset"][ds]
+                                for v in variants
+                            ],
+                        },
+                    ]
+                    for t in tpt_types:
+                        if ds not in summary["per_pred_variant"][variants[0]].get(t, {}).get("per_dataset", {}):
+                            # If a whole TPT type is missing for this dataset/variant, keep behavior consistent with avg plots.
+                            values = [float("nan") for _ in variants]
+                        else:
+                            values = [
+                                summary["per_pred_variant"][v][t]["per_dataset"].get(ds, float("nan"))
+                                for v in variants
+                            ]
+                        series_ds.append(
+                            {
+                                "name": tpt_type_to_name.get(t, str(t)),
+                                "values": values,
+                            }
+                        )
+
+                    save_grouped_bar_plot(
+                        per_ds_root / f"avg_acc_{ds}.png",
+                        f"Accuracy ({attack}, {model}, {ds})",
+                        x_labels=x_labels,
+                        series=series_ds,
+                        ylabel="Accuracy (%)",
+                        ylim=(0, 100),
+                        legend_loc="upper center",
+                    )
+
         print(f"\n[Done] Outputs written to: {out_root.resolve()}")
 
 
@@ -1739,6 +1824,32 @@ if __name__ == "__main__":
                         legend_loc="upper center",
                     )
 
+                    # Per-dataset thresholded bars
+                    per_ds_root = out_dir / "per_dataset"
+                    per_ds_root.mkdir(parents=True, exist_ok=True)
+                    for ds in datasets:
+                        thr_series_ds = []
+                        for t in tpt_types:
+                            thr_series_ds.append(
+                                {
+                                    "name": f"Thresholded ({tpt_type_to_name.get(t, str(t))})",
+                                    "values": [
+                                        summary_obj["per_pred_variant"][v]["thresholded"][t]["per_dataset"].get(ds, float("nan"))
+                                        for v in variants
+                                    ],
+                                }
+                            )
+
+                        save_grouped_bar_plot(
+                            per_ds_root / f"thresholded_{ds}_thr_{diff_ratio_threshold}.png",
+                            f"Thresholded acc ({attack}, {model}, {ds}) (thr={diff_ratio_threshold}, {diff_ratio_noise_type}/{diff_ratio_noise_value})",
+                            x_labels=x_labels_local,
+                            series=thr_series_ds,
+                            ylabel="Accuracy (%)",
+                            ylim=(0, 100),
+                            legend_loc="upper center",
+                        )
+
                 def plot_threshold_sweep_curves(*, out_dir: Path):
                     """For each variant, plot accuracy vs tau-threshold + bar version."""
                     # Use only the requested threshold grid (no dense sweep).
@@ -1831,6 +1942,61 @@ if __name__ == "__main__":
                             legend_loc="upper center",
                             grid_alpha=0.25,
                         )
+
+                        # Per-dataset threshold sweep: BAR plots (requested)
+                        per_ds_root = out_dir / "per_dataset" / v
+                        per_ds_root.mkdir(parents=True, exist_ok=True)
+                        for ds in datasets:
+                            zs_val = zs_per_ds[ds]
+                            series_ds = [
+                                {"name": "Zero-shot", "y": [zs_val for _ in thresholds]},
+                            ]
+
+                            for t in ["tpt", "rtpt"]:
+                                if t not in tpt_types:
+                                    continue
+                                if v not in pred_variants_by_type.get(t, set()):
+                                    continue
+                                y_vals_ds = []
+                                for thr in thresholds:
+                                    labels = TRUE_LABELS_DATASET[ds]
+                                    zs_preds = _get_zero_shot_preds_for_variant(
+                                        attack=attack,
+                                        dataset=ds,
+                                        zs_variant=v,
+                                    )
+                                    tpt_preds = tpt_dic[attack][model][ds][t]["preds"][v]["prediction"]
+                                    diff_ratio_per_sample = _get_diff_ratio_per_sample(
+                                        dataset=ds,
+                                        attack=attack,
+                                        noise_type=diff_ratio_noise_type,
+                                        noise_value=diff_ratio_noise_value,
+                                    )
+                                    mixed = _mix_preds_by_diff_ratio(
+                                        diff_ratio_per_sample=diff_ratio_per_sample,
+                                        threshold=float(thr),
+                                        zs_preds=zs_preds,
+                                        tpt_preds=tpt_preds,
+                                    )
+                                    _ensure_same_len(mixed, labels, name=f"{attack}/{model}/{ds}/threshold_sweep_per_dataset/{t}/{v}")
+                                    y_vals_ds.append(accuracy_percent(mixed, labels))
+
+                                series_ds.append(
+                                    {
+                                        "name": tpt_type_to_name.get(t, str(t)),
+                                        "y": y_vals_ds,
+                                    }
+                                )
+
+                            save_threshold_sweep_bar_plot(
+                                per_ds_root / f"threshold_sweep_{ds}.png",
+                                f"Threshold sweep ({attack}, {model}, {ds}, {v}, {diff_ratio_noise_type}_{diff_ratio_noise_value})",
+                                thresholds=thresholds,
+                                series=series_ds,
+                                ylabel="Accuracy (%)",
+                                ylim=(0, 100),
+                                legend_loc="best",
+                            )
 
                 def _compute_threshold_sweep_series(*, v: str, noise_type: str, noise_value: str):
                     """Compute sweep series for a given prediction variant + diff-ratio config.
@@ -2118,8 +2284,14 @@ if __name__ == "__main__":
     # ============================================================
     # RUN (sequence: zero-shot first, then TPT)
     # ============================================================
-    out_root = "Results_TTC_default"
-    datasets = list(TRUE_LABELS_DATASET.keys())
+    out_root = "Results"
+    if args.datasets is None:
+        datasets = list(TRUE_LABELS_DATASET.keys())
+    else:
+        datasets = [d.strip() for d in str(args.datasets).split(",") if d.strip()]
+        missing = [d for d in datasets if d not in TRUE_LABELS_DATASET]
+        if missing:
+            raise KeyError(f"Unknown dataset(s) in --datasets: {missing}. Available: {sorted(TRUE_LABELS_DATASET.keys())}")
 
     plot_zero_shot_avg_results(
         out_root=out_root,
