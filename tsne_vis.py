@@ -1333,6 +1333,34 @@ def main() -> None:
     )
 
     # ---------------------------
+    # FIGURE 2+3: Horizontal grid (cosine similarity + L2 distance)
+    # ---------------------------
+    # Requested: combine Fig. 2 and Fig. 3 horizontally.
+    # - share the same y-ticks (same ordering/labels)
+    # - show y-tick labels only once (left panel)
+    # - x-axis titles remain different
+    fig, (ax2, ax3) = plt.subplots(
+        1,
+        2,
+        figsize=(28, 10),
+        sharey=True,
+    )
+
+    _plot_fig2_cosine_hist(ax2)
+    _plot_fig3_l2_distance(ax3)
+
+    # Keep a single y-axis label/ticks on the left subplot.
+    ax3.set_ylabel("")
+    ax3.tick_params(axis="y", which="both", left=False, labelleft=False)
+
+    _finalize_figure(
+        fig,
+        save_path=None
+        if plots_dir is None
+        else os.path.join(plots_dir, "fig2_fig3_horizontal_grid_cosine_and_l2.png"),
+    )
+
+    # ---------------------------
     # FIGURE 4: Attack vs recovery drift alignment
     # ---------------------------
     # What it shows:
