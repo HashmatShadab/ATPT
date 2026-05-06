@@ -589,6 +589,142 @@ def main():
     print(f"Loading counter-attack results from: {root_results}")
     results_dic = get_aggregated_results(root_results, selected_attacks=selected_attacks)
 
+    # --- Pre Zero-Shot diagnostics (requested): count diff-ratio threshold hits across all datasets ---
+    def _count_diff_ratio_hits_across_datasets(
+        *,
+        model_name: str,
+        attack: str,
+        noise_type: str,
+        noise_param: str,
+        threshold: float,
+        direction: str,
+    ) -> None:
+        """Print per-dataset and total counts of diff ratios crossing a threshold."""
+
+        if direction not in {"lt", "gt"}:
+            raise ValueError(f"direction must be 'lt' or 'gt', got: {direction}")
+
+        datasets_dict = diff_ratio_dic.get("results", {}).get(model_name, {})
+        datasets = list(datasets_dict.keys())
+
+        total_hits = 0
+        total_samples = 0
+        datasets_missing = 0
+
+        print(
+            f"\n[Pre ZS check] attack={attack} noise_type={noise_type} noise_param={noise_param} "
+            f"condition=({'<' if direction == 'lt' else '>'}{threshold})"
+        )
+
+        for dataset in datasets:
+            dr_entry = (
+                diff_ratio_dic.get("results", {})
+                .get(model_name, {})
+                .get(dataset, {})
+                .get(attack, {})
+                .get(noise_type, {})
+                .get(noise_param, {})
+            )
+
+            if not isinstance(dr_entry, dict) or len(dr_entry) == 0:
+                datasets_missing += 1
+                print(f"  {dataset}: missing")
+                continue
+
+            # If multiple tau-types exist, aggregate across all of them.
+            dataset_hits = 0
+            dataset_samples = 0
+            for tau_type, tau_obj in dr_entry.items():
+                if not isinstance(tau_obj, dict):
+                    continue
+                diff_ratios = tau_obj.get("diff_ratio_after_counter_attack")
+                if diff_ratios is None:
+                    continue
+
+                dataset_samples += len(diff_ratios)
+                if direction == "lt":
+                    dataset_hits += sum(1 for v in diff_ratios if v is not None and v < threshold)
+                else:
+                    dataset_hits += sum(1 for v in diff_ratios if v is not None and v > threshold)
+
+            total_hits += dataset_hits
+            total_samples += dataset_samples
+            print(f"  {dataset}: {dataset_hits}/{dataset_samples}")
+
+        print(
+            f"  TOTAL: {total_hits}/{total_samples} (datasets={len(datasets)}, missing={datasets_missing})"
+        )
+
+    model_name_for_checks = "vit_l_14_datacomp_1b"
+    attack_for_checks = "eps_0.0_steps_0"
+    _count_diff_ratio_hits_across_datasets(
+        model_name=model_name_for_checks,
+        attack=attack_for_checks,
+        noise_type="uniform",
+        noise_param="Eps_24.0",
+        threshold=0.85,
+        direction="lt",
+    )
+    _count_diff_ratio_hits_across_datasets(
+        model_name=model_name_for_checks,
+        attack=attack_for_checks,
+        noise_type="gaussian",
+        noise_param="Sigma_0.12",
+        threshold=0.85,
+        direction="lt",
+    )
+    _count_diff_ratio_hits_across_datasets(
+        model_name=model_name_for_checks,
+        attack=attack_for_checks,
+        noise_type="uniform",
+        noise_param="Eps_4.0",
+        threshold=0.2,
+        direction="gt",
+    )
+    _count_diff_ratio_hits_across_datasets(
+        model_name=model_name_for_checks,
+        attack=attack_for_checks,
+        noise_type="uniform",
+        noise_param="Eps_2.0",
+        threshold=0.2,
+        direction="gt",
+    )
+
+    # Opposite-condition checks for eps_4.0_steps_100 (requested)
+    attack_for_checks = "eps_4.0_steps_100"
+    _count_diff_ratio_hits_across_datasets(
+        model_name=model_name_for_checks,
+        attack=attack_for_checks,
+        noise_type="uniform",
+        noise_param="Eps_24.0",
+        threshold=0.85,
+        direction="gt",
+    )
+    _count_diff_ratio_hits_across_datasets(
+        model_name=model_name_for_checks,
+        attack=attack_for_checks,
+        noise_type="gaussian",
+        noise_param="Sigma_0.12",
+        threshold=0.85,
+        direction="gt",
+    )
+    _count_diff_ratio_hits_across_datasets(
+        model_name=model_name_for_checks,
+        attack=attack_for_checks,
+        noise_type="uniform",
+        noise_param="Eps_4.0",
+        threshold=0.2,
+        direction="lt",
+    )
+    _count_diff_ratio_hits_across_datasets(
+        model_name=model_name_for_checks,
+        attack=attack_for_checks,
+        noise_type="uniform",
+        noise_param="Eps_2.0",
+        threshold=0.2,
+        direction="lt",
+    )
+
     # 2. Load Zero-Shot baseline results for comparison.
     print("Loading Zero-Shot results...")
     TRUE_LABELS_DATASET, ZS_CLEAN_PREDS_DATASET, ZS_ADV_PREDS_DATASET, ZS_ADV_IMAGE_ONLY_PREDS_DATASET = get_zs_results("vit_l_14_datacomp_1b")
