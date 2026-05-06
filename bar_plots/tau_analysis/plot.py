@@ -1354,6 +1354,192 @@ if __name__ == "__main__":
 
     diff_ratio_dic = diff_ratio_dic["results"][model_name]
 
+    def _count_diff_ratio_events_across_datasets(
+        results_dic: Dict[str, Any],
+        *,
+        attack_key: str,
+        noise_type_key: str,
+        noise_param_key: str,
+        threshold: float,
+        direction: str,
+    ) -> Dict[str, Any]:
+        """Count sample-level diff-ratio events across all datasets.
+
+        `results_dic` here is expected to be `diff_ratio_dic["results"][model_name]`, i.e.
+        a mapping: dataset -> attack -> noise_type -> noise_param -> tau_type -> payload.
+        """
+
+        def _matches(arr: np.ndarray) -> np.ndarray:
+            if direction == "below":
+                return arr < threshold
+            if direction == "above":
+                return arr > threshold
+            raise ValueError(f"Unknown direction: {direction}")
+
+        per_dataset = {}
+        total = 0
+        total_available = 0
+        missing = []
+
+        for dataset_key, dataset_value in results_dic.items():
+            try:
+                attack_value = dataset_value[attack_key]
+                noise_type_value = attack_value[noise_type_key]
+                noise_param_value = noise_type_value[noise_param_key]
+            except KeyError as e:
+                missing.append((dataset_key, str(e)))
+                continue
+
+            dataset_count = 0
+            dataset_available = 0
+
+            # Typically there is a single tau_type (e.g. "normal_anchors_num_anchors_10"),
+            # but we aggregate across all tau_type keys to be safe.
+            for _tau_type_key, tau_type_value in noise_param_value.items():
+                diff_ratio = tau_type_value.get("diff_ratio_after_counter_attack", None)
+                if diff_ratio is None:
+                    continue
+                arr = np.asarray(diff_ratio, dtype=float)
+                if arr.size == 0:
+                    continue
+
+                mask = _matches(arr)
+                dataset_count += int(mask.sum())
+                dataset_available += int(arr.size)
+
+            per_dataset[dataset_key] = {
+                "count": dataset_count,
+                "available": dataset_available,
+            }
+            total += dataset_count
+            total_available += dataset_available
+
+        return {
+            "attack_key": attack_key,
+            "noise_type_key": noise_type_key,
+            "noise_param_key": noise_param_key,
+            "threshold": threshold,
+            "direction": direction,
+            "total": total,
+            "total_available": total_available,
+            "per_dataset": per_dataset,
+            "missing": missing,
+        }
+
+    def _print_diff_ratio_event_summary(summary: Dict[str, Any]) -> None:
+        desc = (
+            f"attack='{summary['attack_key']}', noise_type='{summary['noise_type_key']}', "
+            f"noise_param='{summary['noise_param_key']}', condition={summary['direction']} {summary['threshold']}"
+        )
+        print("\n[Diff-ratio sample event count] " + desc)
+        total_available = int(summary.get("total_available", 0) or 0)
+        total_events = int(summary.get("total", 0) or 0)
+        total_pct = (100.0 * total_events / total_available) if total_available > 0 else float("nan")
+
+        if total_available > 0:
+            print(
+                f"  total_events={total_events} (out of total_samples={total_available}) "
+                f"=> {total_pct:.2f}%"
+            )
+        else:
+            print(f"  total_events={total_events} (out of total_samples={total_available})")
+
+        # Per-dataset breakdown (only datasets with at least one available sample)
+        for ds, stats in summary["per_dataset"].items():
+            available = int(stats.get("available", 0) or 0)
+            count = int(stats.get("count", 0) or 0)
+            if available > 0:
+                pct = 100.0 * count / available
+                print(f"    - {ds}: {count} / {available} => {pct:.2f}%")
+        if summary["missing"]:
+            missing_ds = ", ".join([m[0] for m in summary["missing"]])
+            print(f"  missing_datasets={len(summary['missing'])}: {missing_ds}")
+
+    # --- Requested pre-final_diff_ratio_dic checks (sample-level diff-ratio thresholds) ---
+    # Conditions for eps_0.0_steps_0
+    _print_diff_ratio_event_summary(
+        _count_diff_ratio_events_across_datasets(
+            diff_ratio_dic,
+            attack_key="eps_0.0_steps_0",
+            noise_type_key="uniform",
+            noise_param_key="Eps_24.0",
+            threshold=0.85,
+            direction="below",
+        )
+    )
+    _print_diff_ratio_event_summary(
+        _count_diff_ratio_events_across_datasets(
+            diff_ratio_dic,
+            attack_key="eps_0.0_steps_0",
+            noise_type_key="gaussian",
+            noise_param_key="Sigma_0.12",
+            threshold=0.85,
+            direction="below",
+        )
+    )
+    _print_diff_ratio_event_summary(
+        _count_diff_ratio_events_across_datasets(
+            diff_ratio_dic,
+            attack_key="eps_0.0_steps_0",
+            noise_type_key="uniform",
+            noise_param_key="Eps_4.0",
+            threshold=0.2,
+            direction="above",
+        )
+    )
+    _print_diff_ratio_event_summary(
+        _count_diff_ratio_events_across_datasets(
+            diff_ratio_dic,
+            attack_key="eps_0.0_steps_0",
+            noise_type_key="uniform",
+            noise_param_key="Eps_2.0",
+            threshold=0.2,
+            direction="above",
+        )
+    )
+
+    # Opposite conditions for eps_8.0_steps_100
+    _print_diff_ratio_event_summary(
+        _count_diff_ratio_events_across_datasets(
+            diff_ratio_dic,
+            attack_key="eps_8.0_steps_100",
+            noise_type_key="uniform",
+            noise_param_key="Eps_24.0",
+            threshold=0.85,
+            direction="above",
+        )
+    )
+    _print_diff_ratio_event_summary(
+        _count_diff_ratio_events_across_datasets(
+            diff_ratio_dic,
+            attack_key="eps_8.0_steps_100",
+            noise_type_key="gaussian",
+            noise_param_key="Sigma_0.12",
+            threshold=0.85,
+            direction="above",
+        )
+    )
+    _print_diff_ratio_event_summary(
+        _count_diff_ratio_events_across_datasets(
+            diff_ratio_dic,
+            attack_key="eps_8.0_steps_100",
+            noise_type_key="uniform",
+            noise_param_key="Eps_4.0",
+            threshold=0.2,
+            direction="below",
+        )
+    )
+    _print_diff_ratio_event_summary(
+        _count_diff_ratio_events_across_datasets(
+            diff_ratio_dic,
+            attack_key="eps_8.0_steps_100",
+            noise_type_key="uniform",
+            noise_param_key="Eps_2.0",
+            threshold=0.2,
+            direction="below",
+        )
+    )
+
     final_diff_ratio_dic = {}
 
     for dataset_key, dataset_value in diff_ratio_dic.items():
