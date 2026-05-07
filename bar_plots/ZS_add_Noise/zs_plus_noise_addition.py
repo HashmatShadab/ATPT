@@ -106,11 +106,11 @@ def get_zs_results():
                     "Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01"
                 ),
             },
-            "adversarial_eps4_steps100": {
+            "adversarial_eps8_steps100": {
                 "base_path": (
                     "../../Final_Results_corrected_ca_tau/"
                     "{model}/{dataset}/"
-                    "Adversarial_Eps_4_0_Steps_100/"
+                    "Adversarial_Eps_8_0_Steps_100/"
                     "No_Counter_Attack/No_TPT/"
                     "Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01"
                 ),
@@ -221,7 +221,7 @@ def get_zs_results():
         # print mean confidence
         print(dataset, np.mean(zero_shot_clean_max_confidences_data[dataset]))
 
-    case = "adversarial_eps4_steps100"
+    case = "adversarial_eps8_steps100"
     model = "vit_l_14_datacomp_1b"
 
     zero_shot_adv_preds_data = {}
@@ -458,11 +458,11 @@ RESULT_PATHS = {
                 "Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01"
             ),
         },
-        "adversarial_eps4_steps100": {
+        "adversarial_eps8_steps100": {
             "base_path": (
                 "../../Final_Results_corrected_ca_tau/"
                 "{model}/{dataset}/"
-                "Adversarial_Eps_4_0_Steps_100/"
+                "Adversarial_Eps_8_0_Steps_100/"
                 "Counter_Attack/"
                 "Eps_{eps}_0_Steps_0_Alpha_1_0/"
                 "Tau_normal_anchors_num_anchors_10_tauthresh_0_2_beta_2_0_weighted_pertrubation_True/"
@@ -500,11 +500,11 @@ RESULT_PATHS = {
                 "Inference_Ensemble_all_weighted_rtpt_topk_20_softmaxtemp_0_01"
             ),
         },
-        "adversarial_eps4_steps100": {
+        "adversarial_eps8_steps100": {
             "base_path": (
                 "../../Final_Results_corrected_ca_tau/"
                 "{model}/{dataset}/"
-                "Adversarial_Eps_4_0_Steps_100/"
+                "Adversarial_Eps_8_0_Steps_100/"
                 "Counter_Attack/"
                 "Init_Sigma_0_{sigma}_Eps_4_0_Steps_0_Alpha_1_0/"
                 "Tau_noisy_num_anchors_10_tauthresh_0_2_beta_2_0_weighted_pertrubation_True/"

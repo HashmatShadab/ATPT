@@ -28,16 +28,20 @@ plt.rcParams.update({
 # ---------------------------
 
 methods = [
-    "RN",
-    "RN (Ours)",
+    # "RN",
+    # "RN (Ours)",
     "TTC",
     "TTC (Ours)",
     "AOM",
     "AOM (Ours)"
 ]
+#
+# clean_scores = [59.80, 71.90,  50.10, 70.50, 56.9, 71.90]
+# adv_scores   = [54.10, 53.10,  62, 61.80, 67.2, 63.3]
+clean_scores = [61.7, 73.2, 58.6, 72.9]
+adv_scores   = [59.6, 58.8, 60.3, 60.8]
 
-clean_scores = [59.80, 71.90,  50.10, 70.50, 56.9, 71.90]
-adv_scores   = [54.10, 53.10,  62, 61.80, 67.2, 63.3]
+
 
 # ---------------------------
 # Plot Setup
@@ -74,7 +78,7 @@ bars_adv = ax.bar(
     x + width / 2,
     adv_scores,
     width,
-    label="PGD-100 (ε=4/255)",
+    label="PGD-100 (ε=8/255)",
     color=adv_color,
     edgecolor=bar_edgecolor,
     linewidth=bar_linewidth,
@@ -147,5 +151,5 @@ fig.tight_layout(pad=1.0)
 
 # Save figure
 project_root = Path(__file__).resolve().parents[3]
-fig.savefig("main_intro_figure_I.png", bbox_inches="tight")
+fig.savefig("main_intro_figure_eps_8.png", bbox_inches="tight")
 # plt.show()
