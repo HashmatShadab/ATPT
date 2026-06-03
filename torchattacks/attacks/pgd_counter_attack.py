@@ -1,8 +1,15 @@
 import torch
 import torch.nn as nn
+from typing import Dict, List
 
 from ..attack import Attack
 
+import torchvision.transforms.functional as TF
+from PIL import Image
+import math
+import io
+import numpy as np
+import torch.nn.functional as F
 
 class PGDCounter(Attack):
     r"""
@@ -29,8 +36,71 @@ class PGDCounter(Attack):
 
     """
 
+    FACTOR_LEVELS: Dict[str, List[float]] = {
+        # Additive noise in normalized image scale [0, 1].
+        # 0.00 = identity; larger = more noise.
+        "gaussian_noise": [0.00, 0.01, 0.03, 0.06, 0.12, 0.18, 0.24],
+        "uniform_noise": [
+            0.0000,
+            0.0039,
+            0.0078,
+            0.0157,
+            0.0314,
+            0.0471,
+            0.0627,
+            0.0784,
+            0.0941,
+            0.1255,
+            0.1569,
+            0.1882,
+        ],
+        # Brightness direct factor. 1.0 = identity.
+        # Split into two monotonic visual directions.
+        "brightness_dark":   [1.00, 0.90, 0.75, 0.60, 0.45, 0.30, 0.20, 0.10],
+        "brightness_bright": [1.00,  1.25, 1.50, 1.75, 2.00, 2.50, 3.0, 3.50],
+
+        # Contrast direct factor. 1.0 = identity.
+        "contrast_low":  [1.00, 0.90, 0.75, 0.60, 0.45, 0.30, 0.20, 0.10],
+        "contrast_high": [1.00, 1.10, 1.25, 1.50, 1.75, 2.00, 2.50, 3.0, 3.50],
+
+        # Saturation direct factor. 1.0 = identity; 0.0 = grayscale.
+        "saturation_low":  [1.00, 0.90, 0.75, 0.50, 0.25, 0.00],
+        "saturation_high": [1.00, 1.50, 2.00, 2.50, 3.00, 4.00],
+
+        # Sharpness direct factor. 1.0 = identity; 0.0 is heavily softened/blurred.
+        "sharpness_low":  [1.00, 0.75, 0.50, 0.25, 0.10, 0.00],
+        "sharpness_high": [1.00, 1.25, 1.50, 2.00, 3.00, 4.00],
+
+        # Gamma direct value. 1.0 = identity.
+        # In torchvision/PIL convention: gamma < 1 brightens; gamma > 1 darkens.
+        "gamma_bright": [1.00, 0.90, 0.75, 0.60, 0.45, 0.30, 0.20, 0.10],
+        "gamma_dark":   [1.00, 1.10, 1.25, 1.50, 1.75, 2.00, 2.50, 3.00],
+
+        # Hue shift. 0.0 = identity. torchvision valid range is [-0.5, 0.5].
+        "hue_negative": [0.00, -0.03, -0.06, -0.10, -0.20, -0.30, -0.40, -0.50],
+        "hue_positive": [0.00,  0.03,  0.06,  0.10,  0.20,  0.30, 0.40, 0.50],
+
+        # Spatial transforms.
+        # Blur sigma: 0 = identity; larger = more blur.
+        # Rotation angle: 0 = identity; larger = more clockwise rotation.
+        # Translation: 0 = identity; larger = more right-shift in pixels.
+        "gaussian_blur": [0.00, 0.25, 0.50, 1.00, 2.00, 4.00, 6.00],
+        "rotation":      [0, 15, 30, 40, 60, 90, 120],
+        "translation":   [0, 2, 4, 8, 16, 32, 48, 64],
+
+        # Quantization / compression.
+        # Posterize: dropped low-order bits; 0 = identity; larger = fewer color bits.
+        # Solarize: strength; 0 = identity; larger = lower threshold, more inversion.
+        # Downsample: factor; 1.0 = identity; larger = stronger downsample/upsample.
+        # JPEG: compression drop from quality 100; 0 = identity, larger = lower quality.
+        "posterize":  [0, 1, 2, 3, 4, 5, 6, 7],
+        "solarize":   [0.00, 0.10, 0.25, 0.40, 0.60, 0.80, 0.90],
+        "downsample": [1.00, 1.25, 1.50, 2.00, 4.00, 8.00, 12.00],
+        "jpeg":       [0, 10, 25, 40, 60, 80, 90],
+    }
+
     def __init__(self, model, eps=8 / 255, alpha=2 / 255, steps=10, random_start=True, tau_thres=None, beta=None, weighted_perturbation=True, init_noise="uniform", gaussian_sigma=0.18,
-                 tau_type="normal", num_anchors=10):
+                 tau_type="normal", num_anchors=10, severity=1.0):
         super().__init__("PGDCounter", model)
         self.eps = eps
         self.alpha = alpha
@@ -44,7 +114,210 @@ class PGDCounter(Attack):
         self.gaussian_sigma = gaussian_sigma
         self.tau_type = tau_type
         self.num_anchors = num_anchors
+        self.severity = severity
 
+        # Names that mean "perturb adv_images". Everything else => adv_images = images.
+        self._noise_inits = {"uniform", "gaussian"}
+        # Registry of new transforms (excluding noise, which keep their old paths).
+        self._transform_inits = {
+            "gaussian_noise", "uniform_noise",
+            "brightness_dark", "brightness_bright",
+            "contrast_low", "contrast_high",
+            "saturation_low", "saturation_high",
+            "sharpness_low", "sharpness_high",
+            "gamma_bright", "gamma_dark",
+            "hue_negative", "hue_positive",
+            "gaussian_blur", "rotation", "translation",
+            "posterize", "solarize", "downsample", "jpeg"
+        }
+
+    def _transform_anchors(self, images, transform_type, severity, num_anchors):
+        """
+        Build `num_anchors * B` randomly-transformed copies of `images`.
+
+        Returns:
+            Tensor of shape [num_anchors * B, C, H, W], values in [0, 1].
+            Each (anchor, image) pair gets an INDEPENDENT random parameter
+            draw, so anchors are genuinely diverse.
+
+        Conventions:
+            - `severity` (sev) is now used as a direct factor for most transforms.
+            - Identity values: noise=0, blur=0, rotation=0, translation=0,
+              brightness/contrast/saturation/sharpness/gamma/downsample=1.0,
+              hue=0.0, posterize=0, solarize=0, jpeg=0.
+        """
+        B, C, H, W = images.shape
+        NA = num_anchors
+        N = NA * B
+        device = images.device
+        v = float(severity)
+
+        # Mapping of split variants to base torchvision operations.
+        BASE_TRANSFORMS = {
+            "brightness_dark": "brightness", "brightness_bright": "brightness",
+            "contrast_low": "contrast", "contrast_high": "contrast",
+            "saturation_low": "saturation", "saturation_high": "saturation",
+            "sharpness_low": "sharpness", "sharpness_high": "sharpness",
+            "gamma_bright": "gamma", "gamma_dark": "gamma",
+            "hue_negative": "hue", "hue_positive": "hue",
+        }
+        base = BASE_TRANSFORMS.get(transform_type, transform_type)
+
+        # 1) ADDITIVE PIXEL NOISE (Remains unchanged per requirement)
+        if base == "gaussian_noise":
+            noise = torch.randn(NA, B, C, H, W, device=device) * v
+            return (images.unsqueeze(0) + noise).view(N, C, H, W).clamp(0, 1)
+
+        if base == "uniform_noise":
+            noise = (2 * torch.rand(NA, B, C, H, W, device=device) - 1) * v
+            return (images.unsqueeze(0) + noise).view(N, C, H, W).clamp(0, 1)
+
+        expanded = images.unsqueeze(0).expand(NA, -1, -1, -1, -1).reshape(N, C, H, W)
+
+        def _per_sample(fn, params):
+            out = torch.empty_like(expanded)
+            for i in range(N):
+                out[i] = fn(expanded[i:i + 1], params[i])[0]
+            return out
+
+        # 2) PHOTOMETRIC - Using direct factor 'v'
+        if base == "brightness":
+            return _per_sample(TF.adjust_brightness, [max(0.0, v)] * N).clamp(0, 1)
+
+        if base == "contrast":
+            return _per_sample(TF.adjust_contrast, [max(0.0, v)] * N).clamp(0, 1)
+
+        if base == "saturation":
+            return _per_sample(TF.adjust_saturation, [max(0.0, v)] * N).clamp(0, 1)
+
+        if base == "hue":
+            hue_shift = max(-0.5, min(0.5, v))
+            return _per_sample(TF.adjust_hue, [hue_shift] * N).clamp(0, 1)
+
+        if base == "sharpness":
+            return _per_sample(TF.adjust_sharpness, [max(0.0, v)] * N).clamp(0, 1)
+
+        if base == "gamma":
+            return _per_sample(TF.adjust_gamma, [max(1e-3, v)] * N).clamp(0, 1)
+
+        # 3) SPATIAL
+        if base == "gaussian_blur":
+            if v <= 0:
+                return expanded.clone()
+            s = v
+            ks = int(2 * math.ceil(3 * s) + 1)
+            ks += (ks % 2 == 0)
+            ks = max(ks, 3)
+            return TF.gaussian_blur(expanded, kernel_size=[ks, ks], sigma=[s, s]).clamp(0, 1)
+
+        if base == "rotation":
+            out = torch.empty_like(expanded)
+            for i in range(N):
+                out[i] = TF.rotate(
+                    expanded[i:i + 1],
+                    angle=v,
+                    interpolation=TF.InterpolationMode.BILINEAR,
+                    fill=0,
+                )[0]
+            return out.clamp(0, 1)
+
+        if base == "translation":
+            tx = int(round(v))
+            ty = 0
+            out = torch.empty_like(expanded)
+            for i in range(N):
+                out[i] = TF.affine(
+                    expanded[i:i + 1],
+                    angle=0.0,
+                    translate=[tx, ty],
+                    scale=1.0,
+                    shear=[0.0, 0.0],
+                    interpolation=TF.InterpolationMode.BILINEAR,
+                    fill=0,
+                )[0]
+            return out.clamp(0, 1)
+
+        # 4) QUANTIZATION / COMPRESSION
+        if base == "posterize":
+            drop = max(0, int(round(v)))
+            bits = max(1, 8 - drop)
+            u8 = (expanded.clamp(0, 1) * 255.0).to(torch.uint8)
+            out = torch.empty_like(u8)
+            for i in range(N):
+                out[i] = TF.posterize(u8[i:i + 1], bits=bits)[0]
+            return out.float() / 255.0
+
+        if base == "solarize":
+            strength = max(0.0, min(1.0, v))
+            threshold = int((1.0 - strength) * 255)
+            u8 = (expanded.clamp(0, 1) * 255.0).to(torch.uint8)
+            out = torch.empty_like(u8)
+            for i in range(N):
+                out[i] = TF.solarize(u8[i:i + 1], threshold=threshold)[0]
+            return out.float() / 255.0
+
+        if base == "downsample":
+            f = max(1.0, v)
+            if f == 1.0:
+                return expanded.clone()
+            out = torch.empty_like(expanded)
+            nh, nw = max(1, int(H / f)), max(1, int(W / f))
+            for i in range(N):
+                d = F.interpolate(expanded[i:i + 1], size=(nh, nw), mode="bilinear", align_corners=False)
+                out[i] = F.interpolate(d, size=(H, W), mode="bilinear", align_corners=False)[0]
+            return out.clamp(0, 1)
+
+        if base == "jpeg":
+            quality = max(1, min(100, 100 - int(round(v))))
+            return self._jpeg_roundtrip_per_sample(expanded, [quality] * N)
+
+        raise ValueError(f"Unknown transform type: {transform_type}")
+
+    def _jpeg_roundtrip_per_sample(self, images, qualities):
+        """Per-sample JPEG roundtrip; `qualities` is a list of length images.size(0)."""
+        device = images.device
+        out = []
+        imgs_u8 = (images.detach().cpu().clamp(0, 1) * 255.0).to(torch.uint8)
+        for img, q in zip(imgs_u8, qualities):
+            pil = Image.fromarray(img.permute(1, 2, 0).numpy())
+            buf = io.BytesIO()
+            pil.save(buf, format="JPEG", quality=int(q))
+            buf.seek(0)
+            dec = Image.open(buf).convert("RGB")
+            arr = torch.from_numpy(np.array(dec)).permute(2, 0, 1).float() / 255.0
+            out.append(arr)
+        return torch.stack(out, dim=0).to(device)
+
+    @torch.no_grad()
+    def compute_tau_transform(self, images, transform_type, num_anchors):
+        """
+        Anchor-based tau via arbitrary transforms. Computes tau for all severity levels
+        defined in FACTOR_LEVELS for the given transform_type.
+
+        Returns:
+            Dict[float, torch.Tensor]: A mapping from severity level to a Tensor of shape [B].
+        """
+        assert images.dim() == 4, "images must be [B,C,H,W]"
+        B = images.size(0)
+
+        orig_feat = self.model(images, get_image_features=True)  # [B, D]
+        orig_feat = orig_feat / orig_feat.norm(dim=-1, keepdim=True)
+
+        severity_levels = self.FACTOR_LEVELS.get(transform_type, [self.severity])
+        tau_dict = {}
+
+        for sev in severity_levels:
+            transformed = self._transform_anchors(images, transform_type, sev, num_anchors)
+            # transformed: [NA*B, C, H, W]
+
+            f = self.model(transformed, get_image_features=True)  # [NA*B, D]
+            f = f / f.norm(dim=-1, keepdim=True)
+            f = f.view(num_anchors, B, -1)  # [NA, B, D]
+
+            drift = (f - orig_feat.unsqueeze(0)).norm(dim=-1)  # [NA, B]
+            tau_dict[sev] = drift.mean(dim=0)  # [B]
+
+        return tau_dict
 
     def compute_tau(self, images, delta):
         # Assume model(images) returns unnormalized image features
@@ -213,29 +486,69 @@ class PGDCounter(Attack):
                 sigma = self.gaussian_sigma
                 noise = torch.randn_like(adv_images) * sigma
                 adv_images = adv_images + noise
+            elif self.init_noise in self._transform_inits:
+                # New transforms: don't perturb adv_images; tau probes clean `images`.
+                adv_images = images.clone().detach()
             else:
                 raise ValueError(f"Unknown init_noise type: {self.init_noise}")
             adv_images = torch.clamp(adv_images, min=0, max=1).detach()
 
-        if self.tau_type == "normal":
-            #################################################
-            delta_initial = adv_images - images
-            deltas_per_step = [delta_initial.clone().detach()]
-            diff_ratio = self.compute_tau(images, delta_initial)
-            ################################################
-        elif self.tau_type == "noisy":
-            tau_sigma = self.gaussian_sigma
-            number_of_anchors = self.num_anchors
-            diff_ratio = self.compute_tau_noisy(images, tau_sigma, number_of_anchors)
+        # if self.tau_type == "normal":
+        #     #################################################
+        #     delta_initial = adv_images - images
+        #     deltas_per_step = [delta_initial.clone().detach()]
+        #     diff_ratio = self.compute_tau(images, delta_initial)
+        #     ################################################
+        # elif self.tau_type == "noisy":
+        #     tau_sigma = self.gaussian_sigma
+        #     number_of_anchors = self.num_anchors
+        #     diff_ratio = self.compute_tau_noisy(images, tau_sigma, number_of_anchors)
+        #
+        # elif self.tau_type == "normal_anchors":
+        #     tau_eps = self.eps
+        #     number_of_anchors = self.num_anchors
+        #     diff_ratio = self.compute_tau_noisy_uniform(images, tau_eps, number_of_anchors)
 
-        elif self.tau_type == "normal_anchors":
-            tau_eps = self.eps
-            number_of_anchors = self.num_anchors
-            diff_ratio = self.compute_tau_noisy_uniform(images, tau_eps, number_of_anchors)
+        # ----- compute tau -----
+        tau_dict = {}
+        if self.init_noise in self._noise_inits:
+            # Existing behavior for noise inits, gated by tau_type.
+            if self.tau_type == "normal":
+                delta_initial = adv_images - images
+                deltas_per_step = [delta_initial.clone().detach()]
+                diff_ratio = self.compute_tau(images, delta_initial)
+            elif self.tau_type == "noisy":
+                diff_ratio = self.compute_tau_noisy(images, self.gaussian_sigma, self.num_anchors)
+            elif self.tau_type == "normal_anchors":
+                diff_ratio = self.compute_tau_noisy_uniform(images, self.eps, self.num_anchors)
+            else:
+                raise ValueError(f"Unknown tau_type: {self.tau_type}")
+            tau_dict[self.severity] = diff_ratio
+        else:
+            # New transforms: anchor-based tau on clean images, severity-driven.
+            tau_dict = self.compute_tau_transform(
+                images, self.init_noise, self.num_anchors
+            )
+        # For backward compatibility and early exit logic below, use self.severity if present in tau_dict,
+        # otherwise pick the first one.
+        if self.init_noise in self._noise_inits:
+            diff_ratio = tau_dict[self.severity]
+        elif self.severity in tau_dict:
+            diff_ratio = tau_dict[self.severity]
+        else:
+            diff_ratio = next(iter(tau_dict.values()))
 
+        # Convert all tensors in tau_dict to CPU items if they are scalar tensors
+        # or leave them as tensors if they are batches.
+        # Based on the original code returning diff_ratio.item(), we should probably 
+        # return items for batch size 1.
+        if images.size(0) == 1:
+            tau_dict_to_return = {k: v.item() for k, v in tau_dict.items()}
+        else:
+            tau_dict_to_return = tau_dict
 
         if self.steps == 0:
-            return adv_images, diff_ratio.item()
+            return adv_images, tau_dict_to_return
 
         # ---- Algorithm 1 early exit (only when batch size == 1) ----
         if (
@@ -244,7 +557,7 @@ class PGDCounter(Attack):
                 and diff_ratio.item() >= self.tau_thres
         ):
             # Return delta^0 only (random start), no counterattack
-            return adv_images, diff_ratio.item()
+            return adv_images, tau_dict_to_return
 
         for _ in range(self.steps):
             # Create a fresh copy for gradient computation
@@ -307,4 +620,4 @@ class PGDCounter(Attack):
         del original_features
         torch.cuda.empty_cache()
 
-        return adv_images, diff_ratio.item()
+        return adv_images, tau_dict_to_return

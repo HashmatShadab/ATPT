@@ -159,7 +159,8 @@ def main():
                     num_anchors = args.counter_attack_noisy_tau_num_anchors
                 log_name = f"{log_name}_Sigma_{args.counter_attack_gaussian_sigma}_Tau_Type_{args.counter_attack_tau}_num_anchors_{num_anchors}"
             else:
-               raise ValueError("Unknown init noise type")
+                log_name = f"{log_name}_across_severity_levels"
+               # raise ValueError("Unknown init noise type")
 
         # Create output directory path with experiment parameters
     args.output_dir = os.path.join(args.output_dir, args.arch, args.test_sets)
@@ -588,7 +589,7 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     diff_ratio_clean = 0
     diff_ratio_adv = 0
 
-    diff_ratio_after_counter_attack = []
+    diff_ratio_after_counter_attack = {}
     
     all_true_labels = []
     all_clean_preds = []
@@ -620,7 +621,12 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             # If using counter-attack, apply it to the generated image
             adv_images_counter, diff_ratio = counter_atk(adv_images, target)
             adv_images_counter = adv_images_counter.cuda(args.gpu, non_blocking=True)
-            diff_ratio_after_counter_attack.append(diff_ratio)
+            for key, value in diff_ratio.items():
+                if key in diff_ratio_after_counter_attack:
+                    diff_ratio_after_counter_attack[key].append(value)
+                else:
+                    diff_ratio_after_counter_attack[key] = []
+                    diff_ratio_after_counter_attack[key].append(value)
 
 
 
@@ -951,7 +957,10 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
     adv_accuracy_orig = adv_correct_orig / total
     diff_ratio_clean = diff_ratio_clean / len(val_loader)
     diff_ratio_adv = diff_ratio_adv / len(val_loader)
-    avg_diff_ratio_after_counter_attack = sum(diff_ratio_after_counter_attack) / len(diff_ratio_after_counter_attack) if len(diff_ratio_after_counter_attack) > 0 else 0
+    avg_diff_ratio_after_counter_attack = {}
+
+    for severity, diff_ratios in diff_ratio_after_counter_attack.items():
+        avg_diff_ratio_after_counter_attack[severity] = sum(diff_ratios) / len(diff_ratios) if len(diff_ratios) > 0 else 0
 
     # Calculate accuracy on correctly/incorrectly classified clean samples
     adv_accuracy_purify_clean_correct = adv_correct_purify_clean_correct / total_clean_correct if total_clean_correct > 0 else 0
@@ -1127,7 +1136,15 @@ if __name__ == '__main__':
     parser.add_argument('--counter_attack_tau_thres', default=0.2, type=float)
     parser.add_argument('--counter_attack_beta', default=2.0, type=float)
     parser.add_argument('--counter_attack_weighted_perturbations', default=True, type=lambda x: (str(x).lower() == 'true') )
-    parser.add_argument('--counter_attack_init_noise', default='uniform', choices=["uniform", "gaussian"], type=str)
+    parser.add_argument('--counter_attack_init_noise', default='uniform', choices=[
+        "uniform", "gaussian", "gaussian_noise", "uniform_noise",
+        "brightness_dark", "brightness_bright", "contrast_low", "contrast_high",
+        "saturation_low", "saturation_high", "sharpness_low", "sharpness_high",
+        "gamma_bright", "gamma_dark", "hue_negative", "hue_positive",
+        "gaussian_blur", "rotation", "translation", "posterize", "solarize",
+        "downsample", "jpeg"
+    ], type=str)
+    parser.add_argument('--counter_attack_severity', default=1.0, type=float)
     parser.add_argument('--counter_attack_gaussian_sigma', default=0.18, type=float)
     parser.add_argument('--counter_attack_noisy_tau_num_anchors', default=10, type=int)
     parser.add_argument('--counter_attack_tau', default='normal', choices=["normal", "noisy", "normal_anchors"], type=str)
