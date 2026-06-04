@@ -621,11 +621,25 @@ def test_time_adapt_eval(val_loader, model, model_state, optimizer, optim_state,
             # If using counter-attack, apply it to the generated image
             adv_images_counter, diff_ratio = counter_atk(adv_images, target)
             adv_images_counter = adv_images_counter.cuda(args.gpu, non_blocking=True)
+            # for key, value in diff_ratio.items():
+            #     if key in diff_ratio_after_counter_attack:
+            #         diff_ratio_after_counter_attack[key].append(value)
+            #     else:
+            #         diff_ratio_after_counter_attack[key] = []
+            #         diff_ratio_after_counter_attack[key].append(value)
+
             for key, value in diff_ratio.items():
-                if key in diff_ratio_after_counter_attack:
-                    diff_ratio_after_counter_attack[key].append(value)
-                else:
+                if key not in diff_ratio_after_counter_attack:
                     diff_ratio_after_counter_attack[key] = []
+
+                # Case 1: value is a CUDA tensor, e.g. tensor([0.1, 0.2], device='cuda')
+                if torch.is_tensor(value):
+                    value = value.detach().cpu().tolist()
+
+
+                if isinstance(value, list):
+                    diff_ratio_after_counter_attack[key].extend(value)
+                else:
                     diff_ratio_after_counter_attack[key].append(value)
 
 
